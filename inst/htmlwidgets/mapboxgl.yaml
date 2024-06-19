@@ -1,0 +1,17 @@
+dependencies:
+  - name: mapbox-gl-js
+    version: 3
+    src:
+      href: "https://api.mapbox.com/mapbox-gl-js/v3.4.0/"
+    script:
+      - "mapbox-gl.js"
+    stylesheet:
+      - "mapbox-gl.css"
+  - name: maplibre-gl
+    version: 2
+    src:
+      href: "https://unpkg.com/maplibre-gl/dist/"
+    script:
+      - "maplibre-gl.js"
+    stylesheet:
+      - "maplibre-gl.css"

@@ -1,0 +1,665 @@
+#' Add a layer to a Mapbox GL map from a source
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param type The type of the layer (e.g., "fill", "line", "circle").
+#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source_layer The source layer (for vector sources).
+#' @param paint A list of paint properties for the layer.
+#' @param layout A list of layout properties for the layer.
+#' @param slot An optional slot for layer order.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
+#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param hover_options A named list of options for highlighting features in the layer on hover.
+#'
+#' @return The modified map object with the new layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(access_token = "your_token_here")
+#' map <- add_source(map, id = "nc-source", type = "geojson", data = nc)
+#' map <- add_layer(map, id = "nc-layer", type = "fill", source = "nc-source", paint = list("fill-color" = "#888888", "fill-opacity" = 0.4))
+#' map <- add_source(map, id = "external-source", type = "vector", url = "mapbox://mapbox.mapbox-streets-v8")
+#' map <- add_layer(map, id = "external-layer", type = "circle", source = "external-source", source_layer = "sf2010", paint = list("circle-radius" = list("base" = 1.75, "stops" = list(c(12, 2), c(22, 180))), "circle-color" = list("match", list("get", "ethnicity"), "White", "#fbb03b", "Black", "#223b53", "Hispanic", "#e55e5e", "Asian", "#3bb2d0", "other", "#ccc")))
+#' }
+add_layer <- function(map,
+                      id,
+                      type = "fill",
+                      source,
+                      source_layer = NULL,
+                      paint = list(),
+                      layout = list(),
+                      slot = NULL,
+                      min_zoom = NULL,
+                      max_zoom = NULL,
+                      popup = NULL,
+                      tooltip = NULL,
+                      hover_options = NULL
+) {
+
+  if (length(paint) == 0) {
+    paint <- NULL
+  }
+
+  if (length(layout) == 0) {
+    layout <- NULL
+  }
+
+  # Convert sf objects to GeoJSON source
+  if (inherits(source, "sf")) {
+    geojson <- geojsonsf::sf_geojson(sf::st_transform(source, crs = 4326))
+    source <- list(
+      type = "geojson",
+      data = geojson,
+      generateId = TRUE
+    )
+  }
+
+  map$x$layers <- c(map$x$layers, list(list(
+    id = id,
+    type = type,
+    source = source,
+    source_layer = source_layer,
+    paint = paint,
+    layout = layout,
+    slot = slot,
+    minzoom = min_zoom,
+    maxzoom = max_zoom,
+    popup = popup,
+    tooltip = tooltip,
+    hover_options = hover_options
+  )))
+
+  if (inherits(map, "mapboxgl_proxy")) {
+    layer <- list(
+      id = id,
+      type = type,
+      source = source,
+      layout = layout,
+      paint = paint,
+      popup = popup,
+      tooltip = tooltip,
+      hover_options = hover_options
+    )
+
+    if (!is.null(source_layer)) {
+      layer$source_layer <- source_layer
+    }
+
+    if (!is.null(slot)) {
+      layer$slot <- slot
+    }
+
+    if (!is.null(min_zoom)) {
+      layer$minzoom <- min_zoom
+    }
+
+    if (!is.null(max_zoom)) {
+      layer$maxzoom = max_zoom
+    }
+
+
+    map$session$sendCustomMessage("mapboxgl-proxy", list(
+      id = map$id,
+      message = list(type = "add_layer", layer = layer)
+    ))
+
+    map
+
+  } else {
+    map
+  }
+
+}
+
+#' Add a fill layer to a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source_layer The source layer (for vector sources).
+#' @param fill_antialias Whether or not the fill should be antialiased.
+#' @param fill_color The color of the filled part of this layer.
+#' @param fill_emissive_strength Controls the intensity of light emitted on the source features.
+#' @param fill_opacity The opacity of the entire fill layer.
+#' @param fill_outline_color The outline color of the fill.
+#' @param fill_pattern Name of image in sprite to use for drawing image fills.
+#' @param fill_sort_key Sorts features in ascending order based on this value.
+#' @param fill_translate The geometry's offset. Values are [x, y] where negatives indicate left and up.
+#' @param fill_translate_anchor Controls the frame of reference for `fill-translate`.
+#' @param visibility Whether this layer is displayed.
+#' @param slot An optional slot for layer order.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
+#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param hover_options A named list of options for highlighting features in the layer on hover.
+#'
+#' @return The modified map object with the new fill layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(
+#'   style = "mapbox://styles/mapbox/streets-v11",
+#'   center = c(-74.006, 40.7128),
+#'   zoom = 10,
+#'   access_token = "your_token_here"
+#' )
+#' map <- add_fill_layer(map, id = "fill-layer", source = "source-id", fill_color = "rgba(255,0,0,0.5)")
+#' }
+add_fill_layer <- function(map,
+                           id,
+                           source,
+                           source_layer = NULL,
+                           fill_antialias = TRUE,
+                           fill_color = NULL,
+                           fill_emissive_strength = NULL,
+                           fill_opacity = NULL,
+                           fill_outline_color = NULL,
+                           fill_pattern = NULL,
+                           fill_sort_key = NULL,
+                           fill_translate = NULL,
+                           fill_translate_anchor = "map",
+                           visibility = "visible",
+                           slot = NULL,
+                           min_zoom = NULL,
+                           max_zoom = NULL,
+                           popup = NULL,
+                           tooltip = NULL,
+                           hover_options = NULL) {
+  paint <- list()
+  layout <- list()
+
+
+
+  if (!is.null(fill_antialias)) paint[["fill-antialias"]] <- fill_antialias
+  if (!is.null(fill_color)) paint[["fill-color"]] <- fill_color
+  if (!is.null(fill_emissive_strength)) paint[["fill-emissive-strength"]] <- fill_emissive_strength
+  if (!is.null(fill_opacity)) paint[["fill-opacity"]] <- fill_opacity
+  if (!is.null(fill_outline_color)) paint[["fill-outline-color"]] <- fill_outline_color
+  if (!is.null(fill_pattern)) paint[["fill-pattern"]] <- fill_pattern
+  if (!is.null(fill_translate)) paint[["fill-translate"]] <- fill_translate
+  if (!is.null(fill_translate_anchor)) paint[["fill-translate-anchor"]] <- fill_translate_anchor
+
+  if (!is.null(fill_sort_key)) layout[["fill-sort-key"]] <- fill_sort_key
+  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+
+  map <- add_layer(map, id, "fill", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options)
+
+  return(map)
+}
+
+#' Add a line layer to a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source_layer The source layer (for vector sources).
+#' @param line_blur Amount to blur the line.
+#' @param line_color The color with which the line will be drawn.
+#' @param line_dasharray Specifies the lengths of the alternating dashes and gaps that form the dash pattern.
+#' @param line_gap_width The width of the gap between a dashed line's individual dashes.
+#' @param line_offset The line's offset.
+#' @param line_opacity The opacity at which the line will be drawn.
+#' @param line_pattern Name of image in sprite to use for drawing image fills.
+#' @param line_sort_key Sorts features in ascending order based on this value.
+#' @param line_translate The geometry's offset. Values are [x, y] where negatives indicate left and up.
+#' @param line_translate_anchor Controls the frame of reference for `line-translate`.
+#' @param line_width Stroke thickness.
+#' @param visibility Whether this layer is displayed.
+#' @param slot An optional slot for layer order. Only available when using the Mapbox Standard style.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
+#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#'
+#' @return The modified map object with the new line layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(
+#'   style = "mapbox://styles/mapbox/streets-v11",
+#'   center = c(-74.006, 40.7128),
+#'   zoom = 10,
+#'   access_token = "your_token_here"
+#' )
+#' map <- add_line_layer(map, id = "line-layer", source = "source-id", line_color = "rgba(255,0,0,0.5)")
+#' }
+add_line_layer <- function(map,
+                           id,
+                           source,
+                           source_layer = NULL,
+                           line_blur = NULL,
+                           line_color = NULL,
+                           line_dasharray = NULL,
+                           line_gap_width = NULL,
+                           line_offset = NULL,
+                           line_opacity = NULL,
+                           line_pattern = NULL,
+                           line_sort_key = NULL,
+                           line_translate = NULL,
+                           line_translate_anchor = "map",
+                           line_width = NULL,
+                           visibility = "visible",
+                           slot = NULL,
+                           min_zoom = NULL,
+                           max_zoom = NULL,
+                           popup = NULL,
+                           tooltip = NULL) {
+  paint <- list()
+  layout <- list()
+
+  if (!is.null(line_blur)) paint[["line-blur"]] <- line_blur
+  if (!is.null(line_color)) paint[["line-color"]] <- line_color
+  if (!is.null(line_dasharray)) paint[["line-dasharray"]] <- line_dasharray
+  if (!is.null(line_gap_width)) paint[["line-gap-width"]] <- line_gap_width
+  if (!is.null(line_offset)) paint[["line-offset"]] <- line_offset
+  if (!is.null(line_opacity)) paint[["line-opacity"]] <- line_opacity
+  if (!is.null(line_pattern)) paint[["line-pattern"]] <- line_pattern
+  if (!is.null(line_translate)) paint[["line-translate"]] <- line_translate
+  if (!is.null(line_translate_anchor)) paint[["line-translate-anchor"]] <- line_translate_anchor
+  if (!is.null(line_width)) paint[["line-width"]] <- line_width
+
+  if (!is.null(line_sort_key)) layout[["line-sort-key"]] <- line_sort_key
+  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+
+  map <- add_layer(map, id, "line", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip)
+
+  return(map)
+}
+
+#' Add a heatmap layer to a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source_layer The source layer (for vector sources).
+#' @param heatmap_color The color of the heatmap points.
+#' @param heatmap_intensity The intensity of the heatmap points.
+#' @param heatmap_opacity The opacity of the heatmap layer.
+#' @param heatmap_radius The radius of influence of each individual heatmap point.
+#' @param heatmap_weight The weight of each individual heatmap point.
+#' @param visibility Whether this layer is displayed.
+#' @param slot An optional slot for layer order.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#'
+#' @return The modified map object with the new heatmap layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(
+#'   style = "mapbox://styles/mapbox/streets-v11",
+#'   center = c(-74.006, 40.7128),
+#'   zoom = 10,
+#'   access_token = "your_token_here"
+#' )
+#' map <- add_heatmap_layer(map, id = "heatmap-layer", source = "source-id", heatmap_color = "rgba(255,0,0,0.5)")
+#' }
+add_heatmap_layer <- function(map,
+                              id,
+                              source,
+                              source_layer = NULL,
+                              heatmap_color = NULL,
+                              heatmap_intensity = NULL,
+                              heatmap_opacity = NULL,
+                              heatmap_radius = NULL,
+                              heatmap_weight = NULL,
+                              visibility = "visible",
+                              slot = NULL,
+                              min_zoom = NULL,
+                              max_zoom = NULL) {
+  paint <- list()
+  layout <- list()
+
+  if (!is.null(heatmap_color)) paint[["heatmap-color"]] <- heatmap_color
+  if (!is.null(heatmap_intensity)) paint[["heatmap-intensity"]] <- heatmap_intensity
+  if (!is.null(heatmap_opacity)) paint[["heatmap-opacity"]] <- heatmap_opacity
+  if (!is.null(heatmap_radius)) paint[["heatmap-radius"]] <- heatmap_radius
+  if (!is.null(heatmap_weight)) paint[["heatmap-weight"]] <- heatmap_weight
+
+  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+
+  map <- add_layer(map, id, "heatmap", source, source_layer, paint, layout, slot, min_zoom, max_zoom)
+
+  return(map)
+}
+
+#' Add a fill-extrusion layer to a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source_layer The source layer (for vector sources).
+#' @param fill_extrusion_base The base height of the fill extrusion.
+#' @param fill_extrusion_color The color of the fill extrusion.
+#' @param fill_extrusion_height The height of the fill extrusion.
+#' @param fill_extrusion_opacity The opacity of the fill extrusion.
+#' @param fill_extrusion_pattern Name of image in sprite to use for drawing image fills.
+#' @param fill_extrusion_translate The geometry's offset. Values are [x, y] where negatives indicate left and up.
+#' @param fill_extrusion_translate_anchor Controls the frame of reference for `fill-extrusion-translate`.
+#' @param visibility Whether this layer is displayed.
+#' @param slot An optional slot for layer order.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
+#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#'
+#' @return The modified map object with the new fill-extrusion layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(
+#'   style = "mapbox://styles/mapbox/streets-v11",
+#'   center = c(-74.006, 40.7128),
+#'   zoom = 10,
+#'   access_token = "your_token_here"
+#' )
+#' map <- add_fill_extrusion_layer(map, id = "fill-extrusion-layer", source = "source-id", fill_extrusion_color = "rgba(255,0,0,0.5)")
+#' }
+add_fill_extrusion_layer <- function(map,
+                                     id,
+                                     source,
+                                     source_layer = NULL,
+                                     fill_extrusion_base = NULL,
+                                     fill_extrusion_color = NULL,
+                                     fill_extrusion_height = NULL,
+                                     fill_extrusion_opacity = NULL,
+                                     fill_extrusion_pattern = NULL,
+                                     fill_extrusion_translate = NULL,
+                                     fill_extrusion_translate_anchor = "map",
+                                     visibility = "visible",
+                                     slot = NULL,
+                                     min_zoom = NULL,
+                                     max_zoom = NULL,
+                                     popup = NULL,
+                                     tooltip = NULL) {
+  paint <- list()
+  layout <- list()
+
+  if (!is.null(fill_extrusion_base)) paint[["fill-extrusion-base"]] <- fill_extrusion_base
+  if (!is.null(fill_extrusion_color)) paint[["fill-extrusion-color"]] <- fill_extrusion_color
+  if (!is.null(fill_extrusion_height)) paint[["fill-extrusion-height"]] <- fill_extrusion_height
+  if (!is.null(fill_extrusion_opacity)) paint[["fill-extrusion-opacity"]] <- fill_extrusion_opacity
+  if (!is.null(fill_extrusion_pattern)) paint[["fill-extrusion-pattern"]] <- fill_extrusion_pattern
+  if (!is.null(fill_extrusion_translate)) paint[["fill-extrusion-translate"]] <- fill_extrusion_translate
+  if (!is.null(fill_extrusion_translate_anchor)) paint[["fill-extrusion-translate-anchor"]] <- fill_extrusion_translate_anchor
+
+  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+
+  map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip)
+
+  return(map)
+}
+
+#' Add a circle layer to a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source_layer The source layer (for vector sources).
+#' @param circle_blur Amount to blur the circle.
+#' @param circle_color The color of the circle.
+#' @param circle_opacity The opacity at which the circle will be drawn.
+#' @param circle_radius Circle radius.
+#' @param circle_sort_key Sorts features in ascending order based on this value.
+#' @param circle_stroke_color The color of the circle's stroke.
+#' @param circle_stroke_opacity The opacity of the circle's stroke.
+#' @param circle_stroke_width The width of the circle's stroke.
+#' @param circle_translate The geometry's offset. Values are [x, y] where negatives indicate left and up.
+#' @param circle_translate_anchor Controls the frame of reference for `circle-translate`.
+#' @param visibility Whether this layer is displayed.
+#' @param slot An optional slot for layer order.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
+#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#'
+#' @return The modified map object with the new circle layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(
+#'   style = "mapbox://styles/mapbox/streets-v11",
+#'   center = c(-74.006, 40.7128),
+#'   zoom = 10,
+#'   access_token = "your_token_here"
+#' )
+#' map <- add_circle_layer(map, id = "circle-layer", source = "source-id", circle_color = "rgba(255,0,0,0.5)")
+#' }
+add_circle_layer <- function(map,
+                             id,
+                             source,
+                             source_layer = NULL,
+                             circle_blur = NULL,
+                             circle_color = NULL,
+                             circle_opacity = NULL,
+                             circle_radius = NULL,
+                             circle_sort_key = NULL,
+                             circle_stroke_color = NULL,
+                             circle_stroke_opacity = NULL,
+                             circle_stroke_width = NULL,
+                             circle_translate = NULL,
+                             circle_translate_anchor = "map",
+                             visibility = "visible",
+                             slot = NULL,
+                             min_zoom = NULL,
+                             max_zoom = NULL,
+                             popup = NULL,
+                             tooltip = NULL) {
+  paint <- list()
+  layout <- list()
+
+  if (!is.null(circle_blur)) paint[["circle-blur"]] <- circle_blur
+  if (!is.null(circle_color)) paint[["circle-color"]] <- circle_color
+  if (!is.null(circle_opacity)) paint[["circle-opacity"]] <- circle_opacity
+  if (!is.null(circle_radius)) paint[["circle-radius"]] <- circle_radius
+  if (!is.null(circle_stroke_color)) paint[["circle-stroke-color"]] <- circle_stroke_color
+  if (!is.null(circle_stroke_opacity)) paint[["circle-stroke-opacity"]] <- circle_stroke_opacity
+  if (!is.null(circle_stroke_width)) paint[["circle-stroke-width"]] <- circle_stroke_width
+  if (!is.null(circle_translate)) paint[["circle-translate"]] <- circle_translate
+  if (!is.null(circle_translate_anchor)) paint[["circle-translate-anchor"]] <- circle_translate_anchor
+
+  if (!is.null(circle_sort_key)) layout[["circle-sort-key"]] <- circle_sort_key
+  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+
+  map <- add_layer(map, id, "circle", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip)
+
+  return(map)
+}
+
+#' Add a raster layer to a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param source The ID of the source.
+#' @param source_layer The source layer (for vector sources).
+#' @param raster_brightness_max The maximum brightness of the image.
+#' @param raster_brightness_min The minimum brightness of the image.
+#' @param raster_contrast Increase or reduce the brightness of the image.
+#' @param raster_fade_duration The duration of the fade-in/fade-out effect.
+#' @param raster_hue_rotate Rotates hues around the color wheel.
+#' @param raster_opacity The opacity at which the raster will be drawn.
+#' @param raster_resampling The resampling/interpolation method to use for overscaling.
+#' @param raster_saturation Increase or reduce the saturation of the image.
+#' @param visibility Whether this layer is displayed.
+#' @param slot An optional slot for layer order.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#'
+#' @return The modified map object with the new raster layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(
+#'   style = "mapbox://styles/mapbox/streets-v11",
+#'   center = c(-74.006, 40.7128),
+#'   zoom = 10,
+#'   access_token = "your_token_here"
+#' )
+#' map <- add_raster_layer(map, id = "raster-layer", source = "source-id", raster_opacity = 0.8)
+#' }
+add_raster_layer <- function(map,
+                             id,
+                             source,
+                             source_layer = NULL,
+                             raster_brightness_max = NULL,
+                             raster_brightness_min = NULL,
+                             raster_contrast = NULL,
+                             raster_fade_duration = NULL,
+                             raster_hue_rotate = NULL,
+                             raster_opacity = NULL,
+                             raster_resampling = NULL,
+                             raster_saturation = NULL,
+                             visibility = "visible",
+                             slot = NULL,
+                             min_zoom = NULL,
+                             max_zoom = NULL) {
+  paint <- list()
+  layout <- list()
+
+  if (!is.null(raster_brightness_max)) paint[["raster-brightness-max"]] <- raster_brightness_max
+  if (!is.null(raster_brightness_min)) paint[["raster-brightness-min"]] <- raster_brightness_min
+  if (!is.null(raster_contrast)) paint[["raster-contrast"]] <- raster_contrast
+  if (!is.null(raster_fade_duration)) paint[["raster-fade-duration"]] <- raster_fade_duration
+  if (!is.null(raster_hue_rotate)) paint[["raster-hue-rotate"]] <- raster_hue_rotate
+  if (!is.null(raster_opacity)) paint[["raster-opacity"]] <- raster_opacity
+  if (!is.null(raster_resampling)) paint[["raster-resampling"]] <- raster_resampling
+  if (!is.null(raster_saturation)) paint[["raster-saturation"]] <- raster_saturation
+
+  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+
+  map <- add_layer(map, id, "raster", source, source_layer, paint, layout, slot, min_zoom, max_zoom)
+
+  return(map)
+}
+
+
+#' Add a symbol layer to a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function.
+#' @param id A unique ID for the layer.
+#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source_layer The source layer (for vector sources).
+#' @param icon_allow_overlap If true, the icon will be visible even if it collides with other previously drawn symbols.
+#' @param icon_anchor Part of the icon placed closest to the anchor.
+#' @param icon_color The color of the icon. This can only be specified as a string.
+#' @param icon_halo_color The color of the icon's halo. This can only be specified as a string.
+#' @param icon_halo_width Distance of halo to icon outline.
+#' @param icon_ignore_placement If true, the icon will be visible even if it collides with other symbols.
+#' @param icon_image Name of image in sprite to use for drawing an image background.
+#' @param icon_keep_upright If true, the icon will be kept upright.
+#' @param icon_offset Offset distance of icon.
+#' @param icon_opacity The opacity at which the icon will be drawn.
+#' @param icon_rotate Rotates the icon clockwise.
+#' @param icon_size The size of the icon.
+#' @param icon_text_fit Scales the text to fit the icon.
+#' @param text_anchor Part of the text placed closest to the anchor.
+#' @param text_color The color with which the text will be drawn.
+#' @param text_field Value to use for a text label.
+#' @param text_font Font stack to use for displaying text.
+#' @param text_halo_color The color of the text's halo. This can only be specified as a string.
+#' @param text_halo_width Distance of halo to text outline.
+#' @param text_ignore_placement If true, the text will be visible even if it collides with other symbols.
+#' @param text_keep_upright If true, the text will be kept upright.
+#' @param text_offset Offset distance of text.
+#' @param text_opacity The opacity at which the text will be drawn.
+#' @param text_size The size of the text.
+#' @param visibility Whether this layer is displayed.
+#' @param slot An optional slot for layer order.
+#' @param min_zoom The minimum zoom level for the layer.
+#' @param max_zoom The maximum zoom level for the layer.
+#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
+#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#'
+#' @return The modified map object with the new symbol layer added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' map <- mapboxgl(
+#'   style = "mapbox://styles/mapbox/streets-v11",
+#'   center = c(-74.006, 40.7128),
+#'   zoom = 10,
+#'   access_token = "your_token_here"
+#' )
+#' map <- add_symbol_layer(map, id = "symbol-layer", source = "source-id", icon_image = "my-icon")
+#' }
+add_symbol_layer <- function(map,
+                             id,
+                             source,
+                             source_layer = NULL,
+                             icon_allow_overlap = NULL,
+                             icon_anchor = NULL,
+                             icon_color = NULL,
+                             icon_halo_color = NULL,
+                             icon_halo_width = NULL,
+                             icon_ignore_placement = NULL,
+                             icon_image = NULL,
+                             icon_keep_upright = NULL,
+                             icon_offset = NULL,
+                             icon_opacity = NULL,
+                             icon_rotate = NULL,
+                             icon_size = NULL,
+                             icon_text_fit = NULL,
+                             text_anchor = NULL,
+                             text_color = NULL,
+                             text_field = NULL,
+                             text_font = NULL,
+                             text_halo_color = NULL,
+                             text_halo_width = NULL,
+                             text_ignore_placement = NULL,
+                             text_keep_upright = NULL,
+                             text_offset = NULL,
+                             text_opacity = NULL,
+                             text_size = NULL,
+                             visibility = "visible",
+                             slot = NULL,
+                             min_zoom = NULL,
+                             max_zoom = NULL,
+                             popup = NULL,
+                             tooltip = NULL) {
+  paint <- list()
+  layout <- list()
+
+  if (!is.null(icon_allow_overlap)) layout[["icon-allow-overlap"]] <- icon_allow_overlap
+  if (!is.null(icon_anchor)) layout[["icon-anchor"]] <- icon_anchor
+  if (!is.null(icon_color)) paint[["icon-color"]] <- icon_color
+  if (!is.null(icon_halo_color)) paint[["icon-halo-color"]] <- icon_halo_color
+  if (!is.null(icon_halo_width)) paint[["icon-halo-width"]] <- icon_halo_width
+  if (!is.null(icon_ignore_placement)) layout[["icon-ignore-placement"]] <- icon_ignore_placement
+  if (!is.null(icon_image)) layout[["icon-image"]] <- icon_image
+  if (!is.null(icon_keep_upright)) layout[["icon-keep-upright"]] <- icon_keep_upright
+  if (!is.null(icon_offset)) layout[["icon-offset"]] <- icon_offset
+  if (!is.null(icon_opacity)) paint[["icon-opacity"]] <- icon_opacity
+  if (!is.null(icon_rotate)) layout[["icon-rotate"]] <- icon_rotate
+  if (!is.null(icon_size)) layout[["icon-size"]] <- icon_size
+  if (!is.null(icon_text_fit)) layout[["icon-text-fit"]] <- icon_text_fit
+
+  if (!is.null(text_anchor)) layout[["text-anchor"]] <- text_anchor
+  if (!is.null(text_color)) paint[["text-color"]] <- text_color
+  if (!is.null(text_field)) layout[["text-field"]] <- text_field
+  if (!is.null(text_font)) layout[["text-font"]] <- text_font
+  if (!is.null(text_halo_color)) paint[["text-halo-color"]] <- text_halo_color
+  if (!is.null(text_halo_width)) paint[["text-halo-width"]] <- text_halo_width
+  if (!is.null(text_ignore_placement)) layout[["text-ignore-placement"]] <- text_ignore_placement
+  if (!is.null(text_keep_upright)) layout[["text-keep-upright"]] <- text_keep_upright
+  if (!is.null(text_offset)) layout[["text-offset"]] <- text_offset
+  if (!is.null(text_opacity)) paint[["text-opacity"]] <- text_opacity
+  if (!is.null(text_size)) layout[["text-size"]] <- text_size
+
+  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+
+  map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip)
+
+  return(map)
+}
