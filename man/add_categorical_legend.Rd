@@ -9,7 +9,8 @@ add_categorical_legend(
   legend_title,
   values,
   colors,
-  circular_patches = FALSE
+  circular_patches = FALSE,
+  position = "topleft"
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ add_categorical_legend(
 \item{colors}{The corresponding colors for the values (vector of colors).}
 
 \item{circular_patches}{Logical, whether to use circular patches in the legend.}
+
+\item{position}{The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").}
 }
 \value{
 The updated map object with the legend added.

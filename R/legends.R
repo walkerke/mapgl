@@ -6,19 +6,20 @@
 #' @param colors The corresponding colors for the values (either a vector of colors or an interpolate function).
 #' @param type one of "continuous" or "categorical"
 #' @param circular_patches Logical, whether to use circular patches in the legend.
+#' @param position The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").
 #'
 #' @return The updated map object with the legend added.
 #' @export
 add_legend <- function(map, legend_title, values, colors,
                        type = c("continuous", "categorical"),
-                       circular_patches = FALSE) {
+                       circular_patches = FALSE, position = "topleft") {
 
   type <- match.arg(type)
 
   if (type == "continuous") {
-    add_continuous_legend(map, legend_title, values, colors)
+    add_continuous_legend(map, legend_title, values, colors, position)
   } else {
-    add_categorical_legend(map, legend_title, values, colors, circular_patches)
+    add_categorical_legend(map, legend_title, values, colors, circular_patches, position)
   }
 }
 
@@ -29,17 +30,18 @@ add_legend <- function(map, legend_title, values, colors,
 #' @param values The values being represented on the map (vector of categories).
 #' @param colors The corresponding colors for the values (vector of colors).
 #' @param circular_patches Logical, whether to use circular patches in the legend.
+#' @param position The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE) {
+add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "topleft") {
   legend_items <- lapply(seq_along(values), function(i) {
     shape_style <- if (circular_patches) "border-radius: 50%;" else ""
     paste0('<div class="legend-item"><span class="legend-color" style="background-color:', colors[i], ';', shape_style, '"></span>', values[i], '</div>')
   })
 
   legend_html <- paste0(
-    '<div id="mapboxgl-legend">',
+    '<div id="mapboxgl-legend" class="', position, '">',
     '<h2>', legend_title, '</h2>',
     paste0(legend_items, collapse = ""),
     '</div>'
@@ -63,13 +65,31 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     #mapboxgl-legend {
       position: absolute;
       border-radius: 10px;
-      top:10px;
-      left:10px;
       margin: 10px;
       max-width: 250px;
       background-color: #ffffff80;
       padding: 10px 20px;
       z-index: 1002;
+    }
+
+    #mapboxgl-legend.topleft {
+      top: 10px;
+      left: 10px;
+    }
+
+    #mapboxgl-legend.bottomleft {
+      bottom: 10px;
+      left: 10px;
+    }
+
+    #mapboxgl-legend.topright {
+      top: 10px;
+      right: 10px;
+    }
+
+    #mapboxgl-legend.bottomright {
+      bottom: 10px;
+      right: 10px;
     }
 
     #mapboxgl-legend .legend-item {
@@ -81,7 +101,6 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
-
     }
 
     #mapboxgl-legend .legend-color {
@@ -92,8 +111,13 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     }
   "
 
-  if (inherits(map, "mapboxgl_proxy")) {
-    map$session$sendCustomMessage("mapboxgl-proxy", list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css)))
+
+
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+
+    proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
+
+    map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css)))
   } else {
     map$x$legend_html <- legend_html
     map$x$legend_css <- legend_css
@@ -107,10 +131,11 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 #' @param legend_title The title of the legend.
 #' @param values The values being represented on the map (vector of stops).
 #' @param colors The colors used to generate the color ramp.
+#' @param position The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_continuous_legend <- function(map, legend_title, values, colors) {
+add_continuous_legend <- function(map, legend_title, values, colors, position = "topleft") {
   color_gradient <- paste0("linear-gradient(to right, ", paste(colors, collapse = ", "), ")")
 
   num_values <- length(values)
@@ -122,7 +147,7 @@ add_continuous_legend <- function(map, legend_title, values, colors) {
 
 
   legend_html <- paste0(
-    '<div id="mapboxgl-legend">',
+    '<div id="mapboxgl-legend" class="', position, '">',
     '<h2>', legend_title, '</h2>',
     '<div class="legend-gradient" style="background:', color_gradient, '"></div>',
     '<div class="legend-labels" style="position: relative; height: 20px;">',
@@ -145,13 +170,31 @@ add_continuous_legend <- function(map, legend_title, values, colors) {
     #mapboxgl-legend {
       position: absolute;
       border-radius: 10px;
-      top:10px;
-      left:10px;
       margin: 10px;
       width: 200px;
       background-color: #ffffff80;
       padding: 10px 20px;
       z-index: 1002;
+    }
+
+    #mapboxgl-legend.topleft {
+      top: 10px;
+      left: 10px;
+    }
+
+    #mapboxgl-legend.bottomleft {
+      bottom: 10px;
+      left: 10px;
+    }
+
+    #mapboxgl-legend.topright {
+      top: 10px;
+      right: 10px;
+    }
+
+    #mapboxgl-legend.bottomright {
+      bottom: 10px;
+      right: 10px;
     }
 
     #mapboxgl-legend .legend-gradient {
@@ -171,8 +214,12 @@ add_continuous_legend <- function(map, legend_title, values, colors) {
     }
   "
 
-  if (inherits(map, "mapboxgl_proxy")) {
-    map$session$sendCustomMessage("mapboxgl-proxy", list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css)))
+
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+
+    proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
+
+    map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css)))
   } else {
     map$x$legend_html <- legend_html
     map$x$legend_css <- legend_css
