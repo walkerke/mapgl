@@ -183,31 +183,3 @@ set_style <- function(map, style, config = NULL, diff = TRUE) {
   }
   return(map)
 }
-
-
-#' Query rendered features on a map in a Shiny session
-#'
-#' @param proxy A MapboxGL or Maplibre proxy object, defined with `mapboxgl_proxy()` or `maplibre_proxy()`
-#' @param geometry The geometry to query. Should be a length-2 vector representing a single location at which features will be queried, or a list of two coordinates representing the bottom-left and top-right corners of a bounding box within which features will be queried. Defaults to the current map view.
-#' @param layers A vector of layer names to include in the query
-#' @param filter A filter expression used to filter features in the query.
-#'
-#' @return A list of features in GeoJSON format, accessible at `input$MAPID_feature_query` in your Shiny app code.
-#' @export
-query_rendered_features <- function(proxy, geometry = NULL, layers = NULL, filter = NULL) {
-  if (!inherits(proxy, "mapboxgl_proxy") && !inherits(proxy, "maplibre_proxy")) {
-    stop("Invalid proxy object")
-  }
-
-  proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-  message <- list(
-    type = "query_rendered_features",
-    geometry = geometry,
-    layers = layers,
-    filter = filter
-  )
-
-  proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
-  proxy
-}
