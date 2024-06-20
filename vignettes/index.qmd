@@ -1,0 +1,9 @@
+---
+title: "mapgl"
+format: html
+editor: visual
+---
+
+## High-performance WebGL mapping in R
+
+{mapgl} is an R package that brings the web mapping libraries Mapbox GL JS and Maplibre GL JS to R.

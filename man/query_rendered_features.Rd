@@ -16,7 +16,7 @@ query_rendered_features(proxy, geometry = NULL, layers = NULL, filter = NULL)
 \item{filter}{A filter expression used to filter features in the query.}
 }
 \value{
-A list of features in GeoJSON format, accessible at \code{input$MAPID_feature_query} in your Shiny app code.
+The properties accessible at \code{input$MAPID_feature_query} in your Shiny app code.
 }
 \description{
 Query rendered features on a map in a Shiny session

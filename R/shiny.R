@@ -192,7 +192,7 @@ set_style <- function(map, style, config = NULL, diff = TRUE) {
 #' @param layers A vector of layer names to include in the query
 #' @param filter A filter expression used to filter features in the query.
 #'
-#' @return A list of features in GeoJSON format, accessible at `input$MAPID_feature_query` in your Shiny app code.
+#' @return The properties accessible at `input$MAPID_feature_query` in your Shiny app code.
 #' @export
 query_rendered_features <- function(proxy, geometry = NULL, layers = NULL, filter = NULL) {
   if (!inherits(proxy, "mapboxgl_proxy") && !inherits(proxy, "maplibre_proxy")) {

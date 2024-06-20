@@ -500,7 +500,7 @@ if (HTMLWidgets.shinyMode) {
           var layerFeatureProperties = {};
           Object.keys(uniqueFeatures).forEach(function(id) {
             var feature = uniqueFeatures[id];
-            var layer = feature.layer_id; // Ensure 'layer_id' is set in the properties
+            var layer = feature.layer.id; // Ensure 'layer_id' is set in the properties
             if (!layerFeatureProperties[layer]) {
               layerFeatureProperties[layer] = [];
             }
