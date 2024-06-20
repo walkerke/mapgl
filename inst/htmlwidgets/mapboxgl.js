@@ -55,21 +55,23 @@ HTMLWidgets.widget({
         map.on('style.load', function() {
           map.resize();
 
-          map.on('moveend', function(e) {
-            var map = e.target;
-            var bounds = map.getBounds();
-            var center = map.getCenter();
-            var zoom = map.getZoom();
+          if (HTMLWidgets.shinyMode) {
+            map.on('moveend', function(e) {
+              var map = e.target;
+              var bounds = map.getBounds();
+              var center = map.getCenter();
+              var zoom = map.getZoom();
 
-            Shiny.onInputChange(el.id + '_zoom', zoom);
-            Shiny.onInputChange(el.id + '_center', { lng: center.lng, lat: center.lat });
-            Shiny.onInputChange(el.id + '_bbox', {
-              xmin: bounds.getWest(),
-              ymin: bounds.getSouth(),
-              xmax: bounds.getEast(),
-              ymax: bounds.getNorth()
+              Shiny.onInputChange(el.id + '_zoom', zoom);
+              Shiny.onInputChange(el.id + '_center', { lng: center.lng, lat: center.lat });
+              Shiny.onInputChange(el.id + '_bbox', {
+                xmin: bounds.getWest(),
+                ymin: bounds.getSouth(),
+                xmax: bounds.getEast(),
+                ymax: bounds.getNorth()
+              });
             });
-          });
+          }
 
           // Set config properties if provided
           if (x.config_properties) {
