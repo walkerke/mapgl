@@ -2,27 +2,29 @@
 % Please edit documentation in R/controls.R
 \name{add_fullscreen_control}
 \alias{add_fullscreen_control}
-\title{Add a fullscreen control to a Mapbox GL map}
+\title{Add a fullscreen control to a map}
 \usage{
-add_fullscreen_control(map)
+add_fullscreen_control(map, position = "top-right")
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
+
+\item{position}{A string specifying the position of the fullscreen control.
+One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 }
 \value{
 The modified map object with the fullscreen control added.
 }
 \description{
-Add a fullscreen control to a Mapbox GL map
+Add a fullscreen control to a map
 }
 \examples{
 \dontrun{
-map <- mapboxgl(
-  style = "mapbox://styles/mapbox/outdoors-v12",
-  center = c(11.255, 43.77),
-  zoom = 13,
-  access_token = "your_token_here"
-)
-map <- add_fullscreen_control(map)
+library(mapgl)
+
+maplibre(style = maptiler_style("streets"),
+         center = c(11.255, 43.77),
+         zoom = 13) |>
+  add_fullscreen_control(position = "top-right")
 }
 }

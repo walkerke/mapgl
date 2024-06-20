@@ -2,7 +2,7 @@
 % Please edit documentation in R/controls.R
 \name{add_navigation_control}
 \alias{add_navigation_control}
-\title{Add a navigation control to a Mapbox GL map}
+\title{Add a navigation control to a map}
 \usage{
 add_navigation_control(
   map,
@@ -13,7 +13,7 @@ add_navigation_control(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{show_compass}{Whether to show the compass button.}
 
@@ -27,5 +27,13 @@ add_navigation_control(
 The updated map object with the navigation control added.
 }
 \description{
-Add a navigation control to a Mapbox GL map
+Add a navigation control to a map
+}
+\examples{
+\dontrun{
+library(mapgl)
+
+mapboxgl() |>
+  add_navigation_control(visualize_pitch = TRUE)
+}
 }

@@ -323,8 +323,10 @@ HTMLWidgets.widget({
             el.appendChild(legend);
           }
 
-          if (x.fullscreen_control) {
-            map.addControl(new mapboxgl.FullscreenControl());
+          // Add fullscreen control if enabled
+          if (x.fullscreen_control && x.fullscreen_control.enabled) {
+            const position = x.fullscreen_control.position || 'top-right';
+            map.addControl(new mapboxgl.FullscreenControl(), position);
           }
 
           // Add navigation control if enabled
@@ -480,38 +482,9 @@ if (HTMLWidgets.shinyMode) {
             });
             window.mapboxglMarkers = [];
           }
-      } else if (message.type === "query_rendered_features") {
-        // Query rendered features
-        function queryFeatures(geometry, layers, filter) {
-          var queryOptions = {};
-          if (layers) queryOptions.layers = layers;
-          if (filter) queryOptions.filter = filter;
-
-          var features = geometry ? map.queryRenderedFeatures(geometry, queryOptions) : map.queryRenderedFeatures(queryOptions);
-
-          var uniqueFeatures = {};
-          features.forEach(function(feature) {
-            var id = feature.id; // Identify features by ID
-            if (!uniqueFeatures[id]) {
-              uniqueFeatures[id] = feature.properties;
-            }
-          });
-
-          var layerFeatureProperties = {};
-          Object.keys(uniqueFeatures).forEach(function(id) {
-            var feature = uniqueFeatures[id];
-            var layer = feature.layer_id; // Ensure 'layer_id' is set in the properties
-            if (!layerFeatureProperties[layer]) {
-              layerFeatureProperties[layer] = [];
-            }
-            layerFeatureProperties[layer].push(feature);
-          });
-
-          Shiny.setInputValue(data.id + '_feature_query', layerFeatureProperties);
-        }
-
-        queryFeatures(message.geometry, message.layers, message.filter);
-
+      } else if (message.type === "add_fullscreen_control") {
+        const position = message.position || 'top-right';
+        map.addControl(new mapboxgl.FullscreenControl(), position);
       }
     }
 
