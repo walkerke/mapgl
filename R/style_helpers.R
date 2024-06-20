@@ -1,6 +1,6 @@
-#' Create an interpolation expression for Mapbox GL
+#' Create an interpolation expression
 #'
-#' This function generates an interpolation expression that can be used in Mapbox GL styles.
+#' This function generates an interpolation expression that can be used to style your data.
 #'
 #' @param column The name of the column to use for the interpolation. If specified, `property` should be NULL.
 #' @param property The name of the property to use for the interpolation. If specified, `column` should be NULL.
@@ -56,9 +56,9 @@ interpolate <- function(column = NULL,
 
 }
 
-#' Create a match expression for Mapbox GL
+#' Create a match expression
 #'
-#' This function generates a match expression that can be used in Mapbox GL styles.
+#' This function generates a match expression that can be used to style your data.
 #'
 #' @param column The name of the column to use for the match expression. If specified, `property` should be NULL.
 #' @param property The name of the property to use for the match expression. If specified, `column` should be NULL.
@@ -198,5 +198,45 @@ mapbox_style <- function(style_name) {
   return(style_url)
 }
 
-# Example usage:
-# mapbox_style("streets")
+#' Get MapTiler Style URL
+#'
+#' @param style_name The name of the style (e.g., "basic", "streets", "toner", etc.).
+#' @param api_key Your MapTiler API key (required)
+#' @return The style URL corresponding to the given style name.
+#' @export
+maptiler_style <- function(style_name, api_key = NULL) {
+
+  if (is.null(api_key)) {
+    if (Sys.getenv("MAPTILER_API_KEY") == "") {
+      rlang::abort("A MapTiler API key is required. Get one at https://www.maptiler.com.")
+    } else {
+      api_key <- Sys.getenv("MAPTILER_API_KEY")
+    }
+  }
+
+  styles <- list(
+    backdrop = "https://api.maptiler.com/maps/backdrop/style.json",
+    basic = "https://api.maptiler.com/maps/basic-v2/style.json",
+    bright = "https://api.maptiler.com/maps/bright-v2/style.json",
+    dataviz = "https://api.maptiler.com/maps/dataviz/style.json",
+    landscape = "https://api.maptiler.com/maps/landscape/style.json",
+    ocean = "https://api.maptiler.com/maps/ocean/style.json",
+    openstreetmap = "https://api.maptiler.com/maps/openstreetmap/style.json",
+    outdoor = "https://api.maptiler.com/maps/outdoor-v2/style.json",
+    satellite = "https://api.maptiler.com/maps/satellite/style.json",
+    streets = "https://api.maptiler.com/maps/streets-v2/style.json",
+    toner = "https://api.maptiler.com/maps/toner-v2/style.json",
+    topo = "https://api.maptiler.com/maps/topo-v2/style.json",
+    winter = "https://api.maptiler.com/maps/winter-v2/style.json"
+  )
+
+  style_url <- styles[[style_name]]
+
+  if (is.null(style_url)) {
+    stop("Invalid style name. Please choose from: backdrop, basic, bright, dataviz, landscape, ocean, openstreetmap, outdoor, satellite, streets, toner, topo, and winter.")
+  }
+
+  style_url_with_key <- paste0(style_url, "?key=", api_key)
+
+  return(style_url_with_key)
+}

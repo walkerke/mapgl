@@ -2,7 +2,7 @@
 % Please edit documentation in R/style_helpers.R
 \name{interpolate}
 \alias{interpolate}
-\title{Create an interpolation expression for Mapbox GL}
+\title{Create an interpolation expression}
 \usage{
 interpolate(
   column = NULL,
@@ -30,7 +30,7 @@ interpolate(
 A list representing the interpolation expression.
 }
 \description{
-This function generates an interpolation expression that can be used in Mapbox GL styles.
+This function generates an interpolation expression that can be used to style your data.
 }
 \examples{
 interpolate(

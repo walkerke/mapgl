@@ -12,9 +12,9 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Imports: 
   htmlwidgets,
-  mapboxapi,
-  yyjsonr,
+  geojsonsf,
   sf,
   rlang
 Suggests: 
-  shiny
+  shiny,
+  mapboxapi

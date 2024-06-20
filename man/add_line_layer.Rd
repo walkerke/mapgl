@@ -25,7 +25,8 @@ add_line_layer(
   min_zoom = NULL,
   max_zoom = NULL,
   popup = NULL,
-  tooltip = NULL
+  tooltip = NULL,
+  hover_options = NULL
 )
 }
 \arguments{
@@ -70,6 +71,8 @@ add_line_layer(
 \item{popup}{A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.}
 
 \item{tooltip}{A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.}
+
+\item{hover_options}{A named list of options for highlighting features in the layer on hover.}
 }
 \value{
 The modified map object with the new line layer added.

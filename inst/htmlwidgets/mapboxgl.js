@@ -55,6 +55,22 @@ HTMLWidgets.widget({
         map.on('style.load', function() {
           map.resize();
 
+          map.on('moveend', function(e) {
+            var map = e.target;
+            var bounds = map.getBounds();
+            var center = map.getCenter();
+            var zoom = map.getZoom();
+
+            Shiny.onInputChange(el.id + '_zoom', zoom);
+            Shiny.onInputChange(el.id + '_center', { lng: center.lng, lat: center.lat });
+            Shiny.onInputChange(el.id + '_bbox', {
+              xmin: bounds.getWest(),
+              ymin: bounds.getSouth(),
+              xmax: bounds.getEast(),
+              ymax: bounds.getNorth()
+            });
+          });
+
           // Set config properties if provided
           if (x.config_properties) {
             x.config_properties.forEach(function(config) {
@@ -289,6 +305,24 @@ HTMLWidgets.widget({
             map.jumpTo(x.jumpTo);
           }
 
+        // Query rendered features
+        function queryFeatures(geometry, layers, filter) {
+          var queryOptions = {};
+          if (layers) queryOptions.layers = layers;
+          if (filter) queryOptions.filter = filter;
+
+          var features = geometry ? map.queryRenderedFeatures(geometry, queryOptions) : map.queryRenderedFeatures(queryOptions);
+          Shiny.setInputValue(el.id + '_feature_query', features);
+        }
+
+        if (HTMLWidgets.shinyMode) {
+          Shiny.addCustomMessageHandler('query_rendered_features', function(data) {
+            if (data.id === el.id) {
+              queryFeatures(data.geometry, data.layers, data.filter);
+            }
+          });
+        }
+
           const existingLegend = document.getElementById('mapboxgl-legend');
           if (existingLegend) {
             existingLegend.remove();
@@ -344,6 +378,7 @@ HTMLWidgets.widget({
               time: new Date()
             });
           });
+
           el.map = map;
         });
 
@@ -370,6 +405,8 @@ if (HTMLWidgets.shinyMode) {
       var message = data.message;
       if (message.type === "set_filter") {
         map.setFilter(message.layer, message.filter);
+      } else if (message.type === "add_source") {
+        map.addSource(message.source)
       } else if (message.type === "add_layer") {
         try {
           map.addLayer(message.layer);
@@ -459,5 +496,6 @@ if (HTMLWidgets.shinyMode) {
           }
         }
     }
+
   });
 }

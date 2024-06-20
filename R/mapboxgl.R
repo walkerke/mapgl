@@ -31,7 +31,15 @@ mapboxgl <- function(style = NULL,
                      height = "100%",
                      ...) {
 
-  access_token <- mapboxapi::get_mb_access_token(access_token)
+  if (is.null(access_token)) {
+    if (Sys.getenv("MAPBOX_PUBLIC_TOKEN") == "") {
+      rlang::abort(c("A Mapbox access token is required. Get one at https://www.mapbox.com, and install it one of two ways:",
+                     i = "Run `usethis::edit_r_environ()` and add the line MAPBOX_PUBLIC_TOKEN='your_token_goes_here';",
+                     i = "Install the mapboxapi R package and run `mb_access_token('your_token_goes_here', install = TRUE)`"))
+    } else {
+      access_token <- Sys.getenv("MAPBOX_PUBLIC_TOKEN")
+    }
+  }
 
   additional_params <- list(...)
 
@@ -50,7 +58,7 @@ mapboxgl <- function(style = NULL,
     ),
     width = width,
     height = height,
-    package = "mapboxgl"
+    package = "mapgl"
   )
 }
 
@@ -63,7 +71,7 @@ mapboxgl <- function(style = NULL,
 #' @return A Mapbox GL output element for use in a Shiny UI
 #' @export
 mapboxglOutput <- function(outputId, width = "100%", height = "400px") {
-  htmlwidgets::shinyWidgetOutput(outputId, "mapboxgl", width, height, package = "mapboxgl")
+  htmlwidgets::shinyWidgetOutput(outputId, "mapboxgl", width, height, package = "mapgl")
 }
 
 #' Render a Mapbox GL output element in Shiny

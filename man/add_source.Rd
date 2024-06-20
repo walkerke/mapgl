@@ -2,12 +2,12 @@
 % Please edit documentation in R/sources.R
 \name{add_source}
 \alias{add_source}
-\title{Add a GeoJSON source to a Mapbox GL map}
+\title{Add a GeoJSON or sf source to a Mapbox GL or Maplibre GL map}
 \usage{
 add_source(map, id, data)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
 
 \item{id}{A unique ID for the source.}
 
@@ -17,12 +17,5 @@ add_source(map, id, data)
 The modified map object with the new source added.
 }
 \description{
-Add a GeoJSON source to a Mapbox GL map
-}
-\examples{
-\dontrun{
-nc <- st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
-map <- mapboxgl(access_token = "your_token_here")
-map <- add_source(map, id = "nc-source", data = nc)
-}
+Add a GeoJSON or sf source to a Mapbox GL or Maplibre GL map
 }

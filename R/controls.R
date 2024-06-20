@@ -38,8 +38,11 @@ add_navigation_control <- function(map, show_compass = TRUE, show_zoom = TRUE, v
     position = position
   )
 
-  if (inherits(map, "mapboxgl_proxy")) {
-    map$session$sendCustomMessage("mapboxgl-proxy", list(id = map$id, message = list(type = "add_navigation_control", options = nav_control, position = position)))
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+
+    map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_navigation_control", options = nav_control, position = position)))
   } else {
     if (is.null(map$x$navigation_control)) {
       map$x$navigation_control <- list()

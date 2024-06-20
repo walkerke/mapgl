@@ -1,6 +1,6 @@
-#' Add markers to a Mapbox GL map
+#' Add markers to a Mapbox GL or Maplibre GL map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param data A length-2 numeric vector of coordinates or an `sf` POINT object.
 #' @param color The color of the marker.
 #' @param rotation The rotation of the marker.
@@ -54,8 +54,11 @@ add_markers <- function(map, data, color = "red", rotation = 0, popup = NULL, ..
     stop("Data must be either a length-2 numeric vector or an sf POINT object.")
   }
 
-  if (inherits(map, "mapboxgl_proxy")) {
-    map$session$sendCustomMessage("mapboxgl-proxy", list(id = map$id, message = list(type = "add_markers", markers = markers)))
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+
+    map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_markers", markers = markers)))
   } else {
     if (!is.null(map$x$markers)) {
       map$x$markers <- c(map$x$markers, markers)

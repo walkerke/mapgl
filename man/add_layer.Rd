@@ -21,7 +21,7 @@ add_layer(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl()} or \code{maplibre()} functions.}
 
 \item{id}{A unique ID for the layer.}
 

@@ -7,7 +7,7 @@
 set_view(map, center, zoom)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function or a proxy object.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function or a proxy object.}
 
 \item{center}{A numeric vector of length 2 specifying the center of the map (longitude, latitude).}
 

@@ -7,7 +7,7 @@
 fit_bounds(map, bbox, ...)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function or a proxy object.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function or a proxy object.}
 
 \item{bbox}{A bounding box specified as a numeric vector of length 4 (minLng, minLat, maxLng, maxLat), or an sf object from which a bounding box will be calculated.}
 

@@ -1,6 +1,6 @@
-#' Set terrain properties on a Mapbox GL map
+#' Set terrain properties on a map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param source The ID of the raster DEM source.
 #' @param exaggeration The terrain exaggeration factor.
 #'

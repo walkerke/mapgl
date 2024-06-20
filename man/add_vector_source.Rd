@@ -2,12 +2,12 @@
 % Please edit documentation in R/sources.R
 \name{add_vector_source}
 \alias{add_vector_source}
-\title{Add a vector tile source to a Mapbox GL map}
+\title{Add a vector tile source to a Mapbox GL or Maplibre GL map}
 \usage{
 add_vector_source(map, id, url)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
 
 \item{id}{A unique ID for the source.}
 
@@ -17,11 +17,5 @@ add_vector_source(map, id, url)
 The modified map object with the new source added.
 }
 \description{
-Add a vector tile source to a Mapbox GL map
-}
-\examples{
-\dontrun{
-map <- mapboxgl(access_token = "your_token_here")
-map <- add_vector_source(map, id = "vector-source", url = "mapbox://mapbox.mapbox-streets-v8")
-}
+Add a vector tile source to a Mapbox GL or Maplibre GL map
 }

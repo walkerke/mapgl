@@ -340,6 +340,22 @@ HTMLWidgets.widget({
               time: new Date()
             });
           });
+
+          map.on('moveend', function() {
+            var zoom = map.getZoom();
+            var center = map.getCenter();
+            var bounds = map.getBounds();
+
+            Shiny.setInputValue(data.id + '_zoom', zoom);
+            Shiny.setInputValue(data.id + '_center', { lng: center.lng, lat: center.lat });
+            Shiny.setInputValue(data.id + '_bbox', {
+              xmin: bounds.getWest(),
+              ymin: bounds.getSouth(),
+              xmax: bounds.getEast(),
+              ymax: bounds.getNorth()
+            });
+          });
+        }
           el.map = map;
         });
 
@@ -366,6 +382,8 @@ if (HTMLWidgets.shinyMode) {
       var message = data.message;
       if (message.type === "set_filter") {
         map.setFilter(message.layer, message.filter);
+      } else if (message.type === "add_source") {
+        map.addSource(message.source)
       } else if (message.type === "add_layer") {
         try {
           map.addLayer(message.layer);
@@ -395,6 +413,12 @@ if (HTMLWidgets.shinyMode) {
         map.setLayoutProperty(message.layer, message.name, message.value);
       } else if (message.type === "set_paint_property") {
         map.setPaintProperty(message.layer, message.name, message.value);
+      } else if (message.type === "query_rendered_features") {
+        const features = map.queryRenderedFeatures(message.geometry, {
+         layers: message.layers,
+         filter: message.filter
+        });
+        Shiny.setInputValue(el.id + "_feature_query", features);
       } else if (message.type === "add_legend") {
         const existingLegend = document.getElementById('mapboxgl-legend');
         if (existingLegend) {

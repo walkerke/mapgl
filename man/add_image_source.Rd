@@ -2,12 +2,12 @@
 % Please edit documentation in R/sources.R
 \name{add_image_source}
 \alias{add_image_source}
-\title{Add an image source to a Mapbox GL map}
+\title{Add an image source to a Mapbox GL or Maplibre GL map}
 \usage{
 add_image_source(map, id, url, coordinates)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
 
 \item{id}{A unique ID for the source.}
 
@@ -19,11 +19,5 @@ add_image_source(map, id, url, coordinates)
 The modified map object with the new source added.
 }
 \description{
-Add an image source to a Mapbox GL map
-}
-\examples{
-\dontrun{
-map <- mapboxgl(access_token = "your_token_here")
-map <- add_image_source(map, id = "image-source", url = "https://example.com/image.png", coordinates = list(c(-80.425, 46.437), c(-71.516, 46.437), c(-71.516, 37.936), c(-80.425, 37.936)))
-}
+Add an image source to a Mapbox GL or Maplibre GL map
 }

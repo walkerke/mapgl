@@ -2,12 +2,12 @@
 % Please edit documentation in R/markers.R
 \name{add_markers}
 \alias{add_markers}
-\title{Add markers to a Mapbox GL map}
+\title{Add markers to a Mapbox GL or Maplibre GL map}
 \usage{
 add_markers(map, data, color = "red", rotation = 0, popup = NULL, ...)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{data}{A length-2 numeric vector of coordinates or an \code{sf} POINT object.}
 
@@ -23,7 +23,7 @@ add_markers(map, data, color = "red", rotation = 0, popup = NULL, ...)
 The modified map object with the markers added.
 }
 \description{
-Add markers to a Mapbox GL map
+Add markers to a Mapbox GL or Maplibre GL map
 }
 \examples{
 \dontrun{

@@ -1,6 +1,6 @@
 #' Add a layer to a Mapbox GL map from a source
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl()` or `maplibre()` functions.
 #' @param id A unique ID for the layer.
 #' @param type The type of the layer (e.g., "fill", "line", "circle").
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
@@ -73,7 +73,7 @@ add_layer <- function(map,
     hover_options = hover_options
   )))
 
-  if (inherits(map, "mapboxgl_proxy")) {
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     layer <- list(
       id = id,
       type = type,
@@ -101,8 +101,10 @@ add_layer <- function(map,
       layer$maxzoom = max_zoom
     }
 
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
 
-    map$session$sendCustomMessage("mapboxgl-proxy", list(
+
+    map$session$sendCustomMessage(proxy_class, list(
       id = map$id,
       message = list(type = "add_layer", layer = layer)
     ))
@@ -216,6 +218,7 @@ add_fill_layer <- function(map,
 #' @param max_zoom The maximum zoom level for the layer.
 #' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param hover_options A named list of options for highlighting features in the layer on hover.
 #'
 #' @return The modified map object with the new line layer added.
 #' @export
@@ -250,7 +253,8 @@ add_line_layer <- function(map,
                            min_zoom = NULL,
                            max_zoom = NULL,
                            popup = NULL,
-                           tooltip = NULL) {
+                           tooltip = NULL,
+                           hover_options = NULL) {
   paint <- list()
   layout <- list()
 
@@ -268,7 +272,7 @@ add_line_layer <- function(map,
   if (!is.null(line_sort_key)) layout[["line-sort-key"]] <- line_sort_key
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "line", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip)
+  map <- add_layer(map, id, "line", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options)
 
   return(map)
 }
@@ -350,6 +354,7 @@ add_heatmap_layer <- function(map,
 #' @param max_zoom The maximum zoom level for the layer.
 #' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param hover_options A named list of options for highlighting features in the layer on hover.
 #'
 #' @return The modified map object with the new fill-extrusion layer added.
 #' @export
@@ -380,7 +385,8 @@ add_fill_extrusion_layer <- function(map,
                                      min_zoom = NULL,
                                      max_zoom = NULL,
                                      popup = NULL,
-                                     tooltip = NULL) {
+                                     tooltip = NULL,
+                                     hover_options = NULL) {
   paint <- list()
   layout <- list()
 
@@ -394,7 +400,7 @@ add_fill_extrusion_layer <- function(map,
 
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip)
+  map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options)
 
   return(map)
 }
@@ -421,6 +427,7 @@ add_fill_extrusion_layer <- function(map,
 #' @param max_zoom The maximum zoom level for the layer.
 #' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param hover_options A named list of options for highlighting features in the layer on hover.
 #'
 #' @return The modified map object with the new circle layer added.
 #' @export
@@ -454,7 +461,8 @@ add_circle_layer <- function(map,
                              min_zoom = NULL,
                              max_zoom = NULL,
                              popup = NULL,
-                             tooltip = NULL) {
+                             tooltip = NULL,
+                             hover_options = NULL) {
   paint <- list()
   layout <- list()
 
@@ -471,7 +479,7 @@ add_circle_layer <- function(map,
   if (!is.null(circle_sort_key)) layout[["circle-sort-key"]] <- circle_sort_key
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "circle", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip)
+  map <- add_layer(map, id, "circle", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options)
 
   return(map)
 }

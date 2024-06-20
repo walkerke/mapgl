@@ -40,7 +40,7 @@ maplibre <- function(style = "https://demotiles.maplibre.org/style.json",
     ),
     width = width,
     height = height,
-    package = "mapboxgl"
+    package = "mapgl"
   )
 }
 
@@ -53,7 +53,7 @@ maplibre <- function(style = "https://demotiles.maplibre.org/style.json",
 #' @return A Maplibre GL output element for use in a Shiny UI
 #' @export
 maplibreOutput <- function(outputId, width = "100%", height = "400px") {
-  htmlwidgets::shinyWidgetOutput(outputId, "maplibregl", width, height, package = "mapboxgl")
+  htmlwidgets::shinyWidgetOutput(outputId, "maplibregl", width, height, package = "mapgl")
 }
 
 #' Render a Maplibre GL output element in Shiny

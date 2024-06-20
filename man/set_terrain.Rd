@@ -2,12 +2,12 @@
 % Please edit documentation in R/terrain.R
 \name{set_terrain}
 \alias{set_terrain}
-\title{Set terrain properties on a Mapbox GL map}
+\title{Set terrain properties on a map}
 \usage{
 set_terrain(map, source, exaggeration = 1)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{source}{The ID of the raster DEM source.}
 
@@ -17,7 +17,7 @@ set_terrain(map, source, exaggeration = 1)
 The modified map object with the terrain settings applied.
 }
 \description{
-Set terrain properties on a Mapbox GL map
+Set terrain properties on a map
 }
 \examples{
 \dontrun{

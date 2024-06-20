@@ -2,12 +2,12 @@
 % Please edit documentation in R/sources.R
 \name{add_raster_dem_source}
 \alias{add_raster_dem_source}
-\title{Add a raster DEM source to a Mapbox GL map}
+\title{Add a raster DEM source to a Mapbox GL or Maplibre GL map}
 \usage{
 add_raster_dem_source(map, id, url, tileSize = 512, maxzoom = NULL)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
 
 \item{id}{A unique ID for the source.}
 
@@ -21,11 +21,5 @@ add_raster_dem_source(map, id, url, tileSize = 512, maxzoom = NULL)
 The modified map object with the new source added.
 }
 \description{
-Add a raster DEM source to a Mapbox GL map
-}
-\examples{
-\dontrun{
-map <- mapboxgl(access_token = "your_token_here")
-map <- add_raster_dem_source(map, id = "dem-source", url = "mapbox://mapbox.mapbox-terrain-dem-v1", tileSize = 512, maxzoom = 14)
-}
+Add a raster DEM source to a Mapbox GL or Maplibre GL map
 }

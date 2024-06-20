@@ -2,7 +2,7 @@
 % Please edit documentation in R/style_helpers.R
 \name{match_expr}
 \alias{match_expr}
-\title{Create a match expression for Mapbox GL}
+\title{Create a match expression}
 \usage{
 match_expr(column = NULL, property = NULL, values, stops, default = "#cccccc")
 }
@@ -21,7 +21,7 @@ match_expr(column = NULL, property = NULL, values, stops, default = "#cccccc")
 A list representing the match expression.
 }
 \description{
-This function generates a match expression that can be used in Mapbox GL styles.
+This function generates a match expression that can be used to style your data.
 }
 \examples{
 match_expr(
