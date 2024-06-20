@@ -333,8 +333,9 @@ HTMLWidgets.widget({
             map.addControl(nav, x.navigation_control.position);
           }
 
-          // Add click event listener
-          map.on('click', function(e) {
+          // Add click event listener in shinyMode
+          if (HTMLWidgets.shinyMode) {
+            map.on('click', function(e) {
             const features = map.queryRenderedFeatures(e.point);
 
             if (features.length > 0) {
@@ -358,6 +359,7 @@ HTMLWidgets.widget({
               time: new Date()
             });
           });
+        }
 
           el.map = map;
         });
@@ -480,7 +482,38 @@ if (HTMLWidgets.shinyMode) {
             });
             window.maplibreglMarkers = [];
           }
+      } else if (message.type === "query_rendered_features") {
+        // Query rendered features
+        function queryFeatures(geometry, layers, filter) {
+          var queryOptions = {};
+          if (layers) queryOptions.layers = layers;
+          if (filter) queryOptions.filter = filter;
+
+          var features = geometry ? map.queryRenderedFeatures(geometry, queryOptions) : map.queryRenderedFeatures(queryOptions);
+
+          var uniqueFeatures = {};
+          features.forEach(function(feature) {
+            var id = feature.id; // Identify features by ID
+            if (!uniqueFeatures[id]) {
+              uniqueFeatures[id] = feature.properties;
+            }
+          });
+
+          var layerFeatureProperties = {};
+          Object.keys(uniqueFeatures).forEach(function(id) {
+            var feature = uniqueFeatures[id];
+            var layer = feature.layer_id; // Ensure 'layer_id' is set in the properties
+            if (!layerFeatureProperties[layer]) {
+              layerFeatureProperties[layer] = [];
+            }
+            layerFeatureProperties[layer].push(feature);
+          });
+
+          Shiny.setInputValue(data.id + '_feature_query', layerFeatureProperties);
         }
+
+        queryFeatures(message.geometry, message.layers, message.filter);
+      }
     }
   });
 }
