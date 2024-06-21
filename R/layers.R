@@ -671,8 +671,8 @@ add_raster_layer <- function(map,
 #' @param icon_halo_color The color of the icon's halo. This can only be specified as a string.
 #' @param icon_halo_width Distance of halo to icon outline.
 #' @param icon_ignore_placement If true, the icon will be visible even if it collides with other symbols.
-#' @param icon_image Name of image in sprite to use for drawing an image background.
-#' @param icon_keep_upright If true, the icon will be kept upright.
+#' @param icon_image Name of image in sprite to use for drawing an image background.  To use values in a column of your input dataset, use `c('get', 'YOUR_ICON_COLUMN_NAME')`
+#' @param icon_keep_upright If TRUE, the icon will be kept upright.
 #' @param icon_offset Offset distance of icon.
 #' @param icon_opacity The opacity at which the icon will be drawn.
 #' @param icon_rotate Rotates the icon clockwise.
@@ -684,8 +684,8 @@ add_raster_layer <- function(map,
 #' @param text_font Font stack to use for displaying text.
 #' @param text_halo_color The color of the text's halo. This can only be specified as a string.
 #' @param text_halo_width Distance of halo to text outline.
-#' @param text_ignore_placement If true, the text will be visible even if it collides with other symbols.
-#' @param text_keep_upright If true, the text will be kept upright.
+#' @param text_ignore_placement If TRUE, the text will be visible even if it collides with other symbols.
+#' @param text_keep_upright If TRUE, the text will be kept upright.
 #' @param text_offset Offset distance of text.
 #' @param text_opacity The opacity at which the text will be drawn.
 #' @param text_size The size of the text.
@@ -701,13 +701,42 @@ add_raster_layer <- function(map,
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(
-#'   style = "mapbox://styles/mapbox/streets-v11",
-#'   center = c(-74.006, 40.7128),
-#'   zoom = 10,
-#'   access_token = "your_token_here"
+#' library(mapgl)
+#' library(sf)
+#' library(dplyr)
+#'
+#' # Set seed for reproducibility
+#' set.seed(1234)
+#'
+#' # Define the bounding box for Washington DC (approximately)
+#' bbox <- st_bbox(c(xmin = -77.119759, ymin = 38.791645, xmax = -76.909393, ymax = 38.995548), #' crs = st_crs(4326))
+#'
+#' # Generate 30 random points within the bounding box
+#' random_points <- st_as_sf(
+#'   data.frame(
+#'     id = 1:30,
+#'     lon = runif(30, bbox["xmin"], bbox["xmax"]),
+#'     lat = runif(30, bbox["ymin"], bbox["ymax"])
+#'   ),
+#'   coords = c("lon", "lat"),
+#'   crs = 4326
 #' )
-#' map <- add_symbol_layer(map, id = "symbol-layer", source = "source-id", icon_image = "my-icon")
+#'
+#' # Assign random icons
+#' icons <- c('music', 'bar', 'theatre', 'bicycle')
+#' random_points <- random_points |>
+#'   mutate(icon = sample(icons, n(), replace = TRUE))
+#'
+#' # Map with icons
+#' mapboxgl(style = mapbox_style("light")) |>
+#'   fit_bounds(random_points, animate = FALSE) |>
+#'   add_symbol_layer(
+#'     id = "points-of-interest",
+#'     source = random_points,
+#'     icon_image = c("get", "icon"),
+#'     icon_allow_overlap = TRUE,
+#'     tooltip = "icon"
+#'   )
 #' }
 add_symbol_layer <- function(map,
                              id,
