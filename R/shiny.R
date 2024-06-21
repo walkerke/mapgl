@@ -36,12 +36,12 @@ maplibre_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
   proxy
 }
 
-#' Add a filter to a Mapbox GL map using a proxy
+#' Add a filter to a map using a proxy
 #'
-#' This function allows a filter to be added to an existing Mapbox GL map using a proxy object.
+#' This function allows a filter to be added to an existing Mapbox GL or Maplibre GL map using a proxy object.
 #'
 #' @param proxy A proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
-#' @param layer_id The ID of the layer to which the filter will be applied.
+#' @param layer_id The ID of the layer to whirch the filter will be applied.
 #' @param filter The filter expression to apply.
 #'
 #' @return The updated proxy object.
