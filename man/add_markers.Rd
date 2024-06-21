@@ -9,13 +9,13 @@ add_markers(map, data, color = "red", rotation = 0, popup = NULL, ...)
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
-\item{data}{A length-2 numeric vector of coordinates or an \code{sf} POINT object.}
+\item{data}{A length-2 numeric vector of coordinates, a list of length-2 numeric vectors, or an \code{sf} POINT object.}
 
-\item{color}{The color of the marker.}
+\item{color}{The color of the marker (default is "red").}
 
-\item{rotation}{The rotation of the marker.}
+\item{rotation}{The rotation of the marker (default is 0).}
 
-\item{popup}{A column name for popups (if data is an \code{sf} object) or a string for a single popup (if data is a numeric vector).}
+\item{popup}{A column name for popups (if data is an \code{sf} object) or a string for a single popup (if data is a numeric vector or list of vectors).}
 
 \item{...}{Additional options passed to the marker.}
 }
@@ -27,17 +27,32 @@ Add markers to a Mapbox GL or Maplibre GL map
 }
 \examples{
 \dontrun{
+library(mapgl)
+library(sf)
+
+# Create a map object
 map <- mapboxgl(
-  style = "mapbox://styles/mapbox/streets-v12",
+  style = mapbox_style("streets"),
   center = c(-74.006, 40.7128),
-  zoom = 10,
-  access_token = "your_token_here"
+  zoom = 10
 )
 
 # Add a single marker
 map <- add_markers(map, c(-74.006, 40.7128), color = "blue", rotation = 45, popup = "A marker")
 
+# Add multiple markers from a list of coordinates
+coords_list <- list(c(-74.006, 40.7128), c(-73.935242, 40.730610))
+map <- add_markers(map, coords_list, color = "green", popup = "Multiple markers")
+
+# Create an sf POINT object
+points_sf <- st_as_sf(data.frame(
+  id = 1:2,
+  lon = c(-74.006, -73.935242),
+  lat = c(40.7128, 40.730610)
+), coords = c("lon", "lat"), crs = 4326)
+points_sf$popup <- c("Point 1", "Point 2")
+
 # Add multiple markers from an sf object
-map <- add_markers(map, your_sf_object, color = "red", popup = "your_column_name")
+map <- add_markers(map, points_sf, color = "red", popup = "popup")
 }
 }
