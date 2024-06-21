@@ -58,7 +58,7 @@ set_filter <- function(proxy, layer_id, filter) {
   proxy
 }
 
-#' Clear a layer from a Mapbox GL map using a proxy
+#' Clear a layer from a map using a proxy
 #'
 #' This function allows a layer to be removed from an existing Mapbox GL map using a proxy object.
 #'
@@ -79,7 +79,7 @@ clear_layer <- function(proxy, layer_id) {
   proxy
 }
 
-#' Set a layout property on a Mapbox GL map layer
+#' Set a layout property on a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param layer The ID of the layer to update.
@@ -102,7 +102,7 @@ set_layout_property <- function(map, layer, name, value) {
   return(map)
 }
 
-#' Set a paint property on a Mapbox GL map layer
+#' Set a paint property on a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param layer The ID of the layer to update.
@@ -125,7 +125,7 @@ set_paint_property <- function(map, layer, name, value) {
   return(map)
 }
 
-#' Clear markers from a Mapbox GL map in a Shiny session
+#' Clear markers from a map in a Shiny session
 #'
 #' @param map A map object created by the `mapboxgl_proxy` or `maplibre_proxy` function.
 #'
@@ -141,12 +141,12 @@ clear_markers <- function(map) {
   return(map)
 }
 
-#' Update the style of a Mapbox GL map
+#' Update the style of a map
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param style The new style URL to be applied to the map.
 #' @param config A named list of options to be passed to the style config.
-#' @param diff A boolean that attempts a diff-based update rather than re-drawing the full style.
+#' @param diff A boolean that attempts a diff-based update rather than re-drawing the full style. Not available for all styles.
 #'
 #' @return The modified map object.
 #' @export

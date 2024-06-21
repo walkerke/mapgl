@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny.R
 \name{clear_layer}
 \alias{clear_layer}
-\title{Clear a layer from a Mapbox GL map using a proxy}
+\title{Clear a layer from a map using a proxy}
 \usage{
 clear_layer(proxy, layer_id)
 }

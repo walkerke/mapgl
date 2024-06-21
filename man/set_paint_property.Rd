@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny.R
 \name{set_paint_property}
 \alias{set_paint_property}
-\title{Set a paint property on a Mapbox GL map layer}
+\title{Set a paint property on a map layer}
 \usage{
 set_paint_property(map, layer, name, value)
 }
@@ -19,5 +19,5 @@ set_paint_property(map, layer, name, value)
 The updated map object.
 }
 \description{
-Set a paint property on a Mapbox GL map layer
+Set a paint property on a map layer
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny.R
 \name{set_layout_property}
 \alias{set_layout_property}
-\title{Set a layout property on a Mapbox GL map layer}
+\title{Set a layout property on a map layer}
 \usage{
 set_layout_property(map, layer, name, value)
 }
@@ -19,5 +19,5 @@ set_layout_property(map, layer, name, value)
 The updated map object.
 }
 \description{
-Set a layout property on a Mapbox GL map layer
+Set a layout property on a map layer
 }

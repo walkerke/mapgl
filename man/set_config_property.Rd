@@ -2,7 +2,7 @@
 % Please edit documentation in R/style_helpers.R
 \name{set_config_property}
 \alias{set_config_property}
-\title{Set a configuration property for the Mapbox GL map}
+\title{Set a configuration property for a Mapbox GL map}
 \usage{
 set_config_property(map, import_id, config_name, value)
 }
@@ -19,5 +19,5 @@ set_config_property(map, import_id, config_name, value)
 The updated map object with the configuration property set.
 }
 \description{
-Set a configuration property for the Mapbox GL map
+Set a configuration property for a Mapbox GL map
 }

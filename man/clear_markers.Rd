@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny.R
 \name{clear_markers}
 \alias{clear_markers}
-\title{Clear markers from a Mapbox GL map in a Shiny session}
+\title{Clear markers from a map in a Shiny session}
 \usage{
 clear_markers(map)
 }
@@ -13,5 +13,5 @@ clear_markers(map)
 The modified map object with the markers cleared.
 }
 \description{
-Clear markers from a Mapbox GL map in a Shiny session
+Clear markers from a map in a Shiny session
 }

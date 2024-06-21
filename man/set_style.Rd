@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny.R
 \name{set_style}
 \alias{set_style}
-\title{Update the style of a Mapbox GL map}
+\title{Update the style of a map}
 \usage{
 set_style(map, style, config = NULL, diff = TRUE)
 }
@@ -13,13 +13,13 @@ set_style(map, style, config = NULL, diff = TRUE)
 
 \item{config}{A named list of options to be passed to the style config.}
 
-\item{diff}{A boolean that attempts a diff-based update rather than re-drawing the full style.}
+\item{diff}{A boolean that attempts a diff-based update rather than re-drawing the full style. Not available for all styles.}
 }
 \value{
 The modified map object.
 }
 \description{
-Update the style of a Mapbox GL map
+Update the style of a map
 }
 \examples{
 \dontrun{

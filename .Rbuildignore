@@ -1,2 +1,16 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^docs$
+^vignettes$
+^data-raw$
+_pkgdown.yml
+^examples$
+index.qmd
+index.md
+^mapgl\.Rcheck$
+^mapgl.*\.tar\.gz$
+^mapgl.*\.tgz$
+^.github$
+^\.github$
+logo.png
+^pkgdown$

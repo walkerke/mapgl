@@ -82,7 +82,8 @@ mapboxgl(style = mapbox_style("dark"),
       stops = c('rgba(33,102,172,0)', 'rgb(103,169,207)',
                 'rgb(209,229,240)', 'rgb(253,219,199)',
                 'rgb(239,138,98)', 'rgb(178,24,43)')
-    )
+    ),
+    heatmap_opacity = 0.7
   )
 }
 }

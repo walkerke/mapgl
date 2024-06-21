@@ -147,7 +147,7 @@ step_expr <- function(column = NULL, property = NULL, base, values, stops) {
   expr
 }
 
-#' Set a configuration property for the Mapbox GL map
+#' Set a configuration property for a Mapbox GL map
 #'
 #' @param map A map object created by the `mapboxgl` function or a proxy object defined with `mapboxgl_proxy()`.
 #' @param import_id The name of the imported style to set the config for (e.g., 'basemap').
@@ -208,7 +208,7 @@ maptiler_style <- function(style_name, api_key = NULL) {
 
   if (is.null(api_key)) {
     if (Sys.getenv("MAPTILER_API_KEY") == "") {
-      rlang::abort("A MapTiler API key is required. Get one at https://www.maptiler.com.")
+      rlang::abort("A MapTiler API key is required. Get one at https://www.maptiler.com, then supply it here or set it in your .Renviron file with 'MAPTILER_API_KEY'='YOUR_KEY_HERE'.")
     } else {
       api_key <- Sys.getenv("MAPTILER_API_KEY")
     }
