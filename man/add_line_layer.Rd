@@ -2,7 +2,7 @@
 % Please edit documentation in R/layers.R
 \name{add_line_layer}
 \alias{add_line_layer}
-\title{Add a line layer to a Mapbox GL map}
+\title{Add a line layer to a map}
 \usage{
 add_line_layer(
   map,
@@ -30,7 +30,7 @@ add_line_layer(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{id}{A unique ID for the layer.}
 
@@ -78,16 +78,22 @@ add_line_layer(
 The modified map object with the new line layer added.
 }
 \description{
-Add a line layer to a Mapbox GL map
+Add a line layer to a map
 }
 \examples{
 \dontrun{
-map <- mapboxgl(
-  style = "mapbox://styles/mapbox/streets-v11",
-  center = c(-74.006, 40.7128),
-  zoom = 10,
-  access_token = "your_token_here"
-)
-map <- add_line_layer(map, id = "line-layer", source = "source-id", line_color = "rgba(255,0,0,0.5)")
+library(mapgl)
+library(tigris)
+
+loving_roads <- roads("TX", "Loving")
+
+maplibre(style = maptiler_style("backdrop")) |>
+  fit_bounds(loving_roads) |>
+  add_line_layer(
+    id = "tracks",
+    source = loving_roads,
+    line_color = "navy",
+    line_opacity = 0.7
+  )
 }
 }

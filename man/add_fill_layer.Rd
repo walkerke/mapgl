@@ -2,7 +2,7 @@
 % Please edit documentation in R/layers.R
 \name{add_fill_layer}
 \alias{add_fill_layer}
-\title{Add a fill layer to a Mapbox GL map}
+\title{Add a fill layer to a map}
 \usage{
 add_fill_layer(
   map,
@@ -28,7 +28,7 @@ add_fill_layer(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{id}{A unique ID for the layer.}
 
@@ -72,16 +72,32 @@ add_fill_layer(
 The modified map object with the new fill layer added.
 }
 \description{
-Add a fill layer to a Mapbox GL map
+Add a fill layer to a map
 }
 \examples{
 \dontrun{
-map <- mapboxgl(
-  style = "mapbox://styles/mapbox/streets-v11",
-  center = c(-74.006, 40.7128),
-  zoom = 10,
-  access_token = "your_token_here"
+library(tidycensus)
+
+fl_age <- get_acs(
+  geography = "tract",
+  variables = "B01002_001",
+  state = "FL",
+  year = 2022,
+  geometry = TRUE
 )
-map <- add_fill_layer(map, id = "fill-layer", source = "source-id", fill_color = "rgba(255,0,0,0.5)")
+
+mapboxgl() |>
+  fit_bounds(fl_age, animate = FALSE) |>
+  add_fill_layer(
+    id = "fl_tracts",
+    source = fl_age,
+    fill_color = interpolate(
+      column = "estimate",
+      values = c(20, 80),
+      stops = c("lightblue", "darkblue"),
+      na_color = "lightgrey"
+    ),
+    fill_opacity = 0.5
+  )
 }
 }

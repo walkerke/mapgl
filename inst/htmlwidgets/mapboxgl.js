@@ -112,7 +112,7 @@ HTMLWidgets.widget({
                   url: source.url
                 });
               } else if (source.type === "geojson") {
-                const geojsonData = source.geojson;
+                const geojsonData = source.data;
                 map.addSource(source.id, {
                   type: 'geojson',
                   data: geojsonData,

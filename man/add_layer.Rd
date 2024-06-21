@@ -2,7 +2,7 @@
 % Please edit documentation in R/layers.R
 \name{add_layer}
 \alias{add_layer}
-\title{Add a layer to a Mapbox GL map from a source}
+\title{Add a layer to a map from a source}
 \usage{
 add_layer(
   map,
@@ -51,14 +51,38 @@ add_layer(
 The modified map object with the new layer added.
 }
 \description{
-Add a layer to a Mapbox GL map from a source
+In many cases, you will use \code{add_layer()} internal to other layer-specific functions in mapgl. Advanced users will want to use \code{add_layer()} for more fine-grained control over the appearance of their layers.
 }
 \examples{
 \dontrun{
-map <- mapboxgl(access_token = "your_token_here")
-map <- add_source(map, id = "nc-source", type = "geojson", data = nc)
-map <- add_layer(map, id = "nc-layer", type = "fill", source = "nc-source", paint = list("fill-color" = "#888888", "fill-opacity" = 0.4))
-map <- add_source(map, id = "external-source", type = "vector", url = "mapbox://mapbox.mapbox-streets-v8")
-map <- add_layer(map, id = "external-layer", type = "circle", source = "external-source", source_layer = "sf2010", paint = list("circle-radius" = list("base" = 1.75, "stops" = list(c(12, 2), c(22, 180))), "circle-color" = list("match", list("get", "ethnicity"), "White", "#fbb03b", "Black", "#223b53", "Hispanic", "#e55e5e", "Asian", "#3bb2d0", "other", "#ccc")))
+# Load necessary libraries
+library(mapgl)
+library(tigris)
+
+# Load geojson data for North Carolina tracts
+nc_tracts <- tracts(state = "NC", cb = TRUE)
+
+# Create a Mapbox GL map
+map <- mapboxgl(
+ style = mapbox_style("light"),
+ center = c(-79.0193, 35.7596),
+ zoom = 7
+)
+
+# Add a source and fill layer for North Carolina tracts
+map \%>\%
+ add_source(
+   id = "nc-tracts",
+   data = nc_tracts
+ ) \%>\%
+ add_layer(
+   id = "nc-layer",
+   type = "fill",
+   source = "nc-tracts",
+   paint = list(
+     "fill-color" = "#888888",
+     "fill-opacity" = 0.4
+   )
+ )
 }
 }

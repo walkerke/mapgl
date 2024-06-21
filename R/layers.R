@@ -1,4 +1,6 @@
-#' Add a layer to a Mapbox GL map from a source
+#' Add a layer to a map from a source
+#'
+#' In many cases, you will use `add_layer()` internal to other layer-specific functions in mapgl. Advanced users will want to use `add_layer()` for more fine-grained control over the appearance of their layers.
 #'
 #' @param map A map object created by the `mapboxgl()` or `maplibre()` functions.
 #' @param id A unique ID for the layer.
@@ -19,11 +21,35 @@
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(access_token = "your_token_here")
-#' map <- add_source(map, id = "nc-source", type = "geojson", data = nc)
-#' map <- add_layer(map, id = "nc-layer", type = "fill", source = "nc-source", paint = list("fill-color" = "#888888", "fill-opacity" = 0.4))
-#' map <- add_source(map, id = "external-source", type = "vector", url = "mapbox://mapbox.mapbox-streets-v8")
-#' map <- add_layer(map, id = "external-layer", type = "circle", source = "external-source", source_layer = "sf2010", paint = list("circle-radius" = list("base" = 1.75, "stops" = list(c(12, 2), c(22, 180))), "circle-color" = list("match", list("get", "ethnicity"), "White", "#fbb03b", "Black", "#223b53", "Hispanic", "#e55e5e", "Asian", "#3bb2d0", "other", "#ccc")))
+#' # Load necessary libraries
+#'library(mapgl)
+#'library(tigris)
+#'
+#'# Load geojson data for North Carolina tracts
+#'nc_tracts <- tracts(state = "NC", cb = TRUE)
+#'
+#'# Create a Mapbox GL map
+#'map <- mapboxgl(
+#'  style = mapbox_style("light"),
+#'  center = c(-79.0193, 35.7596),
+#'  zoom = 7
+#')
+#'
+#'# Add a source and fill layer for North Carolina tracts
+#'map %>%
+#'  add_source(
+#'    id = "nc-tracts",
+#'    data = nc_tracts
+#'  ) %>%
+#'  add_layer(
+#'    id = "nc-layer",
+#'    type = "fill",
+#'    source = "nc-tracts",
+#'    paint = list(
+#'      "fill-color" = "#888888",
+#'      "fill-opacity" = 0.4
+#'    )
+#'  )
 #' }
 add_layer <- function(map,
                       id,
@@ -117,9 +143,9 @@ add_layer <- function(map,
 
 }
 
-#' Add a fill layer to a Mapbox GL map
+#' Add a fill layer to a map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
@@ -145,13 +171,29 @@ add_layer <- function(map,
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(
-#'   style = "mapbox://styles/mapbox/streets-v11",
-#'   center = c(-74.006, 40.7128),
-#'   zoom = 10,
-#'   access_token = "your_token_here"
+#' library(tidycensus)
+#'
+#' fl_age <- get_acs(
+#'   geography = "tract",
+#'   variables = "B01002_001",
+#'   state = "FL",
+#'   year = 2022,
+#'   geometry = TRUE
 #' )
-#' map <- add_fill_layer(map, id = "fill-layer", source = "source-id", fill_color = "rgba(255,0,0,0.5)")
+#'
+#' mapboxgl() |>
+#'   fit_bounds(fl_age, animate = FALSE) |>
+#'   add_fill_layer(
+#'     id = "fl_tracts",
+#'     source = fl_age,
+#'     fill_color = interpolate(
+#'       column = "estimate",
+#'       values = c(20, 80),
+#'       stops = c("lightblue", "darkblue"),
+#'       na_color = "lightgrey"
+#'     ),
+#'     fill_opacity = 0.5
+#'   )
 #' }
 add_fill_layer <- function(map,
                            id,
@@ -195,9 +237,9 @@ add_fill_layer <- function(map,
   return(map)
 }
 
-#' Add a line layer to a Mapbox GL map
+#' Add a line layer to a map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
@@ -225,13 +267,19 @@ add_fill_layer <- function(map,
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(
-#'   style = "mapbox://styles/mapbox/streets-v11",
-#'   center = c(-74.006, 40.7128),
-#'   zoom = 10,
-#'   access_token = "your_token_here"
-#' )
-#' map <- add_line_layer(map, id = "line-layer", source = "source-id", line_color = "rgba(255,0,0,0.5)")
+#' library(mapgl)
+#' library(tigris)
+#'
+#' loving_roads <- roads("TX", "Loving")
+#'
+#' maplibre(style = maptiler_style("backdrop")) |>
+#'   fit_bounds(loving_roads) |>
+#'   add_line_layer(
+#'     id = "tracks",
+#'     source = loving_roads,
+#'     line_color = "navy",
+#'     line_opacity = 0.7
+#'   )
 #' }
 add_line_layer <- function(map,
                            id,
@@ -298,13 +346,35 @@ add_line_layer <- function(map,
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(
-#'   style = "mapbox://styles/mapbox/streets-v11",
-#'   center = c(-74.006, 40.7128),
-#'   zoom = 10,
-#'   access_token = "your_token_here"
-#' )
-#' map <- add_heatmap_layer(map, id = "heatmap-layer", source = "source-id", heatmap_color = "rgba(255,0,0,0.5)")
+#' library(mapgl)
+#'
+#' mapboxgl(style = mapbox_style("dark"),
+#'          center = c(-120, 50),
+#'          zoom = 2) |>
+#'   add_heatmap_layer(
+#'     id = "earthquakes-heat",
+#'     source = list(
+#'       type = "geojson",
+#'       data = "https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson"
+#'     ),
+#'     heatmap_weight = interpolate(
+#'       column = "mag",
+#'       values = c(0, 6),
+#'       stops = c(0, 1)
+#'     ),
+#'     heatmap_intensity = interpolate(
+#'       property = "zoom",
+#'       values = c(0, 9),
+#'       stops = c(1, 3)
+#'     ),
+#'     heatmap_color = interpolate(
+#'       property = "heatmap-density",
+#'       values = seq(0, 1, 0.2),
+#'       stops = c('rgba(33,102,172,0)', 'rgb(103,169,207)',
+#'                 'rgb(209,229,240)', 'rgb(253,219,199)',
+#'                 'rgb(239,138,98)', 'rgb(178,24,43)')
+#'     )
+#'   )
 #' }
 add_heatmap_layer <- function(map,
                               id,
@@ -361,13 +431,39 @@ add_heatmap_layer <- function(map,
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(
-#'   style = "mapbox://styles/mapbox/streets-v11",
-#'   center = c(-74.006, 40.7128),
-#'   zoom = 10,
-#'   access_token = "your_token_here"
-#' )
-#' map <- add_fill_extrusion_layer(map, id = "fill-extrusion-layer", source = "source-id", fill_extrusion_color = "rgba(255,0,0,0.5)")
+#' library(mapgl)
+#'
+#' maplibre(
+#'   style = maptiler_style("basic"),
+#'   center = c(-74.0066, 40.7135),
+#'   zoom = 15.5,
+#'   pitch = 45,
+#'   bearing = -17.6
+#' ) |>
+#'   add_vector_source(
+#'     id = "openmaptiles",
+#'     url = paste0("https://api.maptiler.com/tiles/v3/tiles.json?key=",
+#'                  Sys.getenv("MAPTILER_API_KEY"))
+#'   ) |>
+#'   add_fill_extrusion_layer(
+#'     id = "3d-buildings",
+#'     source = 'openmaptiles',
+#'     source_layer = 'building',
+#'     fill_extrusion_color = interpolate(
+#'       column = 'render_height',
+#'       values = c(0, 200, 400),
+#'       stops = c('lightgray', 'royalblue', 'lightblue')
+#'     ),
+#'     fill_extrusion_height = list(
+#'       'interpolate',
+#'       list('linear'),
+#'       list('zoom'),
+#'       15,
+#'       0,
+#'       16,
+#'       list('get', 'render_height')
+#'     )
+#'   )
 #' }
 add_fill_extrusion_layer <- function(map,
                                      id,
@@ -508,13 +604,24 @@ add_circle_layer <- function(map,
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(
-#'   style = "mapbox://styles/mapbox/streets-v11",
-#'   center = c(-74.006, 40.7128),
-#'   zoom = 10,
-#'   access_token = "your_token_here"
-#' )
-#' map <- add_raster_layer(map, id = "raster-layer", source = "source-id", raster_opacity = 0.8)
+#' mapboxgl(style = mapbox_style("dark"),
+#'          zoom = 5,
+#'          center = c(-75.789, 41.874)) |>
+#'   add_image_source(
+#'     id = "radar",
+#'     url = "https://docs.mapbox.com/mapbox-gl-js/assets/radar.gif",
+#'     coordinates = list(
+#'       c(-80.425, 46.437),
+#'       c(-71.516, 46.437),
+#'       c(-71.516, 37.936),
+#'       c(-80.425, 37.936)
+#'     )
+#'   ) |>
+#'   add_raster_layer(
+#'     id = 'radar-layer',
+#'     source = 'radar',
+#'     raster_fade_duration = 0
+#'   )
 #' }
 add_raster_layer <- function(map,
                              id,

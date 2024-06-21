@@ -64,12 +64,23 @@ Add a raster layer to a Mapbox GL map
 }
 \examples{
 \dontrun{
-map <- mapboxgl(
-  style = "mapbox://styles/mapbox/streets-v11",
-  center = c(-74.006, 40.7128),
-  zoom = 10,
-  access_token = "your_token_here"
-)
-map <- add_raster_layer(map, id = "raster-layer", source = "source-id", raster_opacity = 0.8)
+mapboxgl(style = mapbox_style("dark"),
+         zoom = 5,
+         center = c(-75.789, 41.874)) |>
+  add_image_source(
+    id = "radar",
+    url = "https://docs.mapbox.com/mapbox-gl-js/assets/radar.gif",
+    coordinates = list(
+      c(-80.425, 46.437),
+      c(-71.516, 46.437),
+      c(-71.516, 37.936),
+      c(-80.425, 37.936)
+    )
+  ) |>
+  add_raster_layer(
+    id = 'radar-layer',
+    source = 'radar',
+    raster_fade_duration = 0
+  )
 }
 }
