@@ -539,7 +539,13 @@ add_fill_extrusion_layer <- function(map,
 #' set.seed(1234)
 #'
 #' # Define the bounding box for Washington DC (approximately)
-#' bbox <- st_bbox(c(xmin = -77.119759, ymin = 38.791645, xmax = -76#' .909393, ymax = 38.995548), crs = st_crs(4326))
+#' bbox <- st_bbox(c(
+#'   xmin = -77.119759,
+#'   ymin = 38.791645,
+#'   xmax = -76.909393,
+#'   ymax = 38.995548
+#' ),
+#' crs = st_crs(4326))
 #'
 #' # Generate 30 random points within the bounding box
 #' random_points <- st_as_sf(
@@ -795,7 +801,13 @@ add_raster_layer <- function(map,
 #' set.seed(1234)
 #'
 #' # Define the bounding box for Washington DC (approximately)
-#' bbox <- st_bbox(c(xmin = -77.119759, ymin = 38.791645, xmax = -76.909393, ymax = 38.995548), crs = st_crs(4326))
+#' bbox <- st_bbox(c(
+#'   xmin = -77.119759,
+#'   ymin = 38.791645,
+#'   xmax = -76.909393,
+#'   ymax = 38.995548
+#' ),
+#' crs = st_crs(4326))
 #'
 #' # Generate 30 random points within the bounding box
 #' random_points <- st_as_sf(
