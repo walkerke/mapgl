@@ -2,7 +2,7 @@
 % Please edit documentation in R/layers.R
 \name{add_symbol_layer}
 \alias{add_symbol_layer}
-\title{Add a symbol layer to a Mapbox GL map}
+\title{Add a symbol layer to a map}
 \usage{
 add_symbol_layer(
   map,
@@ -12,27 +12,66 @@ add_symbol_layer(
   icon_allow_overlap = NULL,
   icon_anchor = NULL,
   icon_color = NULL,
+  icon_color_brightness_max = NULL,
+  icon_color_brightness_min = NULL,
+  icon_color_contrast = NULL,
+  icon_color_saturation = NULL,
+  icon_emissive_strength = NULL,
+  icon_halo_blur = NULL,
   icon_halo_color = NULL,
   icon_halo_width = NULL,
   icon_ignore_placement = NULL,
   icon_image = NULL,
+  icon_image_cross_fade = NULL,
   icon_keep_upright = NULL,
   icon_offset = NULL,
   icon_opacity = NULL,
+  icon_optional = NULL,
+  icon_padding = NULL,
+  icon_pitch_alignment = NULL,
   icon_rotate = NULL,
+  icon_rotation_alignment = NULL,
   icon_size = NULL,
   icon_text_fit = NULL,
+  icon_text_fit_padding = NULL,
+  icon_translate = NULL,
+  icon_translate_anchor = NULL,
+  symbol_avoid_edges = NULL,
+  symbol_placement = NULL,
+  symbol_sort_key = NULL,
+  symbol_spacing = NULL,
+  symbol_z_elevate = NULL,
+  symbol_z_order = NULL,
+  text_allow_overlap = NULL,
   text_anchor = NULL,
   text_color = NULL,
+  text_emissive_strength = NULL,
   text_field = NULL,
   text_font = NULL,
+  text_halo_blur = NULL,
   text_halo_color = NULL,
   text_halo_width = NULL,
   text_ignore_placement = NULL,
+  text_justify = NULL,
   text_keep_upright = NULL,
+  text_letter_spacing = NULL,
+  text_line_height = NULL,
+  text_max_angle = NULL,
+  text_max_width = NULL,
   text_offset = NULL,
   text_opacity = NULL,
+  text_optional = NULL,
+  text_padding = NULL,
+  text_pitch_alignment = NULL,
+  text_radial_offset = NULL,
+  text_rotate = NULL,
+  text_rotation_alignment = NULL,
   text_size = NULL,
+  text_transform = NULL,
+  text_translate = NULL,
+  text_translate_anchor = NULL,
+  text_variable_anchor = NULL,
+  text_writing_mode = NULL,
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
@@ -42,7 +81,7 @@ add_symbol_layer(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{id}{A unique ID for the layer.}
 
@@ -54,49 +93,127 @@ add_symbol_layer(
 
 \item{icon_anchor}{Part of the icon placed closest to the anchor.}
 
-\item{icon_color}{The color of the icon. This can only be specified as a string.}
+\item{icon_color}{The color of the icon.  This is not supported for many Mapbox icons; read more at \url{https://docs.mapbox.com/help/troubleshooting/using-recolorable-images-in-mapbox-maps/}.}
 
-\item{icon_halo_color}{The color of the icon's halo. This can only be specified as a string.}
+\item{icon_color_brightness_max}{The maximum brightness of the icon color.}
 
-\item{icon_halo_width}{Distance of halo to icon outline.}
+\item{icon_color_brightness_min}{The minimum brightness of the icon color.}
+
+\item{icon_color_contrast}{The contrast of the icon color.}
+
+\item{icon_color_saturation}{The saturation of the icon color.}
+
+\item{icon_emissive_strength}{The strength of the icon's emissive color.}
+
+\item{icon_halo_blur}{The blur applied to the icon's halo.}
+
+\item{icon_halo_color}{The color of the icon's halo.}
+
+\item{icon_halo_width}{The width of the icon's halo.}
 
 \item{icon_ignore_placement}{If true, the icon will be visible even if it collides with other symbols.}
 
-\item{icon_image}{Name of image in sprite to use for drawing an image background.  To use values in a column of your input dataset, use \code{c('get', 'YOUR_ICON_COLUMN_NAME')}}
+\item{icon_image}{Name of image in sprite to use for drawing an image background. To use values in a column of your input dataset, use \code{c('get', 'YOUR_ICON_COLUMN_NAME')}.}
 
-\item{icon_keep_upright}{If TRUE, the icon will be kept upright.}
+\item{icon_image_cross_fade}{The cross-fade parameter for the icon image.}
+
+\item{icon_keep_upright}{If true, the icon will be kept upright.}
 
 \item{icon_offset}{Offset distance of icon.}
 
 \item{icon_opacity}{The opacity at which the icon will be drawn.}
 
+\item{icon_optional}{If true, the icon will be optional.}
+
+\item{icon_padding}{Padding around the icon.}
+
+\item{icon_pitch_alignment}{Alignment of the icon with respect to the pitch of the map.}
+
 \item{icon_rotate}{Rotates the icon clockwise.}
+
+\item{icon_rotation_alignment}{Alignment of the icon with respect to the map.}
 
 \item{icon_size}{The size of the icon.}
 
 \item{icon_text_fit}{Scales the text to fit the icon.}
 
+\item{icon_text_fit_padding}{Padding for text fitting the icon.}
+
+\item{icon_translate}{The offset distance of the icon.}
+
+\item{icon_translate_anchor}{Controls the frame of reference for \code{icon-translate}.}
+
+\item{symbol_avoid_edges}{If true, the symbol will be avoided when near the edges.}
+
+\item{symbol_placement}{Placement of the symbol on the map.}
+
+\item{symbol_sort_key}{Sorts features in ascending order based on this value.}
+
+\item{symbol_spacing}{Spacing between symbols.}
+
+\item{symbol_z_elevate}{Elevates the symbol z-axis.}
+
+\item{symbol_z_order}{Orders the symbol z-axis.}
+
+\item{text_allow_overlap}{If true, the text will be visible even if it collides with other previously drawn symbols.}
+
 \item{text_anchor}{Part of the text placed closest to the anchor.}
 
-\item{text_color}{The color with which the text will be drawn.}
+\item{text_color}{The color of the text.}
+
+\item{text_emissive_strength}{The strength of the text's emissive color.}
 
 \item{text_field}{Value to use for a text label.}
 
 \item{text_font}{Font stack to use for displaying text.}
 
-\item{text_halo_color}{The color of the text's halo. This can only be specified as a string.}
+\item{text_halo_blur}{The blur applied to the text's halo.}
 
-\item{text_halo_width}{Distance of halo to text outline.}
+\item{text_halo_color}{The color of the text's halo.}
 
-\item{text_ignore_placement}{If TRUE, the text will be visible even if it collides with other symbols.}
+\item{text_halo_width}{The width of the text's halo.}
 
-\item{text_keep_upright}{If TRUE, the text will be kept upright.}
+\item{text_ignore_placement}{If true, the text will be visible even if it collides with other symbols.}
+
+\item{text_justify}{The justification of the text.}
+
+\item{text_keep_upright}{If true, the text will be kept upright.}
+
+\item{text_letter_spacing}{Spacing between text letters.}
+
+\item{text_line_height}{Height of the text lines.}
+
+\item{text_max_angle}{Maximum angle of the text.}
+
+\item{text_max_width}{Maximum width of the text.}
 
 \item{text_offset}{Offset distance of text.}
 
 \item{text_opacity}{The opacity at which the text will be drawn.}
 
+\item{text_optional}{If true, the text will be optional.}
+
+\item{text_padding}{Padding around the text.}
+
+\item{text_pitch_alignment}{Alignment of the text with respect to the pitch of the map.}
+
+\item{text_radial_offset}{Radial offset of the text.}
+
+\item{text_rotate}{Rotates the text clockwise.}
+
+\item{text_rotation_alignment}{Alignment of the text with respect to the map.}
+
 \item{text_size}{The size of the text.}
+
+\item{text_transform}{Transform applied to the text.}
+
+\item{text_translate}{The offset distance of the text.}
+
+\item{text_translate_anchor}{Controls the frame of reference for \code{text-translate}.}
+
+\item{text_variable_anchor}{Variable anchor for the text.}
+
+\item{text_writing_mode}{Writing mode for the text.}
 
 \item{visibility}{Whether this layer is displayed.}
 
@@ -106,7 +223,7 @@ add_symbol_layer(
 
 \item{max_zoom}{The maximum zoom level for the layer.}
 
-\item{popup}{A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.}
+\item{popup}{A column name containing information to display in a popup on click. Columns containing HTML will be parsed.}
 
 \item{tooltip}{A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.}
 }
@@ -114,7 +231,7 @@ add_symbol_layer(
 The modified map object with the new symbol layer added.
 }
 \description{
-Add a symbol layer to a Mapbox GL map
+Add a symbol layer to a map
 }
 \examples{
 \dontrun{
@@ -126,7 +243,7 @@ library(dplyr)
 set.seed(1234)
 
 # Define the bounding box for Washington DC (approximately)
-bbox <- st_bbox(c(xmin = -77.119759, ymin = 38.791645, xmax = -76.909393, ymax = 38.995548), #' crs = st_crs(4326))
+bbox <- st_bbox(c(xmin = -77.119759, ymin = 38.791645, xmax = -76.909393, ymax = 38.995548), crs = st_crs(4326))
 
 # Generate 30 random points within the bounding box
 random_points <- st_as_sf(

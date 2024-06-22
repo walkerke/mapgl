@@ -706,41 +706,80 @@ add_raster_layer <- function(map,
 }
 
 
-#' Add a symbol layer to a Mapbox GL map
+#' Add a symbol layer to a map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param icon_allow_overlap If true, the icon will be visible even if it collides with other previously drawn symbols.
 #' @param icon_anchor Part of the icon placed closest to the anchor.
-#' @param icon_color The color of the icon. This can only be specified as a string.
-#' @param icon_halo_color The color of the icon's halo. This can only be specified as a string.
-#' @param icon_halo_width Distance of halo to icon outline.
+#' @param icon_color The color of the icon.  This is not supported for many Mapbox icons; read more at \url{https://docs.mapbox.com/help/troubleshooting/using-recolorable-images-in-mapbox-maps/}.
+#' @param icon_color_brightness_max The maximum brightness of the icon color.
+#' @param icon_color_brightness_min The minimum brightness of the icon color.
+#' @param icon_color_contrast The contrast of the icon color.
+#' @param icon_color_saturation The saturation of the icon color.
+#' @param icon_emissive_strength The strength of the icon's emissive color.
+#' @param icon_halo_blur The blur applied to the icon's halo.
+#' @param icon_halo_color The color of the icon's halo.
+#' @param icon_halo_width The width of the icon's halo.
 #' @param icon_ignore_placement If true, the icon will be visible even if it collides with other symbols.
-#' @param icon_image Name of image in sprite to use for drawing an image background.  To use values in a column of your input dataset, use `c('get', 'YOUR_ICON_COLUMN_NAME')`
-#' @param icon_keep_upright If TRUE, the icon will be kept upright.
+#' @param icon_image Name of image in sprite to use for drawing an image background. To use values in a column of your input dataset, use `c('get', 'YOUR_ICON_COLUMN_NAME')`.
+#' @param icon_image_cross_fade The cross-fade parameter for the icon image.
+#' @param icon_keep_upright If true, the icon will be kept upright.
 #' @param icon_offset Offset distance of icon.
 #' @param icon_opacity The opacity at which the icon will be drawn.
+#' @param icon_optional If true, the icon will be optional.
+#' @param icon_padding Padding around the icon.
+#' @param icon_pitch_alignment Alignment of the icon with respect to the pitch of the map.
 #' @param icon_rotate Rotates the icon clockwise.
+#' @param icon_rotation_alignment Alignment of the icon with respect to the map.
 #' @param icon_size The size of the icon.
 #' @param icon_text_fit Scales the text to fit the icon.
+#' @param icon_text_fit_padding Padding for text fitting the icon.
+#' @param icon_translate The offset distance of the icon.
+#' @param icon_translate_anchor Controls the frame of reference for `icon-translate`.
+#' @param symbol_avoid_edges If true, the symbol will be avoided when near the edges.
+#' @param symbol_placement Placement of the symbol on the map.
+#' @param symbol_sort_key Sorts features in ascending order based on this value.
+#' @param symbol_spacing Spacing between symbols.
+#' @param symbol_z_elevate Elevates the symbol z-axis.
+#' @param symbol_z_order Orders the symbol z-axis.
+#' @param text_allow_overlap If true, the text will be visible even if it collides with other previously drawn symbols.
 #' @param text_anchor Part of the text placed closest to the anchor.
-#' @param text_color The color with which the text will be drawn.
+#' @param text_color The color of the text.
+#' @param text_emissive_strength The strength of the text's emissive color.
 #' @param text_field Value to use for a text label.
 #' @param text_font Font stack to use for displaying text.
-#' @param text_halo_color The color of the text's halo. This can only be specified as a string.
-#' @param text_halo_width Distance of halo to text outline.
-#' @param text_ignore_placement If TRUE, the text will be visible even if it collides with other symbols.
-#' @param text_keep_upright If TRUE, the text will be kept upright.
+#' @param text_halo_blur The blur applied to the text's halo.
+#' @param text_halo_color The color of the text's halo.
+#' @param text_halo_width The width of the text's halo.
+#' @param text_ignore_placement If true, the text will be visible even if it collides with other symbols.
+#' @param text_justify The justification of the text.
+#' @param text_keep_upright If true, the text will be kept upright.
+#' @param text_letter_spacing Spacing between text letters.
+#' @param text_line_height Height of the text lines.
+#' @param text_max_angle Maximum angle of the text.
+#' @param text_max_width Maximum width of the text.
 #' @param text_offset Offset distance of text.
 #' @param text_opacity The opacity at which the text will be drawn.
+#' @param text_optional If true, the text will be optional.
+#' @param text_padding Padding around the text.
+#' @param text_pitch_alignment Alignment of the text with respect to the pitch of the map.
+#' @param text_radial_offset Radial offset of the text.
+#' @param text_rotate Rotates the text clockwise.
+#' @param text_rotation_alignment Alignment of the text with respect to the map.
 #' @param text_size The size of the text.
+#' @param text_transform Transform applied to the text.
+#' @param text_translate The offset distance of the text.
+#' @param text_translate_anchor Controls the frame of reference for `text-translate`.
+#' @param text_variable_anchor Variable anchor for the text.
+#' @param text_writing_mode Writing mode for the text.
 #' @param visibility Whether this layer is displayed.
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
 #' @param max_zoom The maximum zoom level for the layer.
-#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
+#' @param popup A column name containing information to display in a popup on click. Columns containing HTML will be parsed.
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
 #'
 #' @return The modified map object with the new symbol layer added.
@@ -756,7 +795,7 @@ add_raster_layer <- function(map,
 #' set.seed(1234)
 #'
 #' # Define the bounding box for Washington DC (approximately)
-#' bbox <- st_bbox(c(xmin = -77.119759, ymin = 38.791645, xmax = -76.909393, ymax = 38.995548), #' crs = st_crs(4326))
+#' bbox <- st_bbox(c(xmin = -77.119759, ymin = 38.791645, xmax = -76.909393, ymax = 38.995548), crs = st_crs(4326))
 #'
 #' # Generate 30 random points within the bounding box
 #' random_points <- st_as_sf(
@@ -792,27 +831,66 @@ add_symbol_layer <- function(map,
                              icon_allow_overlap = NULL,
                              icon_anchor = NULL,
                              icon_color = NULL,
+                             icon_color_brightness_max = NULL,
+                             icon_color_brightness_min = NULL,
+                             icon_color_contrast = NULL,
+                             icon_color_saturation = NULL,
+                             icon_emissive_strength = NULL,
+                             icon_halo_blur = NULL,
                              icon_halo_color = NULL,
                              icon_halo_width = NULL,
                              icon_ignore_placement = NULL,
                              icon_image = NULL,
+                             icon_image_cross_fade = NULL,
                              icon_keep_upright = NULL,
                              icon_offset = NULL,
                              icon_opacity = NULL,
+                             icon_optional = NULL,
+                             icon_padding = NULL,
+                             icon_pitch_alignment = NULL,
                              icon_rotate = NULL,
+                             icon_rotation_alignment = NULL,
                              icon_size = NULL,
                              icon_text_fit = NULL,
+                             icon_text_fit_padding = NULL,
+                             icon_translate = NULL,
+                             icon_translate_anchor = NULL,
+                             symbol_avoid_edges = NULL,
+                             symbol_placement = NULL,
+                             symbol_sort_key = NULL,
+                             symbol_spacing = NULL,
+                             symbol_z_elevate = NULL,
+                             symbol_z_order = NULL,
+                             text_allow_overlap = NULL,
                              text_anchor = NULL,
                              text_color = NULL,
+                             text_emissive_strength = NULL,
                              text_field = NULL,
                              text_font = NULL,
+                             text_halo_blur = NULL,
                              text_halo_color = NULL,
                              text_halo_width = NULL,
                              text_ignore_placement = NULL,
+                             text_justify = NULL,
                              text_keep_upright = NULL,
+                             text_letter_spacing = NULL,
+                             text_line_height = NULL,
+                             text_max_angle = NULL,
+                             text_max_width = NULL,
                              text_offset = NULL,
                              text_opacity = NULL,
+                             text_optional = NULL,
+                             text_padding = NULL,
+                             text_pitch_alignment = NULL,
+                             text_radial_offset = NULL,
+                             text_rotate = NULL,
+                             text_rotation_alignment = NULL,
                              text_size = NULL,
+                             text_transform = NULL,
+                             text_translate = NULL,
+                             text_translate_anchor = NULL,
+                             text_variable_anchor = NULL,
+                             text_writing_mode = NULL,
                              visibility = "visible",
                              slot = NULL,
                              min_zoom = NULL,
@@ -825,28 +903,68 @@ add_symbol_layer <- function(map,
   if (!is.null(icon_allow_overlap)) layout[["icon-allow-overlap"]] <- icon_allow_overlap
   if (!is.null(icon_anchor)) layout[["icon-anchor"]] <- icon_anchor
   if (!is.null(icon_color)) paint[["icon-color"]] <- icon_color
+  if (!is.null(icon_color_brightness_max)) paint[["icon-color-brightness-max"]] <- icon_color_brightness_max
+  if (!is.null(icon_color_brightness_min)) paint[["icon-color-brightness-min"]] <- icon_color_brightness_min
+  if (!is.null(icon_color_contrast)) paint[["icon-color-contrast"]] <- icon_color_contrast
+  if (!is.null(icon_color_saturation)) paint[["icon-color-saturation"]] <- icon_color_saturation
+  if (!is.null(icon_emissive_strength)) paint[["icon-emissive-strength"]] <- icon_emissive_strength
+  if (!is.null(icon_halo_blur)) paint[["icon-halo-blur"]] <- icon_halo_blur
   if (!is.null(icon_halo_color)) paint[["icon-halo-color"]] <- icon_halo_color
   if (!is.null(icon_halo_width)) paint[["icon-halo-width"]] <- icon_halo_width
   if (!is.null(icon_ignore_placement)) layout[["icon-ignore-placement"]] <- icon_ignore_placement
   if (!is.null(icon_image)) layout[["icon-image"]] <- icon_image
+  if (!is.null(icon_image_cross_fade)) layout[["icon-image-cross-fade"]] <- icon_image_cross_fade
   if (!is.null(icon_keep_upright)) layout[["icon-keep-upright"]] <- icon_keep_upright
   if (!is.null(icon_offset)) layout[["icon-offset"]] <- icon_offset
   if (!is.null(icon_opacity)) paint[["icon-opacity"]] <- icon_opacity
+  if (!is.null(icon_optional)) layout[["icon-optional"]] <- icon_optional
+  if (!is.null(icon_padding)) layout[["icon-padding"]] <- icon_padding
+  if (!is.null(icon_pitch_alignment)) layout[["icon-pitch-alignment"]] <- icon_pitch_alignment
   if (!is.null(icon_rotate)) layout[["icon-rotate"]] <- icon_rotate
+  if (!is.null(icon_rotation_alignment)) layout[["icon-rotation-alignment"]] <- icon_rotation_alignment
   if (!is.null(icon_size)) layout[["icon-size"]] <- icon_size
   if (!is.null(icon_text_fit)) layout[["icon-text-fit"]] <- icon_text_fit
+  if (!is.null(icon_text_fit_padding)) layout[["icon-text-fit-padding"]] <- icon_text_fit_padding
+  if (!is.null(icon_translate)) paint[["icon-translate"]] <- icon_translate
+  if (!is.null(icon_translate_anchor)) paint[["icon-translate-anchor"]] <- icon_translate_anchor
 
+  if (!is.null(symbol_avoid_edges)) layout[["symbol-avoid-edges"]] <- symbol_avoid_edges
+  if (!is.null(symbol_placement)) layout[["symbol-placement"]] <- symbol_placement
+  if (!is.null(symbol_sort_key)) layout[["symbol-sort-key"]] <- symbol_sort_key
+  if (!is.null(symbol_spacing)) layout[["symbol-spacing"]] <- symbol_spacing
+  if (!is.null(symbol_z_elevate)) paint[["symbol-z-elevate"]] <- symbol_z_elevate
+  if (!is.null(symbol_z_order)) layout[["symbol-z-order"]] <- symbol_z_order
+
+  if (!is.null(text_allow_overlap)) layout[["text-allow-overlap"]] <- text_allow_overlap
   if (!is.null(text_anchor)) layout[["text-anchor"]] <- text_anchor
   if (!is.null(text_color)) paint[["text-color"]] <- text_color
+  if (!is.null(text_emissive_strength)) paint[["text-emissive-strength"]] <- text_emissive_strength
   if (!is.null(text_field)) layout[["text-field"]] <- text_field
   if (!is.null(text_font)) layout[["text-font"]] <- text_font
+  if (!is.null(text_halo_blur)) paint[["text-halo-blur"]] <- text_halo_blur
   if (!is.null(text_halo_color)) paint[["text-halo-color"]] <- text_halo_color
   if (!is.null(text_halo_width)) paint[["text-halo-width"]] <- text_halo_width
   if (!is.null(text_ignore_placement)) layout[["text-ignore-placement"]] <- text_ignore_placement
+  if (!is.null(text_justify)) layout[["text-justify"]] <- text_justify
   if (!is.null(text_keep_upright)) layout[["text-keep-upright"]] <- text_keep_upright
+  if (!is.null(text_letter_spacing)) layout[["text-letter-spacing"]] <- text_letter_spacing
+  if (!is.null(text_line_height)) layout[["text-line-height"]] <- text_line_height
+  if (!is.null(text_max_angle)) layout[["text-max-angle"]] <- text_max_angle
+  if (!is.null(text_max_width)) layout[["text-max-width"]] <- text_max_width
   if (!is.null(text_offset)) layout[["text-offset"]] <- text_offset
   if (!is.null(text_opacity)) paint[["text-opacity"]] <- text_opacity
+  if (!is.null(text_optional)) layout[["text-optional"]] <- text_optional
+  if (!is.null(text_padding)) layout[["text-padding"]] <- text_padding
+  if (!is.null(text_pitch_alignment)) layout[["text-pitch-alignment"]] <- text_pitch_alignment
+  if (!is.null(text_radial_offset)) layout[["text-radial-offset"]] <- text_radial_offset
+  if (!is.null(text_rotate)) layout[["text-rotate"]] <- text_rotate
+  if (!is.null(text_rotation_alignment)) layout[["text-rotation-alignment"]] <- text_rotation_alignment
   if (!is.null(text_size)) layout[["text-size"]] <- text_size
+  if (!is.null(text_transform)) layout[["text-transform"]] <- text_transform
+  if (!is.null(text_translate)) paint[["text-translate"]] <- text_translate
+  if (!is.null(text_translate_anchor)) paint[["text-translate-anchor"]] <- text_translate_anchor
+  if (!is.null(text_variable_anchor)) layout[["text-variable-anchor"]] <- text_variable_anchor
+  if (!is.null(text_writing_mode)) layout[["text-writing-mode"]] <- text_writing_mode
 
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
