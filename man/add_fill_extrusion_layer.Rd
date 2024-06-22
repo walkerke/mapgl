@@ -44,7 +44,7 @@ add_fill_extrusion_layer(
 
 \item{fill_extrusion_pattern}{Name of image in sprite to use for drawing image fills.}
 
-\item{fill_extrusion_translate}{The geometry's offset. Values are \link{x, y} where negatives indicate left and up.}
+\item{fill_extrusion_translate}{The geometry's offset. Values are \code{c(x, y)} where negatives indicate left and up.}
 
 \item{fill_extrusion_translate_anchor}{Controls the frame of reference for \code{fill-extrusion-translate}.}
 

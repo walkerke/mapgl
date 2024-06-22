@@ -50,7 +50,7 @@ add_fill_layer(
 
 \item{fill_sort_key}{Sorts features in ascending order based on this value.}
 
-\item{fill_translate}{The geometry's offset. Values are \link{x, y} where negatives indicate left and up.}
+\item{fill_translate}{The geometry's offset. Values are \code{c(x, y)} where negatives indicate left and up.}
 
 \item{fill_translate_anchor}{Controls the frame of reference for \code{fill-translate}.}
 

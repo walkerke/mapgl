@@ -54,7 +54,7 @@ add_line_layer(
 
 \item{line_sort_key}{Sorts features in ascending order based on this value.}
 
-\item{line_translate}{The geometry's offset. Values are \link{x, y} where negatives indicate left and up.}
+\item{line_translate}{The geometry's offset. Values are \code{c(x, y)} where negatives indicate left and up.}
 
 \item{line_translate_anchor}{Controls the frame of reference for \code{line-translate}.}
 
