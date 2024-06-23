@@ -70,7 +70,7 @@ mapboxgl <- function(style = NULL,
 #'
 #' @return A Mapbox GL output element for use in a Shiny UI
 #' @export
-mapboxglOutput <- function(outputId, width = "100%", height = "400px") {
+mapboxglOutput <- function(outputId, width = "100%", height = "100%") {
   htmlwidgets::shinyWidgetOutput(outputId, "mapboxgl", width, height, package = "mapgl")
 }
 

@@ -17,10 +17,13 @@
 #' \dontrun{
 #' library(mapgl)
 #'
-#' map1 <- mapboxgl(style = "mapbox://styles/mapbox/light-v11", center = c(0, 0), zoom = 0, access_token = "your_token_here")
-#' map2 <- mapboxgl(style = "mapbox://styles/mapbox/dark-v11", center = c(0, 0), zoom = 0, access_token = "your_token_here")
+#' library(mapgl)
 #'
-#' compare(map1, map2, mousemove = TRUE, orientation = 'vertical')
+#' m1 <- mapboxgl(style = mapbox_style("light"))
+#'
+#' m2 <- mapboxgl(style = mapbox_style("dark"))
+#'
+#' compare(m1, m2)
 #' }
 compare <- function(map1,
                     map2,
@@ -85,33 +88,4 @@ compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, or
     package = 'mapgl',
     elementId = elementId
   )
-}
-
-#' Create a UI output for a comparison map
-#'
-#' This function creates a UI output element for a comparison map in a Shiny application.
-#'
-#' @param outputId The output variable to read the map from.
-#' @param width The width of the map container.
-#' @param height The height of the map container.
-#'
-#' @return A UI output element for the comparison map.
-#' @export
-compareOutput <- function(outputId, width = '100%', height = '400px') {
-  htmlwidgets::shinyWidgetOutput(outputId, 'mapboxgl_compare', width, height, package = 'mapgl')
-}
-
-#' Render a comparison map in a Shiny application
-#'
-#' This function renders a comparison map in a Shiny application.
-#'
-#' @param expr An expression that generates a comparison map.
-#' @param env The environment in which to evaluate the expression.
-#' @param quoted Logical, whether the expression is quoted. This is useful if you want to save an expression in a variable.
-#'
-#' @return A rendered comparison map.
-#' @export
-renderCompare <- function(expr, env = parent.frame(), quoted = FALSE) {
-  if (!quoted) { expr <- substitute(expr) }
-  htmlwidgets::shinyRenderWidget(expr, compareOutput, env, quoted = TRUE)
 }

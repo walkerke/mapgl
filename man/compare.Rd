@@ -39,9 +39,12 @@ This function creates a comparison view between two Mapbox GL or Maplibre GL map
 \dontrun{
 library(mapgl)
 
-map1 <- mapboxgl(style = "mapbox://styles/mapbox/light-v11", center = c(0, 0), zoom = 0, access_token = "your_token_here")
-map2 <- mapboxgl(style = "mapbox://styles/mapbox/dark-v11", center = c(0, 0), zoom = 0, access_token = "your_token_here")
+library(mapgl)
 
-compare(map1, map2, mousemove = TRUE, orientation = 'vertical')
+m1 <- mapboxgl(style = mapbox_style("light"))
+
+m2 <- mapboxgl(style = mapbox_style("dark"))
+
+compare(m1, m2)
 }
 }

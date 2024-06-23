@@ -53,6 +53,7 @@ HTMLWidgets.widget({
           zoom: x.map1.zoom,
           bearing: x.map1.bearing,
           pitch: x.map1.pitch,
+          projection: x.map1.projection,
           accessToken: x.map1.access_token
         });
 
@@ -63,6 +64,7 @@ HTMLWidgets.widget({
           zoom: x.map2.zoom,
           bearing: x.map2.bearing,
           pitch: x.map2.pitch,
+          projection: x.map2.projection,
           accessToken: x.map2.access_token
         });
 

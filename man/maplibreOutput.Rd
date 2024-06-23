@@ -4,7 +4,7 @@
 \alias{maplibreOutput}
 \title{Create a Maplibre GL output element for Shiny}
 \usage{
-maplibreOutput(outputId, width = "100\%", height = "400px")
+maplibreOutput(outputId, width = "100\%", height = "100\%")
 }
 \arguments{
 \item{outputId}{The output variable to read from}
