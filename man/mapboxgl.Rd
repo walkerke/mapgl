@@ -14,7 +14,7 @@ mapboxgl(
   parallels = NULL,
   access_token = NULL,
   width = "100\%",
-  height = "100\%",
+  height = NULL,
   ...
 )
 }

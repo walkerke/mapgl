@@ -4,7 +4,7 @@
 \alias{mapboxglOutput}
 \title{Create a Mapbox GL output element for Shiny}
 \usage{
-mapboxglOutput(outputId, width = "100\%", height = "100\%")
+mapboxglOutput(outputId, width = "100\%", height = "400px")
 }
 \arguments{
 \item{outputId}{The output variable to read from}

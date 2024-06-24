@@ -10,7 +10,8 @@ add_categorical_legend(
   values,
   colors,
   circular_patches = FALSE,
-  position = "top-left"
+  position = "top-left",
+  unique_id = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ add_categorical_legend(
 \item{circular_patches}{Logical, whether to use circular patches in the legend.}
 
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
+
+\item{unique_id}{A unique ID for the legend container; defaults to NULL.}
 }
 \value{
 The updated map object with the legend added.

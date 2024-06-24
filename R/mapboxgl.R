@@ -28,7 +28,7 @@ mapboxgl <- function(style = NULL,
                      parallels = NULL,
                      access_token = NULL,
                      width = "100%",
-                     height = "100%",
+                     height = NULL,
                      ...) {
 
   if (is.null(access_token)) {
@@ -59,7 +59,17 @@ mapboxgl <- function(style = NULL,
     ),
     width = width,
     height = height,
-    package = "mapgl"
+    package = "mapgl",
+    sizingPolicy = htmlwidgets::sizingPolicy(
+      viewer.suppress = FALSE,
+      browser.fill = FALSE,
+      viewer.fill = TRUE,
+      knitr.figure = TRUE,
+      padding = 0,
+      knitr.defaultHeight = "500px",
+      viewer.defaultHeight = "100vh",
+      browser.defaultHeight = "100vh"
+    )
   )
 }
 
@@ -71,7 +81,7 @@ mapboxgl <- function(style = NULL,
 #'
 #' @return A Mapbox GL output element for use in a Shiny UI
 #' @export
-mapboxglOutput <- function(outputId, width = "100%", height = "100%") {
+mapboxglOutput <- function(outputId, width = "100%", height = "400px") {
   htmlwidgets::shinyWidgetOutput(outputId, "mapboxgl", width, height, package = "mapgl")
 }
 

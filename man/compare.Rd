@@ -8,7 +8,7 @@ compare(
   map1,
   map2,
   width = "100\%",
-  height = "100\%",
+  height = NULL,
   elementId = NULL,
   mousemove = FALSE,
   orientation = "vertical"

@@ -13,13 +13,13 @@
 add_legend <- function(map, legend_title, values, colors,
                        type = c("continuous", "categorical"),
                        circular_patches = FALSE, position = "top-left") {
-
   type <- match.arg(type)
+  unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
 
   if (type == "continuous") {
-    add_continuous_legend(map, legend_title, values, colors, position)
+    add_continuous_legend(map, legend_title, values, colors, position, unique_id)
   } else {
-    add_categorical_legend(map, legend_title, values, colors, circular_patches, position)
+    add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id)
   }
 }
 
@@ -31,17 +31,22 @@ add_legend <- function(map, legend_title, values, colors,
 #' @param colors The corresponding colors for the values (vector of colors).
 #' @param circular_patches Logical, whether to use circular patches in the legend.
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
+#' @param unique_id A unique ID for the legend container; defaults to NULL.
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left") {
+add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left", unique_id = NULL) {
   legend_items <- lapply(seq_along(values), function(i) {
     shape_style <- if (circular_patches) "border-radius: 50%;" else ""
     paste0('<div class="legend-item"><span class="legend-color" style="background-color:', colors[i], ';', shape_style, '"></span>', values[i], '</div>')
   })
 
+  if (is.null(unique_id)) {
+    unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
+  }
+
   legend_html <- paste0(
-    '<div id="mapboxgl-legend" class="', position, '">',
+    '<div id="', unique_id, '" class="mapboxgl-legend ', position, '">',
     '<h2>', legend_title, '</h2>',
     paste0(legend_items, collapse = ""),
     '</div>'
@@ -50,7 +55,7 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
   legend_css <- "
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
-    #mapboxgl-legend h2 {
+    .mapboxgl-legend h2 {
       font-size: 14px;
       font-family: 'Open Sans';
       line-height: 20px;
@@ -62,7 +67,7 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       text-overflow: ellipsis;
     }
 
-    #mapboxgl-legend {
+    .mapboxgl-legend {
       position: absolute;
       border-radius: 10px;
       margin: 10px;
@@ -72,27 +77,27 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       z-index: 1002;
     }
 
-    #mapboxgl-legend.top-left {
+    .mapboxgl-legend.top-left {
       top: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.bottom-left {
+    .mapboxgl-legend.bottom-left {
       bottom: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.top-right {
+    .mapboxgl-legend.top-right {
       top: 10px;
       right: 10px;
     }
 
-    #mapboxgl-legend.bottom-right {
+    .mapboxgl-legend.bottom-right {
       bottom: 10px;
       right: 10px;
     }
 
-    #mapboxgl-legend .legend-item {
+    .mapboxgl-legend .legend-item {
       display: flex;
       align-items: center;
       margin-bottom: 5px;
@@ -103,14 +108,13 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       text-overflow: ellipsis;
     }
 
-    #mapboxgl-legend .legend-color {
+    .mapboxgl-legend .legend-color {
       width: 20px;
       height: 20px;
       margin-right: 5px;
       display: inline-block;
     }
   "
-
 
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
@@ -132,10 +136,16 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 #' @param values The values being represented on the map (vector of stops).
 #' @param colors The colors used to generate the color ramp.
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
+#' @param unique_id A unique ID for the legend container. Defaults to NULL.
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_continuous_legend <- function(map, legend_title, values, colors, position = "topleft") {
+add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL) {
+
+  if (is.null(unique_id)) {
+    unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
+  }
+
   color_gradient <- paste0("linear-gradient(to right, ", paste(colors, collapse = ", "), ")")
 
   num_values <- length(values)
@@ -145,9 +155,8 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     '%; transform: translateX(-50%);">', values, '</span>', collapse = ""
   )
 
-
   legend_html <- paste0(
-    '<div id="mapboxgl-legend" class="', position, '">',
+    '<div id="', unique_id, '" class="mapboxgl-legend ', position, '">',
     '<h2>', legend_title, '</h2>',
     '<div class="legend-gradient" style="background:', color_gradient, '"></div>',
     '<div class="legend-labels" style="position: relative; height: 20px;">',
@@ -159,7 +168,7 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
   legend_css <- "
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
-    #mapboxgl-legend h2 {
+    .mapboxgl-legend h2 {
       font-size: 14px;
       font-family: 'Open Sans';
       line-height: 20px;
@@ -167,7 +176,7 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
       margin-top: 0px;
     }
 
-    #mapboxgl-legend {
+    .mapboxgl-legend {
       position: absolute;
       border-radius: 10px;
       margin: 10px;
@@ -177,43 +186,42 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
       z-index: 1002;
     }
 
-    #mapboxgl-legend.top-left {
+    .mapboxgl-legend.top-left {
       top: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.bottom-left {
+    .mapboxgl-legend.bottom-left {
       bottom: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.top-right {
+    .mapboxgl-legend.top-right {
       top: 10px;
       right: 10px;
     }
 
-    #mapboxgl-legend.bottom-right {
+    .mapboxgl-legend.bottom-right {
       bottom: 10px;
       right: 10px;
     }
 
-    #mapboxgl-legend .legend-gradient {
+    .mapboxgl-legend .legend-gradient {
       height: 20px;
       margin-bottom: 5px;
     }
 
-    #mapboxgl-legend .legend-labels {
+    .mapboxgl-legend .legend-labels {
       display: flex;
       justify-content: space-between;
       font-family: 'Open Sans';
     }
 
-    #mapboxgl-legend .legend-labels span {
+    .mapboxgl-legend .legend-labels span {
       position: absolute;
       transform: translateX(-50%);
     }
   "
-
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
 

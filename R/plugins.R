@@ -28,7 +28,7 @@
 compare <- function(map1,
                     map2,
                     width = '100%',
-                    height = '100%',
+                    height = NULL,
                     elementId = NULL,
                     mousemove = FALSE,
                     orientation = 'vertical'
@@ -62,7 +62,17 @@ compare.mapboxgl <- function(map1, map2, width, height, elementId, mousemove, or
     width = width,
     height = height,
     package = 'mapgl',
-    elementId = elementId
+    elementId = elementId,
+    sizingPolicy = htmlwidgets::sizingPolicy(
+      viewer.suppress = FALSE,
+      browser.fill = FALSE,
+      viewer.fill = TRUE,
+      knitr.figure = TRUE,
+      padding = 0,
+      knitr.defaultHeight = "500px",
+      viewer.defaultHeight = "100vh",
+      browser.defaultHeight = "100vh"
+    )
   )
 }
 
@@ -86,6 +96,16 @@ compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, or
     width = width,
     height = height,
     package = 'mapgl',
-    elementId = elementId
+    elementId = elementId,
+    sizingPolicy = htmlwidgets::sizingPolicy(
+      viewer.suppress = FALSE,
+      browser.fill = FALSE,
+      viewer.fill = TRUE,
+      knitr.figure = TRUE,
+      padding = 0,
+      knitr.defaultHeight = "500px",
+      viewer.defaultHeight = "100vh",
+      browser.defaultHeight = "100vh"
+    )
   )
 }

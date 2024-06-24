@@ -22,7 +22,7 @@ maplibre <- function(style = "https://demotiles.maplibre.org/style.json",
                      bearing = 0,
                      pitch = 0,
                      width = "100%",
-                     height = "100%",
+                     height = NULL,
                      ...) {
 
 
@@ -40,7 +40,17 @@ maplibre <- function(style = "https://demotiles.maplibre.org/style.json",
     ),
     width = width,
     height = height,
-    package = "mapgl"
+    package = "mapgl",
+    sizingPolicy = htmlwidgets::sizingPolicy(
+      viewer.suppress = FALSE,
+      browser.fill = FALSE,
+      viewer.fill = TRUE,
+      knitr.figure = TRUE,
+      padding = 0,
+      knitr.defaultHeight = "500px",
+      viewer.defaultHeight = "100vh",
+      browser.defaultHeight = "100vh"
+    )
   )
 }
 
@@ -52,7 +62,7 @@ maplibre <- function(style = "https://demotiles.maplibre.org/style.json",
 #'
 #' @return A Maplibre GL output element for use in a Shiny UI
 #' @export
-maplibreOutput <- function(outputId, width = "100%", height = "100%") {
+maplibreOutput <- function(outputId, width = "100%", height = "400px") {
   htmlwidgets::shinyWidgetOutput(outputId, "maplibregl", width, height, package = "mapgl")
 }
 
