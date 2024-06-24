@@ -52,10 +52,10 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     '</div>'
   )
 
-  legend_css <- "
+  legend_css <- paste0("
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
-    .mapboxgl-legend h2 {
+    #", unique_id, " h2 {
       font-size: 14px;
       font-family: 'Open Sans';
       line-height: 20px;
@@ -67,7 +67,7 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       text-overflow: ellipsis;
     }
 
-    .mapboxgl-legend {
+    #", unique_id, " {
       position: absolute;
       border-radius: 10px;
       margin: 10px;
@@ -77,27 +77,27 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       z-index: 1002;
     }
 
-    .mapboxgl-legend.top-left {
+    #", unique_id, ".top-left {
       top: 10px;
       left: 10px;
     }
 
-    .mapboxgl-legend.bottom-left {
+    #", unique_id, ".bottom-left {
       bottom: 10px;
       left: 10px;
     }
 
-    .mapboxgl-legend.top-right {
+    #", unique_id, ".top-right {
       top: 10px;
       right: 10px;
     }
 
-    .mapboxgl-legend.bottom-right {
+    #", unique_id, ".bottom-right {
       bottom: 10px;
       right: 10px;
     }
 
-    .mapboxgl-legend .legend-item {
+    #", unique_id, " .legend-item {
       display: flex;
       align-items: center;
       margin-bottom: 5px;
@@ -108,13 +108,13 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       text-overflow: ellipsis;
     }
 
-    .mapboxgl-legend .legend-color {
+    #", unique_id, " .legend-color {
       width: 20px;
       height: 20px;
       margin-right: 5px;
       display: inline-block;
     }
-  "
+  ")
 
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
@@ -165,10 +165,10 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     '</div>'
   )
 
-  legend_css <- "
+  legend_css <- paste0("
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
-    .mapboxgl-legend h2 {
+    #", unique_id, " h2 {
       font-size: 14px;
       font-family: 'Open Sans';
       line-height: 20px;
@@ -176,7 +176,7 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
       margin-top: 0px;
     }
 
-    .mapboxgl-legend {
+    #", unique_id, " {
       position: absolute;
       border-radius: 10px;
       margin: 10px;
@@ -186,42 +186,42 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
       z-index: 1002;
     }
 
-    .mapboxgl-legend.top-left {
+    #", unique_id, ".top-left {
       top: 10px;
       left: 10px;
     }
 
-    .mapboxgl-legend.bottom-left {
+    #", unique_id, ".bottom-left {
       bottom: 10px;
       left: 10px;
     }
 
-    .mapboxgl-legend.top-right {
+    #", unique_id, ".top-right {
       top: 10px;
       right: 10px;
     }
 
-    .mapboxgl-legend.bottom-right {
+    #", unique_id, ".bottom-right {
       bottom: 10px;
       right: 10px;
     }
 
-    .mapboxgl-legend .legend-gradient {
+    #", unique_id, " .legend-gradient {
       height: 20px;
       margin-bottom: 5px;
     }
 
-    .mapboxgl-legend .legend-labels {
+    #", unique_id, " .legend-labels {
       display: flex;
       justify-content: space-between;
       font-family: 'Open Sans';
     }
 
-    .mapboxgl-legend .legend-labels span {
+    #", unique_id, " .legend-labels span {
       position: absolute;
       transform: translateX(-50%);
     }
-  "
+")
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
 
