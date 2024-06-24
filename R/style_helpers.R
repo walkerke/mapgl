@@ -111,6 +111,7 @@ match_expr <- function(column = NULL, property = NULL, values, stops, default = 
 #' @param base The base value to use for the step expression.
 #' @param values A numeric vector of values at which steps occur.
 #' @param stops A vector of corresponding stops (colors, sizes, etc.) for the steps.
+#' @param na_color The color to use for missing values.  Mapbox GL JS defaults to black if this is not supplied.
 #'
 #' @return A list representing the step expression.
 #' @export
@@ -122,7 +123,8 @@ match_expr <- function(column = NULL, property = NULL, values, stops, default = 
 #'   values = c(1000, 5000, 10000),
 #'   stops = c("#ff0000", "#00ff00", "#0000ff")
 #' )
-step_expr <- function(column = NULL, property = NULL, base, values, stops) {
+step_expr <- function(column = NULL, property = NULL, base, values, stops,
+                      na_color = NULL) {
 
   if (length(values) != length(stops)) {
     rlang::abort("`values` and `stops` must have the same length.")
@@ -144,7 +146,14 @@ step_expr <- function(column = NULL, property = NULL, base, values, stops) {
     expr <- c(expr, values[i], stops[i])
   }
 
-  expr
+  if (!is.null(na_color)) {
+    expr_with_na <- list("case", list("==", to_map, NULL), na_color, expr)
+
+    expr_with_na
+  } else {
+    expr
+
+  }
 }
 
 #' Set a configuration property for a Mapbox GL map
@@ -239,4 +248,16 @@ maptiler_style <- function(style_name, api_key = NULL) {
   style_url_with_key <- paste0(style_url, "?key=", api_key)
 
   return(style_url_with_key)
+}
+
+#' Get column or property for use in mapping
+#'
+#' This function returns a an expression to get a specified column from a dataset (or a property from a layer).
+#'
+#' @param column The name of the column or property to get.
+#'
+#' @return A list representing the expression to get the column.
+#' @export
+get_column <- function(column) {
+  list("get", column)
 }

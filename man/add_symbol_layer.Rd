@@ -89,7 +89,7 @@ add_symbol_layer(
 
 \item{source_layer}{The source layer (for vector sources).}
 
-\item{icon_allow_overlap}{If true, the icon will be visible even if it collides with other previously drawn symbols.}
+\item{icon_allow_overlap}{If TRUE, the icon will be visible even if it collides with other previously drawn symbols.}
 
 \item{icon_anchor}{Part of the icon placed closest to the anchor.}
 
@@ -111,19 +111,19 @@ add_symbol_layer(
 
 \item{icon_halo_width}{The width of the icon's halo.}
 
-\item{icon_ignore_placement}{If true, the icon will be visible even if it collides with other symbols.}
+\item{icon_ignore_placement}{If TRUE, the icon will be visible even if it collides with other symbols.}
 
 \item{icon_image}{Name of image in sprite to use for drawing an image background. To use values in a column of your input dataset, use \code{c('get', 'YOUR_ICON_COLUMN_NAME')}.}
 
 \item{icon_image_cross_fade}{The cross-fade parameter for the icon image.}
 
-\item{icon_keep_upright}{If true, the icon will be kept upright.}
+\item{icon_keep_upright}{If TRUE, the icon will be kept upright.}
 
 \item{icon_offset}{Offset distance of icon.}
 
 \item{icon_opacity}{The opacity at which the icon will be drawn.}
 
-\item{icon_optional}{If true, the icon will be optional.}
+\item{icon_optional}{If TRUE, the icon will be optional.}
 
 \item{icon_padding}{Padding around the icon.}
 
@@ -143,7 +143,7 @@ add_symbol_layer(
 
 \item{icon_translate_anchor}{Controls the frame of reference for \code{icon-translate}.}
 
-\item{symbol_avoid_edges}{If true, the symbol will be avoided when near the edges.}
+\item{symbol_avoid_edges}{If TRUE, the symbol will be avoided when near the edges.}
 
 \item{symbol_placement}{Placement of the symbol on the map.}
 
@@ -155,7 +155,7 @@ add_symbol_layer(
 
 \item{symbol_z_order}{Orders the symbol z-axis.}
 
-\item{text_allow_overlap}{If true, the text will be visible even if it collides with other previously drawn symbols.}
+\item{text_allow_overlap}{If TRUE, the text will be visible even if it collides with other previously drawn symbols.}
 
 \item{text_anchor}{Part of the text placed closest to the anchor.}
 
@@ -173,11 +173,11 @@ add_symbol_layer(
 
 \item{text_halo_width}{The width of the text's halo.}
 
-\item{text_ignore_placement}{If true, the text will be visible even if it collides with other symbols.}
+\item{text_ignore_placement}{If TRUE, the text will be visible even if it collides with other symbols.}
 
 \item{text_justify}{The justification of the text.}
 
-\item{text_keep_upright}{If true, the text will be kept upright.}
+\item{text_keep_upright}{If TRUE, the text will be kept upright.}
 
 \item{text_letter_spacing}{Spacing between text letters.}
 
@@ -191,7 +191,7 @@ add_symbol_layer(
 
 \item{text_opacity}{The opacity at which the text will be drawn.}
 
-\item{text_optional}{If true, the text will be optional.}
+\item{text_optional}{If TRUE, the text will be optional.}
 
 \item{text_padding}{Padding around the text.}
 

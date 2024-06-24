@@ -1,0 +1,7 @@
+---
+format: html
+---
+
+# mapgl <img src="tools/readme/mapgl_sticker.png" align="right" alt="" width="120" />
+
+The mapgl package...

@@ -1,7 +1,7 @@
 Package: mapgl
 Title: Wrapper for Mapbox GL JS v3 and Maplibre GL JS
 Version: 0.1.0
-Date: 2024-06-19
+Date: 2024-06-24
 Authors@R: 
     person("Kyle", "Walker", , "kyle@walker-data.com", role = c("aut", "cre"))
 Description: Provides an interface to Mapbox GL JS v3 and Maplibre GL JS for interactive,
@@ -17,4 +17,5 @@ Imports:
   rlang
 Suggests: 
   shiny,
-  mapboxapi
+  mapboxapi,
+  usethis

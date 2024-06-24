@@ -4,7 +4,7 @@
 \alias{step_expr}
 \title{Create a step expression for Mapbox GL}
 \usage{
-step_expr(column = NULL, property = NULL, base, values, stops)
+step_expr(column = NULL, property = NULL, base, values, stops, na_color = NULL)
 }
 \arguments{
 \item{column}{The name of the column to use for the step expression. If specified, \code{property} should be NULL.}
@@ -16,6 +16,8 @@ step_expr(column = NULL, property = NULL, base, values, stops)
 \item{values}{A numeric vector of values at which steps occur.}
 
 \item{stops}{A vector of corresponding stops (colors, sizes, etc.) for the steps.}
+
+\item{na_color}{The color to use for missing values.  Mapbox GL JS defaults to black if this is not supplied.}
 }
 \value{
 A list representing the step expression.

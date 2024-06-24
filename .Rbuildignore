@@ -14,3 +14,4 @@ index.md
 ^\.github$
 logo.png
 ^pkgdown$
+LICENSE.md

@@ -1,0 +1,43 @@
+url: https://walker-data.com/mapgl
+
+home:
+  title: High-Performance WebGL Mapping in R
+
+authors:
+  Kyle Walker:
+    href: https://walker-data.com
+
+template:
+  bootstrap: 5
+  bootswatch: zephyr
+
+navbar:
+  structure:
+    left:
+    - home
+    - reference
+    - articles
+    - news
+    right: github
+  components:
+    home:
+      icon: fa-home fa-lg
+      href: index.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+      - text: Getting started with mapgl
+        href: articles/getting-started.html
+      - text: An overview of layers in mapgl
+        href: articles/layers-overview.html
+      - text: Fundamentals of map design with mapgl
+        href: articles/map-design.html
+      - text: Using mapgl with Shiny
+        href: articles/margins-of-error.html
+
+    github:
+      icon: fa-github fa-lg
+      href: https://github.com/walkerke/mapgl

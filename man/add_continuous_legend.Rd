@@ -15,7 +15,7 @@ add_continuous_legend(map, legend_title, values, colors, position = "topleft")
 
 \item{colors}{The colors used to generate the color ramp.}
 
-\item{position}{The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").}
+\item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 }
 \value{
 The updated map object with the legend added.

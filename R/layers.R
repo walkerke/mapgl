@@ -718,7 +718,7 @@ add_raster_layer <- function(map,
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
-#' @param icon_allow_overlap If true, the icon will be visible even if it collides with other previously drawn symbols.
+#' @param icon_allow_overlap If TRUE, the icon will be visible even if it collides with other previously drawn symbols.
 #' @param icon_anchor Part of the icon placed closest to the anchor.
 #' @param icon_color The color of the icon.  This is not supported for many Mapbox icons; read more at \url{https://docs.mapbox.com/help/troubleshooting/using-recolorable-images-in-mapbox-maps/}.
 #' @param icon_color_brightness_max The maximum brightness of the icon color.
@@ -729,13 +729,13 @@ add_raster_layer <- function(map,
 #' @param icon_halo_blur The blur applied to the icon's halo.
 #' @param icon_halo_color The color of the icon's halo.
 #' @param icon_halo_width The width of the icon's halo.
-#' @param icon_ignore_placement If true, the icon will be visible even if it collides with other symbols.
+#' @param icon_ignore_placement If TRUE, the icon will be visible even if it collides with other symbols.
 #' @param icon_image Name of image in sprite to use for drawing an image background. To use values in a column of your input dataset, use `c('get', 'YOUR_ICON_COLUMN_NAME')`.
 #' @param icon_image_cross_fade The cross-fade parameter for the icon image.
-#' @param icon_keep_upright If true, the icon will be kept upright.
+#' @param icon_keep_upright If TRUE, the icon will be kept upright.
 #' @param icon_offset Offset distance of icon.
 #' @param icon_opacity The opacity at which the icon will be drawn.
-#' @param icon_optional If true, the icon will be optional.
+#' @param icon_optional If TRUE, the icon will be optional.
 #' @param icon_padding Padding around the icon.
 #' @param icon_pitch_alignment Alignment of the icon with respect to the pitch of the map.
 #' @param icon_rotate Rotates the icon clockwise.
@@ -745,13 +745,13 @@ add_raster_layer <- function(map,
 #' @param icon_text_fit_padding Padding for text fitting the icon.
 #' @param icon_translate The offset distance of the icon.
 #' @param icon_translate_anchor Controls the frame of reference for `icon-translate`.
-#' @param symbol_avoid_edges If true, the symbol will be avoided when near the edges.
+#' @param symbol_avoid_edges If TRUE, the symbol will be avoided when near the edges.
 #' @param symbol_placement Placement of the symbol on the map.
 #' @param symbol_sort_key Sorts features in ascending order based on this value.
 #' @param symbol_spacing Spacing between symbols.
 #' @param symbol_z_elevate Elevates the symbol z-axis.
 #' @param symbol_z_order Orders the symbol z-axis.
-#' @param text_allow_overlap If true, the text will be visible even if it collides with other previously drawn symbols.
+#' @param text_allow_overlap If TRUE, the text will be visible even if it collides with other previously drawn symbols.
 #' @param text_anchor Part of the text placed closest to the anchor.
 #' @param text_color The color of the text.
 #' @param text_emissive_strength The strength of the text's emissive color.
@@ -760,16 +760,16 @@ add_raster_layer <- function(map,
 #' @param text_halo_blur The blur applied to the text's halo.
 #' @param text_halo_color The color of the text's halo.
 #' @param text_halo_width The width of the text's halo.
-#' @param text_ignore_placement If true, the text will be visible even if it collides with other symbols.
+#' @param text_ignore_placement If TRUE, the text will be visible even if it collides with other symbols.
 #' @param text_justify The justification of the text.
-#' @param text_keep_upright If true, the text will be kept upright.
+#' @param text_keep_upright If TRUE, the text will be kept upright.
 #' @param text_letter_spacing Spacing between text letters.
 #' @param text_line_height Height of the text lines.
 #' @param text_max_angle Maximum angle of the text.
 #' @param text_max_width Maximum width of the text.
 #' @param text_offset Offset distance of text.
 #' @param text_opacity The opacity at which the text will be drawn.
-#' @param text_optional If true, the text will be optional.
+#' @param text_optional If TRUE, the text will be optional.
 #' @param text_padding Padding around the text.
 #' @param text_pitch_alignment Alignment of the text with respect to the pitch of the map.
 #' @param text_radial_offset Radial offset of the text.

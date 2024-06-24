@@ -33,9 +33,10 @@ mapboxgl <- function(style = NULL,
 
   if (is.null(access_token)) {
     if (Sys.getenv("MAPBOX_PUBLIC_TOKEN") == "") {
-      rlang::abort(c("A Mapbox access token is required. Get one at https://www.mapbox.com, and install it one of two ways:",
+      rlang::abort(c("A Mapbox access token is required. Get one from your account at https://www.mapbox.com, and do one of the following:",
                      i = "Run `usethis::edit_r_environ()` and add the line MAPBOX_PUBLIC_TOKEN='your_token_goes_here';",
-                     i = "Install the mapboxapi R package and run `mb_access_token('your_token_goes_here', install = TRUE)`"))
+                     i = "Install the mapboxapi R package and run `mb_access_token('your_token_goes_here', install = TRUE)`",
+                     i = "Alternatively, supply your token to the `access_token` parameter in this function or run `Sys.setenv(MAPBOX_PUBLIC_TOKEN='your_token_goes_here') for this session."))
     } else {
       access_token <- Sys.getenv("MAPBOX_PUBLIC_TOKEN")
     }

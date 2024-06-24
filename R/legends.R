@@ -6,13 +6,13 @@
 #' @param colors The corresponding colors for the values (either a vector of colors or an interpolate function).
 #' @param type one of "continuous" or "categorical"
 #' @param circular_patches Logical, whether to use circular patches in the legend.
-#' @param position The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").
+#' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #'
 #' @return The updated map object with the legend added.
 #' @export
 add_legend <- function(map, legend_title, values, colors,
                        type = c("continuous", "categorical"),
-                       circular_patches = FALSE, position = "topleft") {
+                       circular_patches = FALSE, position = "top-left") {
 
   type <- match.arg(type)
 
@@ -30,11 +30,11 @@ add_legend <- function(map, legend_title, values, colors,
 #' @param values The values being represented on the map (vector of categories).
 #' @param colors The corresponding colors for the values (vector of colors).
 #' @param circular_patches Logical, whether to use circular patches in the legend.
-#' @param position The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").
+#' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "topleft") {
+add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left") {
   legend_items <- lapply(seq_along(values), function(i) {
     shape_style <- if (circular_patches) "border-radius: 50%;" else ""
     paste0('<div class="legend-item"><span class="legend-color" style="background-color:', colors[i], ';', shape_style, '"></span>', values[i], '</div>')
@@ -72,22 +72,22 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       z-index: 1002;
     }
 
-    #mapboxgl-legend.topleft {
+    #mapboxgl-legend.top-left {
       top: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.bottomleft {
+    #mapboxgl-legend.bottom-left {
       bottom: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.topright {
+    #mapboxgl-legend.top-right {
       top: 10px;
       right: 10px;
     }
 
-    #mapboxgl-legend.bottomright {
+    #mapboxgl-legend.bottom-right {
       bottom: 10px;
       right: 10px;
     }
@@ -131,7 +131,7 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 #' @param legend_title The title of the legend.
 #' @param values The values being represented on the map (vector of stops).
 #' @param colors The colors used to generate the color ramp.
-#' @param position The position of the legend on the map (one of "topleft", "bottomleft", "topright", "bottomright").
+#' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #'
 #' @return The updated map object with the legend added.
 #' @export
@@ -177,22 +177,22 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
       z-index: 1002;
     }
 
-    #mapboxgl-legend.topleft {
+    #mapboxgl-legend.top-left {
       top: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.bottomleft {
+    #mapboxgl-legend.bottom-left {
       bottom: 10px;
       left: 10px;
     }
 
-    #mapboxgl-legend.topright {
+    #mapboxgl-legend.top-right {
       top: 10px;
       right: 10px;
     }
 
-    #mapboxgl-legend.bottomright {
+    #mapboxgl-legend.bottom-right {
       bottom: 10px;
       right: 10px;
     }
