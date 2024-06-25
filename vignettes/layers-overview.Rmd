@@ -39,7 +39,7 @@ maplibre(style = maptiler_style("backdrop")) |>
   )
 ```
 
-### Circle layers 
+### Circle layers
 
 ```{r}
 library(mapgl)

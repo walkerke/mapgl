@@ -322,6 +322,7 @@ HTMLWidgets.widget({
             legend.innerHTML = x.legend_html;
             // legend.classList.add("mapboxgl-legend");
             el.appendChild(legend);
+
           }
 
           // Add fullscreen control if enabled

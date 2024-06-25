@@ -1,8 +1,7 @@
 dependencies:
   - name: maplibre-gl
-    version: 2
-    src:
-      href: "https://unpkg.com/maplibre-gl/dist/"
+    version: "4.4.1"
+    src: "htmlwidgets/lib/maplibre-gl"
     script:
       - "maplibre-gl.js"
     stylesheet:

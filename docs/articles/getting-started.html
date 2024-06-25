@@ -85,10 +85,8 @@ users coming from other R mapping packages.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span>
 <span>  style <span class="op">=</span> <span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"satellite"</span><span class="op">)</span>,</span>
-<span>  projection <span class="op">=</span> <span class="st">"winkelTripel"</span>, </span>
-<span>  height <span class="op">=</span> <span class="st">"400px"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div id="htmlwidget-e5c8c404fe174e4c81bd" style="width:100%;height:400px;" class="mapboxgl html-widget"></div>
+<span>  projection <span class="op">=</span> <span class="st">"winkelTripel"</span><span class="op">)</span></span></code></pre></div>
+<div id="htmlwidget-e5c8c404fe174e4c81bd" style="width:100%;height:432.632880098888px;" class="mapboxgl html-widget"></div>
 <script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"style":"mapbox://styles/mapbox/satellite-v9","center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"winkelTripel","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[]},"evals":[],"jsHooks":[]}</script><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span>
 <span>  center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">97.6</span>, <span class="fl">25.4</span><span class="op">)</span></span>
@@ -106,18 +104,17 @@ users coming from other R mapping packages.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">mapgl</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span>height <span class="op">=</span> <span class="st">"400px"</span><span class="op">)</span></span></code></pre></div>
-<div id="htmlwidget-36aa3d2a04d42bbc2145" style="width:100%;height:400px;" class="maplibregl html-widget"></div>
-<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"style":"https://demotiles.maplibre.org/style.json","center":[0,0],"zoom":0,"bearing":0,"pitch":0,"additional_params":[]},"evals":[],"jsHooks":[]}</script><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div id="htmlwidget-36aa3d2a04d42bbc2145" style="width:100%;height:432.632880098888px;" class="maplibregl html-widget"></div>
+<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"style":"https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json","center":[0,0],"zoom":0,"bearing":0,"pitch":0,"additional_params":[]},"evals":[],"jsHooks":[]}</script><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span></span>
 <span>  style <span class="op">=</span> <span class="fu"><a href="../reference/maptiler_style.html">maptiler_style</a></span><span class="op">(</span><span class="st">"bright"</span><span class="op">)</span>,</span>
 <span>  center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">43.23412</span>, <span class="op">-</span><span class="fl">22.91370</span><span class="op">)</span>,</span>
-<span>  zoom <span class="op">=</span> <span class="fl">14</span>, </span>
-<span>  height <span class="op">=</span> <span class="st">"400px"</span></span>
+<span>  zoom <span class="op">=</span> <span class="fl">14</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/add_fullscreen_control.html">add_fullscreen_control</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"top-left"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/add_navigation_control.html">add_navigation_control</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div id="htmlwidget-febe03efa1a2d8d52a86" style="width:100%;height:400px;" class="maplibregl html-widget"></div>
+<div id="htmlwidget-febe03efa1a2d8d52a86" style="width:100%;height:432.632880098888px;" class="maplibregl html-widget"></div>
 <script type="application/json" data-for="htmlwidget-febe03efa1a2d8d52a86">{"x":{"style":"https://api.maptiler.com/maps/bright-v2/style.json?key=PVhOrNnfJElnZGQ8Cl6z","center":[-43.23412,-22.9137],"zoom":14,"bearing":0,"pitch":0,"additional_params":[],"fullscreen_control":{"enabled":true,"position":"top-left"},"navigation_control":{"show_compass":true,"show_zoom":true,"visualize_pitch":false,"position":"top-right"}},"evals":[],"jsHooks":[]}</script>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

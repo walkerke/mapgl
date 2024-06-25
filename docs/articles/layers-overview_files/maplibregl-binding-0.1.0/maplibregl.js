@@ -315,7 +315,7 @@ HTMLWidgets.widget({
 
             const legend = document.createElement('div');
             legend.innerHTML = x.legend_html;
-            legend.classList.add("mapboxgl-legend");
+            // legend.classList.add("mapboxgl-legend");
             el.appendChild(legend);
           }
 
@@ -427,7 +427,7 @@ if (HTMLWidgets.shinyMode) {
         });
         Shiny.setInputValue(el.id + "_feature_query", features);
       } else if (message.type === "add_legend") {
-        const existingLegend = document.getElementById('mapboxgl-legend');
+        const existingLegend = document.querySelector(`#${data.id} .mapboxgl-legend`);
         if (existingLegend) {
           existingLegend.remove();
         }
