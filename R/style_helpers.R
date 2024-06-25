@@ -250,6 +250,31 @@ maptiler_style <- function(style_name, api_key = NULL) {
   return(style_url_with_key)
 }
 
+
+#' Get CARTO Style URL
+#'
+#' @param style_name The name of the style (e.g., "voyager", "positron", "dark-matter").
+#' @return The style URL corresponding to the given style name.
+#' @export
+carto_style <- function(style_name) {
+  styles <- list(
+    voyager = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+    positron = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+    `dark-matter` = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+    `voyager-no-labels` = "https://basemaps.cartocdn.com/gl/voyager-nolabels-gl-style/style.json",
+    `positron-no-labels` = "https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json",
+    `dark-matter-no-labels` = "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json"
+  )
+
+  style_url <- styles[[style_name]]
+
+  if (is.null(style_url)) {
+    stop("Invalid style name. Please choose from: voyager, positron, dark-matter, voyager-no-labels, positron-no-labels, or dark-matter-no-labels")
+  }
+
+  return(style_url)
+}
+
 #' Get column or property for use in mapping
 #'
 #' This function returns a an expression to get a specified column from a dataset (or a property from a layer).

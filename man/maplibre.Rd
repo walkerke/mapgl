@@ -5,7 +5,7 @@
 \title{Initialize a Maplibre GL Map}
 \usage{
 maplibre(
-  style = "https://demotiles.maplibre.org/style.json",
+  style = carto_style("voyager"),
   center = c(0, 0),
   zoom = 0,
   bearing = 0,

@@ -16,7 +16,7 @@
 #' \dontrun{
 #' maplibre()
 #' }
-maplibre <- function(style = "https://demotiles.maplibre.org/style.json",
+maplibre <- function(style = carto_style("voyager"),
                      center = c(0, 0),
                      zoom = 0,
                      bearing = 0,
