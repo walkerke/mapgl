@@ -14,7 +14,7 @@ library(mapgl)
 mapboxgl()
 ```
 
-If you are a user of the [mapboxapi](https://walker-data.com/mapboxapi) package and have installed your Mapbox access token, the function will pick up your token for you. If you are new to my R packages, you'll want to get a token from your Mapbox account, run `usethis::edit_r_environ()`, and set the environment variable `MAPBOX_PUBLIC_TOKEN="your_token_here"`. It's important for you to know that Mapbox GL JS is a commercial product that does charge you for map views; however, it does have a generous free tier.
+To use Mapbox maps, you will need a [Mapbox access token](https://docs.mapbox.com/help/getting-started/access-tokens/). If you are a user of the [mapboxapi](https://walker-data.com/mapboxapi) package and have installed your Mapbox access token, `mapboxgl()` will pick up your token for you. If you are new to my R packages, you'll want to get a token from your Mapbox account, run `usethis::edit_r_environ()`, and set the environment variable `MAPBOX_PUBLIC_TOKEN="your_token_here"`. It's important for you to know that Mapbox GL JS is a commercial product that charges you for map views; however, it does have a generous free tier.
 
 Mapbox's default styles are accessible with the `mapbox_style()` function, and can be passed to the `style` parameter to change the style of your map. Mapbox GL JS also supports modifying map projections; here we use `projection = "winkelTripel"` for the Winkel Tripel global projection.
 

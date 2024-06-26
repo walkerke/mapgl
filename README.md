@@ -1,18 +1,14 @@
 # mapgl <a href="https://walker-data.com/mapgl"><img src="man/figures/logo.png" align="right" height="120" alt="mapgl website" /></a>
 
-The **mapgl** R package makes the latest versions of [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [Maplibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) available to R users. The package interface is designed to make the powerful capabilities of both libraries available in R mapping projects, but also feel similar to users coming from other R mapping packages.
+The **mapgl** R package makes the latest versions of [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) available to R users. The package interface is designed to make the powerful capabilities of both libraries available in R mapping projects, but also feel similar to users coming from other R mapping packages.
 
-Install the released version from CRAN:
+Install the development version from GitHub with the following command: 
 
-``` r
-install.packages("mapgl")
-```
-
-As the pace of development will be swift in the early days of the package, you may be more interested in the development version:
-
-``` r
+```r
 remotes::install_github("walkerke/mapgl")
 ```
+
+A CRAN release is forthcoming shortly.  
 
 Read through these vignettes to learn how to use the package:
 

@@ -83,14 +83,15 @@ using Mapbox’s Standard style:</p>
 <span></span>
 <span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div id="htmlwidget-ac96cb3ee4656e2e9ec3" style="width:100%;height:432.632880098888px;" class="mapboxgl html-widget"></div>
-<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"style":null,"center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"globe","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[]},"evals":[],"jsHooks":[]}</script><p>If you are a user of the <a href="https://walker-data.com/mapboxapi" class="external-link">mapboxapi</a> package and have
-installed your Mapbox access token, the function will pick up your token
-for you. If you are new to my R packages, you’ll want to get a token
-from your Mapbox account, run <code><a href="https://usethis.r-lib.org/reference/edit.html" class="external-link">usethis::edit_r_environ()</a></code>,
-and set the environment variable
+<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"style":null,"center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"globe","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[]},"evals":[],"jsHooks":[]}</script><p>To use Mapbox maps, you will need a <a href="https://docs.mapbox.com/help/getting-started/access-tokens/" class="external-link">Mapbox
+access token</a>. If you are a user of the <a href="https://walker-data.com/mapboxapi" class="external-link">mapboxapi</a> package and have
+installed your Mapbox access token, <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code> will pick up
+your token for you. If you are new to my R packages, you’ll want to get
+a token from your Mapbox account, run
+<code><a href="https://usethis.r-lib.org/reference/edit.html" class="external-link">usethis::edit_r_environ()</a></code>, and set the environment variable
 <code>MAPBOX_PUBLIC_TOKEN="your_token_here"</code>. It’s important for
-you to know that Mapbox GL JS is a commercial product that does charge
-you for map views; however, it does have a generous free tier.</p>
+you to know that Mapbox GL JS is a commercial product that charges you
+for map views; however, it does have a generous free tier.</p>
 <p>Mapbox’s default styles are accessible with the
 <code><a href="../reference/mapbox_style.html">mapbox_style()</a></code> function, and can be passed to the
 <code>style</code> parameter to change the style of your map. Mapbox GL

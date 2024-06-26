@@ -1,7 +1,7 @@
 url: https://walker-data.com/mapgl
 
 home:
-  title: High-Performance WebGL Mapping in R
+  title: "mapgl: WebGL Maps in R with Mapbox and MapLibre"
 
 authors:
   Kyle Walker:
