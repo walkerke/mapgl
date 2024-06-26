@@ -78,7 +78,170 @@ aims to connect the interactive features of the JavaScript libraries
 with Shiny’s reactive programming framework. The overall goal here is to
 help you design Mapbox / MapLibre apps that approach pure
 JavaScript-level performance but are written in R.</p>
-  </main>
+<p>Let’s step through a simple app using the North Carolina dataset that
+comes with the <strong>sf</strong> package. We’ll initialize a basic app
+with a sidebar using the <strong>bslib</strong> package that does
+nothing more than display North Carolina’s counties over a basemap.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://shiny.posit.co/" class="external-link">shiny</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rstudio.github.io/bslib/" class="external-link">bslib</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shape/nc.shp"</span>, package<span class="op">=</span><span class="st">"sf"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="st">"mapgl with Shiny"</span>,</span>
+<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/card.html" class="external-link">card</a></span><span class="op">(</span></span>
+<span>    full_screen <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    <span class="fu"><a href="../reference/maplibreOutput.html">maplibreOutput</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">output</span><span class="op">$</span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/renderMaplibre.html">renderMaplibre</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/carto_style.html">carto_style</a></span><span class="op">(</span><span class="st">"positron"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="../reference/fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">nc</span>, animate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="../reference/add_fill_layer.html">add_fill_layer</a></span><span class="op">(</span>id <span class="op">=</span> <span class="st">"nc_data"</span>,</span>
+<span>                     source <span class="op">=</span> <span class="va">nc</span>,</span>
+<span>                     fill_color <span class="op">=</span> <span class="st">"blue"</span>,</span>
+<span>                     fill_opacity <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
+<p><img src="images/clipboard-2017990981.png"></p>
+<p>Note that we use <code><a href="../reference/maplibreOutput.html">maplibreOutput()</a></code> to display the map in
+the UI and <code><a href="../reference/renderMaplibre.html">renderMaplibre()</a></code> to render it in the server
+code; the equivalent functions for Mapbox maps are
+<code><a href="../reference/mapboxglOutput.html">mapboxglOutput()</a></code> and <code><a href="../reference/renderMapboxgl.html">renderMapboxgl()</a></code>.</p>
+<div class="section level3">
+<h3 id="map-inputs">Map inputs<a class="anchor" aria-label="anchor" href="#map-inputs"></a>
+</h3>
+<p>A number of map events are built-in when working with
+<strong>mapgl</strong> in a Shiny session and exposed to the user as
+inputs. These include:</p>
+<ul>
+<li><p>input$<em>MAPID</em>_center: The center coordinates of the map
+(named as <code>lng</code> and <code>lat</code>);</p></li>
+<li><p>input$<em>MAPID</em>_zoom: The current zoom level of the
+map;</p></li>
+<li><p>input$<em>MAPID</em>_bounds: The bounding box of the visible
+extent of the map, named as <code>xmin</code>, <code>xmax</code>,
+<code>ymin</code>, and <code>ymax</code>.</p></li>
+</ul>
+<p>Visible features on the map can also be queried when clicked.
+Clicking the map in Shiny returns input$<em>MAPID</em>_feature_click,
+which gets you the layer ID, all of the column values for the clicked
+feature (accessible in <code>properties</code>), as well as the
+coordinates and time of the click.</p>
+<p>Try this example to see how this works:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="st">"mapgl with Shiny"</span>,</span>
+<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/textOutput.html" class="external-link">verbatimTextOutput</a></span><span class="op">(</span><span class="st">"clicked_feature"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/card.html" class="external-link">card</a></span><span class="op">(</span></span>
+<span>    full_screen <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    <span class="fu"><a href="../reference/maplibreOutput.html">maplibreOutput</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">output</span><span class="op">$</span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/renderMaplibre.html">renderMaplibre</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/carto_style.html">carto_style</a></span><span class="op">(</span><span class="st">"positron"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="../reference/fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">nc</span>, animate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="../reference/add_fill_layer.html">add_fill_layer</a></span><span class="op">(</span>id <span class="op">=</span> <span class="st">"nc_data"</span>,</span>
+<span>                     source <span class="op">=</span> <span class="va">nc</span>,</span>
+<span>                     fill_color <span class="op">=</span> <span class="st">"blue"</span>,</span>
+<span>                     fill_opacity <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">output</span><span class="op">$</span><span class="va">clicked_feature</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/renderPrint.html" class="external-link">renderPrint</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/req.html" class="external-link">req</a></span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">map_feature_click</span><span class="op">)</span></span>
+<span>    <span class="va">input</span><span class="op">$</span><span class="va">map_feature_click</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
+<p><img src="images/clipboard-3084377675.png"></p>
+</div>
+<div class="section level3">
+<h3 id="shiny-specific-functions">Shiny-specific functions<a class="anchor" aria-label="anchor" href="#shiny-specific-functions"></a>
+</h3>
+<p><strong>mapgl</strong> includes a number of functions to help you
+interact with your maps and data in a Shiny session, and will likely add
+more in the future. These include:</p>
+<ul>
+<li><p><code><a href="../reference/set_style.html">set_style()</a></code>, which will modify the underlying style
+(basemap) of the map;</p></li>
+<li><p><code><a href="../reference/set_layout_property.html">set_layout_property()</a></code>, which will modify a layout
+property of the map (such as whether or not a layer is
+displayed);</p></li>
+<li><p><code><a href="../reference/set_paint_property.html">set_paint_property()</a></code>, which will modify the styling
+of a layer;</p></li>
+<li><p><code><a href="../reference/set_filter.html">set_filter()</a></code>, which dynamically filters the
+displayed data in a layer based on an input value. You’ll need to build
+a <a href="https://docs.mapbox.com/style-spec/reference/expressions/#decision" class="external-link">filter
+expression</a>to achieve this; using <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code> in R will
+translate to square brackets in JavaScript. I have plans to make this
+easier for users in the future.</p></li>
+</ul>
+<p>You’ll use these functions in combination with a <code>proxy</code>
+object, which will be familiar to users coming from Leaflet or other R
+mapping packages. The map proxy preserves the existing state of the map,
+and allows you to edit components of it without re-drawing the entire
+map in the app. You’ll use <code><a href="../reference/mapboxgl_proxy.html">mapboxgl_proxy()</a></code> for Mapbox
+maps, and <code><a href="../reference/maplibre_proxy.html">maplibre_proxy()</a></code> for MapLibre maps.</p>
+<p>Try out this example which uses a color picker widget to change the
+color on the map, and a slider to filter the visible counties based on
+an expression.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/daattali/colourpicker" class="external-link">colourpicker</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="st">"mapgl with Shiny"</span>,</span>
+<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/pkg/colourpicker/man/colourInput.html" class="external-link">colourInput</a></span><span class="op">(</span><span class="st">"color"</span>, <span class="st">"Select a color"</span>,</span>
+<span>                value <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/sliderInput.html" class="external-link">sliderInput</a></span><span class="op">(</span><span class="st">"slider"</span>, <span class="st">"Show BIR74 values above:"</span>,</span>
+<span>                value <span class="op">=</span> <span class="fl">248</span>, min <span class="op">=</span> <span class="fl">248</span>, max <span class="op">=</span> <span class="fl">21588</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/card.html" class="external-link">card</a></span><span class="op">(</span></span>
+<span>    full_screen <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    <span class="fu"><a href="../reference/maplibreOutput.html">maplibreOutput</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">output</span><span class="op">$</span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/renderMaplibre.html">renderMaplibre</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/carto_style.html">carto_style</a></span><span class="op">(</span><span class="st">"positron"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="../reference/fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">nc</span>, animate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="../reference/add_fill_layer.html">add_fill_layer</a></span><span class="op">(</span>id <span class="op">=</span> <span class="st">"nc_data"</span>,</span>
+<span>                     source <span class="op">=</span> <span class="va">nc</span>,</span>
+<span>                     fill_color <span class="op">=</span> <span class="st">"blue"</span>,</span>
+<span>                     fill_opacity <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/observeEvent.html" class="external-link">observeEvent</a></span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">color</span>, <span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/maplibre_proxy.html">maplibre_proxy</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>      <span class="fu"><a href="../reference/set_paint_property.html">set_paint_property</a></span><span class="op">(</span><span class="st">"nc_data"</span>, <span class="st">"fill-color"</span>, <span class="va">input</span><span class="op">$</span><span class="va">color</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/observeEvent.html" class="external-link">observeEvent</a></span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">slider</span>, <span class="op">{</span></span>
+<span>    <span class="fu"><a href="../reference/maplibre_proxy.html">maplibre_proxy</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="../reference/set_filter.html">set_filter</a></span><span class="op">(</span><span class="st">"nc_data"</span>, </span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"&gt;="</span>, <span class="fu"><a href="../reference/get_column.html">get_column</a></span><span class="op">(</span><span class="st">"BIR74"</span><span class="op">)</span>, <span class="va">input</span><span class="op">$</span><span class="va">slider</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
+<p><img src="images/clipboard-4076622643.png"></p>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

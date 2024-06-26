@@ -50,7 +50,7 @@ library(mapgl)
 maplibre()
 ```
 
-\[MapTiler\](<https://www.maptiler.com/>) tiles are also available via the `maptiler_style()` function. These styles work quite well with MapLibre, but do require an API key; set the environment variable `MAPTILER_API_KEY` in your .Renviron file to store your key. The example below uses the Bright MapTiler style, and adds a fullscreen control and a navigation control to the map.
+[MapTiler](https://www.maptiler.com/) tiles are also available via the `maptiler_style()` function. These styles work quite well with MapLibre, but do require an API key; set the environment variable `MAPTILER_API_KEY` in your .Renviron file to store your key. The example below uses the Bright MapTiler style, and adds a fullscreen control and a navigation control to the map.
 
 These controls and styles are available with `mapboxgl()` as well; **mapgl** aims to provide a consistent API to work with either Mapbox or MapLibre.
 
