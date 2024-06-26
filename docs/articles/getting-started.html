@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Getting started with mapgl • mapgl</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -54,11 +60,10 @@
 
 
 <script src="getting-started_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script><script src="getting-started_files/mapboxgl-binding-0.1.0/mapboxgl.js"></script><link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet">
-<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script><script src="getting-started_files/maplibregl-binding-0.1.0/maplibregl.js"></script><div class="row">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script><script src="getting-started_files/mapboxgl-binding-0.1.0/mapboxgl.js"></script><link href="getting-started_files/maplibre-gl-4.4.1/maplibre-gl.css" rel="stylesheet">
+<script src="getting-started_files/maplibre-gl-4.4.1/maplibre-gl.js"></script><script src="getting-started_files/maplibregl-binding-0.1.0/maplibregl.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Getting started with mapgl</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Getting started with mapgl</h1>
             
       
 
@@ -67,27 +72,45 @@
 
     
     
-<p>The <strong>mapgl</strong> R package makes the latest versions of
-Mapbox GL JS and Maplibre GL JS available to R users. The package
-interface is designed to make the powerful capabilities of both
-libraries available in R mapping projects, but also feel similar to
-users coming from other R mapping packages.</p>
 <div class="section level3">
 <h3 id="using-mapbox-gl-js">Using Mapbox GL JS<a class="anchor" aria-label="anchor" href="#using-mapbox-gl-js"></a>
 </h3>
-<p>A basic map:</p>
+<p>Your gateway to Mapbox GL JS v3 in R is the <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code>
+function. Run the function with no arguments to get an interactive globe
+using Mapbox’s Standard style:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">mapgl</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div id="htmlwidget-ac96cb3ee4656e2e9ec3" style="width:100%;height:432.632880098888px;" class="mapboxgl html-widget"></div>
-<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"style":null,"center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"globe","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[]},"evals":[],"jsHooks":[]}</script><p>Customizing the style and projection:</p>
+<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"style":null,"center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"globe","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[]},"evals":[],"jsHooks":[]}</script><p>If you are a user of the <a href="https://walker-data.com/mapboxapi" class="external-link">mapboxapi</a> package and have
+installed your Mapbox access token, the function will pick up your token
+for you. If you are new to my R packages, you’ll want to get a token
+from your Mapbox account, run <code><a href="https://usethis.r-lib.org/reference/edit.html" class="external-link">usethis::edit_r_environ()</a></code>,
+and set the environment variable
+<code>MAPBOX_PUBLIC_TOKEN="your_token_here"</code>. It’s important for
+you to know that Mapbox GL JS is a commercial product that does charge
+you for map views; however, it does have a generous free tier.</p>
+<p>Mapbox’s default styles are accessible with the
+<code><a href="../reference/mapbox_style.html">mapbox_style()</a></code> function, and can be passed to the
+<code>style</code> parameter to change the style of your map. Mapbox GL
+JS also supports modifying map projections; here we use
+<code>projection = "winkelTripel"</code> for the Winkel Tripel global
+projection.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span>
 <span>  style <span class="op">=</span> <span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"satellite"</span><span class="op">)</span>,</span>
 <span>  projection <span class="op">=</span> <span class="st">"winkelTripel"</span><span class="op">)</span></span></code></pre></div>
 <div id="htmlwidget-e5c8c404fe174e4c81bd" style="width:100%;height:432.632880098888px;" class="mapboxgl html-widget"></div>
-<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"style":"mapbox://styles/mapbox/satellite-v9","center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"winkelTripel","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[]},"evals":[],"jsHooks":[]}</script><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"style":"mapbox://styles/mapbox/satellite-v9","center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"winkelTripel","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[]},"evals":[],"jsHooks":[]}</script><p>To get a more local view in your map, you can use the
+<code>center</code>, <code>zoom</code>, <code>pitch</code>, and
+<code>bearing</code> arguments. In the example shown below, these
+arguments are incorporated into a “fly to” animation.
+<strong>mapgl</strong> supports several of these animated transitions.
+In Mapbox GL JS v3, the new Standard style includes custom-rendered
+buildings around the world, such as the American Airlines Center in
+Dallas.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span>
 <span>  center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">97.6</span>, <span class="fl">25.4</span><span class="op">)</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -97,16 +120,31 @@ users coming from other R mapping packages.</p>
 <span>    pitch <span class="op">=</span> <span class="fl">75</span>,</span>
 <span>    bearing <span class="op">=</span> <span class="fl">136.8</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="dallas.gif" width="100%"></p>
 </div>
 <div class="section level3">
 <h3 id="using-maplibre-gl-js">Using Maplibre GL JS<a class="anchor" aria-label="anchor" href="#using-maplibre-gl-js"></a>
 </h3>
+<p>Maplibre GL JS, a fork of the more permissively-licensed Mapbox GL JS
+1.0, is also available to R users in <strong>mapgl</strong>. The core
+function to initialize a MapLibre map is <code><a href="../reference/maplibre.html">maplibre()</a></code>. The
+default tiles in <code><a href="../reference/maplibre.html">maplibre()</a></code> are CARTO’s Voyager tiles,
+which are usable without an API key.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">mapgl</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div id="htmlwidget-36aa3d2a04d42bbc2145" style="width:100%;height:432.632880098888px;" class="maplibregl html-widget"></div>
-<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"style":"https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json","center":[0,0],"zoom":0,"bearing":0,"pitch":0,"additional_params":[]},"evals":[],"jsHooks":[]}</script><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"style":"https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json","center":[0,0],"zoom":0,"bearing":0,"pitch":0,"additional_params":[]},"evals":[],"jsHooks":[]}</script><p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mi>a</mi><mi>p</mi><mi>T</mi><mi>i</mi><mi>l</mi><mi>e</mi><mi>r</mi></mrow><annotation encoding="application/x-tex">MapTiler</annotation></semantics></math>(<a href="https://www.maptiler.com/" class="external-link uri">https://www.maptiler.com/</a>) tiles are also available via
+the <code><a href="../reference/maptiler_style.html">maptiler_style()</a></code> function. These styles work quite well
+with MapLibre, but do require an API key; set the environment variable
+<code>MAPTILER_API_KEY</code> in your .Renviron file to store your key.
+The example below uses the Bright MapTiler style, and adds a fullscreen
+control and a navigation control to the map.</p>
+<p>These controls and styles are available with <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code>
+as well; <strong>mapgl</strong> aims to provide a consistent API to work
+with either Mapbox or MapLibre.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span></span>
 <span>  style <span class="op">=</span> <span class="fu"><a href="../reference/maptiler_style.html">maptiler_style</a></span><span class="op">(</span><span class="st">"bright"</span><span class="op">)</span>,</span>
 <span>  center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">43.23412</span>, <span class="op">-</span><span class="fl">22.91370</span><span class="op">)</span>,</span>
@@ -116,6 +154,21 @@ users coming from other R mapping packages.</p>
 <span>  <span class="fu"><a href="../reference/add_navigation_control.html">add_navigation_control</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div id="htmlwidget-febe03efa1a2d8d52a86" style="width:100%;height:432.632880098888px;" class="maplibregl html-widget"></div>
 <script type="application/json" data-for="htmlwidget-febe03efa1a2d8d52a86">{"x":{"style":"https://api.maptiler.com/maps/bright-v2/style.json?key=PVhOrNnfJElnZGQ8Cl6z","center":[-43.23412,-22.9137],"zoom":14,"bearing":0,"pitch":0,"additional_params":[],"fullscreen_control":{"enabled":true,"position":"top-left"},"navigation_control":{"show_compass":true,"show_zoom":true,"visualize_pitch":false,"position":"top-right"}},"evals":[],"jsHooks":[]}</script>
+</div>
+<div class="section level3">
+<h3 id="comparing-map-views">Comparing map views<a class="anchor" aria-label="anchor" href="#comparing-map-views"></a>
+</h3>
+<p><strong>mapgl</strong> includes a function <code><a href="../reference/compare.html">compare()</a></code>
+that allows users to create synced swipe maps that can compare two
+styles. This function works for either Mapbox or MapLibre maps. I don’t
+have this working correctly in rendered R Markdown / Quarto docs or
+Shiny apps yet, but I’m working on it!</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">m2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span><span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"satellite-streets"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/compare.html">compare</a></span><span class="op">(</span><span class="va">m1</span>, <span class="va">m2</span><span class="op">)</span></span></code></pre></div>
+<p><img src="athens.gif" fig-alt="Animated comparison map" width="511"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

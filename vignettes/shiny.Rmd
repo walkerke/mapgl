@@ -4,23 +4,57 @@ format: html
 editor: visual
 ---
 
-## Quarto
+My main motivation for writing **mapgl** was to be able to use the latest versions of Mapbox GL JS and MapLibre in my Shiny apps. **mapgl** is designed to work well with Shiny, and aims to connect the interactive features of the JavaScript libraries with Shiny's reactive programming framework. The overall goal here is to help you design Mapbox / MapLibre apps that approach pure JavaScript-level performance but are written in R.
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+Let's step through a simple app using the North Carolina dataset that comes with the **sf** package. We'll initialize a basic app with a sidebar using the **bslib** package that does nothing more than display North Carolina's counties over a basemap.
 
-## Running Code
+``` r
+library(shiny)
+library(bslib)
+library(mapgl)
+library(sf)
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+nc <- st_read(system.file("shape/nc.shp", package="sf"))
 
-```{r}
-1 + 1
+ui <- page_sidebar(
+  title = "mapgl with Shiny",
+  sidebar = sidebar(),
+  card(
+    full_screen = TRUE,
+    maplibreOutput("map")
+  )
+)
+
+server <- function(input, output, session) {
+  output$map <- renderMaplibre({
+    maplibre(style = carto_style("positron")) |> 
+      fit_bounds(nc, animate = FALSE) |> 
+      add_fill_layer(id = "nc_data",
+                     source = nc,
+                     fill_color = "blue",
+                     fill_opacity = 0.5)
+  })
+}
+
+shinyApp(ui, server)
 ```
 
-You can add options to executable code like this
+![ ](images/clipboard-2017990981.png)
 
-```{r}
-#| echo: false
-2 * 2
-```
+Note that we use `maplibreOutput()` to display the map in the UI and `renderMaplibre()` to render it in the server code; the equivalent functions for Mapbox maps are `mapboxglOutput()` and `renderMapboxgl()`.
 
-The `echo: false` option disables the printing of code (only output is displayed).
+A number of map events are built-in when working with **mapgl** in a Shiny session and exposed to the user as inputs. These include:
+
+-   input\$*MAPID*\_
+
+**mapgl** includes a number of functions to help you interact with your maps and data in a Shiny session, and will likely add more in the future. These include:
+
+-   `set_style()`, which will modify the underlying style (basemap) of the map;
+
+-   `set_layout_property()`, which will modify a layout property of the map (such as whether or not a layer is displayed);
+
+-   `set_paint_property()`, which will modify the styling of a layer;
+
+-   `set_filter()`, which dynamically filters the displayed data in a layer based on an input value.
+
+You'll use these functions in combination with a `proxy` object, which will be familiar to users coming from Leaflet or other R mapping packages. The map proxy preserves the existing state of the map, and allows you to edit components of it without re-drawing the entire map in the app.

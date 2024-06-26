@@ -6,7 +6,16 @@
 \alias{mapgl-package}
 \title{mapgl: Wrapper for Mapbox GL JS v3 and Maplibre GL JS}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Provides an interface to Mapbox GL JS v3 and Maplibre GL JS for interactive, customizable maps in R.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://walker-data.com/mapgl/}
+}
+
 }
 \author{
 \strong{Maintainer}: Kyle Walker \email{kyle@walker-data.com}

@@ -6,7 +6,16 @@ editor: visual
 
 ### Using layers: an overview
 
-```{r}
+In Mapbox GL JS and MapLibre, datasets are added to maps as *sources* which are then styled as *layers*. **mapgl** aims to expose the sources and layers APIs to R users in ways that honor the deep customization available in the JavaScript libraries but also accommodate R users' typical workflows.
+
+Geospatial practitioners in R will typically work with objects from the **sf** package. The initial release of **mapgl** natively supports `sf` objects, and will aim to support other geospatial formats (such as objects from the **terra** package) in the future.
+
+Objects of class `sf` can be specified as sources for the map either through the `add_source()` function or via the `source` parameter in one of **mapgl**'s layer functions. The `add_fill_layer()` function calls the Mapbox GL JS `addLayer()` function internally with a `fill` type, and enumerates the available options for styling the layer as function arguments.
+
+**mapgl** users will often want to use the `fit_bounds(animate = FALSE)` function to fix the map view to a given layer's bounding box.
+
+```{r, message = FALSE}
+
 library(mapgl)
 library(sf)
 
@@ -19,6 +28,8 @@ mapboxgl() |>
                  fill_color = "blue",
                  fill_opacity = 0.5)
 ```
+
+An overview of available layers in **mapgl** are below. Layers can be used with either `mapboxgl()` or `maplibre()` maps.
 
 ### Line layers
 
@@ -41,7 +52,9 @@ maplibre(style = maptiler_style("backdrop")) |>
 
 ### Circle layers
 
-```{r}
+At the time of this writing, circle clustering is not yet implemented; however, this is on the roadmap for the package.
+
+```{r, message = FALSE}
 library(mapgl)
 library(sf)
 library(dplyr)
@@ -105,6 +118,8 @@ mapboxgl(style = mapbox_style("dark")) %>%
 
 ### Symbol layers
 
+Symbol layers offer a wide range of arguments for customizing icon and label appearance; however not all arguments will work with all icons. The `icon_image` argument will look for a string that represents an icon found in the map style's sprite. [Read more about sprites here](https://docs.mapbox.com/style-spec/reference/sprite/).
+
 ```{r}
 mapboxgl(style = mapbox_style("light")) |>
   fit_bounds(random_points, animate = FALSE) |>
@@ -118,6 +133,8 @@ mapboxgl(style = mapbox_style("light")) |>
 ```
 
 ### Heatmap layers
+
+Heatmap layers take an object of geometry type POINT and visualize the density of those points in a visually attractive way. `add_heatmap_layer()` takes **sf** POINT objects; the example below shows how to read in a remote GeoJSON file as a source as well.
 
 ```{r}
 library(mapgl)
@@ -192,6 +209,8 @@ maplibre(
 
 ### Raster layers
 
+**mapgl** does not natively support R rasters in its initial release, but aims to do so in the future. Raster sources can be added through `add_image_source()` for remotely-hosted image files, or `add_raster_source()` for remotely-hosted raster tiles.
+
 ```{r}
 mapboxgl(style = mapbox_style("dark"),
          zoom = 5,
@@ -211,4 +230,22 @@ mapboxgl(style = mapbox_style("dark"),
     source = 'radar',
     raster_fade_duration = 0
   )
+```
+
+### Markers
+
+Markers represent a unique visual component in Mapbox GL JS and MapLibre GL JS, as they highlight locations but do not count as map *layers*. In **mapgl**, users can add markers using the `add_markers()` function. A single marker can be added as a length-2 vector of longitude and latitude; a list of length-2 vectors or an **sf** POINT object will add multiple markers.
+
+```{r}
+mapboxgl(
+  style = mapbox_style("streets"),
+  center = c(-74.006, 40.7128),
+  zoom = 10
+) |> 
+add_markers(
+  c(-74.006, 40.7128),
+  color = "blue",
+  rotation = 45,
+  popup = "A marker"
+)
 ```

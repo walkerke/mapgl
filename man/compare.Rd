@@ -25,7 +25,7 @@ compare(
 
 \item{elementId}{An optional string specifying the ID of the container for the comparison. If NULL, a unique ID will be generated.}
 
-\item{mousemove}{A logical value indicating whether to enable swiping during cursor movement.}
+\item{mousemove}{A logical value indicating whether to enable swiping during cursor movement (rather than only when clicked).}
 
 \item{orientation}{A string specifying the orientation of the swiper, either "horizontal" or "vertical".}
 }

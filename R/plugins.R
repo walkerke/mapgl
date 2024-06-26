@@ -7,7 +7,7 @@
 #' @param width Width of the map container.
 #' @param height Height of the map container.
 #' @param elementId An optional string specifying the ID of the container for the comparison. If NULL, a unique ID will be generated.
-#' @param mousemove A logical value indicating whether to enable swiping during cursor movement.
+#' @param mousemove A logical value indicating whether to enable swiping during cursor movement (rather than only when clicked).
 #' @param orientation A string specifying the orientation of the swiper, either "horizontal" or "vertical".
 #'
 #' @return A comparison widget.

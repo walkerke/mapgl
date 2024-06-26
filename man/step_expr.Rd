@@ -2,7 +2,7 @@
 % Please edit documentation in R/style_helpers.R
 \name{step_expr}
 \alias{step_expr}
-\title{Create a step expression for Mapbox GL}
+\title{Create a step expression}
 \usage{
 step_expr(column = NULL, property = NULL, base, values, stops, na_color = NULL)
 }
@@ -23,7 +23,7 @@ step_expr(column = NULL, property = NULL, base, values, stops, na_color = NULL)
 A list representing the step expression.
 }
 \description{
-This function generates a step expression that can be used in Mapbox GL styles.
+This function generates a step expression that can be used in your styles.
 }
 \examples{
 step_expr(

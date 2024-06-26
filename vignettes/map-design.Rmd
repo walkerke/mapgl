@@ -14,6 +14,8 @@ knitr::opts_chunk$set(fig.height = 4)
 
 The **mapgl** package aims to expose the powerful map design capabilities of Mapbox GL JS and Maplibre GL JS, while still feeling intuitive to R users. This means that map-making may require a little more code than other mapping packages - but it also gives you maximum flexibility in how you design your maps.
 
+Let's grab some data from **tidycensus** on median age by Census tract in Florida and initialize an empty map focused on Florida.
+
 ```{r}
 library(tidycensus)
 library(mapgl)
@@ -26,12 +28,21 @@ fl_age <- get_acs(
   geometry = TRUE
 )
 
-fl_map <- mapboxgl(mapbox_style("light")) 
+fl_map <- mapboxgl(mapbox_style("light")) |> 
+  fit_bounds(fl_age, animate = FALSE)
 
 fl_map
 ```
 
 ### Continuous styling
+
+Styling in Mapbox GL JS and Maplibre GL JS is typically handled through *expressions*. Expressions allow for quite a bit of customization for map-makers, but can feel clunky for R users. **mapgl** includes several functions to help R users translate their code into expressions for use in their data visualizations.
+
+The `interpolate()` function will create an `interpolate` expression, which smoothly transitions values between a series of stops. This means that you can natively create just about any color palette you want and map that palette seamlessly to your data.
+
+Below, we specify two values - 20 and 80 - and map the colors "lightblue" and "darkblue" to those values. Mapbox GL JS will smoothly interpolate colors between light blue and dark blue and map them to data values found in the specified `column`.
+
+The `add_legend()` function adds a legend to your map. In **mapgl**'s initial release, `add_legend()` does not automatically populate with values from the style. This gives users much more flexibility in how their format their legend, though users also need to take care to ensure that the legend appropriately represents their data. Future updates to the package may include functionality for automated legends.
 
 ```{r}
 fl_map |> 
@@ -54,6 +65,8 @@ fl_map |>
 ```
 
 ### Categorical styling
+
+Cartographers may prefer a binned method for visualizing their data rather than the continuous palette shown above. In Mapbox GL JS and MapLibre, binned maps can be created with a `step` expression. The `step_expr()` function helps R users assemble this expression. Step expressions may feel a little unfamiliar to R users, as they require a `base` value followed by a series of `stops`. In the example below, we generate a five-color palette from ColorBrewer. The first color will be used as the base, and the other four colors as the stops. The `values` then specify the bin edges.
 
 ```{r}
 brewer_pal <- RColorBrewer::brewer.pal(5, "RdYlBu")
@@ -86,6 +99,12 @@ fl_map |>
 ```
 
 ### Pop-ups, tooltips, and highlighting
+
+Mapmakers will often want to expose some additional interactivity to their users in the form of on-click popups, hover tooltips, and other hover effects. In native JavaScript, this can be tricky to set up as it requires knowledge of events, queries, and feature states in these libraries. **mapgl** wraps this functionality to make these features accessible to R users.
+
+The `popup` and `tooltip` arguments take a string as input representing the name of the column to display on click or on hover. Both arguments accommodate HTML, so the best way to set this up is to create a column of values to display in the popup or tooltip, then use this column when adding the layer.
+
+Hover effects can be set with the `hover_options` argument. This argument takes a list of key-value pairs where the keys are arguments for a given layer type (in this case, the fill layer) and arguments are the desired values on hover. In the example shown here, we tell Mapbox GL JS to change a Census tract's fill to yellow and fill opacity to 1 when the users hovers over the tract.
 
 ```{r}
 fl_age$popup <- glue::glue(

@@ -9,7 +9,7 @@ set_filter(proxy, layer_id, filter)
 \arguments{
 \item{proxy}{A proxy object created by \code{mapboxgl_proxy} or \code{maplibre_proxy}.}
 
-\item{layer_id}{The ID of the layer to whirch the filter will be applied.}
+\item{layer_id}{The ID of the layer to which the filter will be applied.}
 
 \item{filter}{The filter expression to apply.}
 }

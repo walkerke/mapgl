@@ -102,9 +102,9 @@ match_expr <- function(column = NULL, property = NULL, values, stops, default = 
   expr
 }
 
-#' Create a step expression for Mapbox GL
+#' Create a step expression
 #'
-#' This function generates a step expression that can be used in Mapbox GL styles.
+#' This function generates a step expression that can be used in your styles.
 #'
 #' @param column The name of the column to use for the step expression. If specified, `property` should be NULL.
 #' @param property The name of the property to use for the step expression. If specified, `column` should be NULL.
