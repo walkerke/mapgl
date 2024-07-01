@@ -415,7 +415,7 @@ if (HTMLWidgets.shinyMode) {
           if (message.layer.popup) {
             map.on('click', message.layer.id, function(e) {
               const description = e.features[0].properties[message.layer.popup];
-              new mapboxgl.Popup()
+              new maplibregl.Popup()
                 .setLngLat(e.lngLat)
                 .setHTML(description)
                 .addTo(map);
@@ -423,7 +423,7 @@ if (HTMLWidgets.shinyMode) {
           }
 
           if (message.layer.tooltip) {
-            const tooltip = new mapboxgl.Popup({
+            const tooltip = new maplibregl.Popup({
               closeButton: false,
               closeOnClick: false
             });
@@ -584,7 +584,7 @@ if (HTMLWidgets.shinyMode) {
           }
       } else if (message.type === "add_fullscreen_control") {
         const position = message.position || 'top-right';
-        map.addControl(new mapboxgl.FullscreenControl(), position);
+        map.addControl(new maplibregl.FullscreenControl(), position);
       }
     }
   });
