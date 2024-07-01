@@ -410,6 +410,88 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "add_layer") {
         try {
           map.addLayer(message.layer);
+
+          // Add popups or tooltips if provided
+          if (message.layer.popup) {
+            map.on('click', message.layer.id, function(e) {
+              const description = e.features[0].properties[message.layer.popup];
+              new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(description)
+                .addTo(map);
+            });
+          }
+
+          if (message.layer.tooltip) {
+            const tooltip = new mapboxgl.Popup({
+              closeButton: false,
+              closeOnClick: false
+            });
+
+            map.on('mousemove', message.layer.id, function(e) {
+              map.getCanvas().style.cursor = 'pointer';
+
+              if (e.features.length > 0) {
+                const description = e.features[0].properties[message.layer.tooltip];
+                tooltip.setLngLat(e.lngLat).setHTML(description).addTo(map);
+              } else {
+                tooltip.remove();
+              }
+            });
+
+            map.on('mouseleave', message.layer.id, function() {
+              map.getCanvas().style.cursor = '';
+              tooltip.remove();
+            });
+          }
+
+          // Add hover effect if provided
+          if (message.layer.hover_options) {
+            const jsHoverOptions = {};
+            for (const [key, value] of Object.entries(message.layer.hover_options)) {
+              const jsKey = key.replace(/_/g, '-');
+              jsHoverOptions[jsKey] = value;
+            }
+
+            let hoveredFeatureId = null;
+
+            map.on('mousemove', message.layer.id, function(e) {
+              if (e.features.length > 0) {
+                if (hoveredFeatureId !== null) {
+                  map.setFeatureState(
+                    { source: typeof message.layer.source === 'string' ? message.layer.source : message.layer.id, id: hoveredFeatureId },
+                    { hover: false }
+                  );
+                }
+                hoveredFeatureId = e.features[0].id;
+                map.setFeatureState(
+                  { source: typeof message.layer.source === 'string' ? message.layer.source : message.layer.id, id: hoveredFeatureId },
+                  { hover: true }
+                );
+              }
+            });
+
+            map.on('mouseleave', message.layer.id, function() {
+              if (hoveredFeatureId !== null) {
+                map.setFeatureState(
+                  { source: typeof message.layer.source === 'string' ? message.layer.source : message.layer.id, id: hoveredFeatureId },
+                  { hover: false }
+                );
+              }
+              hoveredFeatureId = null;
+            });
+
+            Object.keys(jsHoverOptions).forEach(function(key) {
+              const originalPaint = map.getPaintProperty(message.layer.id, key) || message.layer.paint[key];
+              map.setPaintProperty(message.layer.id, key, [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                jsHoverOptions[key],
+                originalPaint
+              ]);
+            });
+          }
+
         } catch (e) {
           console.error("Failed to add layer via proxy: ", message.layer, e);
         }

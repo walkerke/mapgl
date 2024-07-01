@@ -39,7 +39,7 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
-![ ](images/clipboard-2017990981.png)
+![](images/clipboard-2017990981.png)
 
 Note that we use `maplibreOutput()` to display the map in the UI and `renderMaplibre()` to render it in the server code; the equivalent functions for Mapbox maps are `mapboxglOutput()` and `renderMapboxgl()`.
 
