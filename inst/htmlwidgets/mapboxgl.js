@@ -196,12 +196,15 @@ HTMLWidgets.widget({
                 if (layer.minzoom) {
                   layerConfig['minzoom'] = layer.minzoom;
                 }
-
                 if (layer.maxzoom) {
                   layerConfig['maxzoom'] = layer.maxzoom;
                 }
 
-                map.addLayer(layerConfig);
+                if (layer.before_id) {
+                  map.addLayer(layerConfig, layer.before_id);
+                } else {
+                  map.addLayer(layerConfig);
+                }
 
                 // Add popups or tooltips if provided
                 if (layer.popup) {
@@ -415,7 +418,11 @@ if (HTMLWidgets.shinyMode) {
         map.addSource(message.source)
       } else if (message.type === "add_layer") {
         try {
-          map.addLayer(message.layer);
+          if (message.layer.before_id) {
+            map.addLayer(message.layer, message.layer.before_id);
+          } else {
+            map.addLayer(message.layer);
+          }
 
           // Add popups or tooltips if provided
           if (message.layer.popup) {

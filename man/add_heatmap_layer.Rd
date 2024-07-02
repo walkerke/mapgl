@@ -17,7 +17,8 @@ add_heatmap_layer(
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
-  max_zoom = NULL
+  max_zoom = NULL,
+  before_id = NULL
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ add_heatmap_layer(
 \item{min_zoom}{The minimum zoom level for the layer.}
 
 \item{max_zoom}{The maximum zoom level for the layer.}
+
+\item{before_id}{The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).}
 }
 \value{
 The modified map object with the new heatmap layer added.

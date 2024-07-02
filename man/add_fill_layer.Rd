@@ -24,7 +24,8 @@ add_fill_layer(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
-  hover_options = NULL
+  hover_options = NULL,
+  before_id = NULL
 )
 }
 \arguments{
@@ -67,6 +68,8 @@ add_fill_layer(
 \item{tooltip}{A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.}
 
 \item{hover_options}{A named list of options for highlighting features in the layer on hover.}
+
+\item{before_id}{The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).}
 }
 \value{
 The modified map object with the new fill layer added.

@@ -77,7 +77,8 @@ add_symbol_layer(
   min_zoom = NULL,
   max_zoom = NULL,
   popup = NULL,
-  tooltip = NULL
+  tooltip = NULL,
+  before_id = NULL
 )
 }
 \arguments{
@@ -226,6 +227,8 @@ add_symbol_layer(
 \item{popup}{A column name containing information to display in a popup on click. Columns containing HTML will be parsed.}
 
 \item{tooltip}{A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.}
+
+\item{before_id}{The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).}
 }
 \value{
 The modified map object with the new symbol layer added.

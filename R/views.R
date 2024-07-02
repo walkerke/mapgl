@@ -2,13 +2,15 @@
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function or a proxy object.
 #' @param bbox A bounding box specified as a numeric vector of length 4 (minLng, minLat, maxLng, maxLat), or an sf object from which a bounding box will be calculated.
+#' @param animate A logical value indicating whether to animate the transition to the new bounds. Defaults to FALSE.
 #' @param ... Additional named arguments for fitting the bounds.
 #'
 #' @return The updated map object.
 #' @export
-fit_bounds <- function(map, bbox, ...) {
+fit_bounds <- function(map, bbox, animate = FALSE, ...) {
 
   options <- list(...)
+  options$animate <- animate
 
   if (inherits(bbox, "sf")) {
     bbox <- as.vector(sf::st_bbox(sf::st_transform(bbox, 4326)))
@@ -23,6 +25,7 @@ fit_bounds <- function(map, bbox, ...) {
   } else {
     map$x$fitBounds <- list(bounds = bbox, options = options)
   }
+
   return(map)
 }
 
