@@ -4,7 +4,7 @@
 \name{mapgl-package}
 \alias{mapgl}
 \alias{mapgl-package}
-\title{mapgl: Wrapper for Mapbox GL JS v3 and Maplibre GL JS}
+\title{mapgl: Interface to Mapbox GL JS v3 and Maplibre GL JS}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
