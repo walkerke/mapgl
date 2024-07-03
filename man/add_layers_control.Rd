@@ -26,3 +26,28 @@ The modified map object with the layers control added.
 \description{
 Add a layers control to the map
 }
+\examples{
+\dontrun{
+library(tigris)
+options(tigris_use_cache = TRUE)
+
+rds <- roads("TX", "Tarrant")
+tr <- tracts("TX", "Tarrant", cb = TRUE)
+
+maplibre() |>
+  fit_bounds(rds) |>
+  add_fill_layer(
+    id = "Census tracts",
+    source = tr,
+    fill_color = "purple",
+    fill_opacity = 0.6
+  ) |>
+  add_line_layer(
+    "Local roads",
+    source = rds,
+    line_color = "pink"
+  ) |>
+  add_layers_control(collapsible = TRUE)
+
+}
+}

@@ -15,7 +15,8 @@ Imports:
   htmlwidgets,
   geojsonsf,
   sf,
-  rlang
+  rlang,
+  htmltools
 Suggests: 
   shiny,
   mapboxapi,

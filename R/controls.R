@@ -88,6 +88,29 @@ add_navigation_control <- function(map, show_compass = TRUE, show_zoom = TRUE, v
 #'
 #' @return The modified map object with the layers control added.
 #' @export
+#' @examples \dontrun{
+#' library(tigris)
+#' options(tigris_use_cache = TRUE)
+#'
+#' rds <- roads("TX", "Tarrant")
+#' tr <- tracts("TX", "Tarrant", cb = TRUE)
+#'
+#' maplibre() |>
+#'   fit_bounds(rds) |>
+#'   add_fill_layer(
+#'     id = "Census tracts",
+#'     source = tr,
+#'     fill_color = "purple",
+#'     fill_opacity = 0.6
+#'   ) |>
+#'   add_line_layer(
+#'     "Local roads",
+#'     source = rds,
+#'     line_color = "pink"
+#'   ) |>
+#'   add_layers_control(collapsible = TRUE)
+#'
+#' }
 add_layers_control <- function(map, position = "top-left", layers = NULL, collapsible = FALSE) {
   control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
 

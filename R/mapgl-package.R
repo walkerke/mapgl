@@ -6,5 +6,6 @@
 #' @import sf
 #' @import geojsonsf
 #' @import htmlwidgets
+#' @import htmltools
 ## usethis namespace: end
 NULL
