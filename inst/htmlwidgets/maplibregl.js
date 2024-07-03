@@ -355,6 +355,62 @@ HTMLWidgets.widget({
             map.addControl(nav, x.navigation_control.position);
           }
 
+          // Add the layers control if provided
+          if (x.layers_control) {
+            const layersControl = document.createElement('div');
+            layersControl.id = x.layers_control.control_id;
+            layersControl.className = x.layers_control.collapsible ? 'layers-control collapsible' : 'layers-control';
+            layersControl.style.position = 'absolute';
+            layersControl.style[x.layers_control.position || 'top-right'] = '10px';
+            el.appendChild(layersControl);
+
+            const layersList = document.createElement('div');
+            layersList.className = 'layers-list';
+            layersControl.appendChild(layersList);
+
+            // Fetch layers to be included in the control
+            let layers = x.layers_control.layers || map.getStyle().layers.map(layer => layer.id);
+
+            layers.forEach((layerId, index) => {
+              const link = document.createElement('a');
+              link.id = layerId;
+              link.href = '#';
+              link.textContent = layerId;
+              link.className = 'active';
+
+              // Show or hide layer when the toggle is clicked
+              link.onclick = function(e) {
+                const clickedLayer = this.textContent;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+                // Toggle layer visibility by changing the layout object's visibility property
+                if (visibility === 'visible') {
+                  map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+                  this.className = '';
+                } else {
+                  this.className = 'active';
+                  map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+                }
+              };
+
+              layersList.appendChild(link);
+            });
+
+            // Handle collapsible behavior
+            if (x.layers_control.collapsible) {
+              const toggleButton = document.createElement('div');
+              toggleButton.className = 'toggle-button';
+              toggleButton.textContent = 'Layers';
+              toggleButton.onclick = function() {
+                layersControl.classList.toggle('open');
+              };
+              layersControl.insertBefore(toggleButton, layersList);
+            }
+          }
+
           // Add click event listener in shinyMode
           if (HTMLWidgets.shinyMode) {
             map.on('click', function(e) {
