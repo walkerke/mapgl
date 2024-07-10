@@ -80,6 +80,7 @@ HTMLWidgets.widget({
               const markerOptions = {
                 color: marker.color,
                 rotation: marker.rotation,
+                draggable: marker.options.draggable || false,
                 ...marker.options
               };
               const mapMarker = new mapboxgl.Marker(markerOptions)
@@ -88,6 +89,17 @@ HTMLWidgets.widget({
 
               if (marker.popup) {
                 mapMarker.setPopup(new mapboxgl.Popup({ offset: 25 }).setText(marker.popup));
+              }
+
+              const markerId = marker.id;
+              if (markerId) {
+                const lngLat = mapMarker.getLngLat();
+                Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+
+                mapMarker.on('dragend', function() {
+                  const lngLat = mapMarker.getLngLat();
+                  Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+                });
               }
 
               window.mapboxglMarkers.push(mapMarker);

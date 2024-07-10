@@ -76,6 +76,7 @@ HTMLWidgets.widget({
               const markerOptions = {
                 color: marker.color,
                 rotation: marker.rotation,
+                draggable: marker.options.draggable || false,
                 ...marker.options
               };
               const mapMarker = new maplibregl.Marker(markerOptions)
@@ -84,6 +85,17 @@ HTMLWidgets.widget({
 
               if (marker.popup) {
                 mapMarker.setPopup(new maplibregl.Popup({ offset: 25 }).setText(marker.popup));
+              }
+
+              const markerId = marker.id;
+              if (markerId) {
+                const lngLat = mapMarker.getLngLat();
+                Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+
+                mapMarker.on('dragend', function() {
+                  const lngLat = mapMarker.getLngLat();
+                  Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+                });
               }
 
               window.maplibreglMarkers.push(mapMarker);
