@@ -111,12 +111,21 @@ HTMLWidgets.widget({
                   generateId: true
                 });
               } else if (source.type === "raster") {
-                map.addSource(source.id, {
-                  type: 'raster',
-                  url: source.url,
-                  tileSize: source.tileSize,
-                  maxzoom: source.maxzoom
-                });
+                if (source.url) {
+                  map.addSource(source.id, {
+                    type: 'raster',
+                    url: source.url,
+                    tileSize: source.tileSize,
+                    maxzoom: source.maxzoom
+                  });
+                } else if (source.tiles) {
+                  map.addSource(source.id, {
+                    type: 'raster',
+                    tiles: source.tiles,
+                    tileSize: source.tileSize,
+                    maxzoom: source.maxzoom
+                  });
+                }
               } else if (source.type === "raster-dem") {
                 map.addSource(source.id, {
                   type: 'raster-dem',

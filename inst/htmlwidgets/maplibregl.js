@@ -7,30 +7,6 @@ HTMLWidgets.widget({
   factory: function(el, width, height) {
     let map;
 
-    // Add default CSS for full screen
-    // const css = `
-    //   body, html {
-    //     margin: 0;
-    //     padding: 0;
-    //     width: 100%;
-    //     height: 100%;
-    //     overflow: hidden;
-    //   }
-    //   #${el.id} {
-    //     position: absolute;
-    //     top: 0;
-    //     bottom: 0;
-    //     left: 0;
-    //     right: 0;
-    //     width: 100%;
-    //     height: 100%;
-    //   }
-    // `;
-    // const style = document.createElement('style');
-    // style.type = 'text/css';
-    // style.innerHTML = css;
-    // document.getElementsByTagName('head')[0].appendChild(style);
-
     return {
       renderValue: function(x) {
         if (typeof maplibregl === 'undefined') {
@@ -131,12 +107,21 @@ HTMLWidgets.widget({
                   generateId: true
                 });
               } else if (source.type === "raster") {
-                map.addSource(source.id, {
-                  type: 'raster',
-                  url: source.url,
-                  tileSize: source.tileSize,
-                  maxzoom: source.maxzoom
-                });
+                if (source.url) {
+                  map.addSource(source.id, {
+                    type: 'raster',
+                    url: source.url,
+                    tileSize: source.tileSize,
+                    maxzoom: source.maxzoom
+                  });
+                } else if (source.tiles) {
+                  map.addSource(source.id, {
+                    type: 'raster',
+                    tiles: source.tiles,
+                    tileSize: source.tileSize,
+                    maxzoom: source.maxzoom
+                  });
+                }
               } else if (source.type === "raster-dem") {
                 map.addSource(source.id, {
                   type: 'raster-dem',

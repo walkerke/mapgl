@@ -61,19 +61,38 @@ add_vector_source <- function(map, id, url) {
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
-#' @param url A URL pointing to the raster tile source.
+#' @param url A URL pointing to the raster tile source. (optional)
+#' @param tiles A vector of tile URLs for the raster source. (optional)
 #' @param tileSize The size of the raster tiles.
 #' @param maxzoom The maximum zoom level for the raster tiles.
 #'
 #' @return The modified map object with the new source added.
 #' @export
-add_raster_source <- function(map, id, url, tileSize = 256, maxzoom = 22) {
+add_raster_source <- function(map, id, url = NULL, tiles = NULL, tileSize = 256, maxzoom = 22) {
+  if (is.null(url) && is.null(tiles)) {
+    stop("Either 'url' or 'tiles' must be provided.")
+  }
+
+  if (!is.null(url) && !is.null(tiles)) {
+    stop("Both 'url' and 'tiles' cannot be provided simultaneously. Please provide only one.")
+  }
+
   source <- list(
     id = id,
     type = "raster",
-    url = url,
     tileSize = tileSize
   )
+
+  if (!is.null(url)) {
+    source$url <- url
+  } else if (!is.null(tiles)) {
+
+    if (!is.list(tiles)) {
+      source$tiles <- list(tiles)
+    } else {
+      source$tiles <- tiles
+    }
+  }
 
   if (!is.null(maxzoom)) {
     source$maxzoom <- maxzoom

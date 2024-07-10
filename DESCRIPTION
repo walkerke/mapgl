@@ -1,7 +1,7 @@
 Package: mapgl
 Title: Interface to Mapbox GL JS v3 and Maplibre GL JS
 Version: 0.1.1
-Date: 2024-07-03
+Date: 2024-07-09
 Authors@R: 
     person("Kyle", "Walker", , "kyle@walker-data.com", role = c("aut", "cre"))
 Description: Provides an interface to Mapbox GL JS v3 and Maplibre GL JS for interactive,
