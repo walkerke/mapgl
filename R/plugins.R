@@ -65,7 +65,7 @@ compare.mapboxgl <- function(map1, map2, width, height, elementId, mousemove, or
     elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(
       viewer.suppress = FALSE,
-      browser.fill = FALSE,
+      browser.fill = TRUE,
       viewer.fill = TRUE,
       knitr.figure = TRUE,
       padding = 0,
@@ -80,6 +80,21 @@ compare.mapboxgl <- function(map1, map2, width, height, elementId, mousemove, or
 compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, orientation) {
   if (is.null(elementId)) {
     elementId <- paste0("compare-container-", as.hexmode(sample(1:1000000, 1)))
+  }
+
+  check_for_popups_or_tooltips <- function(map) {
+    if (!is.null(map$x$layers)) {
+      for (layer in map$x$layers) {
+        if (!is.null(layer$popup) || !is.null(layer$tooltip)) {
+          return(TRUE)
+        }
+      }
+    }
+    return(FALSE)
+  }
+
+  if (check_for_popups_or_tooltips(map1) || check_for_popups_or_tooltips(map2)) {
+    rlang::warn("Popups and tooltips are not currently supported for `compare()` with maplibre maps.")
   }
 
   x <- list(
@@ -99,7 +114,7 @@ compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, or
     elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(
       viewer.suppress = FALSE,
-      browser.fill = FALSE,
+      browser.fill = TRUE,
       viewer.fill = TRUE,
       knitr.figure = TRUE,
       padding = 0,
