@@ -10,6 +10,7 @@ maplibre(
   zoom = 0,
   bearing = 0,
   pitch = 0,
+  bounds = NULL,
   width = "100\%",
   height = NULL,
   ...
@@ -25,6 +26,8 @@ maplibre(
 \item{bearing}{The initial bearing (rotation) of the map, in degrees.}
 
 \item{pitch}{The initial pitch (tilt) of the map, in degrees.}
+
+\item{bounds}{An sf object or bounding box to fit the map to.}
 
 \item{width}{The width of the output htmlwidget.}
 

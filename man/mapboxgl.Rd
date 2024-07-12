@@ -13,6 +13,7 @@ mapboxgl(
   projection = "globe",
   parallels = NULL,
   access_token = NULL,
+  bounds = NULL,
   width = "100\%",
   height = NULL,
   ...
@@ -34,6 +35,8 @@ mapboxgl(
 \item{parallels}{A vector of two numbers representing the standard parellels of the projection.  Only available when the projection is "albers" or "lambertConformalConic".}
 
 \item{access_token}{Your Mapbox access token.}
+
+\item{bounds}{An sf object or bounding box to fit the map to.}
 
 \item{width}{The width of the output htmlwidget.}
 

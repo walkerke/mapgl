@@ -5,6 +5,7 @@
 #' @param zoom The initial zoom level of the map.
 #' @param bearing The initial bearing (rotation) of the map, in degrees.
 #' @param pitch The initial pitch (tilt) of the map, in degrees.
+#' @param bounds An sf object or bounding box to fit the map to.
 #' @param width The width of the output htmlwidget.
 #' @param height The height of the output htmlwidget.
 #' @param ... Additional named parameters to be passed to the Mapbox GL map.
@@ -21,12 +22,19 @@ maplibre <- function(style = carto_style("voyager"),
                      zoom = 0,
                      bearing = 0,
                      pitch = 0,
+                     bounds = NULL,
                      width = "100%",
                      height = NULL,
                      ...) {
 
-
   additional_params <- list(...)
+
+  if (!is.null(bounds)) {
+    if (inherits(bounds, "sf")) {
+      bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
+    }
+    additional_params$bounds <- bounds
+  }
 
   htmlwidgets::createWidget(
     name = "maplibregl",

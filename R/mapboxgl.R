@@ -8,6 +8,7 @@
 #' @param projection The map projection to use (e.g., "mercator", "globe").
 #' @param parallels A vector of two numbers representing the standard parellels of the projection.  Only available when the projection is "albers" or "lambertConformalConic".
 #' @param access_token Your Mapbox access token.
+#' @param bounds An sf object or bounding box to fit the map to.
 #' @param width The width of the output htmlwidget.
 #' @param height The height of the output htmlwidget.
 #' @param ... Additional named parameters to be passed to the Mapbox GL map.
@@ -27,6 +28,7 @@ mapboxgl <- function(style = NULL,
                      projection = "globe",
                      parallels = NULL,
                      access_token = NULL,
+                     bounds = NULL,
                      width = "100%",
                      height = NULL,
                      ...) {
@@ -43,6 +45,13 @@ mapboxgl <- function(style = NULL,
   }
 
   additional_params <- list(...)
+
+  if (!is.null(bounds)) {
+    if (inherits(bounds, "sf")) {
+      bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
+    }
+    additional_params$bounds <- bounds
+  }
 
   htmlwidgets::createWidget(
     name = "mapboxgl",
