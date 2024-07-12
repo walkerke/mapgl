@@ -617,13 +617,14 @@ if (HTMLWidgets.shinyMode) {
         });
         map.addControl(nav, message.position);
       } else if (message.type === "add_markers") {
-        if (!window.maplibreglMarkers) {
-          window.maplibreglMarkers = [];
+        if (!window.maplibreMarkers) {
+          window.maplibreMarkers = [];
         }
         message.markers.forEach(function(marker) {
           const markerOptions = {
             color: marker.color,
             rotation: marker.rotation,
+            draggable: marker.options.draggable || false,
             ...marker.options
           };
           const mapMarker = new maplibregl.Marker(markerOptions)
@@ -634,7 +635,18 @@ if (HTMLWidgets.shinyMode) {
             mapMarker.setPopup(new maplibregl.Popup({ offset: 25 }).setText(marker.popup));
           }
 
-          window.maplibreglMarkers.push(mapMarker);
+          const markerId = marker.id;
+          if (markerId) {
+            const lngLat = mapMarker.getLngLat();
+            Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+
+            mapMarker.on('dragend', function() {
+              const lngLat = mapMarker.getLngLat();
+              Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+            });
+          }
+
+          window.maplibreMarkers.push(mapMarker);
         });
       } else if (message.type === "clear_markers") {
           if (window.maplibreglMarkers) {
