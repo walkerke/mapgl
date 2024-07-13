@@ -658,19 +658,25 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "add_fullscreen_control") {
         const position = message.position || 'top-right';
         map.addControl(new maplibregl.FullscreenControl(), position);
-      } else if (message.type === 'add_layers_control') {
+      } else if (message.type === "add_layers_control") {
         const layersControl = document.createElement('div');
         layersControl.id = message.control_id;
         layersControl.className = message.collapsible ? 'layers-control collapsible' : 'layers-control';
         layersControl.style.position = 'absolute';
         layersControl.style[message.position || 'top-right'] = '10px';
-        document.getElementById(message.id).appendChild(layersControl);
 
         const layersList = document.createElement('div');
         layersList.className = 'layers-list';
         layersControl.appendChild(layersList);
 
-        message.layers.forEach((layerId) => {
+        let layers = message.layers || [];
+
+        // Ensure layers is always an array
+        if (!Array.isArray(layers)) {
+          layers = [layers];
+        }
+
+        layers.forEach((layerId, index) => {
           const link = document.createElement('a');
           link.id = layerId;
           link.href = '#';
@@ -682,7 +688,6 @@ if (HTMLWidgets.shinyMode) {
             e.preventDefault();
             e.stopPropagation();
 
-            const map = window.maplibreglMaps[message.id];
             const visibility = map.getLayoutProperty(clickedLayer, 'visibility');
 
             if (visibility === 'visible') {
@@ -705,6 +710,13 @@ if (HTMLWidgets.shinyMode) {
             layersControl.classList.toggle('open');
           };
           layersControl.insertBefore(toggleButton, layersList);
+        }
+
+        const mapContainer = document.getElementById(data.id);
+        if (mapContainer) {
+          mapContainer.appendChild(layersControl);
+        } else {
+          console.error(`Cannot find map container with ID ${data.id}`);
         }
       }
     }

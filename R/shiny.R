@@ -12,6 +12,12 @@ mapboxgl_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
     stop("mapboxgl_proxy must be called from within a Shiny session")
   }
 
+  if (!is.null(session$ns) &&
+    nzchar(session$ns(NULL)) &&
+    substring(mapId, 1, nchar(session$ns(""))) != session$ns("")) {
+    mapId <- session$ns(mapId)
+  }
+
   proxy <- list(id = mapId, session = session)
   class(proxy) <- "mapboxgl_proxy"
   proxy
@@ -29,6 +35,12 @@ mapboxgl_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
 maplibre_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
   if (is.null(session)) {
     stop("maplibre_proxy must be called from within a Shiny session")
+  }
+
+  if (!is.null(session$ns) &&
+    nzchar(session$ns(NULL)) &&
+    substring(mapId, 1, nchar(session$ns(""))) != session$ns("")) {
+    mapId <- session$ns(mapId)
   }
 
   proxy <- list(id = mapId, session = session)
