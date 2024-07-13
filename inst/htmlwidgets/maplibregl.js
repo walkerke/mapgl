@@ -658,6 +658,54 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "add_fullscreen_control") {
         const position = message.position || 'top-right';
         map.addControl(new maplibregl.FullscreenControl(), position);
+      } else if (message.type === 'add_layers_control') {
+        const layersControl = document.createElement('div');
+        layersControl.id = message.control_id;
+        layersControl.className = message.collapsible ? 'layers-control collapsible' : 'layers-control';
+        layersControl.style.position = 'absolute';
+        layersControl.style[message.position || 'top-right'] = '10px';
+        document.getElementById(message.id).appendChild(layersControl);
+
+        const layersList = document.createElement('div');
+        layersList.className = 'layers-list';
+        layersControl.appendChild(layersList);
+
+        message.layers.forEach((layerId) => {
+          const link = document.createElement('a');
+          link.id = layerId;
+          link.href = '#';
+          link.textContent = layerId;
+          link.className = 'active';
+
+          link.onclick = function(e) {
+            const clickedLayer = this.textContent;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const map = window.maplibreglMaps[message.id];
+            const visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+            if (visibility === 'visible') {
+              map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+              this.className = '';
+            } else {
+              this.className = 'active';
+              map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+            }
+          };
+
+          layersList.appendChild(link);
+        });
+
+        if (message.collapsible) {
+          const toggleButton = document.createElement('div');
+          toggleButton.className = 'toggle-button';
+          toggleButton.textContent = 'Layers';
+          toggleButton.onclick = function() {
+            layersControl.classList.toggle('open');
+          };
+          layersControl.insertBefore(toggleButton, layersList);
+        }
       }
     }
   });

@@ -53,6 +53,13 @@ mapboxgl <- function(style = NULL,
     additional_params$bounds <- bounds
   }
 
+  control_css <- htmltools::htmlDependency(
+    name = "layers-control",
+    version = "1.0.0",
+    src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
+    stylesheet = "layers-control.css"
+  )
+
   htmlwidgets::createWidget(
     name = "mapboxgl",
     x = list(
@@ -69,6 +76,7 @@ mapboxgl <- function(style = NULL,
     width = width,
     height = height,
     package = "mapgl",
+    dependencies = list(control_css),
     sizingPolicy = htmlwidgets::sizingPolicy(
       viewer.suppress = FALSE,
       browser.fill = TRUE,

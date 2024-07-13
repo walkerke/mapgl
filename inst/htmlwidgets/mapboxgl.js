@@ -372,6 +372,11 @@ HTMLWidgets.widget({
             // Fetch layers to be included in the control
             let layers = x.layers_control.layers || map.getStyle().layers.map(layer => layer.id);
 
+            // Ensure layers is always an array
+            if (!Array.isArray(layers)) {
+              layers = [layers];
+            }
+
             layers.forEach((layerId, index) => {
               const link = document.createElement('a');
               link.id = layerId;
@@ -657,8 +662,69 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "add_fullscreen_control") {
         const position = message.position || 'top-right';
         map.addControl(new mapboxgl.FullscreenControl(), position);
+      } else     if (message.type === "add_layers_control") {
+      const layersControl = document.createElement('div');
+      layersControl.id = message.control_id;
+      layersControl.className = message.collapsible ? 'layers-control collapsible' : 'layers-control';
+      layersControl.style.position = 'absolute';
+      layersControl.style[message.position || 'top-right'] = '10px';
+
+      const layersList = document.createElement('div');
+      layersList.className = 'layers-list';
+      layersControl.appendChild(layersList);
+
+      let layers = message.layers || [];
+
+      // Ensure layers is always an array
+      if (!Array.isArray(layers)) {
+        layers = [layers];
       }
+
+      layers.forEach((layerId, index) => {
+        const link = document.createElement('a');
+        link.id = layerId;
+        link.href = '#';
+        link.textContent = layerId;
+        link.className = 'active';
+
+        link.onclick = function(e) {
+          const clickedLayer = this.textContent;
+          e.preventDefault();
+          e.stopPropagation();
+
+          const visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+          if (visibility === 'visible') {
+            map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+            this.className = '';
+          } else {
+            this.className = 'active';
+            map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+          }
+        };
+
+        layersList.appendChild(link);
+      });
+
+      if (message.collapsible) {
+        const toggleButton = document.createElement('div');
+        toggleButton.className = 'toggle-button';
+        toggleButton.textContent = 'Layers';
+        toggleButton.onclick = function() {
+          layersControl.classList.toggle('open');
+        };
+        layersControl.insertBefore(toggleButton, layersList);
+      }
+
+      const mapContainer = document.getElementById(data.id);
+      if (mapContainer) {
+        mapContainer.appendChild(layersControl);
+      } else {
+        console.error(`Cannot find map container with ID ${data.id}`);
+      }
+
     }
+  }
 
   });
 }

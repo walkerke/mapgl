@@ -117,14 +117,6 @@ add_layers_control <- function(map, position = "top-left", layers = NULL, collap
   # Create the control container
   control_html <- paste0('<nav id="', control_id, '" class="layers-control', ifelse(collapsible, ' collapsible', ''), '" style="', position, ': 10px;"></nav>')
 
-  # Create the HTML dependency for the CSS file
-  control_css <- htmltools::htmlDependency(
-    name = "layers-control",
-    version = "1.0.0",
-    src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
-    stylesheet = "layers-control.css"
-  )
-
   # If layers is NULL, get the layers added by the user
   if (is.null(layers)) {
     layers <- unlist(
@@ -141,10 +133,10 @@ add_layers_control <- function(map, position = "top-left", layers = NULL, collap
       id = map$id,
       message = list(type = "add_layers_control", control_id = control_id, position = position, layers = layers, collapsible = collapsible)
     ))
+
   } else {
     map$x$layers_control <- list(control_id = control_id, position = position, layers = layers, collapsible = collapsible)
     map$x$control_html <- control_html
-    map$dependencies <- c(map$dependencies, list(control_css))
   }
 
   return(map)
