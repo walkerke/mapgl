@@ -10,7 +10,8 @@ add_image_source(
   url = NULL,
   data = NULL,
   coordinates = NULL,
-  colors = NULL
+  colors = NULL,
+  na_color = "transparent"
 )
 }
 \arguments{

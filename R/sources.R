@@ -151,7 +151,7 @@ add_raster_dem_source <- function(map, id, url, tileSize = 512, maxzoom = NULL) 
 #'
 #' @return The modified map object with the new source added.
 #' @export
-add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NULL, colors = NULL) {
+add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NULL, colors = NULL, na_color = "transparent") {
 
   if (!is.null(data)) {
     if (inherits(data, "RasterLayer")) {
@@ -160,37 +160,52 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
 
     data <- terra::project(data, "EPSG:4326")
 
-    # Prepare color mapping
-    if (is.null(colors)) {
-      colors <- colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
-    } else if (length(colors) < 256) {
-      colors <- colorRampPalette(colors)(256)
-    }
+    if (terra::nlyr(data) == 3) {
+      # For RGB raster
+      png_path <- tempfile(fileext = ".png")
+      terra::writeRaster(data, png_path, overwrite = TRUE)
+      url <- base64enc::dataURI(file = png_path, mime = "image/png")
+    } else {
+      if (terra::has.colors(data)) {
+        # If the raster already has a color table
+        coltb <- terra::coltab(data)
+      } else {
+        # Prepare color mapping for single-band raster
+        if (is.null(colors)) {
+          colors <- colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
+        } else if (length(colors) < 256) {
+          colors <- colorRampPalette(colors)(256)
+        }
 
-    data <- data / max(values(data), na.rm = TRUE) * 255
-    data <- round(data)
-    coltb <- data.frame(value = 0:255, col = colors)
+        data <- data / max(terra::values(data), na.rm = TRUE) * 255
+        data <- round(data)
+        coltb <- data.frame(value = 0:255, col = colors)
 
+        # Create color table
+        terra::coltab(data) <- coltb
+      }
 
-    # Create color table
-    coltab(data) <- coltb
+      # Handle NA values
+      if (!is.null(na_color)) {
+        data[is.na(terra::values(data))] <- 255
+        coltb <- rbind(coltb, data.frame(value = 255, col = na_color))
+        terra::coltab(data) <- coltb
+      }
 
-    # Handle NA values
-    data[is.na(data[])] <- 255
+      png_path <- tempfile(fileext = ".png")
+      terra::writeRaster(data, png_path, overwrite = TRUE, NAflag = 255, datatype = "INT1U")
+      url <- base64enc::dataURI(file = png_path, mime = "image/png")
 
-    png_path <- tempfile(fileext = ".png")
-    terra::writeRaster(data, png_path, overwrite = TRUE, NAflag = 255, datatype = "INT1U")
-    url <- base64enc::dataURI(file = png_path, mime = "image/png")
-
-    # Compute coordinates if not provided
-    if (is.null(coordinates)) {
-      ext <- ext(data)
-      coordinates <- list(
-        unname(c(ext[1], ext[4])),  # top-left
-        unname(c(ext[2], ext[4])),  # top-right
-        unname(c(ext[2], ext[3])),  # bottom-right
-        unname(c(ext[1], ext[3]))   # bottom-left
-      )
+      # Compute coordinates if not provided
+      if (is.null(coordinates)) {
+        ext <- terra::ext(data)
+        coordinates <- list(
+          unname(c(ext[1], ext[4])),  # top-left
+          unname(c(ext[2], ext[4])),  # top-right
+          unname(c(ext[2], ext[3])),  # bottom-right
+          unname(c(ext[1], ext[3]))   # bottom-left
+        )
+      }
     }
   }
 
