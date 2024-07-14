@@ -190,16 +190,17 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
       terra::writeRaster(data, png_path, overwrite = TRUE, NAflag = 255, datatype = "INT1U")
       url <- base64enc::dataURI(file = png_path, mime = "image/png")
 
-      # Compute coordinates if not provided
-      if (is.null(coordinates)) {
-        ext <- terra::ext(data)
-        coordinates <- list(
-          unname(c(ext[1], ext[4])),  # top-left
-          unname(c(ext[2], ext[4])),  # top-right
-          unname(c(ext[2], ext[3])),  # bottom-right
-          unname(c(ext[1], ext[3]))   # bottom-left
-        )
-      }
+
+    }
+    # Compute coordinates if not provided
+    if (is.null(coordinates)) {
+      ext <- terra::ext(data)
+      coordinates <- list(
+        unname(c(ext[1], ext[4])),  # top-left
+        unname(c(ext[2], ext[4])),  # top-right
+        unname(c(ext[2], ext[3])),  # bottom-right
+        unname(c(ext[1], ext[3]))   # bottom-left
+      )
     }
   }
 
