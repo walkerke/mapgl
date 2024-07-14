@@ -158,6 +158,8 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
       data <- terra::rast(data)
     }
 
+    data <- terra::project(data, "EPSG:4326")
+
     # Prepare color mapping
     if (is.null(colors)) {
       colors <- colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
