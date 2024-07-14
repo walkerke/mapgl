@@ -4,7 +4,14 @@
 \alias{add_image_source}
 \title{Add an image source to a Mapbox GL or Maplibre GL map}
 \usage{
-add_image_source(map, id, url, coordinates)
+add_image_source(
+  map,
+  id,
+  url = NULL,
+  data = NULL,
+  coordinates = NULL,
+  colors = NULL
+)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
@@ -13,7 +20,11 @@ add_image_source(map, id, url, coordinates)
 
 \item{url}{A URL pointing to the image source.}
 
-\item{coordinates}{A list of coordinates specifying the image corners in clockwise order: top left, top right, bottom right, bottom left.}
+\item{data}{A \code{SpatRaster} object from the \code{terra} package or a \code{RasterLayer} object.}
+
+\item{coordinates}{A list of coordinates specifying the image corners in clockwise order: top left, top right, bottom right, bottom left.  For \code{SpatRaster} or \code{RasterLayer} objects, this will be extracted for you.}
+
+\item{colors}{A vector of colors to use for the raster image.}
 }
 \value{
 The modified map object with the new source added.

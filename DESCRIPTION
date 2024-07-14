@@ -16,7 +16,9 @@ Imports:
   geojsonsf,
   sf,
   rlang,
-  htmltools
+  htmltools,
+  grDevices,
+  terra
 Suggests: 
   shiny,
   mapboxapi,
