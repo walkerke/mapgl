@@ -151,7 +151,7 @@ add_raster_dem_source <- function(map, id, url, tileSize = 512, maxzoom = NULL) 
 #'
 #' @return The modified map object with the new source added.
 #' @export
-add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NULL, colors = NULL, na_color = "transparent") {
+add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NULL, colors = NULL) {
 
   if (!is.null(data)) {
     if (inherits(data, "RasterLayer")) {
@@ -179,16 +179,10 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
 
         data <- data / max(terra::values(data), na.rm = TRUE) * 255
         data <- round(data)
+        data[is.na(terra::values(data))] <- 255
         coltb <- data.frame(value = 0:255, col = colors)
 
         # Create color table
-        terra::coltab(data) <- coltb
-      }
-
-      # Handle NA values
-      if (!is.null(na_color)) {
-        data[is.na(terra::values(data))] <- 255
-        coltb <- rbind(coltb, data.frame(value = 255, col = na_color))
         terra::coltab(data) <- coltb
       }
 
