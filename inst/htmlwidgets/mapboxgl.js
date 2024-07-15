@@ -350,7 +350,7 @@ HTMLWidgets.widget({
             const position = x.fullscreen_control.position || 'top-right';
             const fullscreen = new mapboxgl.FullscreenControl();
             map.addControl(fullscreen, position);
-            map.controls.push(fullscreen)
+            map.controls.push(fullscreen);
           }
 
           // Add navigation control if enabled

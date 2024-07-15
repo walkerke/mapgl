@@ -24,6 +24,8 @@ HTMLWidgets.widget({
           ...x.additional_params
         });
 
+        map.controls = [];
+
         map.on('style.load', function() {
           map.resize();
 
@@ -342,7 +344,9 @@ HTMLWidgets.widget({
           // Add fullscreen control if enabled
           if (x.fullscreen_control && x.fullscreen_control.enabled) {
             const position = x.fullscreen_control.position || 'top-right';
-            map.addControl(new maplibregl.FullscreenControl(), position);
+            const fullscreen = new maplibregl.FullscreenControl();
+            map.addControl(fullscreen, position);
+            map.controls.push(fullscreen);
           }
 
           // Add navigation control if enabled
@@ -353,6 +357,7 @@ HTMLWidgets.widget({
               visualizePitch: x.navigation_control.visualize_pitch
             });
             map.addControl(nav, x.navigation_control.position);
+            map.controls.push(nav);
           }
 
           // Add the layers control if provided
@@ -619,6 +624,7 @@ if (HTMLWidgets.shinyMode) {
           visualizePitch: message.options.visualize_pitch
         });
         map.addControl(nav, message.position);
+        map.controls.push(nav);
       } else if (message.type === "add_markers") {
         if (!window.maplibreMarkers) {
           window.maplibreMarkers = [];
@@ -660,7 +666,9 @@ if (HTMLWidgets.shinyMode) {
           }
       } else if (message.type === "add_fullscreen_control") {
         const position = message.position || 'top-right';
-        map.addControl(new maplibregl.FullscreenControl(), position);
+        const fullscreen = new maplibregl.FullscreenControl();
+        map.addControl(fullscreen, position);
+        map.controls.push(fullscreen);
       } else if (message.type === "add_layers_control") {
         const layersControl = document.createElement('div');
         layersControl.id = message.control_id;
@@ -726,7 +734,17 @@ if (HTMLWidgets.shinyMode) {
         if (existingLegend) {
           existingLegend.remove();
         }
+      } else if (message.type === "clear_controls") {
+        map.controls.forEach(control => {
+          map.removeControl(control);
+        });
+        map.controls = [];
+
+        const layersControl = document.querySelector(`#${data.id} .layers-control`);
+        if (layersControl) {
+          layersControl.remove();
         }
+  }
     }
   });
 }
