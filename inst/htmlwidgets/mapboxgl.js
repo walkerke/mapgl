@@ -724,8 +724,12 @@ if (HTMLWidgets.shinyMode) {
         } else {
           console.error(`Cannot find map container with ID ${data.id}`);
         }
+    } else if (message.type === 'clear_legend') {
+        const existingLegend = document.querySelector(`#${data.id} .mapboxgl-legend`);
+        if (existingLegend) {
+          existingLegend.remove();
+        }
+      }
     }
-  }
-
   });
 }

@@ -234,3 +234,20 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     return(map)
   }
 }
+
+
+#' Clear legend from a map in a proxy session
+#'
+#' @param map A map object created by the `mapboxgl_proxy` or `maplibre_proxy` function.
+#'
+#' @return The updated map object with the legend cleared.
+#' @export
+clear_legend <- function(map) {
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
+    map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_legend")))
+  } else {
+    stop("clear_legend can only be used with mapboxgl_proxy or maplibre_proxy objects.")
+  }
+  return(map)
+}
