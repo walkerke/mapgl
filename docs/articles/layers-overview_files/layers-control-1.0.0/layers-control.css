@@ -1,0 +1,73 @@
+.layers-control {
+    background: #fff;
+    position: absolute;
+    z-index: 1;
+    border-radius: 3px;
+    width: 120px;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    font-family: 'Open Sans', sans-serif;
+    margin: 10px;
+}
+
+.layers-control a {
+    font-size: 13px;
+    color: #404040;
+    display: block;
+    margin: 0;
+    padding: 0;
+    padding: 10px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    text-align: center;
+}
+
+.layers-control a:last-child {
+    border: none;
+}
+
+.layers-control a:hover {
+    background-color: #f8f8f8;
+    color: #404040;
+}
+
+.layers-control a.active {
+    background-color: darkgrey;
+    color: #ffffff;
+}
+
+.layers-control a.active:hover {
+    background: grey;
+}
+
+.layers-control .toggle-button {
+    display: none;
+    background: darkgrey;
+    color: #ffffff;
+    text-align: center;
+    cursor: pointer;
+    padding: 5px 0;
+    border-radius: 3px 3px 0 0;
+
+}
+
+
+.layers-control .toggle-button:hover {
+    background: grey;
+}
+
+.layers-control .layers-list {
+    display: block;
+}
+
+.layers-control.collapsible .toggle-button {
+    display: block;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.layers-control.collapsible .layers-list {
+    display: none;
+}
+
+.layers-control.collapsible.open .layers-list {
+    display: block;
+}

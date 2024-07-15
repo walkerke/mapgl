@@ -44,7 +44,14 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_raster_source</span><span class="op">(</span><span class="va">map</span>, <span class="va">id</span>, <span class="va">url</span>, tileSize <span class="op">=</span> <span class="fl">256</span>, maxzoom <span class="op">=</span> <span class="fl">22</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_raster_source</span><span class="op">(</span></span>
+<span>  <span class="va">map</span>,</span>
+<span>  <span class="va">id</span>,</span>
+<span>  url <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tiles <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tileSize <span class="op">=</span> <span class="fl">256</span>,</span>
+<span>  maxzoom <span class="op">=</span> <span class="fl">22</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -60,7 +67,11 @@
 
 
 <dt id="arg-url">url<a class="anchor" aria-label="anchor" href="#arg-url"></a></dt>
-<dd><p>A URL pointing to the raster tile source.</p></dd>
+<dd><p>A URL pointing to the raster tile source. (optional)</p></dd>
+
+
+<dt id="arg-tiles">tiles<a class="anchor" aria-label="anchor" href="#arg-tiles"></a></dt>
+<dd><p>A vector of tile URLs for the raster source. (optional)</p></dd>
 
 
 <dt id="arg-tilesize">tileSize<a class="anchor" aria-label="anchor" href="#arg-tilesize"></a></dt>

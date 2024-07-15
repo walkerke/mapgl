@@ -28,6 +28,9 @@ HTMLWidgets.widget({
           ...x.additional_params
         });
 
+        map.controls = [];
+
+
         map.on('style.load', function() {
           map.resize();
 
@@ -80,6 +83,7 @@ HTMLWidgets.widget({
               const markerOptions = {
                 color: marker.color,
                 rotation: marker.rotation,
+                draggable: marker.options.draggable || false,
                 ...marker.options
               };
               const mapMarker = new mapboxgl.Marker(markerOptions)
@@ -88,6 +92,19 @@ HTMLWidgets.widget({
 
               if (marker.popup) {
                 mapMarker.setPopup(new mapboxgl.Popup({ offset: 25 }).setText(marker.popup));
+              }
+
+              if (HTMLWidgets.shinyMode) {
+                const markerId = marker.id;
+                if (markerId) {
+                  const lngLat = mapMarker.getLngLat();
+                  Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+
+                  mapMarker.on('dragend', function() {
+                    const lngLat = mapMarker.getLngLat();
+                    Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+                  });
+                }
               }
 
               window.mapboxglMarkers.push(mapMarker);
@@ -111,12 +128,21 @@ HTMLWidgets.widget({
                   generateId: true
                 });
               } else if (source.type === "raster") {
-                map.addSource(source.id, {
-                  type: 'raster',
-                  url: source.url,
-                  tileSize: source.tileSize,
-                  maxzoom: source.maxzoom
-                });
+                if (source.url) {
+                  map.addSource(source.id, {
+                    type: 'raster',
+                    url: source.url,
+                    tileSize: source.tileSize,
+                    maxzoom: source.maxzoom
+                  });
+                } else if (source.tiles) {
+                  map.addSource(source.id, {
+                    type: 'raster',
+                    tiles: source.tiles,
+                    tileSize: source.tileSize,
+                    maxzoom: source.maxzoom
+                  });
+                }
               } else if (source.type === "raster-dem") {
                 map.addSource(source.id, {
                   type: 'raster-dem',
@@ -322,7 +348,9 @@ HTMLWidgets.widget({
           // Add fullscreen control if enabled
           if (x.fullscreen_control && x.fullscreen_control.enabled) {
             const position = x.fullscreen_control.position || 'top-right';
-            map.addControl(new mapboxgl.FullscreenControl(), position);
+            const fullscreen = new mapboxgl.FullscreenControl();
+            map.addControl(fullscreen, position);
+            map.controls.push(fullscreen);
           }
 
           // Add navigation control if enabled
@@ -333,6 +361,7 @@ HTMLWidgets.widget({
               visualizePitch: x.navigation_control.visualize_pitch
             });
             map.addControl(nav, x.navigation_control.position);
+            map.controls.push(nav);
           }
 
           // Add the layers control if provided
@@ -350,6 +379,11 @@ HTMLWidgets.widget({
 
             // Fetch layers to be included in the control
             let layers = x.layers_control.layers || map.getStyle().layers.map(layer => layer.id);
+
+            // Ensure layers is always an array
+            if (!Array.isArray(layers)) {
+              layers = [layers];
+            }
 
             layers.forEach((layerId, index) => {
               const link = document.createElement('a');
@@ -594,26 +628,39 @@ if (HTMLWidgets.shinyMode) {
           visualizePitch: message.options.visualize_pitch
         });
         map.addControl(nav, message.position);
+        map.controls.push(nav);
       } else if (message.type === "add_markers") {
-        if (!window.mapboxglMarkers) {
-          window.mapboxglMarkers = [];
-        }
-        message.markers.forEach(function(marker) {
-          const markerOptions = {
-            color: marker.color,
-            rotation: marker.rotation,
-            ...marker.options
-          };
-          const mapMarker = new mapboxgl.Marker(markerOptions)
-            .setLngLat([marker.lng, marker.lat])
-            .addTo(map);
-
-          if (marker.popup) {
-            mapMarker.setPopup(new mapboxgl.Popup({ offset: 25 }).setText(marker.popup));
+          if (!window.mapboxglMarkers) {
+            window.mapboxglMarkers = [];
           }
+          message.markers.forEach(function(marker) {
+            const markerOptions = {
+              color: marker.color,
+              rotation: marker.rotation,
+              draggable: marker.options.draggable || false,
+              ...marker.options
+            };
+            const mapMarker = new mapboxgl.Marker(markerOptions)
+              .setLngLat([marker.lng, marker.lat])
+              .addTo(map);
 
-          window.mapboxglMarkers.push(mapMarker);
-        });
+            if (marker.popup) {
+              mapMarker.setPopup(new mapboxgl.Popup({ offset: 25 }).setText(marker.popup));
+            }
+
+            const markerId = marker.id;
+            if (markerId) {
+              const lngLat = mapMarker.getLngLat();
+              Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+
+              mapMarker.on('dragend', function() {
+                const lngLat = mapMarker.getLngLat();
+                Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+              });
+            }
+
+            window.mapboxglMarkers.push(mapMarker);
+          });
       } else if (message.type === "clear_markers") {
           if (window.mapboxglMarkers) {
             window.mapboxglMarkers.forEach(function(marker) {
@@ -623,9 +670,85 @@ if (HTMLWidgets.shinyMode) {
           }
       } else if (message.type === "add_fullscreen_control") {
         const position = message.position || 'top-right';
-        map.addControl(new mapboxgl.FullscreenControl(), position);
-      }
-    }
+        const fullscreen = new mapboxgl.FullscreenControl();
+        map.addControl(fullscreen, position);
+        map.controls.push(fullscreen)
+      } else if (message.type === "add_layers_control") {
+        const layersControl = document.createElement('div');
+        layersControl.id = message.control_id;
+        layersControl.className = message.collapsible ? 'layers-control collapsible' : 'layers-control';
+        layersControl.style.position = 'absolute';
+        layersControl.style[message.position || 'top-right'] = '10px';
 
+        const layersList = document.createElement('div');
+        layersList.className = 'layers-list';
+        layersControl.appendChild(layersList);
+
+        let layers = message.layers || [];
+
+        // Ensure layers is always an array
+        if (!Array.isArray(layers)) {
+          layers = [layers];
+        }
+
+        layers.forEach((layerId, index) => {
+          const link = document.createElement('a');
+          link.id = layerId;
+          link.href = '#';
+          link.textContent = layerId;
+          link.className = 'active';
+
+          link.onclick = function(e) {
+            const clickedLayer = this.textContent;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+            if (visibility === 'visible') {
+              map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+              this.className = '';
+            } else {
+              this.className = 'active';
+              map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+            }
+          };
+
+          layersList.appendChild(link);
+        });
+
+        if (message.collapsible) {
+          const toggleButton = document.createElement('div');
+          toggleButton.className = 'toggle-button';
+          toggleButton.textContent = 'Layers';
+          toggleButton.onclick = function() {
+            layersControl.classList.toggle('open');
+          };
+          layersControl.insertBefore(toggleButton, layersList);
+        }
+
+        const mapContainer = document.getElementById(data.id);
+        if (mapContainer) {
+          mapContainer.appendChild(layersControl);
+        } else {
+          console.error(`Cannot find map container with ID ${data.id}`);
+        }
+    } else if (message.type === 'clear_legend') {
+        const existingLegend = document.querySelector(`#${data.id} .mapboxgl-legend`);
+        if (existingLegend) {
+          existingLegend.remove();
+        }
+      } else if (message.type === "clear_controls") {
+        map.controls.forEach(control => {
+          map.removeControl(control);
+        });
+        map.controls = [];
+
+        const layersControl = document.querySelector(`#${data.id} .layers-control`);
+        if (layersControl) {
+          layersControl.remove();
+        }
+  }
+    }
   });
 }

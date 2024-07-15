@@ -60,7 +60,8 @@
 
 
 <script src="layers-overview_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script><script src="layers-overview_files/mapboxgl-binding-0.1.1/mapboxgl.js"></script><link href="layers-overview_files/maplibre-gl-4.4.1/maplibre-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script><script src="layers-overview_files/mapboxgl-binding-0.1.1/mapboxgl.js"></script><link href="layers-overview_files/layers-control-1.0.0/layers-control.css" rel="stylesheet">
+<link href="layers-overview_files/maplibre-gl-4.4.1/maplibre-gl.css" rel="stylesheet">
 <script src="layers-overview_files/maplibre-gl-4.4.1/maplibre-gl.js"></script><script src="layers-overview_files/maplibregl-binding-0.1.1/maplibregl.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Layers overview</h1>
@@ -319,11 +320,13 @@ a source as well.</p>
 <div class="section level3">
 <h3 id="raster-layers">Raster layers<a class="anchor" aria-label="anchor" href="#raster-layers"></a>
 </h3>
-<p><strong>mapgl</strong> does not natively support R rasters in its
-initial release, but aims to do so in the future. Raster sources can be
-added through <code><a href="../reference/add_image_source.html">add_image_source()</a></code> for remotely-hosted image
-files, or <code><a href="../reference/add_raster_source.html">add_raster_source()</a></code> for remotely-hosted raster
-tiles.</p>
+<p><strong>mapgl</strong> supports rasters from the
+<strong>terra</strong> package when passed to the <code>data</code>
+argument in the <code><a href="../reference/add_image_source.html">add_image_source()</a></code> function, then
+visualized with <code><a href="../reference/add_raster_layer.html">add_raster_layer()</a></code>. Remote raster sources
+(as shown below) can also be added through
+<code><a href="../reference/add_image_source.html">add_image_source()</a></code> for remotely-hosted image files, or
+<code><a href="../reference/add_raster_source.html">add_raster_source()</a></code> for remotely-hosted raster tiles.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"dark"</span><span class="op">)</span>,</span>
 <span>         zoom <span class="op">=</span> <span class="fl">5</span>,</span>
@@ -368,7 +371,7 @@ or an <strong>sf</strong> POINT object will add multiple markers.</p>
 <span>  popup <span class="op">=</span> <span class="st">"A marker"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div id="htmlwidget-5b1b2f4ad92281566982" style="width:100%;height:432.632880098888px;" class="mapboxgl html-widget"></div>
-<script type="application/json" data-for="htmlwidget-5b1b2f4ad92281566982">{"x":{"style":"mapbox://styles/mapbox/streets-v12","center":[-74.006,40.7128],"zoom":10,"bearing":0,"pitch":0,"projection":"globe","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[],"markers":[{"lng":-74.006,"lat":40.7128,"color":"blue","rotation":45,"popup":"A marker","options":[]}]},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-5b1b2f4ad92281566982">{"x":{"style":"mapbox://styles/mapbox/streets-v12","center":[-74.006,40.7128],"zoom":10,"bearing":0,"pitch":0,"projection":"globe","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[],"markers":[{"id":"marker_1","lng":-74.006,"lat":40.7128,"color":"blue","rotation":45,"popup":"A marker","options":{"draggable":false}}]},"evals":[],"jsHooks":[]}</script>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -209,7 +209,7 @@ maplibre(
 
 ### Raster layers
 
-**mapgl** does not natively support R rasters in its initial release, but aims to do so in the future. Raster sources can be added through `add_image_source()` for remotely-hosted image files, or `add_raster_source()` for remotely-hosted raster tiles.
+**mapgl** supports rasters from the **terra** package when passed to the `data` argument in the `add_image_source()` function, then visualized with `add_raster_layer()`. Remote raster sources (as shown below) can also be added through `add_image_source()` for remotely-hosted image files, or `add_raster_source()` for remotely-hosted raster tiles.
 
 ```{r}
 mapboxgl(style = mapbox_style("dark"),
