@@ -177,7 +177,7 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
           colors <- colorRampPalette(colors)(256)
         }
 
-        data <- data / max(terra::values(data), na.rm = TRUE) * 255
+        data <- data / max(terra::values(data), na.rm = TRUE) * 254
         data <- round(data)
         data[is.na(terra::values(data))] <- 255
         coltb <- data.frame(value = 0:255, col = colors)
