@@ -141,3 +141,17 @@ add_layers_control <- function(map, position = "top-left", layers = NULL, collap
 
   return(map)
 }
+
+#' Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` function.
+#'
+#' @return The modified map object with all controls removed.
+#' @export
+clear_controls <- function(map) {
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_controls")))
+  }
+  return(map)
+}
