@@ -172,9 +172,9 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
       } else {
         # Prepare color mapping for single-band raster
         if (is.null(colors)) {
-          colors <- colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
+          colors <- grDevices::colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
         } else if (length(colors) < 256) {
-          colors <- colorRampPalette(colors)(256)
+          colors <- grDevices::colorRampPalette(colors)(256)
         }
 
         data <- data / max(terra::values(data), na.rm = TRUE) * 254

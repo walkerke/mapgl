@@ -25,11 +25,26 @@
 #' )
 #'
 #' # Add a single draggable marker with an ID
-#' map <- add_markers(map, c(-74.006, 40.7128), color = "blue", rotation = 45, popup = "A marker", draggable = TRUE, marker_id = "marker1")
+#' map <- add_markers(
+#'   map,
+#'   c(-74.006, 40.7128),
+#'   color = "blue",
+#'   rotation = 45,
+#'   popup = "A marker",
+#'   draggable = TRUE,
+#'   marker_id = "marker1"
+#' )
 #'
 #' # Add multiple markers from a named list of coordinates
-#' coords_list <- list(marker2 = c(-74.006, 40.7128), marker3 = c(-73.935242, 40.730610))
-#' map <- add_markers(map, coords_list, color = "green", popup = "Multiple markers", draggable = TRUE)
+#' coords_list <- list(marker2 = c(-74.006, 40.7128),
+#'                     marker3 = c(-73.935242, 40.730610))
+#' map <- add_markers(
+#'   map,
+#'   coords_list,
+#'   color = "green",
+#'   popup = "Multiple markers",
+#'   draggable = TRUE
+#' )
 #'
 #' # Create an sf POINT object
 #' points_sf <- st_as_sf(data.frame(
@@ -40,7 +55,14 @@
 #' points_sf$popup <- c("Point 1", "Point 2")
 #'
 #' # Add multiple markers from an sf object with IDs from a column
-#' map <- add_markers(map, points_sf, color = "red", popup = "popup", draggable = TRUE, marker_id = "id")
+#' map <- add_markers(
+#'   map,
+#'   points_sf,
+#'   color = "red",
+#'   popup = "popup",
+#'   draggable = TRUE,
+#'   marker_id = "id"
+#' )
 #' }
 add_markers <- function(map, data, color = "red", rotation = 0, popup = NULL, marker_id = NULL, draggable = FALSE, ...) {
   options <- list(...)
