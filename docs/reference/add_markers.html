@@ -111,11 +111,26 @@
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Add a single draggable marker with an ID</span></span></span>
-<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu">add_markers</span><span class="op">(</span><span class="va">map</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.006</span>, <span class="fl">40.7128</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span>, rotation <span class="op">=</span> <span class="fl">45</span>, popup <span class="op">=</span> <span class="st">"A marker"</span>, draggable <span class="op">=</span> <span class="cn">TRUE</span>, marker_id <span class="op">=</span> <span class="st">"marker1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu">add_markers</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">map</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.006</span>, <span class="fl">40.7128</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  color <span class="op">=</span> <span class="st">"blue"</span>,</span></span>
+<span class="r-in"><span>  rotation <span class="op">=</span> <span class="fl">45</span>,</span></span>
+<span class="r-in"><span>  popup <span class="op">=</span> <span class="st">"A marker"</span>,</span></span>
+<span class="r-in"><span>  draggable <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  marker_id <span class="op">=</span> <span class="st">"marker1"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Add multiple markers from a named list of coordinates</span></span></span>
-<span class="r-in"><span><span class="va">coords_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>marker2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.006</span>, <span class="fl">40.7128</span><span class="op">)</span>, marker3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">73.935242</span>, <span class="fl">40.730610</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu">add_markers</span><span class="op">(</span><span class="va">map</span>, <span class="va">coords_list</span>, color <span class="op">=</span> <span class="st">"green"</span>, popup <span class="op">=</span> <span class="st">"Multiple markers"</span>, draggable <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">coords_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>marker2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.006</span>, <span class="fl">40.7128</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                    marker3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">73.935242</span>, <span class="fl">40.730610</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu">add_markers</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">map</span>,</span></span>
+<span class="r-in"><span>  <span class="va">coords_list</span>,</span></span>
+<span class="r-in"><span>  color <span class="op">=</span> <span class="st">"green"</span>,</span></span>
+<span class="r-in"><span>  popup <span class="op">=</span> <span class="st">"Multiple markers"</span>,</span></span>
+<span class="r-in"><span>  draggable <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create an sf POINT object</span></span></span>
 <span class="r-in"><span><span class="va">points_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
@@ -126,7 +141,14 @@
 <span class="r-in"><span><span class="va">points_sf</span><span class="op">$</span><span class="va">popup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Point 1"</span>, <span class="st">"Point 2"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Add multiple markers from an sf object with IDs from a column</span></span></span>
-<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu">add_markers</span><span class="op">(</span><span class="va">map</span>, <span class="va">points_sf</span>, color <span class="op">=</span> <span class="st">"red"</span>, popup <span class="op">=</span> <span class="st">"popup"</span>, draggable <span class="op">=</span> <span class="cn">TRUE</span>, marker_id <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu">add_markers</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">map</span>,</span></span>
+<span class="r-in"><span>  <span class="va">points_sf</span>,</span></span>
+<span class="r-in"><span>  color <span class="op">=</span> <span class="st">"red"</span>,</span></span>
+<span class="r-in"><span>  popup <span class="op">=</span> <span class="st">"popup"</span>,</span></span>
+<span class="r-in"><span>  draggable <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  marker_id <span class="op">=</span> <span class="st">"id"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
