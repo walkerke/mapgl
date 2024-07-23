@@ -652,19 +652,19 @@ if (HTMLWidgets.shinyMode) {
           const markerId = marker.id;
           if (markerId) {
             const lngLat = mapMarker.getLngLat();
-            Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+            Shiny.setInputValue(data.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
 
             mapMarker.on('dragend', function() {
               const lngLat = mapMarker.getLngLat();
-              Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+              Shiny.setInputValue(data.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
             });
           }
 
           window.maplibreMarkers.push(mapMarker);
         });
       } else if (message.type === "clear_markers") {
-          if (window.maplibreglMarkers) {
-            window.maplibreglMarkers.forEach(function(marker) {
+          if (window.maplibreMarkers) {
+            window.maplibreMarkers.forEach(function(marker) {
               marker.remove();
             });
             window.maplibreglMarkers = [];
