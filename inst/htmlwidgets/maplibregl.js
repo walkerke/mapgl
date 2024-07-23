@@ -376,6 +376,11 @@ HTMLWidgets.widget({
             // Fetch layers to be included in the control
             let layers = x.layers_control.layers || map.getStyle().layers.map(layer => layer.id);
 
+            // Ensure layers is always an array
+            if (!Array.isArray(layers)) {
+              layers = [layers];
+            }
+
             layers.forEach((layerId, index) => {
               const link = document.createElement('a');
               link.id = layerId;
