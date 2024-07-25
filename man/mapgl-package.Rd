@@ -4,11 +4,11 @@
 \name{mapgl-package}
 \alias{mapgl}
 \alias{mapgl-package}
-\title{mapgl: Interface to Mapbox GL JS v3 and Maplibre GL JS}
+\title{mapgl: Interface to Mapbox GL JS V3 and MapLibre GL JS}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Provides an interface to Mapbox GL JS v3 and Maplibre GL JS for interactive, customizable maps in R.
+Provides an interface to Mapbox GL JS v3 and MapLibre GL JS for custom interactive maps in R.
 }
 \seealso{
 Useful links:
