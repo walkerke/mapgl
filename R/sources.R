@@ -158,6 +158,11 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
       data <- terra::rast(data)
     }
 
+    if (terra::has.colors(data)) {
+      # If the raster already has a color table
+      rlang::warn("This function does not support existing color tables, but this feature is in progress.")
+    }
+
     data <- terra::project(data, "EPSG:4326")
 
     if (terra::nlyr(data) == 3) {
@@ -166,30 +171,24 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
       terra::writeRaster(data, png_path, overwrite = TRUE)
       url <- base64enc::dataURI(file = png_path, mime = "image/png")
     } else {
-      if (terra::has.colors(data)) {
-        # If the raster already has a color table
-        coltb <- terra::coltab(data)
-      } else {
-        # Prepare color mapping for single-band raster
-        if (is.null(colors)) {
-          colors <- grDevices::colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
-        } else if (length(colors) < 256) {
-          colors <- grDevices::colorRampPalette(colors)(256)
-        }
 
-        data <- data / max(terra::values(data), na.rm = TRUE) * 254
-        data <- round(data)
-        data[is.na(terra::values(data))] <- 255
-        coltb <- data.frame(value = 0:255, col = colors)
-
-        # Create color table
-        terra::coltab(data) <- coltb
+      if (is.null(colors)) {
+        colors <- grDevices::colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
+      } else if (length(colors) < 256) {
+        colors <- grDevices::colorRampPalette(colors)(256)
       }
+
+      data <- data / max(terra::values(data), na.rm = TRUE) * 254
+      data <- round(data)
+      data[is.na(terra::values(data))] <- 255
+      coltb <- data.frame(value = 0:255, col = colors)
+
+      # Create color table
+      terra::coltab(data) <- coltb
 
       png_path <- tempfile(fileext = ".png")
       terra::writeRaster(data, png_path, overwrite = TRUE, NAflag = 255, datatype = "INT1U")
       url <- base64enc::dataURI(file = png_path, mime = "image/png")
-
 
     }
     # Compute coordinates if not provided
