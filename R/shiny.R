@@ -48,26 +48,28 @@ maplibre_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
   proxy
 }
 
-#' Add a filter to a map using a proxy
+#' Set a filter on a map layer
 #'
-#' This function allows a filter to be added to an existing Mapbox GL or Maplibre GL map using a proxy object.
+#' This function sets a filter on a map layer, working with both regular map objects and proxy objects.
 #'
-#' @param proxy A proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
+#' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param layer_id The ID of the layer to which the filter will be applied.
 #' @param filter The filter expression to apply.
 #'
-#' @return The updated proxy object.
+#' @return The updated map object.
 #' @export
-set_filter <- function(proxy, layer_id, filter) {
-  if (!any(inherits(proxy, "mapboxgl_proxy"), inherits(proxy, "maplibre_proxy"))) {
-    stop("Invalid proxy object")
+set_filter <- function(map, layer_id, filter) {
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(proxy_class, list(
+      id = map$id,
+      message = list(type = "set_filter", layer = layer_id, filter = filter)
+    ))
+  } else {
+    if (is.null(map$x$setFilter)) map$x$setFilter <- list()
+    map$x$setFilter[[length(map$x$setFilter) + 1]] <- list(layer = layer_id, filter = filter)
   }
-
-  proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-  message <- list(type = "set_filter", layer = layer_id, filter = filter)
-  proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
-  proxy
+  return(map)
 }
 
 #' Clear a layer from a map using a proxy

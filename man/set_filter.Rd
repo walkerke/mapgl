@@ -2,20 +2,20 @@
 % Please edit documentation in R/shiny.R
 \name{set_filter}
 \alias{set_filter}
-\title{Add a filter to a map using a proxy}
+\title{Set a filter on a map layer}
 \usage{
-set_filter(proxy, layer_id, filter)
+set_filter(map, layer_id, filter)
 }
 \arguments{
-\item{proxy}{A proxy object created by \code{mapboxgl_proxy} or \code{maplibre_proxy}.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or a proxy object.}
 
 \item{layer_id}{The ID of the layer to which the filter will be applied.}
 
 \item{filter}{The filter expression to apply.}
 }
 \value{
-The updated proxy object.
+The updated map object.
 }
 \description{
-This function allows a filter to be added to an existing Mapbox GL or Maplibre GL map using a proxy object.
+This function sets a filter on a map layer, working with both regular map objects and proxy objects.
 }

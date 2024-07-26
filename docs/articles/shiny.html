@@ -90,10 +90,10 @@ nothing more than display North Carolina’s counties over a basemap.</p>
 <span></span>
 <span><span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shape/nc.shp"</span>, package<span class="op">=</span><span class="st">"sf"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
+<span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rstudio.github.io/bslib/reference/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
 <span>  title <span class="op">=</span> <span class="st">"mapgl with Shiny"</span>,</span>
-<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/card.html" class="external-link">card</a></span><span class="op">(</span></span>
+<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rstudio.github.io/bslib/reference/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rstudio.github.io/bslib/reference/card.html" class="external-link">card</a></span><span class="op">(</span></span>
 <span>    full_screen <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    <span class="fu"><a href="../reference/maplibreOutput.html">maplibreOutput</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
@@ -138,12 +138,12 @@ feature (accessible in <code>properties</code>), as well as the
 coordinates and time of the click.</p>
 <p>Try this example to see how this works:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rstudio.github.io/bslib/reference/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
 <span>  title <span class="op">=</span> <span class="st">"mapgl with Shiny"</span>,</span>
-<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span></span>
+<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rstudio.github.io/bslib/reference/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/textOutput.html" class="external-link">verbatimTextOutput</a></span><span class="op">(</span><span class="st">"clicked_feature"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/card.html" class="external-link">card</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rstudio.github.io/bslib/reference/card.html" class="external-link">card</a></span><span class="op">(</span></span>
 <span>    full_screen <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    <span class="fu"><a href="../reference/maplibreOutput.html">maplibreOutput</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
@@ -201,15 +201,15 @@ an expression.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/daattali/colourpicker" class="external-link">colourpicker</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
+<span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rstudio.github.io/bslib/reference/page_sidebar.html" class="external-link">page_sidebar</a></span><span class="op">(</span></span>
 <span>  title <span class="op">=</span> <span class="st">"mapgl with Shiny"</span>,</span>
-<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span></span>
+<span>  sidebar <span class="op">=</span> <span class="fu"><a href="https://rstudio.github.io/bslib/reference/sidebar.html" class="external-link">sidebar</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/pkg/colourpicker/man/colourInput.html" class="external-link">colourInput</a></span><span class="op">(</span><span class="st">"color"</span>, <span class="st">"Select a color"</span>,</span>
 <span>                value <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/sliderInput.html" class="external-link">sliderInput</a></span><span class="op">(</span><span class="st">"slider"</span>, <span class="st">"Show BIR74 values above:"</span>,</span>
 <span>                value <span class="op">=</span> <span class="fl">248</span>, min <span class="op">=</span> <span class="fl">248</span>, max <span class="op">=</span> <span class="fl">21588</span><span class="op">)</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/bslib/man/card.html" class="external-link">card</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rstudio.github.io/bslib/reference/card.html" class="external-link">card</a></span><span class="op">(</span></span>
 <span>    full_screen <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>    <span class="fu"><a href="../reference/maplibreOutput.html">maplibreOutput</a></span><span class="op">(</span><span class="st">"map"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>

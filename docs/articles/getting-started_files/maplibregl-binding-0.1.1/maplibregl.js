@@ -376,6 +376,11 @@ HTMLWidgets.widget({
             // Fetch layers to be included in the control
             let layers = x.layers_control.layers || map.getStyle().layers.map(layer => layer.id);
 
+            // Ensure layers is always an array
+            if (!Array.isArray(layers)) {
+              layers = [layers];
+            }
+
             layers.forEach((layerId, index) => {
               const link = document.createElement('a');
               link.id = layerId;
@@ -647,19 +652,19 @@ if (HTMLWidgets.shinyMode) {
           const markerId = marker.id;
           if (markerId) {
             const lngLat = mapMarker.getLngLat();
-            Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+            Shiny.setInputValue(data.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
 
             mapMarker.on('dragend', function() {
               const lngLat = mapMarker.getLngLat();
-              Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+              Shiny.setInputValue(data.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
             });
           }
 
           window.maplibreMarkers.push(mapMarker);
         });
       } else if (message.type === "clear_markers") {
-          if (window.maplibreglMarkers) {
-            window.maplibreglMarkers.forEach(function(marker) {
+          if (window.maplibreMarkers) {
+            window.maplibreMarkers.forEach(function(marker) {
               marker.remove();
             });
             window.maplibreglMarkers = [];

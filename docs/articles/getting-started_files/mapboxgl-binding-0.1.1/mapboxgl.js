@@ -651,11 +651,11 @@ if (HTMLWidgets.shinyMode) {
             const markerId = marker.id;
             if (markerId) {
               const lngLat = mapMarker.getLngLat();
-              Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+              Shiny.setInputValue(data.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
 
               mapMarker.on('dragend', function() {
                 const lngLat = mapMarker.getLngLat();
-                Shiny.setInputValue(el.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
+                Shiny.setInputValue(data.id + '_marker_' + markerId, { id: markerId, lng: lngLat.lng, lat: lngLat.lat });
               });
             }
 
