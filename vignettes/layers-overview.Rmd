@@ -12,7 +12,7 @@ Geospatial practitioners in R will typically work with objects from the **sf** p
 
 Objects of class `sf` can be specified as sources for the map either through the `add_source()` function or via the `source` parameter in one of **mapgl**'s layer functions. The `add_fill_layer()` function calls the Mapbox GL JS `addLayer()` function internally with a `fill` type, and enumerates the available options for styling the layer as function arguments.
 
-**mapgl** users will often want to use the `fit_bounds(animate = FALSE)` function to fix the map view to a given layer's bounding box.
+**mapgl** users will often want to use the `bounds` argument when initializing the map, or alternatively the `fit_bounds()` function, to fix the map view to a given layer's bounding box.
 
 ```{r, message = FALSE}
 
@@ -21,8 +21,7 @@ library(sf)
 
 nc <- st_read(system.file("shape/nc.shp", package="sf"))
 
-mapboxgl() |> 
-  fit_bounds(nc, animate = FALSE) |> 
+mapboxgl(bounds = nc) |> 
   add_fill_layer(id = "nc_data",
                  source = nc,
                  fill_color = "blue",
@@ -40,8 +39,8 @@ options(tigris_use_cache = TRUE)
 
 loving_roads <- roads("TX", "Loving")
 
-maplibre(style = maptiler_style("backdrop")) |>
-  fit_bounds(loving_roads, animate = FALSE) |>
+maplibre(style = maptiler_style("backdrop"),
+         bounds = loving_roads) |>
   add_line_layer(
     id = "roads",
     source = loving_roads,
@@ -88,8 +87,8 @@ random_points <- random_points %>%
   mutate(category = sample(categories, n(), replace = TRUE))
 
 # Map with circle layer
-mapboxgl(style = mapbox_style("dark")) %>%
-  fit_bounds(random_points, animate = FALSE) %>%
+mapboxgl(style = mapbox_style("dark"),
+         bounds = random_points) %>%
   add_circle_layer(
     id = "poi-layer",
     source = random_points,
@@ -121,8 +120,8 @@ mapboxgl(style = mapbox_style("dark")) %>%
 Symbol layers offer a wide range of arguments for customizing icon and label appearance; however not all arguments will work with all icons. The `icon_image` argument will look for a string that represents an icon found in the map style's sprite. [Read more about sprites here](https://docs.mapbox.com/style-spec/reference/sprite/).
 
 ```{r}
-mapboxgl(style = mapbox_style("light")) |>
-  fit_bounds(random_points, animate = FALSE) |>
+mapboxgl(style = mapbox_style("light"),
+         bounds = random_points) |>
   add_symbol_layer(
     id = "points-of-interest",
     source = random_points,

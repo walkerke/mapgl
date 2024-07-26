@@ -28,8 +28,8 @@ fl_age <- get_acs(
   geometry = TRUE
 )
 
-fl_map <- mapboxgl(mapbox_style("light")) |> 
-  fit_bounds(fl_age, animate = FALSE)
+fl_map <- mapboxgl(mapbox_style("light"),
+                   bounds = fl_age) 
 
 fl_map
 ```
