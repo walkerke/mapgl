@@ -4,11 +4,11 @@
 \name{mapgl-package}
 \alias{mapgl}
 \alias{mapgl-package}
-\title{mapgl: Interface to Mapbox GL JS V3 and MapLibre GL JS}
+\title{mapgl: Interface to 'Mapbox GL JS' and 'MapLibre GL JS'}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Provides an interface to Mapbox GL JS v3 and MapLibre GL JS for custom interactive maps in R.
+Provides an interface to the 'Mapbox GL JS' (\url{https://docs.mapbox.com/mapbox-gl-js/guides}) and the 'MapLibre GL JS' (\url{https://maplibre.org/maplibre-gl-js/docs/}) interactive mapping libraries to help users create custom interactive maps in R. Users can create interactive globe visualizations; layer 'sf' objects to create filled maps, circle maps, heatmaps, and three-dimensional graphics; and customize map styles and views. The package also includes utilities to use 'Mapbox' and 'MapLibre' maps in Shiny web applications.
 }
 \seealso{
 Useful links:

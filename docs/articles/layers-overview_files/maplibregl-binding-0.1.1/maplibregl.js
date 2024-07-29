@@ -293,6 +293,13 @@ HTMLWidgets.widget({
             });
           }
 
+          // Apply setFilter if provided
+          if (x.setFilter) {
+            x.setFilter.forEach(function(filter) {
+              map.setFilter(filter.layer, filter.filter);
+            });
+          }
+
           // Set terrain if provided
           if (x.terrain) {
             map.setTerrain({
