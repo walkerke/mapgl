@@ -3,7 +3,7 @@ Title: Interactive Maps With 'Mapbox GL JS' and 'MapLibre GL JS' in R
 Version: 0.1.1
 Date: 2024-07-29
 Authors@R: 
-    person("Kyle", "Walker", , "kyle@walker-data.com", role = c("aut", "cre"))
+    person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre"))
 Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.com/mapbox-gl-js/guides>) 
     and the 'MapLibre GL JS' (<https://maplibre.org/maplibre-gl-js/docs/>) interactive mapping libraries to help users
     create custom interactive maps in R.  Users can create interactive globe visualizations; layer 'sf' objects to create 
