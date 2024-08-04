@@ -78,6 +78,7 @@ add_symbol_layer(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  hover_options = NULL,
   before_id = NULL
 )
 }
@@ -227,6 +228,8 @@ add_symbol_layer(
 \item{popup}{A column name containing information to display in a popup on click. Columns containing HTML will be parsed.}
 
 \item{tooltip}{A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.}
+
+\item{hover_options}{A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.}
 
 \item{before_id}{The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).}
 }

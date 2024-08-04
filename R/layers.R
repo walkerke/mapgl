@@ -848,6 +848,7 @@ add_raster_layer <- function(map,
 #' @param max_zoom The maximum zoom level for the layer.
 #' @param popup A column name containing information to display in a popup on click. Columns containing HTML will be parsed.
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param hover_options A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #'
 #' @return The modified map object with the new symbol layer added.
@@ -971,6 +972,7 @@ add_symbol_layer <- function(map,
                              max_zoom = NULL,
                              popup = NULL,
                              tooltip = NULL,
+                             hover_options = NULL,
                              before_id = NULL) {
   paint <- list()
   layout <- list()
@@ -1043,7 +1045,7 @@ add_symbol_layer <- function(map,
 
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, before_id)
+  map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id)
 
   return(map)
 }
