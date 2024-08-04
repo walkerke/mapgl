@@ -4,7 +4,7 @@
 \name{mapgl-package}
 \alias{mapgl}
 \alias{mapgl-package}
-\title{mapgl: Interactive Maps With 'Mapbox GL JS' and 'MapLibre GL JS' in R}
+\title{mapgl: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS' in R}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 

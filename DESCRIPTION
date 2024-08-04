@@ -1,5 +1,5 @@
 Package: mapgl
-Title: Interactive Maps With 'Mapbox GL JS' and 'MapLibre GL JS' in R
+Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS' in R
 Version: 0.1.1
 Date: 2024-07-29
 Authors@R: 

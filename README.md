@@ -29,7 +29,7 @@ Read through these vignettes to learn how to use the package:
 If you find this project useful in your work and would like to ensure continued development of the package, you can provide support in the following ways: 
 
 * [Sign up for the official __mapgl__ workshop series, hosted by __mapgl__'s author, Kyle Walker](https://www.eventbrite.com/e/make-stunning-web-maps-in-r-with-the-mapgl-package-registration-945828617857); 
-[Chip in some funds to support package development via PayPal](https://www.paypal.com/paypalme/walkerdata/);
+* [Chip in some funds to support package development via PayPal](https://www.paypal.com/paypalme/walkerdata/);
 * Set up a consulting engagement or workshop though Walker Data to help you implement __mapgl__ in your project.  Send a note to <kyle@walker-data.com> if you are interested; 
 * File an issue - or even better, a pull request - at https://github.com/walkerke/mapgl/issues. 
 
