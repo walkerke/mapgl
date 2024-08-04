@@ -335,6 +335,16 @@ HTMLWidgets.widget({
             map.jumpTo(x.jumpTo);
           }
 
+          // Add scale control if enabled
+          if (x.scale_control) {
+            const scaleControl = new mapboxgl.ScaleControl({
+              maxWidth: x.scale_control.maxWidth,
+              unit: x.scale_control.unit
+            });
+            map.addControl(scaleControl, x.scale_control.position);
+            map.controls.push(scaleControl);
+          }
+
           const existingLegend = document.getElementById('mapboxgl-legend');
           if (existingLegend) {
             existingLegend.remove();
@@ -680,6 +690,13 @@ if (HTMLWidgets.shinyMode) {
         const fullscreen = new mapboxgl.FullscreenControl();
         map.addControl(fullscreen, position);
         map.controls.push(fullscreen)
+      } else if (message.type === "add_scale_control") {
+        const scaleControl = new mapboxgl.ScaleControl({
+          maxWidth: message.options.maxWidth,
+          unit: message.options.unit
+        });
+        map.addControl(scaleControl, message.options.position);
+        map.controls.push(scaleControl);
       } else if (message.type === "add_layers_control") {
         const layersControl = document.createElement('div');
         layersControl.id = message.control_id;

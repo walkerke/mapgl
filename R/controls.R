@@ -155,3 +155,45 @@ clear_controls <- function(map) {
   }
   return(map)
 }
+
+#' Add a scale control to a map
+#'
+#' This function adds a scale control to a Mapbox GL or Maplibre GL map.
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
+#' @param position The position of the control. Can be one of "top-left", "top-right", "bottom-left", or "bottom-right". Default is "bottom-left".
+#' @param unit The unit of the scale. Can be either "imperial", "metric", or "nautical". Default is "metric".
+#' @param max_width The maximum length of the scale control in pixels. Default is 100.
+#'
+#' @return The modified map object with the scale control added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' mapboxgl() |>
+#'   add_scale_control(position = "bottom-right", unit = "imperial")
+#' }
+add_scale_control <- function(map, position = "bottom-left", unit = "metric", max_width = 100) {
+  scale_control <- list(
+    position = position,
+    unit = unit,
+    maxWidth = max_width
+  )
+
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(proxy_class, list(
+      id = map$id,
+      message = list(type = "add_scale_control", options = scale_control)
+    ))
+  } else {
+    if (is.null(map$x$scale_control)) {
+      map$x$scale_control <- list()
+    }
+    map$x$scale_control <- scale_control
+  }
+
+  return(map)
+}
