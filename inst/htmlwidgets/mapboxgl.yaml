@@ -7,3 +7,11 @@ dependencies:
       - "mapbox-gl.js"
     stylesheet:
       - "mapbox-gl.css"
+  - name: mapbox-gl-draw
+    version: "1.4.3"
+    src:
+      href: "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/"
+    script:
+      - "mapbox-gl-draw.js"
+    stylesheet:
+      - "mapbox-gl-draw.css"

@@ -197,3 +197,108 @@ add_scale_control <- function(map, position = "bottom-left", unit = "metric", ma
 
   return(map)
 }
+
+#' Add a draw control to a map
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
+#' @param position A string specifying the position of the draw control.
+#'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
+#'
+#' @return The modified map object with the draw control added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' mapboxgl(style = mapbox_style("streets"),
+#'          center = c(-74.50, 40),
+#'          zoom = 9) |>
+#'   add_draw_control(position = "top-left")
+#' }
+add_draw_control <- function(map, position = "top-left") {
+  map$x$draw_control <- list(
+    enabled = TRUE,
+    position = position
+  )
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(proxy_class, list(
+      id = map$id,
+      message = list(
+        type = "add_draw_control",
+        position = position
+      )
+    ))
+  }
+  map
+}
+
+#' Get drawn features from the map
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions, or a map proxy.
+#'
+#' @return An sf object containing the drawn features.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # In a non-Shiny context
+#' map <- mapboxgl(style = mapbox_style("streets"),
+#'                 center = c(-74.50, 40),
+#'                 zoom = 9) |>
+#'   add_draw_control()
+#' drawn_features <- get_drawn_features(map)
+#'
+#' # In a Shiny context
+#' library(shiny)
+#'
+#' ui <- fluidPage(
+#'   mapboxglOutput("map"),
+#'   actionButton("get_features", "Get Drawn Features")
+#' )
+#'
+#' server <- function(input, output, session) {
+#'   output$map <- renderMapboxgl({
+#'     mapboxgl(style = mapbox_style("streets"),
+#'              center = c(-74.50, 40),
+#'              zoom = 9) |>
+#'       add_draw_control()
+#'   })
+#'
+#'   observeEvent(input$get_features, {
+#'     drawn_features <- get_drawn_features(mapboxgl_proxy("map"))
+#'     print(drawn_features)
+#'   })
+#' }
+#' }
+get_drawn_features <- function(map) {
+  if (inherits(map, "mapboxgl") || inherits(map, "maplibre")) {
+    # Non-Shiny context or initial map in Shiny
+    features_json <- htmlwidgets::sendCustomMessage(map$id, "getDrawnFeatures")
+  } else if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    # Shiny proxy context
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(proxy_class, list(
+      id = map$id,
+      message = list(
+        type = "get_drawn_features"
+      )
+    ))
+    features_json <- NULL
+    wait_time <- 0
+    while(is.null(features_json) && wait_time < 3) {  # Wait up to 3 seconds
+      features_json <- map$session$input[[paste0(map$id, '_drawn_features')]]
+      Sys.sleep(0.1)
+      wait_time <- wait_time + 0.1
+    }
+  } else {
+    stop("Invalid map object. Expected mapboxgl, maplibre, or their proxy objects.")
+  }
+
+  if (!is.null(features_json) && features_json != "null" && nchar(features_json) > 0) {
+    sf::st_read(features_json, quiet = TRUE)
+  } else {
+    sf::st_sf(geometry = sf::st_sfc())  # Return an empty sf object if no features
+  }
+}
