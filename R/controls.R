@@ -247,31 +247,26 @@ add_draw_control <- function(map, position = "top-left",
 
 #' Get drawn features from the map
 #'
-#' @param map A map object created by the `mapboxgl` or `maplibre` functions, or a map proxy.
+#' @param map A map object created by the `mapboxgl` function, or a mapboxgl proxy.
 #'
 #' @return An sf object containing the drawn features.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # In a non-Shiny context
-#' map <- mapboxgl(style = mapbox_style("streets"),
-#'                 center = c(-74.50, 40),
-#'                 zoom = 9) |>
-#'   add_draw_control()
-#' drawn_features <- get_drawn_features(map)
-#'
-#' # In a Shiny context
+#' # In a Shiny application
 #' library(shiny)
+#' library(mapboxer)
 #'
 #' ui <- fluidPage(
 #'   mapboxglOutput("map"),
-#'   actionButton("get_features", "Get Drawn Features")
+#'   actionButton("get_features", "Get Drawn Features"),
+#'   verbatimTextOutput("feature_output")
 #' )
 #'
 #' server <- function(input, output, session) {
 #'   output$map <- renderMapboxgl({
-#'     mapboxgl(style = mapbox_style("streets"),
+#'     mapboxgl(style = mapbox_style("streets-v12"),
 #'              center = c(-74.50, 40),
 #'              zoom = 9) |>
 #'       add_draw_control()
@@ -279,32 +274,60 @@ add_draw_control <- function(map, position = "top-left",
 #'
 #'   observeEvent(input$get_features, {
 #'     drawn_features <- get_drawn_features(mapboxgl_proxy("map"))
-#'     print(drawn_features)
+#'     output$feature_output <- renderPrint({
+#'       print(drawn_features)
+#'     })
 #'   })
 #' }
+#'
+#' shinyApp(ui, server)
 #' }
 get_drawn_features <- function(map) {
-  if (inherits(map, "mapboxgl") || inherits(map, "maplibre")) {
-    # Non-Shiny context or initial map in Shiny
-    features_json <- htmlwidgets::sendCustomMessage(map$id, "getDrawnFeatures")
-  } else if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    # Shiny proxy context
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(
-        type = "get_drawn_features"
-      )
-    ))
-    features_json <- NULL
-    wait_time <- 0
-    while(is.null(features_json) && wait_time < 3) {  # Wait up to 3 seconds
-      features_json <- map$session$input[[paste0(map$id, '_drawn_features')]]
-      Sys.sleep(0.1)
-      wait_time <- wait_time + 0.1
-    }
+  if (!shiny::is.reactive(map) && !inherits(map, c("mapboxgl", "mapboxgl_proxy"))) {
+    stop("Invalid map object. Expected mapboxgl or mapboxgl_proxy object within a Shiny context.")
+  }
+
+  # If map is reactive (e.g., output$map in Shiny), evaluate it
+  if (shiny::is.reactive(map)) {
+    map <- map()
+  }
+
+  # Determine if we're in a Shiny session
+  in_shiny <- shiny::isRunning()
+
+  if (!in_shiny) {
+    warning("Getting drawn features outside of a Shiny context is not supported. Please use this function within a Shiny application.")
+    return(sf::st_sf(geometry = sf::st_sfc()))  # Return an empty sf object
+  }
+
+  # Get the session object
+  session <- shiny::getDefaultReactiveDomain()
+
+  if (inherits(map, "mapboxgl")) {
+    # Initial map object in Shiny
+    map_id <- map$elementId
+  } else if (inherits(map, "mapboxgl_proxy")) {
+    # Proxy object
+    map_id <- map$id
   } else {
-    stop("Invalid map object. Expected mapboxgl, maplibre, or their proxy objects.")
+    stop("Unexpected map object type.")
+  }
+
+  # Send message to get drawn features
+  session$sendCustomMessage("mapboxgl-proxy", list(
+    id = map_id,
+    message = list(
+      type = "get_drawn_features"
+    )
+  ))
+
+  # Wait for response
+  features_json <- NULL
+  wait_time <- 0
+  while(is.null(features_json) && wait_time < 3) {  # Wait up to 3 seconds
+    features_json <- session$input[[paste0(map_id, '_drawn_features')]]
+    Sys.sleep(0.1)
+    wait_time <- wait_time + 0.1
   }
 
   if (!is.null(features_json) && features_json != "null" && nchar(features_json) > 0) {

@@ -7,7 +7,7 @@
 get_drawn_features(map)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions, or a map proxy.}
+\item{map}{A map object created by the \code{mapboxgl} function, or a mapboxgl proxy.}
 }
 \value{
 An sf object containing the drawn features.
@@ -17,24 +17,19 @@ Get drawn features from the map
 }
 \examples{
 \dontrun{
-# In a non-Shiny context
-map <- mapboxgl(style = mapbox_style("streets"),
-                center = c(-74.50, 40),
-                zoom = 9) |>
-  add_draw_control()
-drawn_features <- get_drawn_features(map)
-
-# In a Shiny context
+# In a Shiny application
 library(shiny)
+library(mapboxer)
 
 ui <- fluidPage(
   mapboxglOutput("map"),
-  actionButton("get_features", "Get Drawn Features")
+  actionButton("get_features", "Get Drawn Features"),
+  verbatimTextOutput("feature_output")
 )
 
 server <- function(input, output, session) {
   output$map <- renderMapboxgl({
-    mapboxgl(style = mapbox_style("streets"),
+    mapboxgl(style = mapbox_style("streets-v12"),
              center = c(-74.50, 40),
              zoom = 9) |>
       add_draw_control()
@@ -42,8 +37,12 @@ server <- function(input, output, session) {
 
   observeEvent(input$get_features, {
     drawn_features <- get_drawn_features(mapboxgl_proxy("map"))
-    print(drawn_features)
+    output$feature_output <- renderPrint({
+      print(drawn_features)
+    })
   })
 }
+
+shinyApp(ui, server)
 }
 }
