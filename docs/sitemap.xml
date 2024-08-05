@@ -13,6 +13,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_categorical_legend.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_circle_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_continuous_legend.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/add_draw_control.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_fill_extrusion_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_fill_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_fullscreen_control.html</loc></url>
@@ -27,6 +28,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_dem_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_source.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/add_scale_control.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_symbol_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_vector_source.html</loc></url>
@@ -41,6 +43,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/fit_bounds.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/fly_to.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/get_column.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/get_drawn_features.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/index.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/interpolate.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/jump_to.html</loc></url>
