@@ -6,3 +6,11 @@ dependencies:
       - "maplibre-gl.js"
     stylesheet:
       - "maplibre-gl.css"
+  - name: mapbox-gl-draw
+    version: "1.4.3"
+    src:
+      href: "https://www.unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist"
+    script:
+      - "mapbox-gl-draw.js"
+    stylesheet:
+      - "mapbox-gl-draw.css"

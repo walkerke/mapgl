@@ -691,9 +691,20 @@ if (HTMLWidgets.shinyMode) {
         draw = new MapboxDraw();
         map.addControl(draw, message.position);
         map.controls.push(draw);
+
+        // Add event listeners
+        map.on('draw.create', updateDrawnFeatures);
+        map.on('draw.delete', updateDrawnFeatures);
+        map.on('draw.update', updateDrawnFeatures);
       } else if (message.type === "get_drawn_features") {
         const features = draw ? draw.getAll() : null;
         Shiny.setInputValue(data.id + '_drawn_features', JSON.stringify(features));
+      } else if (message.type === "clear_drawn_features") {
+        if (draw) {
+          draw.deleteAll();
+          // Update the drawn features
+          updateDrawnFeatures();
+        }
       } else if (message.type === "add_markers") {
           if (!window.mapboxglMarkers) {
             window.mapboxglMarkers = [];
