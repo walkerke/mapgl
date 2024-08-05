@@ -31,6 +31,8 @@ interpolate <- function(column = NULL,
     rlang::abort("`values` and `stops` must have the same length.")
   }
 
+  stops <- trim_hex_colors(stops)
+
   if (!is.null(column)) {
     to_map <- list("get", column)
   } else if (!is.null(property)) {
@@ -45,6 +47,8 @@ interpolate <- function(column = NULL,
   }
 
   if (!is.null(na_color)) {
+    na_color <- trim_hex_colors(na_color)
+
     expr_with_na <- list("case", list("==", to_map, NULL), na_color, expr)
 
     expr_with_na
@@ -81,6 +85,9 @@ match_expr <- function(column = NULL, property = NULL, values, stops, default = 
   if (length(values) != length(stops)) {
     rlang::abort("`values` and `stops` must have the same length.")
   }
+
+  stops <- trim_hex_colors(stops)
+  default <- trim_hex_colors(default)
 
   if (!is.null(column)) {
     to_map <- list("get", column)
@@ -130,6 +137,10 @@ step_expr <- function(column = NULL, property = NULL, base, values, stops,
     rlang::abort("`values` and `stops` must have the same length.")
   }
 
+  # Trim colors as needed
+  base <- trim_hex_colors(base)
+  stops <- trim_hex_colors(stops)
+
   if (!is.null(column)) {
     to_map <- list("get", column)
   } else if (!is.null(property)) {
@@ -147,6 +158,8 @@ step_expr <- function(column = NULL, property = NULL, base, values, stops,
   }
 
   if (!is.null(na_color)) {
+    na_color <- trim_hex_colors(na_color)
+
     expr_with_na <- list("case", list("==", to_map, NULL), na_color, expr)
 
     expr_with_na
@@ -285,4 +298,11 @@ carto_style <- function(style_name) {
 #' @export
 get_column <- function(column) {
   list("get", column)
+}
+
+# Trim hex colors (so packages like viridisLite can be used)
+trim_hex_colors <- function(colors) {
+  ifelse(substr(colors, 1, 1) == "#" & nchar(colors) == 9,
+         substr(colors, 1, nchar(colors) - 2),
+         colors)
 }
