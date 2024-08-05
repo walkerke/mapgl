@@ -347,16 +347,7 @@ HTMLWidgets.widget({
           }
 
           if (x.draw_control && x.draw_control.enabled) {
-            draw = new MapboxDraw({
-              displayControlsDefault: false,
-              controls: {
-                polygon: true,
-                line_string: true,
-                point: true,
-                trash: true
-              },
-              defaultMode: 'draw_polygon'
-            });
+            draw = new MapboxDraw(x.draw_control.options);
             map.addControl(draw, x.draw_control.position);
             map.controls.push(draw);
 
@@ -688,7 +679,7 @@ if (HTMLWidgets.shinyMode) {
         map.addControl(nav, message.position);
         map.controls.push(nav);
       } else if (message.type === "add_draw_control") {
-        draw = new MapboxDraw();
+        draw = new MapboxDraw(message.options);
         map.addControl(draw, message.position);
         map.controls.push(draw);
 

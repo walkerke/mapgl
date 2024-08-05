@@ -4,13 +4,15 @@
 \alias{add_draw_control}
 \title{Add a draw control to a map}
 \usage{
-add_draw_control(map, position = "top-left")
+add_draw_control(map, position = "top-left", ...)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{position}{A string specifying the position of the draw control.
 One of "top-right", "top-left", "bottom-right", or "bottom-left".}
+
+\item{...}{Additional named arguments.  See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.}
 }
 \value{
 The modified map object with the draw control added.

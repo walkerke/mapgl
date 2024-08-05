@@ -203,6 +203,7 @@ add_scale_control <- function(map, position = "bottom-left", unit = "metric", ma
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param position A string specifying the position of the draw control.
 #'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
+#' @param ... Additional named arguments.  See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
 #' @export
@@ -216,15 +217,19 @@ add_scale_control <- function(map, position = "bottom-left", unit = "metric", ma
 #'          zoom = 9) |>
 #'   add_draw_control(position = "top-left")
 #' }
-add_draw_control <- function(map, position = "top-left") {
+add_draw_control <- function(map, position = "top-left",
+                             ...) {
 
   if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
     rlang::abort("The draw control is not yet supported for MapLibre maps.")
   }
 
+  options <- list(...)
+
   map$x$draw_control <- list(
     enabled = TRUE,
-    position = position
+    position = position,
+    options = options
   )
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
@@ -232,7 +237,8 @@ add_draw_control <- function(map, position = "top-left") {
       id = map$id,
       message = list(
         type = "add_draw_control",
-        position = position
+        position = position,
+        options = options
       )
     ))
   }
