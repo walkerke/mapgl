@@ -51,7 +51,7 @@ A number of map events are built-in when working with **mapgl** in a Shiny sessi
 
 -   input\$*MAPID*\_zoom: The current zoom level of the map;
 
--   input\$*MAPID*\_bounds: The bounding box of the visible extent of the map, named as `xmin`, `xmax`, `ymin`, and `ymax`.
+-   input\$*MAPID*\_bbox: The bounding box of the visible extent of the map, named as `xmin`, `xmax`, `ymin`, and `ymax`.
 
 Visible features on the map can also be queried when clicked. Clicking the map in Shiny returns input\$*MAPID*\_feature_click, which gets you the layer ID, all of the column values for the clicked feature (accessible in `properties`), as well as the coordinates and time of the click.
 

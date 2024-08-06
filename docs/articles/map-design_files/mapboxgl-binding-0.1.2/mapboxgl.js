@@ -42,9 +42,9 @@ HTMLWidgets.widget({
                 var center = map.getCenter();
                 var zoom = map.getZoom();
 
-                Shiny.onInputChange(el.id + '_zoom', zoom);
-                Shiny.onInputChange(el.id + '_center', { lng: center.lng, lat: center.lat });
-                Shiny.onInputChange(el.id + '_bbox', {
+                Shiny.setInputValue(el.id + '_zoom', zoom);
+                Shiny.setInputValue(el.id + '_center', { lng: center.lng, lat: center.lat });
+                Shiny.setInputValue(el.id + '_bbox', {
                   xmin: bounds.getWest(),
                   ymin: bounds.getSouth(),
                   xmax: bounds.getEast(),
