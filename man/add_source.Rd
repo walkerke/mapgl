@@ -4,7 +4,7 @@
 \alias{add_source}
 \title{Add a GeoJSON or sf source to a Mapbox GL or Maplibre GL map}
 \usage{
-add_source(map, id, data)
+add_source(map, id, data, ...)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
@@ -12,6 +12,8 @@ add_source(map, id, data)
 \item{id}{A unique ID for the source.}
 
 \item{data}{An sf object or a URL pointing to a remote GeoJSON file.}
+
+\item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }
 \value{
 The modified map object with the new source added.

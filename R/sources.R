@@ -3,10 +3,11 @@
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param data An sf object or a URL pointing to a remote GeoJSON file.
+#' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
 #' @export
-add_source <- function(map, id, data) {
+add_source <- function(map, id, data, ...) {
   if (inherits(data, "sf")) {
     geojson <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
   } else if (is.character(data) && grepl("^http", data)) {
@@ -22,13 +23,16 @@ add_source <- function(map, id, data) {
     generateId = TRUE
   )
 
+  # Add additional arguments
+  extra_args <- list(...)
+  source <- c(source, extra_args)
+
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
     map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
   } else {
     map$x$sources <- c(map$x$sources, list(source))
   }
-
   return(map)
 }
 
