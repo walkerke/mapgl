@@ -18,7 +18,7 @@ interpolate(
 
 \item{property}{The name of the property to use for the interpolation. If specified, \code{column} should be NULL.}
 
-\item{type}{The interpolation type (e.g., "linear").}
+\item{type}{The interpolation type. Can be one of \code{"linear"}, \code{c("exponential", base)} where \code{base} specifies the rate at which the output increases, or \code{c("cubic-bezier", x1, y1, x2, y2)} where you define a cubic bezier curve with control points.}
 
 \item{values}{A numeric vector of values at which stops occur.}
 

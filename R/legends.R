@@ -122,6 +122,9 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
 
     map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css)))
+
+    map
+
   } else {
     map$x$legend_html <- legend_html
     map$x$legend_css <- legend_css
@@ -228,6 +231,9 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
 
     map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css)))
+
+    map
+
   } else {
     map$x$legend_html <- legend_html
     map$x$legend_css <- legend_css

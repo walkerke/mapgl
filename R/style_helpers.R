@@ -4,7 +4,7 @@
 #'
 #' @param column The name of the column to use for the interpolation. If specified, `property` should be NULL.
 #' @param property The name of the property to use for the interpolation. If specified, `column` should be NULL.
-#' @param type The interpolation type (e.g., "linear").
+#' @param type The interpolation type. Can be one of `"linear"`, `c("exponential", base)` where `base` specifies the rate at which the output increases, or `c("cubic-bezier", x1, y1, x2, y2)` where you define a cubic bezier curve with control points.
 #' @param values A numeric vector of values at which stops occur.
 #' @param stops A vector of corresponding stops (colors, sizes, etc.) for the interpolation.
 #' @param na_color The color to use for missing values.  Mapbox GL JS defaults to black if this is not supplied.
@@ -41,7 +41,11 @@ interpolate <- function(column = NULL,
     rlang::abort("You must specify a column or property, but not both.")
   }
 
-  expr <- list("interpolate", list(type), to_map)
+  if (length(type) == 1 && !is.list(type)) {
+    type <- list(type)
+  }
+
+  expr <- list("interpolate", type, to_map)
   for (i in seq_along(values)) {
     expr <- c(expr, list(values[i]), list(stops[i]))
   }
