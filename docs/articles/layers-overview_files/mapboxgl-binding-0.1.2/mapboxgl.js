@@ -123,11 +123,20 @@ HTMLWidgets.widget({
                 });
               } else if (source.type === "geojson") {
                 const geojsonData = source.data;
-                map.addSource(source.id, {
-                  type: 'geojson',
-                  data: geojsonData,
-                  generateId: true
-                });
+                const sourceOptions = {
+                    type: 'geojson',
+                    data: geojsonData,
+                    generateId: source.generateId
+                  };
+
+                  // Add additional options
+                  for (const [key, value] of Object.entries(source)) {
+                    if (!['id', 'type', 'data', 'generateId'].includes(key)) {
+                      sourceOptions[key] = value;
+                    }
+                  }
+
+                  map.addSource(source.id, sourceOptions);
               } else if (source.type === "raster") {
                 if (source.url) {
                   map.addSource(source.id, {
