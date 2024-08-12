@@ -1,7 +1,7 @@
 Package: mapgl
 Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS' in R
 Version: 0.1.2
-Date: 2024-08-09
+Date: 2024-08-12
 Authors@R: 
     person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre"))
 Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.com/mapbox-gl-js/guides>) 
@@ -22,7 +22,8 @@ Imports:
   htmltools,
   grDevices,
   base64enc,
-  terra
+  terra,
+  classInt
 Suggests: 
   shiny,
   mapboxapi,

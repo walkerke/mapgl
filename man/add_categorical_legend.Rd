@@ -2,7 +2,7 @@
 % Please edit documentation in R/legends.R
 \name{add_categorical_legend}
 \alias{add_categorical_legend}
-\title{Add a categorical legend}
+\title{Add a categorical legend to a Mapbox GL map}
 \usage{
 add_categorical_legend(
   map,
@@ -11,7 +11,8 @@ add_categorical_legend(
   colors,
   circular_patches = FALSE,
   position = "top-left",
-  unique_id = NULL
+  unique_id = NULL,
+  sizes = NULL
 )
 }
 \arguments{
@@ -19,19 +20,38 @@ add_categorical_legend(
 
 \item{legend_title}{The title of the legend.}
 
-\item{values}{The values being represented on the map (vector of categories).}
+\item{values}{A vector of categories or values to be displayed in the legend.}
 
-\item{colors}{The corresponding colors for the values (vector of colors).}
+\item{colors}{The corresponding colors for the values. Can be a vector of colors or a single color.}
 
-\item{circular_patches}{Logical, whether to use circular patches in the legend.}
+\item{circular_patches}{Logical, whether to use circular patches in the legend. Default is FALSE.}
 
-\item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
+\item{position}{The position of the legend on the map. One of "top-left", "bottom-left", "top-right", "bottom-right". Default is "top-left".}
 
-\item{unique_id}{A unique ID for the legend container; defaults to NULL.}
+\item{unique_id}{A unique ID for the legend container. If NULL, a random ID will be generated.}
+
+\item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as \code{values}.}
 }
 \value{
 The updated map object with the legend added.
 }
 \description{
-Add a categorical legend
+This function adds a categorical legend to a Mapbox GL map. It supports
+customizable colors, sizes, and shapes for legend items.
+}
+\examples{
+\dontrun{
+library(mapboxgl)
+map <- mapboxgl(
+  center = c(-96, 37.8),
+  zoom = 3
+)
+map \%>\% add_categorical_legend(
+  legend_title = "Population",
+  values = c("Low", "Medium", "High"),
+  colors = c("#FED976", "#FEB24C", "#FD8D3C"),
+  circular_patches = TRUE,
+  sizes = c(10, 15, 20)
+)
+}
 }

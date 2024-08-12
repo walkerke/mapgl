@@ -11,7 +11,8 @@ add_legend(
   colors,
   type = c("continuous", "categorical"),
   circular_patches = FALSE,
-  position = "top-left"
+  position = "top-left",
+  sizes = NULL
 )
 }
 \arguments{
@@ -21,13 +22,15 @@ add_legend(
 
 \item{values}{The values being represented on the map (either a vector of categories or a vector of stops).}
 
-\item{colors}{The corresponding colors for the values (either a vector of colors or an interpolate function).}
+\item{colors}{The corresponding colors for the values (either a vector of colors, a single color, or an interpolate function).}
 
-\item{type}{one of "continuous" or "categorical"}
+\item{type}{One of "continuous" or "categorical".}
 
-\item{circular_patches}{Logical, whether to use circular patches in the legend.}
+\item{circular_patches}{Logical, whether to use circular patches in the legend (only for categorical legends).}
 
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
+
+\item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).}
 }
 \value{
 The updated map object with the legend added.

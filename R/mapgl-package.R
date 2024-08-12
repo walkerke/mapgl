@@ -7,5 +7,9 @@
 #' @import geojsonsf
 #' @import htmlwidgets
 #' @import htmltools
+#' @importFrom classInt classIntervals
+#' @import terra
+#' @import base64enc
+#' @import grDevices
 ## usethis namespace: end
 NULL

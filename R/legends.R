@@ -3,42 +3,85 @@
 #' @param map A map object created by the `mapboxgl` function.
 #' @param legend_title The title of the legend.
 #' @param values The values being represented on the map (either a vector of categories or a vector of stops).
-#' @param colors The corresponding colors for the values (either a vector of colors or an interpolate function).
-#' @param type one of "continuous" or "categorical"
-#' @param circular_patches Logical, whether to use circular patches in the legend.
+#' @param colors The corresponding colors for the values (either a vector of colors, a single color, or an interpolate function).
+#' @param type One of "continuous" or "categorical".
+#' @param circular_patches Logical, whether to use circular patches in the legend (only for categorical legends).
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
+#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).
 #'
 #' @return The updated map object with the legend added.
 #' @export
 add_legend <- function(map, legend_title, values, colors,
                        type = c("continuous", "categorical"),
-                       circular_patches = FALSE, position = "top-left") {
+                       circular_patches = FALSE, position = "top-left",
+                       sizes = NULL) {
   type <- match.arg(type)
   unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
 
   if (type == "continuous") {
     add_continuous_legend(map, legend_title, values, colors, position, unique_id)
   } else {
-    add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id)
+    add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id, sizes)
   }
 }
 
-#' Add a categorical legend
+#' Add a categorical legend to a Mapbox GL map
+#'
+#' This function adds a categorical legend to a Mapbox GL map. It supports
+#' customizable colors, sizes, and shapes for legend items.
 #'
 #' @param map A map object created by the `mapboxgl` function.
 #' @param legend_title The title of the legend.
-#' @param values The values being represented on the map (vector of categories).
-#' @param colors The corresponding colors for the values (vector of colors).
-#' @param circular_patches Logical, whether to use circular patches in the legend.
-#' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
-#' @param unique_id A unique ID for the legend container; defaults to NULL.
+#' @param values A vector of categories or values to be displayed in the legend.
+#' @param colors The corresponding colors for the values. Can be a vector of colors or a single color.
+#' @param circular_patches Logical, whether to use circular patches in the legend. Default is FALSE.
+#' @param position The position of the legend on the map. One of "top-left", "bottom-left", "top-right", "bottom-right". Default is "top-left".
+#' @param unique_id A unique ID for the legend container. If NULL, a random ID will be generated.
+#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as `values`.
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left", unique_id = NULL) {
+#'
+#' @examples
+#' \dontrun{
+#' library(mapboxgl)
+#' map <- mapboxgl(
+#'   center = c(-96, 37.8),
+#'   zoom = 3
+#' )
+#' map %>% add_categorical_legend(
+#'   legend_title = "Population",
+#'   values = c("Low", "Medium", "High"),
+#'   colors = c("#FED976", "#FEB24C", "#FD8D3C"),
+#'   circular_patches = TRUE,
+#'   sizes = c(10, 15, 20)
+#' )
+#' }
+add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left", unique_id = NULL, sizes = NULL) {
+  # Validate and prepare inputs
+  if (length(colors) == 1) {
+    colors <- rep(colors, length(values))
+  } else if (length(colors) != length(values)) {
+    stop("'colors' must be a single value or have the same length as 'values'.")
+  }
+
+  if (!is.null(sizes)) {
+    if (length(sizes) == 1) {
+      sizes <- rep(sizes, length(values))
+    } else if (length(sizes) != length(values)) {
+      stop("'sizes' must be a single value or have the same length as 'values'.")
+    }
+  }
+
   legend_items <- lapply(seq_along(values), function(i) {
     shape_style <- if (circular_patches) "border-radius: 50%;" else ""
-    paste0('<div class="legend-item"><span class="legend-color" style="background-color:', colors[i], ';', shape_style, '"></span>', values[i], '</div>')
+    size_style <- if (!is.null(sizes)) sprintf("width: %dpx; height: %dpx;", sizes[i], sizes[i]) else ""
+    paste0(
+      '<div class="legend-item">',
+      '<div class="legend-patch-container"><span class="legend-color" style="background-color:', colors[i], ';', shape_style, size_style, '"></span></div>',
+      '<span class="legend-text">', values[i], '</span>',
+      '</div>'
+    )
   })
 
   if (is.null(unique_id)) {
@@ -54,7 +97,6 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 
   legend_css <- paste0("
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
-
     #", unique_id, " h2 {
       font-size: 14px;
       font-family: 'Open Sans';
@@ -66,7 +108,6 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     #", unique_id, " {
       position: absolute;
       border-radius: 10px;
@@ -76,27 +117,22 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       padding: 10px 20px;
       z-index: 1002;
     }
-
     #", unique_id, ".top-left {
       top: 10px;
       left: 10px;
     }
-
     #", unique_id, ".bottom-left {
       bottom: 10px;
       left: 10px;
     }
-
     #", unique_id, ".top-right {
       top: 10px;
       right: 10px;
     }
-
     #", unique_id, ".bottom-right {
       bottom: 10px;
       right: 10px;
     }
-
     #", unique_id, " .legend-item {
       display: flex;
       align-items: center;
@@ -105,26 +141,29 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       white-space: nowrap;
       max-width: 100%;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
-
-    #", unique_id, " .legend-color {
-      width: 20px;
-      height: 20px;
+    #", unique_id, " .legend-patch-container {
+      width: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       margin-right: 5px;
+    }
+    #", unique_id, " .legend-color {
       display: inline-block;
+      flex-shrink: 0;
+    }
+    #", unique_id, " .legend-text {
+      flex-grow: 1;
+      text-overflow: ellipsis;
+      overflow: hidden;
     }
   ")
 
-
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-
     proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
-
     map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css)))
-
     map
-
   } else {
     map$x$legend_html <- legend_html
     map$x$legend_css <- legend_css
