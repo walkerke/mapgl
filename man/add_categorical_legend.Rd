@@ -30,7 +30,7 @@ add_categorical_legend(
 
 \item{unique_id}{A unique ID for the legend container. If NULL, a random ID will be generated.}
 
-\item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as \code{values}.}
+\item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as \code{values}. If \code{circular_patches} is \code{FALSE} (for square patches), sizes represent the width and height of the patch in pixels.  If \code{circular_patches} is \code{TRUE}, sizes represent the radius of the circle.}
 }
 \value{
 The updated map object with the legend added.

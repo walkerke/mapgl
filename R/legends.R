@@ -37,7 +37,7 @@ add_legend <- function(map, legend_title, values, colors,
 #' @param circular_patches Logical, whether to use circular patches in the legend. Default is FALSE.
 #' @param position The position of the legend on the map. One of "top-left", "bottom-left", "top-right", "bottom-right". Default is "top-left".
 #' @param unique_id A unique ID for the legend container. If NULL, a random ID will be generated.
-#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as `values`.
+#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as `values`. If `circular_patches` is `FALSE` (for square patches), sizes represent the width and height of the patch in pixels.  If `circular_patches` is `TRUE`, sizes represent the radius of the circle.
 #'
 #' @return The updated map object with the legend added.
 #' @export
@@ -63,6 +63,11 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     colors <- rep(colors, length(values))
   } else if (length(colors) != length(values)) {
     stop("'colors' must be a single value or have the same length as 'values'.")
+  }
+
+  # If circular patches is TRUE, multiply by 2 to get a diameter of the circle
+  if (circular_patches) {
+    sizes <- sizes * 2
   }
 
   # Give a default size of 20 if no size supplied
