@@ -65,6 +65,11 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     stop("'colors' must be a single value or have the same length as 'values'.")
   }
 
+  # Give a default size of 20 if no size supplied
+  if (is.null(sizes)) {
+    sizes <- 20
+  }
+
   if (!is.null(sizes)) {
     if (length(sizes) == 1) {
       sizes <- rep(sizes, length(values))
