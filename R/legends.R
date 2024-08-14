@@ -65,22 +65,24 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     stop("'colors' must be a single value or have the same length as 'values'.")
   }
 
+  # Give a default size of 20 if no size supplied
+  if (is.null(sizes)) {
+    if (circular_patches) {
+      sizes <- 10
+    } else {
+      sizes <- 20
+    }
+  }
+
   # If circular patches is TRUE, multiply by 2 to get a diameter of the circle
   if (circular_patches) {
     sizes <- sizes * 2
   }
 
-  # Give a default size of 20 if no size supplied
-  if (is.null(sizes)) {
-    sizes <- 20
-  }
-
-  if (!is.null(sizes)) {
-    if (length(sizes) == 1) {
-      sizes <- rep(sizes, length(values))
-    } else if (length(sizes) != length(values)) {
-      stop("'sizes' must be a single value or have the same length as 'values'.")
-    }
+  if (length(sizes) == 1) {
+    sizes <- rep(sizes, length(values))
+  } else if (length(sizes) != length(values)) {
+    stop("'sizes' must be a single value or have the same length as 'values'.")
   }
 
   legend_items <- lapply(seq_along(values), function(i) {
