@@ -356,7 +356,18 @@ HTMLWidgets.widget({
           }
 
           if (x.draw_control && x.draw_control.enabled) {
-            draw = new MapboxDraw(x.draw_control.options);
+            let drawOptions = x.draw_control.options || {};
+
+            if (x.draw_control.freehand) {
+              drawOptions = Object.assign({}, drawOptions, {
+                modes: Object.assign({}, MapboxDraw.modes, {
+                  draw_polygon: MapboxDraw.modes.draw_freehand
+                })
+                // defaultMode: 'draw_polygon' # Don't set the default yet
+              });
+            }
+
+            draw = new MapboxDraw(drawOptions);
             map.addControl(draw, x.draw_control.position);
             map.controls.push(draw);
 

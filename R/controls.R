@@ -203,7 +203,8 @@ add_scale_control <- function(map, position = "bottom-left", unit = "metric", ma
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param position A string specifying the position of the draw control.
 #'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
-#' @param ... Additional named arguments.  See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
+#' @param freehand Logical, whether to enable freehand drawing mode. Default is FALSE.
+#' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
 #' @export
@@ -215,11 +216,9 @@ add_scale_control <- function(map, position = "bottom-left", unit = "metric", ma
 #' mapboxgl(style = mapbox_style("streets"),
 #'          center = c(-74.50, 40),
 #'          zoom = 9) |>
-#'   add_draw_control(position = "top-left")
+#'   add_draw_control(position = "top-left", freehand = TRUE)
 #' }
-add_draw_control <- function(map, position = "top-left",
-                             ...) {
-
+add_draw_control <- function(map, position = "top-left", freehand = FALSE, ...) {
   if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
     rlang::abort("The draw control is not yet supported for MapLibre maps.")
   }
@@ -229,8 +228,10 @@ add_draw_control <- function(map, position = "top-left",
   map$x$draw_control <- list(
     enabled = TRUE,
     position = position,
+    freehand = freehand,
     options = options
   )
+
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
     map$session$sendCustomMessage(proxy_class, list(
@@ -238,10 +239,12 @@ add_draw_control <- function(map, position = "top-left",
       message = list(
         type = "add_draw_control",
         position = position,
-        options = options
+        options = options,
+        freehand = freehand
       )
     ))
   }
+
   map
 }
 
