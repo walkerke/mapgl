@@ -14,3 +14,8 @@ dependencies:
       - "mapbox-gl-draw.js"
     stylesheet:
       - "mapbox-gl-draw.css"
+  - name: freehand-mode
+    version: 1.0.0
+    src: "htmlwidgets/lib/freehand-mode"
+    script:
+      - "freehand-mode.js"

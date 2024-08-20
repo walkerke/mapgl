@@ -351,6 +351,49 @@ HTMLWidgets.widget({
             map.controls.push(scaleControl);
           }
 
+          if (x.draw_control && x.draw_control.enabled) {
+
+            MapboxDraw.constants.classes.CONTROL_BASE  = 'maplibregl-ctrl';
+            MapboxDraw.constants.classes.CONTROL_PREFIX = 'maplibregl-ctrl-';
+            MapboxDraw.constants.classes.CONTROL_GROUP = 'maplibregl-ctrl-group';
+
+            let drawOptions = x.draw_control.options || {};
+
+            if (x.draw_control.freehand) {
+              drawOptions = Object.assign({}, drawOptions, {
+                modes: Object.assign({}, MapboxDraw.modes, {
+                  draw_polygon: MapboxDraw.modes.draw_freehand
+                })
+                // defaultMode: 'draw_polygon' # Don't set the default yet
+              });
+            }
+
+            draw = new MapboxDraw(drawOptions);
+            map.addControl(draw, x.draw_control.position);
+            map.controls.push(draw);
+
+            // Add event listeners
+            map.on('draw.create', updateDrawnFeatures);
+            map.on('draw.delete', updateDrawnFeatures);
+            map.on('draw.update', updateDrawnFeatures);
+          }
+
+          function updateDrawnFeatures() {
+            if (draw) {
+              var drawnFeatures = draw.getAll();
+              if (HTMLWidgets.shinyMode) {
+                Shiny.setInputValue(el.id + '_drawn_features', JSON.stringify(drawnFeatures));
+              }
+              // Store drawn features in the widget's data
+              if (el.querySelector) {
+                var widget = HTMLWidgets.find("#" + el.id);
+                if (widget) {
+                  widget.drawFeatures = drawnFeatures;
+                }
+              }
+            }
+          }
+
           const existingLegend = document.getElementById('mapboxgl-legend');
           if (existingLegend) {
             existingLegend.remove();
@@ -483,6 +526,10 @@ HTMLWidgets.widget({
 
       getMap: function() {
         return map;  // Return the map instance
+      },
+
+      getDrawnFeatures: function() {
+        return this.drawFeatures || {type: "FeatureCollection", features: []};
       },
 
       resize: function(width, height) {
@@ -656,6 +703,39 @@ if (HTMLWidgets.shinyMode) {
         });
         map.addControl(nav, message.position);
         map.controls.push(nav);
+      } else if (message.type === "add_draw_control") {
+
+        MapboxDraw.constants.classes.CONTROL_BASE  = 'maplibregl-ctrl';
+        MapboxDraw.constants.classes.CONTROL_PREFIX = 'maplibregl-ctrl-';
+        MapboxDraw.constants.classes.CONTROL_GROUP = 'maplibregl-ctrl-group';
+
+        let drawOptions = message.options || {};
+        if (message.freehand) {
+          drawOptions = Object.assign({}, drawOptions, {
+            modes: Object.assign({}, MapboxDraw.modes, {
+              draw_polygon: MapboxDraw.modes.draw_freehand
+            })
+            // defaultMode: 'draw_polygon' # Don't set the default yet
+          });
+        }
+
+        draw = new MapboxDraw(drawOptions);
+        map.addControl(draw, x.draw_control.position);
+        map.controls.push(draw);
+
+        // Add event listeners
+        map.on('draw.create', updateDrawnFeatures);
+        map.on('draw.delete', updateDrawnFeatures);
+        map.on('draw.update', updateDrawnFeatures);
+      } else if (message.type === "get_drawn_features") {
+        const features = draw ? draw.getAll() : null;
+        Shiny.setInputValue(data.id + '_drawn_features', JSON.stringify(features));
+      } else if (message.type === "clear_drawn_features") {
+        if (draw) {
+          draw.deleteAll();
+          // Update the drawn features
+          updateDrawnFeatures();
+        }
       } else if (message.type === "add_markers") {
         if (!window.maplibreMarkers) {
           window.maplibreMarkers = [];

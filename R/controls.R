@@ -219,9 +219,9 @@ add_scale_control <- function(map, position = "bottom-left", unit = "metric", ma
 #'   add_draw_control(position = "top-left", freehand = TRUE)
 #' }
 add_draw_control <- function(map, position = "top-left", freehand = FALSE, ...) {
-  if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
-    rlang::abort("The draw control is not yet supported for MapLibre maps.")
-  }
+  # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
+  #   rlang::abort("The draw control is not yet supported for MapLibre maps.")
+  # }
 
   options <- list(...)
 

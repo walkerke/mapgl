@@ -683,13 +683,13 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "set_config_property") {
         map.setConfigProperty(message.importId, message.configName, message.value);
       } else if (message.type === "set_style") {
-      map.setStyle(message.style, { diff: message.diff });
+        map.setStyle(message.style, { diff: message.diff });
 
-      if (message.config) {
-        Object.keys(message.config).forEach(function(key) {
-          map.setConfigProperty('basemap', key, message.config[key]);
-        });
-      }
+        if (message.config) {
+          Object.keys(message.config).forEach(function(key) {
+            map.setConfigProperty('basemap', key, message.config[key]);
+          });
+        }
     } else if (message.type === "add_navigation_control") {
         const nav = new mapboxgl.NavigationControl({
           showCompass: message.options.show_compass,
@@ -699,8 +699,18 @@ if (HTMLWidgets.shinyMode) {
         map.addControl(nav, message.position);
         map.controls.push(nav);
       } else if (message.type === "add_draw_control") {
-        draw = new MapboxDraw(message.options);
-        map.addControl(draw, message.position);
+        let drawOptions = message.options || {};
+        if (message.freehand) {
+          drawOptions = Object.assign({}, drawOptions, {
+            modes: Object.assign({}, MapboxDraw.modes, {
+              draw_polygon: MapboxDraw.modes.draw_freehand
+            })
+            // defaultMode: 'draw_polygon' # Don't set the default yet
+          });
+        }
+
+        draw = new MapboxDraw(drawOptions);
+        map.addControl(draw, x.draw_control.position);
         map.controls.push(draw);
 
         // Add event listeners
