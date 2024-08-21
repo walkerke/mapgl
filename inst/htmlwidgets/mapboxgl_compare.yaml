@@ -1,11 +1,11 @@
 dependencies:
   - name: mapbox-gl-js
-    version: "3.4.0"
+    version: "3.6.0"
     src:
       href: "https://api.mapbox.com/mapbox-gl-js/"
     script:
-      - "v3.4.0/mapbox-gl.js"
+      - "v3.6.0/mapbox-gl.js"
       - "plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"
     stylesheet:
-      - "v3.4.0/mapbox-gl.css"
+      - "v3.6.0/mapbox-gl.css"
       - "plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css"
