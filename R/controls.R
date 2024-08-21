@@ -259,7 +259,7 @@ add_draw_control <- function(map, position = "top-left", freehand = FALSE, ...) 
 #' \dontrun{
 #' # In a Shiny application
 #' library(shiny)
-#' library(mapboxer)
+#' library(mapgl)
 #'
 #' ui <- fluidPage(
 #'   mapboxglOutput("map"),
@@ -269,7 +269,7 @@ add_draw_control <- function(map, position = "top-left", freehand = FALSE, ...) 
 #'
 #' server <- function(input, output, session) {
 #'   output$map <- renderMapboxgl({
-#'     mapboxgl(style = mapbox_style("streets-v12"),
+#'     mapboxgl(style = mapbox_style("streets"),
 #'              center = c(-74.50, 40),
 #'              zoom = 9) |>
 #'       add_draw_control()
