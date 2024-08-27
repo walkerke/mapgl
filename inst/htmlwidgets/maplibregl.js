@@ -436,15 +436,24 @@ HTMLWidgets.widget({
                 };
               },
             };
-            const geocoder = new MaplibreGeocoder(geocoderApi, {
+            const geocoderOptions = {
               maplibregl: maplibregl,
-              placeholder: x.geocoder_control.placeholder,
-              collapsed: x.geocoder_control.collapsed,
-            });
+              ...x.geocoder_control,
+            };
 
-            map.addControl(geocoder, x.geocoder_control.position);
+            // Set default values if not provided
+            if (!geocoderOptions.placeholder)
+              geocoderOptions.placeholder = "Search";
+            if (typeof geocoderOptions.collapsed === "undefined")
+              geocoderOptions.collapsed = false;
+
+            const geocoder = new MaplibreGeocoder(geocoderApi, geocoderOptions);
+
+            map.addControl(
+              geocoder,
+              x.geocoder_control.position || "top-right"
+            );
             map.controls.push(geocoder);
-          }
           // Handle geocoder results in Shiny mode
           if (HTMLWidgets.shinyMode) {
             geocoder.on("result", function (e) {
