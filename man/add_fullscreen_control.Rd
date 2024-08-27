@@ -22,9 +22,11 @@ Add a fullscreen control to a map
 \dontrun{
 library(mapgl)
 
-maplibre(style = maptiler_style("streets"),
-         center = c(11.255, 43.77),
-         zoom = 13) |>
-  add_fullscreen_control(position = "top-right")
+maplibre(
+    style = maptiler_style("streets"),
+    center = c(11.255, 43.77),
+    zoom = 13
+) |>
+    add_fullscreen_control(position = "top-right")
 }
 }

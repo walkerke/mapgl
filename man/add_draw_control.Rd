@@ -26,9 +26,11 @@ Add a draw control to a map
 \dontrun{
 library(mapgl)
 
-mapboxgl(style = mapbox_style("streets"),
-         center = c(-74.50, 40),
-         zoom = 9) |>
-  add_draw_control(position = "top-left", freehand = TRUE)
+mapboxgl(
+    style = mapbox_style("streets"),
+    center = c(-74.50, 40),
+    zoom = 9
+) |>
+    add_draw_control(position = "top-left", freehand = TRUE)
 }
 }

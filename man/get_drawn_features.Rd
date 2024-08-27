@@ -22,25 +22,27 @@ library(shiny)
 library(mapgl)
 
 ui <- fluidPage(
-  mapboxglOutput("map"),
-  actionButton("get_features", "Get Drawn Features"),
-  verbatimTextOutput("feature_output")
+    mapboxglOutput("map"),
+    actionButton("get_features", "Get Drawn Features"),
+    verbatimTextOutput("feature_output")
 )
 
 server <- function(input, output, session) {
-  output$map <- renderMapboxgl({
-    mapboxgl(style = mapbox_style("streets"),
-             center = c(-74.50, 40),
-             zoom = 9) |>
-      add_draw_control()
-  })
-
-  observeEvent(input$get_features, {
-    drawn_features <- get_drawn_features(mapboxgl_proxy("map"))
-    output$feature_output <- renderPrint({
-      print(drawn_features)
+    output$map <- renderMapboxgl({
+        mapboxgl(
+            style = mapbox_style("streets"),
+            center = c(-74.50, 40),
+            zoom = 9
+        ) |>
+            add_draw_control()
     })
-  })
+
+    observeEvent(input$get_features, {
+        drawn_features <- get_drawn_features(mapboxgl_proxy("map"))
+        output$feature_output <- renderPrint({
+            print(drawn_features)
+        })
+    })
 }
 
 shinyApp(ui, server)

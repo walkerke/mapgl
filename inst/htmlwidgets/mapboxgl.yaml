@@ -20,3 +20,11 @@ dependencies:
     src: "htmlwidgets/lib/freehand-mode"
     script:
       - "freehand-mode.js"
+  - name: mapbox-gl-geocoder
+    version: 5.0.0
+    src:
+      href: "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/"
+    script:
+      - "mapbox-gl-geocoder.min.js"
+    stylesheet:
+      - "mapbox-gl-geocoder.css"

@@ -31,6 +31,6 @@ This function adds a scale control to a Mapbox GL or Maplibre GL map.
 library(mapgl)
 
 mapboxgl() |>
-  add_scale_control(position = "bottom-right", unit = "imperial")
+    add_scale_control(position = "bottom-right", unit = "imperial")
 }
 }

@@ -34,6 +34,6 @@ Add a navigation control to a map
 library(mapgl)
 
 mapboxgl() |>
-  add_navigation_control(visualize_pitch = TRUE)
+    add_navigation_control(visualize_pitch = TRUE)
 }
 }
