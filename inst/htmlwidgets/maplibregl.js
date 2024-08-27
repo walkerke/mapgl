@@ -438,7 +438,10 @@ HTMLWidgets.widget({
             };
             const geocoder = new MaplibreGeocoder(geocoderApi, {
               maplibregl: maplibregl,
+              placeholder: x.geocoder_control.placeholder,
+              collapsed: x.geocoder_control.collapsed,
             });
+
             map.addControl(geocoder, x.geocoder_control.position);
             map.controls.push(geocoder);
           }
@@ -939,6 +942,61 @@ if (HTMLWidgets.shinyMode) {
         });
         map.addControl(scaleControl, message.options.position);
         map.controls.push(scaleControl);
+      } else if (message.type === "add_geocoder_control") {
+        const geocoderApi = {
+          forwardGeocode: async (config) => {
+            const features = [];
+            try {
+              const request = `https://nominatim.openstreetmap.org/search?q=${
+                config.query
+              }&format=geojson&polygon_geojson=1&addressdetails=1`;
+              const response = await fetch(request);
+              const geojson = await response.json();
+              for (const feature of geojson.features) {
+                const center = [
+                  feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
+                  feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
+                ];
+                const point = {
+                  type: "Feature",
+                  geometry: {
+                    type: "Point",
+                    coordinates: center,
+                  },
+                  place_name: feature.properties.display_name,
+                  properties: feature.properties,
+                  text: feature.properties.display_name,
+                  place_type: ["place"],
+                  center,
+                };
+                features.push(point);
+              }
+            } catch (e) {
+              console.error(`Failed to forwardGeocode with error: ${e}`);
+            }
+
+            return {
+              features,
+            };
+          },
+        };
+        const geocoder = new MaplibreGeocoder(geocoderApi, {
+          maplibregl: maplibregl,
+          placeholder: message.options.placeholder,
+          collapsed: message.options.collapsed,
+        });
+        map.addControl(geocoder, message.options.position);
+        map.controls.push(geocoder);
+
+        // Handle geocoder results in Shiny mode
+        if (HTMLWidgets.shinyMode) {
+          geocoder.on("result", function (e) {
+            Shiny.setInputValue(data.id + "_geocoder_result", {
+              result: e.result,
+              time: new Date(),
+            });
+          });
+        }
       } else if (message.type === "add_layers_control") {
         const layersControl = document.createElement("div");
         layersControl.id = message.control_id;

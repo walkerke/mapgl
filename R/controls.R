@@ -344,13 +344,13 @@ get_drawn_features <- function(map) {
 
 #' Add a geocoder control to a map
 #'
-#' This function adds a Mapbox Geocoder search bar to a Mapbox GL map.
+#' This function adds a Geocoder search bar to a Mapbox GL or MapLibre GL map.
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param position The position of the control. Can be one of "top-left", "top-right", "bottom-left", or "bottom-right". Default is "top-right".
 #' @param placeholder A string to use as placeholder text for the search bar. Default is "Search".
 #' @param collapsed Whether the control should be collapsed until hovered or clicked. Default is FALSE.
-#' @param ... Additional parameters to pass to the Mapbox Geocoder.
+#' @param ... Additional parameters to pass to the Geocoder.
 #'
 #' @return The modified map object with the geocoder control added.
 #' @export
@@ -361,12 +361,11 @@ get_drawn_features <- function(map) {
 #'
 #' mapboxgl() |>
 #'     add_geocoder_control(position = "top-left", placeholder = "Enter an address")
+#'
+#' maplibre() |>
+#'     add_geocoder_control(position = "top-right", placeholder = "Search location")
 #' }
 add_geocoder_control <- function(map, position = "top-right", placeholder = "Search", collapsed = FALSE, ...) {
-    # if (!inherits(map, "mapboxgl") && !inherits(map, "mapboxgl_proxy")) {
-    #     stop("The geocoder control is only supported for Mapbox GL maps.")
-    # }
-
     geocoder_options <- list(
         position = position,
         placeholder = placeholder,
@@ -374,8 +373,9 @@ add_geocoder_control <- function(map, position = "top-right", placeholder = "Sea
         ...
     )
 
-    if (inherits(map, "mapboxgl_proxy")) {
-        map$session$sendCustomMessage("mapboxgl-proxy", list(
+    if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        map$session$sendCustomMessage(proxy_class, list(
             id = map$id,
             message = list(
                 type = "add_geocoder_control",

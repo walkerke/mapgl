@@ -13,7 +13,7 @@ add_geocoder_control(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
 
 \item{position}{The position of the control. Can be one of "top-left", "top-right", "bottom-left", or "bottom-right". Default is "top-right".}
 
@@ -21,13 +21,13 @@ add_geocoder_control(
 
 \item{collapsed}{Whether the control should be collapsed until hovered or clicked. Default is FALSE.}
 
-\item{...}{Additional parameters to pass to the Mapbox Geocoder.}
+\item{...}{Additional parameters to pass to the Geocoder.}
 }
 \value{
 The modified map object with the geocoder control added.
 }
 \description{
-This function adds a Mapbox Geocoder search bar to a Mapbox GL map.
+This function adds a Geocoder search bar to a Mapbox GL or MapLibre GL map.
 }
 \examples{
 \dontrun{
@@ -35,5 +35,8 @@ library(mapgl)
 
 mapboxgl() |>
     add_geocoder_control(position = "top-left", placeholder = "Enter an address")
+
+maplibre() |>
+    add_geocoder_control(position = "top-right", placeholder = "Search location")
 }
 }
