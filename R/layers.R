@@ -16,6 +16,7 @@
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
+#' @param filter An optional filter expression to subset features in the layer.
 #'
 #' @return The modified map object with the new layer added.
 #' @export
@@ -65,7 +66,8 @@ add_layer <- function(map,
                       popup = NULL,
                       tooltip = NULL,
                       hover_options = NULL,
-                      before_id = NULL
+                      before_id = NULL,
+                      filter = NULL
 ) {
 
   if (length(paint) == 0) {
@@ -99,7 +101,8 @@ add_layer <- function(map,
     popup = popup,
     tooltip = tooltip,
     hover_options = hover_options,
-    before_id = before_id
+    before_id = before_id,
+    filter = filter
   )))
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
@@ -112,7 +115,8 @@ add_layer <- function(map,
       popup = popup,
       tooltip = tooltip,
       hover_options = hover_options,
-      before_id = before_id
+      before_id = before_id,
+      filter = filter
     )
 
     if (!is.null(source_layer)) {
@@ -170,6 +174,7 @@ add_layer <- function(map,
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
+#' @param filter An optional filter expression to subset features in the layer.
 #'
 #' @return The modified map object with the new fill layer added.
 #' @export
@@ -220,7 +225,8 @@ add_fill_layer <- function(map,
                            popup = NULL,
                            tooltip = NULL,
                            hover_options = NULL,
-                           before_id = NULL) {
+                           before_id = NULL,
+                           filter = NULL) {
   paint <- list()
   layout <- list()
 
@@ -252,7 +258,8 @@ add_fill_layer <- function(map,
     popup,
     tooltip,
     hover_options,
-    before_id
+    before_id,
+    filter
   )
 
   return(map)
@@ -282,7 +289,8 @@ add_fill_layer <- function(map,
 #' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
-#' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
+#' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels)
+#' @param filter An optional filter expression to subset features in the layer.
 #'
 #' @return The modified map object with the new line layer added.
 #' @export
@@ -325,7 +333,8 @@ add_line_layer <- function(map,
                            popup = NULL,
                            tooltip = NULL,
                            hover_options = NULL,
-                           before_id = NULL) {
+                           before_id = NULL,
+                           filter = NULL) {
   paint <- list()
   layout <- list()
 
@@ -357,7 +366,8 @@ add_line_layer <- function(map,
     popup,
     tooltip,
     hover_options,
-    before_id
+    before_id,
+    filter
   )
 
   return(map)
@@ -379,6 +389,7 @@ add_line_layer <- function(map,
 #' @param min_zoom The minimum zoom level for the layer.
 #' @param max_zoom The maximum zoom level for the layer.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
+#' @param filter An optional filter expression to subset features in the layer.
 #'
 #' @return The modified map object with the new heatmap layer added.
 #' @export
@@ -429,7 +440,8 @@ add_heatmap_layer <- function(map,
                               slot = NULL,
                               min_zoom = NULL,
                               max_zoom = NULL,
-                              before_id = NULL) {
+                              before_id = NULL,
+                              filter = NULL) {
   paint <- list()
   layout <- list()
 
@@ -441,7 +453,7 @@ add_heatmap_layer <- function(map,
 
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "heatmap", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id)
+  map <- add_layer(map, id, "heatmap", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id, filter)
 
   return(map)
 }
@@ -467,6 +479,7 @@ add_heatmap_layer <- function(map,
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
+#' @param filter An optional filter expression to subset features in the layer.
 #'
 #' @return The modified map object with the new fill-extrusion layer added.
 #' @export
@@ -525,7 +538,8 @@ add_fill_extrusion_layer <- function(map,
                                      popup = NULL,
                                      tooltip = NULL,
                                      hover_options = NULL,
-                                     before_id = NULL) {
+                                     before_id = NULL,
+                                     filter = NULL) {
   paint <- list()
   layout <- list()
 
@@ -539,7 +553,7 @@ add_fill_extrusion_layer <- function(map,
 
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id)
+  map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
 
   return(map)
 }
@@ -568,6 +582,7 @@ add_fill_extrusion_layer <- function(map,
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
+#' @param filter An optional filter expression to subset features in the layer.
 #'
 #' @return The modified map object with the new circle layer added.
 #' @export
@@ -655,7 +670,8 @@ add_circle_layer <- function(map,
                              popup = NULL,
                              tooltip = NULL,
                              hover_options = NULL,
-                             before_id = NULL) {
+                             before_id = NULL,
+                             filter = NULL) {
   paint <- list()
   layout <- list()
 
@@ -686,7 +702,8 @@ add_circle_layer <- function(map,
     popup,
     tooltip,
     hover_options,
-    before_id
+    before_id,
+    filter
   )
 
   return(map)
@@ -850,6 +867,7 @@ add_raster_layer <- function(map,
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
 #' @param hover_options A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
+#' @param filter An optional filter expression to subset features in the layer.
 #'
 #' @return The modified map object with the new symbol layer added.
 #' @export
@@ -973,7 +991,8 @@ add_symbol_layer <- function(map,
                              popup = NULL,
                              tooltip = NULL,
                              hover_options = NULL,
-                             before_id = NULL) {
+                             before_id = NULL,
+                             filter = NULL) {
   paint <- list()
   layout <- list()
 
@@ -1045,7 +1064,7 @@ add_symbol_layer <- function(map,
 
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id)
+  map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
 
   return(map)
 }

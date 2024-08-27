@@ -207,6 +207,10 @@ HTMLWidgets.widget({
                   layerConfig['maxzoom'] = layer.maxzoom;
                 }
 
+                if (layer.filter) {
+                  layerConfig['filter'] = layer.filter;
+                }
+
                 if (layer.before_id) {
                   map.addLayer(layerConfig, layer.before_id);
                 } else {
