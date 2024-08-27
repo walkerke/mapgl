@@ -15,7 +15,7 @@ add_source <- function(map, id, data, ...) {
   } else {
     stop("Data must be an sf object or a URL to a remote GeoJSON file.")
   }
-
+ß
   source <- list(
     id = id,
     type = "geojson",

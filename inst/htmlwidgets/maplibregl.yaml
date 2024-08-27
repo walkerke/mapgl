@@ -19,3 +19,11 @@ dependencies:
     src: "htmlwidgets/lib/freehand-mode"
     script:
       - "freehand-mode.js"
+  - name: maplibre-gl-geocoder
+    version: 1.5.0
+    src:
+      href: "https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/"
+    script:
+      - "maplibre-gl-geocoder.min.js"
+    stylesheet:
+      - "maplibre-gl-geocoder.css"

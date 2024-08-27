@@ -363,9 +363,9 @@ get_drawn_features <- function(map) {
 #'     add_geocoder_control(position = "top-left", placeholder = "Enter an address")
 #' }
 add_geocoder_control <- function(map, position = "top-right", placeholder = "Search", collapsed = FALSE, ...) {
-    if (!inherits(map, "mapboxgl") && !inherits(map, "mapboxgl_proxy")) {
-        stop("The geocoder control is only supported for Mapbox GL maps.")
-    }
+    # if (!inherits(map, "mapboxgl") && !inherits(map, "mapboxgl_proxy")) {
+    #     stop("The geocoder control is only supported for Mapbox GL maps.")
+    # }
 
     geocoder_options <- list(
         position = position,
