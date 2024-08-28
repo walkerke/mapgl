@@ -463,6 +463,7 @@ HTMLWidgets.widget({
               });
             });
           }
+          }
 
           if (x.draw_control && x.draw_control.enabled) {
             MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
