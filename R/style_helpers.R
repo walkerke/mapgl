@@ -212,13 +212,14 @@ mapbox_style <- function(style_name) {
     satellite = "mapbox://styles/mapbox/satellite-v9",
     `satellite-streets` = "mapbox://styles/mapbox/satellite-streets-v12",
     `navigation-day` = "mapbox://styles/mapbox/navigation-day-v1",
-    `navigation-night` = "mapbox://styles/mapbox/navigation-night-v1"
+    `navigation-night` = "mapbox://styles/mapbox/navigation-night-v1",
+    `standard-satellite` = "mapbox://styles/mapbox/standard-satellite"
   )
 
   style_url <- styles[[style_name]]
 
   if (is.null(style_url)) {
-    stop("Invalid style name. Please choose from: standard, streets, outdoors, light, dark, satellite, satellite-streets, navigation-day, navigation-night.")
+    stop("Invalid style name. Please choose from: standard, streets, outdoors, light, dark, satellite, satellite-streets, navigation-day, navigation-night, standard-satellite.")
   }
 
   return(style_url)

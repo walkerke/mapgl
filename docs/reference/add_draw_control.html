@@ -78,10 +78,12 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"streets"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>         center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.50</span>, <span class="fl">40</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>         zoom <span class="op">=</span> <span class="fl">9</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">add_draw_control</span><span class="op">(</span>position <span class="op">=</span> <span class="st">"top-left"</span>, freehand <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    style <span class="op">=</span> <span class="fu"><a href="mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"streets"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.50</span>, <span class="fl">40</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    zoom <span class="op">=</span> <span class="fl">9</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_draw_control</span><span class="op">(</span>position <span class="op">=</span> <span class="st">"top-left"</span>, freehand <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

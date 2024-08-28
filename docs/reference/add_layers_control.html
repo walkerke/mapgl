@@ -87,20 +87,19 @@
 <span class="r-in"><span><span class="va">tr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tigris/man/tracts.html" class="external-link">tracts</a></span><span class="op">(</span><span class="st">"TX"</span>, <span class="st">"Tarrant"</span>, cb <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="maplibre.html">maplibre</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">rds</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="add_fill_layer.html">add_fill_layer</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    id <span class="op">=</span> <span class="st">"Census tracts"</span>,</span></span>
-<span class="r-in"><span>    source <span class="op">=</span> <span class="va">tr</span>,</span></span>
-<span class="r-in"><span>    fill_color <span class="op">=</span> <span class="st">"purple"</span>,</span></span>
-<span class="r-in"><span>    fill_opacity <span class="op">=</span> <span class="fl">0.6</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="add_line_layer.html">add_line_layer</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="st">"Local roads"</span>,</span></span>
-<span class="r-in"><span>    source <span class="op">=</span> <span class="va">rds</span>,</span></span>
-<span class="r-in"><span>    line_color <span class="op">=</span> <span class="st">"pink"</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">add_layers_control</span><span class="op">(</span>collapsible <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">rds</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="add_fill_layer.html">add_fill_layer</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="st">"Census tracts"</span>,</span></span>
+<span class="r-in"><span>        source <span class="op">=</span> <span class="va">tr</span>,</span></span>
+<span class="r-in"><span>        fill_color <span class="op">=</span> <span class="st">"purple"</span>,</span></span>
+<span class="r-in"><span>        fill_opacity <span class="op">=</span> <span class="fl">0.6</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="add_line_layer.html">add_line_layer</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="st">"Local roads"</span>,</span></span>
+<span class="r-in"><span>        source <span class="op">=</span> <span class="va">rds</span>,</span></span>
+<span class="r-in"><span>        line_color <span class="op">=</span> <span class="st">"pink"</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_layers_control</span><span class="op">(</span>collapsible <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
