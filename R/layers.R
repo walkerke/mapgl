@@ -115,12 +115,15 @@ add_layer <- function(map,
       popup = popup,
       tooltip = tooltip,
       hover_options = hover_options,
-      before_id = before_id,
-      filter = filter
+      before_id = before_id
     )
 
     if (!is.null(source_layer)) {
       layer$source_layer <- source_layer
+    }
+
+    if (!is.null(filter)) {
+      layer$filter <- filter
     }
 
     if (!is.null(slot)) {
