@@ -44,7 +44,7 @@ add_symbol_layer(
   symbol_z_order = NULL,
   text_allow_overlap = NULL,
   text_anchor = NULL,
-  text_color = NULL,
+  text_color = "black",
   text_emissive_strength = NULL,
   text_field = NULL,
   text_font = NULL,
