@@ -94,12 +94,12 @@ library(tigris)
 loving_roads <- roads("TX", "Loving")
 
 maplibre(style = maptiler_style("backdrop")) |>
-  fit_bounds(loving_roads) |>
-  add_line_layer(
-    id = "tracks",
-    source = loving_roads,
-    line_color = "navy",
-    line_opacity = 0.7
-  )
+    fit_bounds(loving_roads) |>
+    add_line_layer(
+        id = "tracks",
+        source = loving_roads,
+        line_color = "navy",
+        line_opacity = 0.7
+    )
 }
 }

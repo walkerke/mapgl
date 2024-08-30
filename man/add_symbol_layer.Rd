@@ -252,39 +252,41 @@ library(dplyr)
 set.seed(1234)
 
 # Define the bounding box for Washington DC (approximately)
-bbox <- st_bbox(c(
-  xmin = -77.119759,
-  ymin = 38.791645,
-  xmax = -76.909393,
-  ymax = 38.995548
-),
-crs = st_crs(4326))
+bbox <- st_bbox(
+    c(
+        xmin = -77.119759,
+        ymin = 38.791645,
+        xmax = -76.909393,
+        ymax = 38.995548
+    ),
+    crs = st_crs(4326)
+)
 
 # Generate 30 random points within the bounding box
 random_points <- st_as_sf(
-  data.frame(
-    id = 1:30,
-    lon = runif(30, bbox["xmin"], bbox["xmax"]),
-    lat = runif(30, bbox["ymin"], bbox["ymax"])
-  ),
-  coords = c("lon", "lat"),
-  crs = 4326
+    data.frame(
+        id = 1:30,
+        lon = runif(30, bbox["xmin"], bbox["xmax"]),
+        lat = runif(30, bbox["ymin"], bbox["ymax"])
+    ),
+    coords = c("lon", "lat"),
+    crs = 4326
 )
 
 # Assign random icons
-icons <- c('music', 'bar', 'theatre', 'bicycle')
+icons <- c("music", "bar", "theatre", "bicycle")
 random_points <- random_points |>
-  mutate(icon = sample(icons, n(), replace = TRUE))
+    mutate(icon = sample(icons, n(), replace = TRUE))
 
 # Map with icons
 mapboxgl(style = mapbox_style("light")) |>
-  fit_bounds(random_points, animate = FALSE) |>
-  add_symbol_layer(
-    id = "points-of-interest",
-    source = random_points,
-    icon_image = c("get", "icon"),
-    icon_allow_overlap = TRUE,
-    tooltip = "icon"
-  )
+    fit_bounds(random_points, animate = FALSE) |>
+    add_symbol_layer(
+        id = "points-of-interest",
+        source = random_points,
+        icon_image = c("get", "icon"),
+        icon_allow_overlap = TRUE,
+        tooltip = "icon"
+    )
 }
 }

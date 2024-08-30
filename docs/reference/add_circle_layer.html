@@ -183,57 +183,65 @@
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Define the bounding box for Washington DC (approximately)</span></span></span>
-<span class="r-in"><span><span class="va">bbox</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">st_bbox</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  xmin <span class="op">=</span> <span class="op">-</span><span class="fl">77.119759</span>,</span></span>
-<span class="r-in"><span>  ymin <span class="op">=</span> <span class="fl">38.791645</span>,</span></span>
-<span class="r-in"><span>  xmax <span class="op">=</span> <span class="op">-</span><span class="fl">76.909393</span>,</span></span>
-<span class="r-in"><span>  ymax <span class="op">=</span> <span class="fl">38.995548</span></span></span>
-<span class="r-in"><span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>crs <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="fl">4326</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">bbox</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">st_bbox</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        xmin <span class="op">=</span> <span class="op">-</span><span class="fl">77.119759</span>,</span></span>
+<span class="r-in"><span>        ymin <span class="op">=</span> <span class="fl">38.791645</span>,</span></span>
+<span class="r-in"><span>        xmax <span class="op">=</span> <span class="op">-</span><span class="fl">76.909393</span>,</span></span>
+<span class="r-in"><span>        ymax <span class="op">=</span> <span class="fl">38.995548</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    crs <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="fl">4326</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Generate 30 random points within the bounding box</span></span></span>
 <span class="r-in"><span><span class="va">random_points</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span>,</span></span>
-<span class="r-in"><span>    lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmax"</span><span class="op">]</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymax"</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span>,</span></span>
-<span class="r-in"><span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  crs <span class="op">=</span> <span class="fl">4326</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span>,</span></span>
+<span class="r-in"><span>        lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmax"</span><span class="op">]</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymax"</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    crs <span class="op">=</span> <span class="fl">4326</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Assign random categories</span></span></span>
-<span class="r-in"><span><span class="va">categories</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'music'</span>, <span class="st">'bar'</span>, <span class="st">'theatre'</span>, <span class="st">'bicycle'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">categories</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"music"</span>, <span class="st">"bar"</span>, <span class="st">"theatre"</span>, <span class="st">"bicycle"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">random_points</span> <span class="op">&lt;-</span> <span class="va">random_points</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>category <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">categories</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>category <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">categories</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Map with circle layer</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"light"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">random_points</span>, animate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu">add_circle_layer</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    id <span class="op">=</span> <span class="st">"poi-layer"</span>,</span></span>
-<span class="r-in"><span>    source <span class="op">=</span> <span class="va">random_points</span>,</span></span>
-<span class="r-in"><span>    circle_color <span class="op">=</span> <span class="fu"><a href="match_expr.html">match_expr</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>      <span class="st">"category"</span>,</span></span>
-<span class="r-in"><span>      values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"music"</span>, <span class="st">"bar"</span>, <span class="st">"theatre"</span>,</span></span>
-<span class="r-in"><span>                 <span class="st">"bicycle"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#1f78b4"</span>, <span class="st">"#33a02c"</span>,</span></span>
-<span class="r-in"><span>                <span class="st">"#e31a1c"</span>, <span class="st">"#ff7f00"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span>,</span></span>
-<span class="r-in"><span>    circle_radius <span class="op">=</span> <span class="fl">8</span>,</span></span>
-<span class="r-in"><span>    circle_stroke_color <span class="op">=</span> <span class="st">"#ffffff"</span>,</span></span>
-<span class="r-in"><span>    circle_stroke_width <span class="op">=</span> <span class="fl">2</span>,</span></span>
-<span class="r-in"><span>    circle_opacity <span class="op">=</span> <span class="fl">0.8</span>,</span></span>
-<span class="r-in"><span>    tooltip <span class="op">=</span> <span class="st">"category"</span>,</span></span>
-<span class="r-in"><span>    hover_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>circle_radius <span class="op">=</span> <span class="fl">12</span>,</span></span>
-<span class="r-in"><span>                         circle_color <span class="op">=</span> <span class="st">"#ffff99"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="add_categorical_legend.html">add_categorical_legend</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    legend_title <span class="op">=</span> <span class="st">"Points of Interest"</span>,</span></span>
-<span class="r-in"><span>    values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Music"</span>, <span class="st">"Bar"</span>, <span class="st">"Theatre"</span>, <span class="st">"Bicycle"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#1f78b4"</span>, <span class="st">"#33a02c"</span>, <span class="st">"#e31a1c"</span>, <span class="st">"#ff7f00"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    circular_patches <span class="op">=</span> <span class="cn">TRUE</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">random_points</span>, animate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>    <span class="fu">add_circle_layer</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="st">"poi-layer"</span>,</span></span>
+<span class="r-in"><span>        source <span class="op">=</span> <span class="va">random_points</span>,</span></span>
+<span class="r-in"><span>        circle_color <span class="op">=</span> <span class="fu"><a href="match_expr.html">match_expr</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            <span class="st">"category"</span>,</span></span>
+<span class="r-in"><span>            values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>                <span class="st">"music"</span>, <span class="st">"bar"</span>, <span class="st">"theatre"</span>,</span></span>
+<span class="r-in"><span>                <span class="st">"bicycle"</span></span></span>
+<span class="r-in"><span>            <span class="op">)</span>,</span></span>
+<span class="r-in"><span>            stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>                <span class="st">"#1f78b4"</span>, <span class="st">"#33a02c"</span>,</span></span>
+<span class="r-in"><span>                <span class="st">"#e31a1c"</span>, <span class="st">"#ff7f00"</span></span></span>
+<span class="r-in"><span>            <span class="op">)</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span>,</span></span>
+<span class="r-in"><span>        circle_radius <span class="op">=</span> <span class="fl">8</span>,</span></span>
+<span class="r-in"><span>        circle_stroke_color <span class="op">=</span> <span class="st">"#ffffff"</span>,</span></span>
+<span class="r-in"><span>        circle_stroke_width <span class="op">=</span> <span class="fl">2</span>,</span></span>
+<span class="r-in"><span>        circle_opacity <span class="op">=</span> <span class="fl">0.8</span>,</span></span>
+<span class="r-in"><span>        tooltip <span class="op">=</span> <span class="st">"category"</span>,</span></span>
+<span class="r-in"><span>        hover_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            circle_radius <span class="op">=</span> <span class="fl">12</span>,</span></span>
+<span class="r-in"><span>            circle_color <span class="op">=</span> <span class="st">"#ffff99"</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="add_categorical_legend.html">add_categorical_legend</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        legend_title <span class="op">=</span> <span class="st">"Points of Interest"</span>,</span></span>
+<span class="r-in"><span>        values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Music"</span>, <span class="st">"Bar"</span>, <span class="st">"Theatre"</span>, <span class="st">"Bicycle"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#1f78b4"</span>, <span class="st">"#33a02c"</span>, <span class="st">"#e31a1c"</span>, <span class="st">"#ff7f00"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        circular_patches <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

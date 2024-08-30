@@ -84,7 +84,7 @@
 <span>  symbol_z_order <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_allow_overlap <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_anchor <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  text_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  text_color <span class="op">=</span> <span class="st">"black"</span>,</span>
 <span>  text_emissive_strength <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_field <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_font <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -448,40 +448,42 @@
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Define the bounding box for Washington DC (approximately)</span></span></span>
-<span class="r-in"><span><span class="va">bbox</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">st_bbox</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  xmin <span class="op">=</span> <span class="op">-</span><span class="fl">77.119759</span>,</span></span>
-<span class="r-in"><span>  ymin <span class="op">=</span> <span class="fl">38.791645</span>,</span></span>
-<span class="r-in"><span>  xmax <span class="op">=</span> <span class="op">-</span><span class="fl">76.909393</span>,</span></span>
-<span class="r-in"><span>  ymax <span class="op">=</span> <span class="fl">38.995548</span></span></span>
-<span class="r-in"><span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>crs <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="fl">4326</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">bbox</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">st_bbox</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        xmin <span class="op">=</span> <span class="op">-</span><span class="fl">77.119759</span>,</span></span>
+<span class="r-in"><span>        ymin <span class="op">=</span> <span class="fl">38.791645</span>,</span></span>
+<span class="r-in"><span>        xmax <span class="op">=</span> <span class="op">-</span><span class="fl">76.909393</span>,</span></span>
+<span class="r-in"><span>        ymax <span class="op">=</span> <span class="fl">38.995548</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    crs <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="fl">4326</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Generate 30 random points within the bounding box</span></span></span>
 <span class="r-in"><span><span class="va">random_points</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span>,</span></span>
-<span class="r-in"><span>    lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmax"</span><span class="op">]</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymax"</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span>,</span></span>
-<span class="r-in"><span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  crs <span class="op">=</span> <span class="fl">4326</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span>,</span></span>
+<span class="r-in"><span>        lon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"xmax"</span><span class="op">]</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        lat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">30</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymin"</span><span class="op">]</span>, <span class="va">bbox</span><span class="op">[</span><span class="st">"ymax"</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lon"</span>, <span class="st">"lat"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    crs <span class="op">=</span> <span class="fl">4326</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Assign random icons</span></span></span>
-<span class="r-in"><span><span class="va">icons</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'music'</span>, <span class="st">'bar'</span>, <span class="st">'theatre'</span>, <span class="st">'bicycle'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">icons</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"music"</span>, <span class="st">"bar"</span>, <span class="st">"theatre"</span>, <span class="st">"bicycle"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">random_points</span> <span class="op">&lt;-</span> <span class="va">random_points</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>icon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">icons</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>icon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">icons</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Map with icons</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"light"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">random_points</span>, animate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">add_symbol_layer</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    id <span class="op">=</span> <span class="st">"points-of-interest"</span>,</span></span>
-<span class="r-in"><span>    source <span class="op">=</span> <span class="va">random_points</span>,</span></span>
-<span class="r-in"><span>    icon_image <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"get"</span>, <span class="st">"icon"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    icon_allow_overlap <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>    tooltip <span class="op">=</span> <span class="st">"icon"</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="fit_bounds.html">fit_bounds</a></span><span class="op">(</span><span class="va">random_points</span>, animate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_symbol_layer</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="st">"points-of-interest"</span>,</span></span>
+<span class="r-in"><span>        source <span class="op">=</span> <span class="va">random_points</span>,</span></span>
+<span class="r-in"><span>        icon_image <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"get"</span>, <span class="st">"icon"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        icon_allow_overlap <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>        tooltip <span class="op">=</span> <span class="st">"icon"</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -144,26 +144,26 @@
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a Mapbox GL map</span></span></span>
 <span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span> style <span class="op">=</span> <span class="fu"><a href="mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"light"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span> center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">79.0193</span>, <span class="fl">35.7596</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span> zoom <span class="op">=</span> <span class="fl">7</span></span></span>
+<span class="r-in"><span>    style <span class="op">=</span> <span class="fu"><a href="mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"light"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">79.0193</span>, <span class="fl">35.7596</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    zoom <span class="op">=</span> <span class="fl">7</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Add a source and fill layer for North Carolina tracts</span></span></span>
 <span class="r-in"><span><span class="va">map</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu"><a href="add_source.html">add_source</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>   id <span class="op">=</span> <span class="st">"nc-tracts"</span>,</span></span>
-<span class="r-in"><span>   data <span class="op">=</span> <span class="va">nc_tracts</span></span></span>
-<span class="r-in"><span> <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span> <span class="fu">add_layer</span><span class="op">(</span></span></span>
-<span class="r-in"><span>   id <span class="op">=</span> <span class="st">"nc-layer"</span>,</span></span>
-<span class="r-in"><span>   type <span class="op">=</span> <span class="st">"fill"</span>,</span></span>
-<span class="r-in"><span>   source <span class="op">=</span> <span class="st">"nc-tracts"</span>,</span></span>
-<span class="r-in"><span>   paint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>     <span class="st">"fill-color"</span> <span class="op">=</span> <span class="st">"#888888"</span>,</span></span>
-<span class="r-in"><span>     <span class="st">"fill-opacity"</span> <span class="op">=</span> <span class="fl">0.4</span></span></span>
-<span class="r-in"><span>   <span class="op">)</span></span></span>
-<span class="r-in"><span> <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="add_source.html">add_source</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="st">"nc-tracts"</span>,</span></span>
+<span class="r-in"><span>        data <span class="op">=</span> <span class="va">nc_tracts</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>    <span class="fu">add_layer</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="st">"nc-layer"</span>,</span></span>
+<span class="r-in"><span>        type <span class="op">=</span> <span class="st">"fill"</span>,</span></span>
+<span class="r-in"><span>        source <span class="op">=</span> <span class="st">"nc-tracts"</span>,</span></span>
+<span class="r-in"><span>        paint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            <span class="st">"fill-color"</span> <span class="op">=</span> <span class="st">"#888888"</span>,</span></span>
+<span class="r-in"><span>            <span class="st">"fill-opacity"</span> <span class="op">=</span> <span class="fl">0.4</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

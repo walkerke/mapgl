@@ -70,25 +70,25 @@ nc_tracts <- tracts(state = "NC", cb = TRUE)
 
 # Create a Mapbox GL map
 map <- mapboxgl(
- style = mapbox_style("light"),
- center = c(-79.0193, 35.7596),
- zoom = 7
+    style = mapbox_style("light"),
+    center = c(-79.0193, 35.7596),
+    zoom = 7
 )
 
 # Add a source and fill layer for North Carolina tracts
 map \%>\%
- add_source(
-   id = "nc-tracts",
-   data = nc_tracts
- ) \%>\%
- add_layer(
-   id = "nc-layer",
-   type = "fill",
-   source = "nc-tracts",
-   paint = list(
-     "fill-color" = "#888888",
-     "fill-opacity" = 0.4
-   )
- )
+    add_source(
+        id = "nc-tracts",
+        data = nc_tracts
+    ) \%>\%
+    add_layer(
+        id = "nc-layer",
+        type = "fill",
+        source = "nc-tracts",
+        paint = list(
+            "fill-color" = "#888888",
+            "fill-opacity" = 0.4
+        )
+    )
 }
 }

@@ -638,7 +638,53 @@ if (HTMLWidgets.shinyMode) {
       if (message.type === "set_filter") {
         map.setFilter(message.layer, message.filter);
       } else if (message.type === "add_source") {
-        map.addSource(message.source);
+        if (message.source.type === "vector") {
+          map.addSource(message.source.id, {
+            type: "vector",
+            url: message.source.url,
+          });
+        } else if (message.source.type === "geojson") {
+          map.addSource(message.source.id, {
+            type: "geojson",
+            data: message.source.data,
+            generateId: message.source.generateId,
+          });
+        } else if (message.source.type === "raster") {
+          if (message.source.url) {
+            map.addSource(message.source.id, {
+              type: "raster",
+              url: message.source.url,
+              tileSize: message.source.tileSize,
+              maxzoom: message.source.maxzoom,
+            });
+          } else if (message.source.tiles) {
+            map.addSource(message.source.id, {
+              type: "raster",
+              tiles: message.source.tiles,
+              tileSize: message.source.tileSize,
+              maxzoom: message.source.maxzoom,
+            });
+          }
+        } else if (message.source.type === "raster-dem") {
+          map.addSource(message.source.id, {
+            type: "raster-dem",
+            url: message.source.url,
+            tileSize: message.source.tileSize,
+            maxzoom: message.source.maxzoom,
+          });
+        } else if (message.source.type === "image") {
+          map.addSource(message.source.id, {
+            type: "image",
+            url: message.source.url,
+            coordinates: message.source.coordinates,
+          });
+        } else if (message.source.type === "video") {
+          map.addSource(message.source.id, {
+            type: "video",
+            urls: message.source.urls,
+            coordinates: message.source.coordinates,
+          });
+        }
       } else if (message.type === "add_layer") {
         try {
           if (message.layer.before_id) {

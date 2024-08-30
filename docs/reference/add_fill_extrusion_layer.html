@@ -163,36 +163,38 @@
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="maplibre.html">maplibre</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  style <span class="op">=</span> <span class="fu"><a href="maptiler_style.html">maptiler_style</a></span><span class="op">(</span><span class="st">"basic"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.0066</span>, <span class="fl">40.7135</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  zoom <span class="op">=</span> <span class="fl">15.5</span>,</span></span>
-<span class="r-in"><span>  pitch <span class="op">=</span> <span class="fl">45</span>,</span></span>
-<span class="r-in"><span>  bearing <span class="op">=</span> <span class="op">-</span><span class="fl">17.6</span></span></span>
+<span class="r-in"><span>    style <span class="op">=</span> <span class="fu"><a href="maptiler_style.html">maptiler_style</a></span><span class="op">(</span><span class="st">"basic"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.0066</span>, <span class="fl">40.7135</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    zoom <span class="op">=</span> <span class="fl">15.5</span>,</span></span>
+<span class="r-in"><span>    pitch <span class="op">=</span> <span class="fl">45</span>,</span></span>
+<span class="r-in"><span>    bearing <span class="op">=</span> <span class="op">-</span><span class="fl">17.6</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="add_vector_source.html">add_vector_source</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    id <span class="op">=</span> <span class="st">"openmaptiles"</span>,</span></span>
-<span class="r-in"><span>    url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https://api.maptiler.com/tiles/v3/tiles.json?key="</span>,</span></span>
-<span class="r-in"><span>                 <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"MAPTILER_API_KEY"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">add_fill_extrusion_layer</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    id <span class="op">=</span> <span class="st">"3d-buildings"</span>,</span></span>
-<span class="r-in"><span>    source <span class="op">=</span> <span class="st">'openmaptiles'</span>,</span></span>
-<span class="r-in"><span>    source_layer <span class="op">=</span> <span class="st">'building'</span>,</span></span>
-<span class="r-in"><span>    fill_extrusion_color <span class="op">=</span> <span class="fu"><a href="interpolate.html">interpolate</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>      column <span class="op">=</span> <span class="st">'render_height'</span>,</span></span>
-<span class="r-in"><span>      values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">200</span>, <span class="fl">400</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'lightgray'</span>, <span class="st">'royalblue'</span>, <span class="st">'lightblue'</span><span class="op">)</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span>,</span></span>
-<span class="r-in"><span>    fill_extrusion_height <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>      <span class="st">'interpolate'</span>,</span></span>
-<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">'linear'</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">'zoom'</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      <span class="fl">15</span>,</span></span>
-<span class="r-in"><span>      <span class="fl">0</span>,</span></span>
-<span class="r-in"><span>      <span class="fl">16</span>,</span></span>
-<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">'get'</span>, <span class="st">'render_height'</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="add_vector_source.html">add_vector_source</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="st">"openmaptiles"</span>,</span></span>
+<span class="r-in"><span>        url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            <span class="st">"https://api.maptiler.com/tiles/v3/tiles.json?key="</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"MAPTILER_API_KEY"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_fill_extrusion_layer</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        id <span class="op">=</span> <span class="st">"3d-buildings"</span>,</span></span>
+<span class="r-in"><span>        source <span class="op">=</span> <span class="st">"openmaptiles"</span>,</span></span>
+<span class="r-in"><span>        source_layer <span class="op">=</span> <span class="st">"building"</span>,</span></span>
+<span class="r-in"><span>        fill_extrusion_color <span class="op">=</span> <span class="fu"><a href="interpolate.html">interpolate</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            column <span class="op">=</span> <span class="st">"render_height"</span>,</span></span>
+<span class="r-in"><span>            values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">200</span>, <span class="fl">400</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lightgray"</span>, <span class="st">"royalblue"</span>, <span class="st">"lightblue"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span>,</span></span>
+<span class="r-in"><span>        fill_extrusion_height <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>            <span class="st">"interpolate"</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"linear"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"zoom"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            <span class="fl">15</span>,</span></span>
+<span class="r-in"><span>            <span class="fl">0</span>,</span></span>
+<span class="r-in"><span>            <span class="fl">16</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"get"</span>, <span class="st">"render_height"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

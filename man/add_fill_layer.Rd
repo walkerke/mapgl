@@ -85,25 +85,25 @@ Add a fill layer to a map
 library(tidycensus)
 
 fl_age <- get_acs(
-  geography = "tract",
-  variables = "B01002_001",
-  state = "FL",
-  year = 2022,
-  geometry = TRUE
+    geography = "tract",
+    variables = "B01002_001",
+    state = "FL",
+    year = 2022,
+    geometry = TRUE
 )
 
 mapboxgl() |>
-  fit_bounds(fl_age, animate = FALSE) |>
-  add_fill_layer(
-    id = "fl_tracts",
-    source = fl_age,
-    fill_color = interpolate(
-      column = "estimate",
-      values = c(20, 80),
-      stops = c("lightblue", "darkblue"),
-      na_color = "lightgrey"
-    ),
-    fill_opacity = 0.5
-  )
+    fit_bounds(fl_age, animate = FALSE) |>
+    add_fill_layer(
+        id = "fl_tracts",
+        source = fl_age,
+        fill_color = interpolate(
+            column = "estimate",
+            values = c(20, 80),
+            stops = c("lightblue", "darkblue"),
+            na_color = "lightgrey"
+        ),
+        fill_opacity = 0.5
+    )
 }
 }

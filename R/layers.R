@@ -24,34 +24,34 @@
 #' @examples
 #' \dontrun{
 #' # Load necessary libraries
-#'library(mapgl)
-#'library(tigris)
+#' library(mapgl)
+#' library(tigris)
 #'
-#'# Load geojson data for North Carolina tracts
-#'nc_tracts <- tracts(state = "NC", cb = TRUE)
+#' # Load geojson data for North Carolina tracts
+#' nc_tracts <- tracts(state = "NC", cb = TRUE)
 #'
-#'# Create a Mapbox GL map
-#'map <- mapboxgl(
-#'  style = mapbox_style("light"),
-#'  center = c(-79.0193, 35.7596),
-#'  zoom = 7
-#')
+#' # Create a Mapbox GL map
+#' map <- mapboxgl(
+#'     style = mapbox_style("light"),
+#'     center = c(-79.0193, 35.7596),
+#'     zoom = 7
+#' )
 #'
-#'# Add a source and fill layer for North Carolina tracts
-#'map %>%
-#'  add_source(
-#'    id = "nc-tracts",
-#'    data = nc_tracts
-#'  ) %>%
-#'  add_layer(
-#'    id = "nc-layer",
-#'    type = "fill",
-#'    source = "nc-tracts",
-#'    paint = list(
-#'      "fill-color" = "#888888",
-#'      "fill-opacity" = 0.4
-#'    )
-#'  )
+#' # Add a source and fill layer for North Carolina tracts
+#' map %>%
+#'     add_source(
+#'         id = "nc-tracts",
+#'         data = nc_tracts
+#'     ) %>%
+#'     add_layer(
+#'         id = "nc-layer",
+#'         type = "fill",
+#'         source = "nc-tracts",
+#'         paint = list(
+#'             "fill-color" = "#888888",
+#'             "fill-opacity" = 0.4
+#'         )
+#'     )
 #' }
 add_layer <- function(map,
                       id,
@@ -67,91 +67,87 @@ add_layer <- function(map,
                       tooltip = NULL,
                       hover_options = NULL,
                       before_id = NULL,
-                      filter = NULL
-) {
-
-  if (length(paint) == 0) {
-    paint <- NULL
-  }
-
-  if (length(layout) == 0) {
-    layout <- NULL
-  }
-
-  # Convert sf objects to GeoJSON source
-  if (inherits(source, "sf")) {
-    geojson <- geojsonsf::sf_geojson(sf::st_transform(source, crs = 4326))
-    source <- list(
-      type = "geojson",
-      data = geojson,
-      generateId = TRUE
-    )
-  }
-
-  map$x$layers <- c(map$x$layers, list(list(
-    id = id,
-    type = type,
-    source = source,
-    source_layer = source_layer,
-    paint = paint,
-    layout = layout,
-    slot = slot,
-    minzoom = min_zoom,
-    maxzoom = max_zoom,
-    popup = popup,
-    tooltip = tooltip,
-    hover_options = hover_options,
-    before_id = before_id,
-    filter = filter
-  )))
-
-  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    layer <- list(
-      id = id,
-      type = type,
-      source = source,
-      layout = layout,
-      paint = paint,
-      popup = popup,
-      tooltip = tooltip,
-      hover_options = hover_options,
-      before_id = before_id
-    )
-
-    if (!is.null(source_layer)) {
-      layer$source_layer <- source_layer
+                      filter = NULL) {
+    if (length(paint) == 0) {
+        paint <- NULL
     }
 
-    if (!is.null(filter)) {
-      layer$filter <- filter
+    if (length(layout) == 0) {
+        layout <- NULL
     }
 
-    if (!is.null(slot)) {
-      layer$slot <- slot
+    # Convert sf objects to GeoJSON source
+    if (inherits(source, "sf")) {
+        geojson <- geojsonsf::sf_geojson(sf::st_transform(source, crs = 4326))
+        source <- list(
+            type = "geojson",
+            data = geojson,
+            generateId = TRUE
+        )
     }
 
-    if (!is.null(min_zoom)) {
-      layer$minzoom <- min_zoom
+    map$x$layers <- c(map$x$layers, list(list(
+        id = id,
+        type = type,
+        source = source,
+        source_layer = source_layer,
+        paint = paint,
+        layout = layout,
+        slot = slot,
+        minzoom = min_zoom,
+        maxzoom = max_zoom,
+        popup = popup,
+        tooltip = tooltip,
+        hover_options = hover_options,
+        before_id = before_id,
+        filter = filter
+    )))
+
+    if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+        layer <- list(
+            id = id,
+            type = type,
+            source = source,
+            layout = layout,
+            paint = paint,
+            popup = popup,
+            tooltip = tooltip,
+            hover_options = hover_options,
+            before_id = before_id
+        )
+
+        if (!is.null(source_layer)) {
+            layer$`source-layer` <- source_layer
+        }
+
+        if (!is.null(filter)) {
+            layer$filter <- filter
+        }
+
+        if (!is.null(slot)) {
+            layer$slot <- slot
+        }
+
+        if (!is.null(min_zoom)) {
+            layer$minzoom <- min_zoom
+        }
+
+        if (!is.null(max_zoom)) {
+            layer$maxzoom <- max_zoom
+        }
+
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+
+
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "add_layer", layer = layer)
+        ))
+
+        map
+    } else {
+        map
     }
-
-    if (!is.null(max_zoom)) {
-      layer$maxzoom = max_zoom
-    }
-
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "add_layer", layer = layer)
-    ))
-
-    map
-
-  } else {
-    map
-  }
-
 }
 
 #' Add a fill layer to a map
@@ -187,26 +183,26 @@ add_layer <- function(map,
 #' library(tidycensus)
 #'
 #' fl_age <- get_acs(
-#'   geography = "tract",
-#'   variables = "B01002_001",
-#'   state = "FL",
-#'   year = 2022,
-#'   geometry = TRUE
+#'     geography = "tract",
+#'     variables = "B01002_001",
+#'     state = "FL",
+#'     year = 2022,
+#'     geometry = TRUE
 #' )
 #'
 #' mapboxgl() |>
-#'   fit_bounds(fl_age, animate = FALSE) |>
-#'   add_fill_layer(
-#'     id = "fl_tracts",
-#'     source = fl_age,
-#'     fill_color = interpolate(
-#'       column = "estimate",
-#'       values = c(20, 80),
-#'       stops = c("lightblue", "darkblue"),
-#'       na_color = "lightgrey"
-#'     ),
-#'     fill_opacity = 0.5
-#'   )
+#'     fit_bounds(fl_age, animate = FALSE) |>
+#'     add_fill_layer(
+#'         id = "fl_tracts",
+#'         source = fl_age,
+#'         fill_color = interpolate(
+#'             column = "estimate",
+#'             values = c(20, 80),
+#'             stops = c("lightblue", "darkblue"),
+#'             na_color = "lightgrey"
+#'         ),
+#'         fill_opacity = 0.5
+#'     )
 #' }
 add_fill_layer <- function(map,
                            id,
@@ -230,42 +226,42 @@ add_fill_layer <- function(map,
                            hover_options = NULL,
                            before_id = NULL,
                            filter = NULL) {
-  paint <- list()
-  layout <- list()
+    paint <- list()
+    layout <- list()
 
 
 
-  if (!is.null(fill_antialias)) paint[["fill-antialias"]] <- fill_antialias
-  if (!is.null(fill_color)) paint[["fill-color"]] <- fill_color
-  if (!is.null(fill_emissive_strength)) paint[["fill-emissive-strength"]] <- fill_emissive_strength
-  if (!is.null(fill_opacity)) paint[["fill-opacity"]] <- fill_opacity
-  if (!is.null(fill_outline_color)) paint[["fill-outline-color"]] <- fill_outline_color
-  if (!is.null(fill_pattern)) paint[["fill-pattern"]] <- fill_pattern
-  if (!is.null(fill_translate)) paint[["fill-translate"]] <- fill_translate
-  if (!is.null(fill_translate_anchor)) paint[["fill-translate-anchor"]] <- fill_translate_anchor
+    if (!is.null(fill_antialias)) paint[["fill-antialias"]] <- fill_antialias
+    if (!is.null(fill_color)) paint[["fill-color"]] <- fill_color
+    if (!is.null(fill_emissive_strength)) paint[["fill-emissive-strength"]] <- fill_emissive_strength
+    if (!is.null(fill_opacity)) paint[["fill-opacity"]] <- fill_opacity
+    if (!is.null(fill_outline_color)) paint[["fill-outline-color"]] <- fill_outline_color
+    if (!is.null(fill_pattern)) paint[["fill-pattern"]] <- fill_pattern
+    if (!is.null(fill_translate)) paint[["fill-translate"]] <- fill_translate
+    if (!is.null(fill_translate_anchor)) paint[["fill-translate-anchor"]] <- fill_translate_anchor
 
-  if (!is.null(fill_sort_key)) layout[["fill-sort-key"]] <- fill_sort_key
-  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+    if (!is.null(fill_sort_key)) layout[["fill-sort-key"]] <- fill_sort_key
+    if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(
-    map,
-    id,
-    "fill",
-    source,
-    source_layer,
-    paint,
-    layout,
-    slot,
-    min_zoom,
-    max_zoom,
-    popup,
-    tooltip,
-    hover_options,
-    before_id,
-    filter
-  )
+    map <- add_layer(
+        map,
+        id,
+        "fill",
+        source,
+        source_layer,
+        paint,
+        layout,
+        slot,
+        min_zoom,
+        max_zoom,
+        popup,
+        tooltip,
+        hover_options,
+        before_id,
+        filter
+    )
 
-  return(map)
+    return(map)
 }
 
 #' Add a line layer to a map
@@ -306,13 +302,13 @@ add_fill_layer <- function(map,
 #' loving_roads <- roads("TX", "Loving")
 #'
 #' maplibre(style = maptiler_style("backdrop")) |>
-#'   fit_bounds(loving_roads) |>
-#'   add_line_layer(
-#'     id = "tracks",
-#'     source = loving_roads,
-#'     line_color = "navy",
-#'     line_opacity = 0.7
-#'   )
+#'     fit_bounds(loving_roads) |>
+#'     add_line_layer(
+#'         id = "tracks",
+#'         source = loving_roads,
+#'         line_color = "navy",
+#'         line_opacity = 0.7
+#'     )
 #' }
 add_line_layer <- function(map,
                            id,
@@ -338,42 +334,42 @@ add_line_layer <- function(map,
                            hover_options = NULL,
                            before_id = NULL,
                            filter = NULL) {
-  paint <- list()
-  layout <- list()
+    paint <- list()
+    layout <- list()
 
-  if (!is.null(line_blur)) paint[["line-blur"]] <- line_blur
-  if (!is.null(line_color)) paint[["line-color"]] <- line_color
-  if (!is.null(line_dasharray)) paint[["line-dasharray"]] <- line_dasharray
-  if (!is.null(line_gap_width)) paint[["line-gap-width"]] <- line_gap_width
-  if (!is.null(line_offset)) paint[["line-offset"]] <- line_offset
-  if (!is.null(line_opacity)) paint[["line-opacity"]] <- line_opacity
-  if (!is.null(line_pattern)) paint[["line-pattern"]] <- line_pattern
-  if (!is.null(line_translate)) paint[["line-translate"]] <- line_translate
-  if (!is.null(line_translate_anchor)) paint[["line-translate-anchor"]] <- line_translate_anchor
-  if (!is.null(line_width)) paint[["line-width"]] <- line_width
+    if (!is.null(line_blur)) paint[["line-blur"]] <- line_blur
+    if (!is.null(line_color)) paint[["line-color"]] <- line_color
+    if (!is.null(line_dasharray)) paint[["line-dasharray"]] <- line_dasharray
+    if (!is.null(line_gap_width)) paint[["line-gap-width"]] <- line_gap_width
+    if (!is.null(line_offset)) paint[["line-offset"]] <- line_offset
+    if (!is.null(line_opacity)) paint[["line-opacity"]] <- line_opacity
+    if (!is.null(line_pattern)) paint[["line-pattern"]] <- line_pattern
+    if (!is.null(line_translate)) paint[["line-translate"]] <- line_translate
+    if (!is.null(line_translate_anchor)) paint[["line-translate-anchor"]] <- line_translate_anchor
+    if (!is.null(line_width)) paint[["line-width"]] <- line_width
 
-  if (!is.null(line_sort_key)) layout[["line-sort-key"]] <- line_sort_key
-  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+    if (!is.null(line_sort_key)) layout[["line-sort-key"]] <- line_sort_key
+    if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(
-    map,
-    id,
-    "line",
-    source,
-    source_layer,
-    paint,
-    layout,
-    slot,
-    min_zoom,
-    max_zoom,
-    popup,
-    tooltip,
-    hover_options,
-    before_id,
-    filter
-  )
+    map <- add_layer(
+        map,
+        id,
+        "line",
+        source,
+        source_layer,
+        paint,
+        layout,
+        slot,
+        min_zoom,
+        max_zoom,
+        popup,
+        tooltip,
+        hover_options,
+        before_id,
+        filter
+    )
 
-  return(map)
+    return(map)
 }
 
 #' Add a heatmap layer to a Mapbox GL map
@@ -401,34 +397,38 @@ add_line_layer <- function(map,
 #' \dontrun{
 #' library(mapgl)
 #'
-#' mapboxgl(style = mapbox_style("dark"),
-#'          center = c(-120, 50),
-#'          zoom = 2) |>
-#'   add_heatmap_layer(
-#'     id = "earthquakes-heat",
-#'     source = list(
-#'       type = "geojson",
-#'       data = "https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson"
-#'     ),
-#'     heatmap_weight = interpolate(
-#'       column = "mag",
-#'       values = c(0, 6),
-#'       stops = c(0, 1)
-#'     ),
-#'     heatmap_intensity = interpolate(
-#'       property = "zoom",
-#'       values = c(0, 9),
-#'       stops = c(1, 3)
-#'     ),
-#'     heatmap_color = interpolate(
-#'       property = "heatmap-density",
-#'       values = seq(0, 1, 0.2),
-#'       stops = c('rgba(33,102,172,0)', 'rgb(103,169,207)',
-#'                 'rgb(209,229,240)', 'rgb(253,219,199)',
-#'                 'rgb(239,138,98)', 'rgb(178,24,43)')
-#'     ),
-#'     heatmap_opacity = 0.7
-#'   )
+#' mapboxgl(
+#'     style = mapbox_style("dark"),
+#'     center = c(-120, 50),
+#'     zoom = 2
+#' ) |>
+#'     add_heatmap_layer(
+#'         id = "earthquakes-heat",
+#'         source = list(
+#'             type = "geojson",
+#'             data = "https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson"
+#'         ),
+#'         heatmap_weight = interpolate(
+#'             column = "mag",
+#'             values = c(0, 6),
+#'             stops = c(0, 1)
+#'         ),
+#'         heatmap_intensity = interpolate(
+#'             property = "zoom",
+#'             values = c(0, 9),
+#'             stops = c(1, 3)
+#'         ),
+#'         heatmap_color = interpolate(
+#'             property = "heatmap-density",
+#'             values = seq(0, 1, 0.2),
+#'             stops = c(
+#'                 "rgba(33,102,172,0)", "rgb(103,169,207)",
+#'                 "rgb(209,229,240)", "rgb(253,219,199)",
+#'                 "rgb(239,138,98)", "rgb(178,24,43)"
+#'             )
+#'         ),
+#'         heatmap_opacity = 0.7
+#'     )
 #' }
 add_heatmap_layer <- function(map,
                               id,
@@ -445,20 +445,20 @@ add_heatmap_layer <- function(map,
                               max_zoom = NULL,
                               before_id = NULL,
                               filter = NULL) {
-  paint <- list()
-  layout <- list()
+    paint <- list()
+    layout <- list()
 
-  if (!is.null(heatmap_color)) paint[["heatmap-color"]] <- heatmap_color
-  if (!is.null(heatmap_intensity)) paint[["heatmap-intensity"]] <- heatmap_intensity
-  if (!is.null(heatmap_opacity)) paint[["heatmap-opacity"]] <- heatmap_opacity
-  if (!is.null(heatmap_radius)) paint[["heatmap-radius"]] <- heatmap_radius
-  if (!is.null(heatmap_weight)) paint[["heatmap-weight"]] <- heatmap_weight
+    if (!is.null(heatmap_color)) paint[["heatmap-color"]] <- heatmap_color
+    if (!is.null(heatmap_intensity)) paint[["heatmap-intensity"]] <- heatmap_intensity
+    if (!is.null(heatmap_opacity)) paint[["heatmap-opacity"]] <- heatmap_opacity
+    if (!is.null(heatmap_radius)) paint[["heatmap-radius"]] <- heatmap_radius
+    if (!is.null(heatmap_weight)) paint[["heatmap-weight"]] <- heatmap_weight
 
-  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+    if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "heatmap", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id, filter)
+    map <- add_layer(map, id, "heatmap", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id, filter)
 
-  return(map)
+    return(map)
 }
 
 #' Add a fill-extrusion layer to a Mapbox GL map
@@ -492,36 +492,38 @@ add_heatmap_layer <- function(map,
 #' library(mapgl)
 #'
 #' maplibre(
-#'   style = maptiler_style("basic"),
-#'   center = c(-74.0066, 40.7135),
-#'   zoom = 15.5,
-#'   pitch = 45,
-#'   bearing = -17.6
+#'     style = maptiler_style("basic"),
+#'     center = c(-74.0066, 40.7135),
+#'     zoom = 15.5,
+#'     pitch = 45,
+#'     bearing = -17.6
 #' ) |>
-#'   add_vector_source(
-#'     id = "openmaptiles",
-#'     url = paste0("https://api.maptiler.com/tiles/v3/tiles.json?key=",
-#'                  Sys.getenv("MAPTILER_API_KEY"))
-#'   ) |>
-#'   add_fill_extrusion_layer(
-#'     id = "3d-buildings",
-#'     source = 'openmaptiles',
-#'     source_layer = 'building',
-#'     fill_extrusion_color = interpolate(
-#'       column = 'render_height',
-#'       values = c(0, 200, 400),
-#'       stops = c('lightgray', 'royalblue', 'lightblue')
-#'     ),
-#'     fill_extrusion_height = list(
-#'       'interpolate',
-#'       list('linear'),
-#'       list('zoom'),
-#'       15,
-#'       0,
-#'       16,
-#'       list('get', 'render_height')
+#'     add_vector_source(
+#'         id = "openmaptiles",
+#'         url = paste0(
+#'             "https://api.maptiler.com/tiles/v3/tiles.json?key=",
+#'             Sys.getenv("MAPTILER_API_KEY")
+#'         )
+#'     ) |>
+#'     add_fill_extrusion_layer(
+#'         id = "3d-buildings",
+#'         source = "openmaptiles",
+#'         source_layer = "building",
+#'         fill_extrusion_color = interpolate(
+#'             column = "render_height",
+#'             values = c(0, 200, 400),
+#'             stops = c("lightgray", "royalblue", "lightblue")
+#'         ),
+#'         fill_extrusion_height = list(
+#'             "interpolate",
+#'             list("linear"),
+#'             list("zoom"),
+#'             15,
+#'             0,
+#'             16,
+#'             list("get", "render_height")
+#'         )
 #'     )
-#'   )
 #' }
 add_fill_extrusion_layer <- function(map,
                                      id,
@@ -543,22 +545,22 @@ add_fill_extrusion_layer <- function(map,
                                      hover_options = NULL,
                                      before_id = NULL,
                                      filter = NULL) {
-  paint <- list()
-  layout <- list()
+    paint <- list()
+    layout <- list()
 
-  if (!is.null(fill_extrusion_base)) paint[["fill-extrusion-base"]] <- fill_extrusion_base
-  if (!is.null(fill_extrusion_color)) paint[["fill-extrusion-color"]] <- fill_extrusion_color
-  if (!is.null(fill_extrusion_height)) paint[["fill-extrusion-height"]] <- fill_extrusion_height
-  if (!is.null(fill_extrusion_opacity)) paint[["fill-extrusion-opacity"]] <- fill_extrusion_opacity
-  if (!is.null(fill_extrusion_pattern)) paint[["fill-extrusion-pattern"]] <- fill_extrusion_pattern
-  if (!is.null(fill_extrusion_translate)) paint[["fill-extrusion-translate"]] <- fill_extrusion_translate
-  if (!is.null(fill_extrusion_translate_anchor)) paint[["fill-extrusion-translate-anchor"]] <- fill_extrusion_translate_anchor
+    if (!is.null(fill_extrusion_base)) paint[["fill-extrusion-base"]] <- fill_extrusion_base
+    if (!is.null(fill_extrusion_color)) paint[["fill-extrusion-color"]] <- fill_extrusion_color
+    if (!is.null(fill_extrusion_height)) paint[["fill-extrusion-height"]] <- fill_extrusion_height
+    if (!is.null(fill_extrusion_opacity)) paint[["fill-extrusion-opacity"]] <- fill_extrusion_opacity
+    if (!is.null(fill_extrusion_pattern)) paint[["fill-extrusion-pattern"]] <- fill_extrusion_pattern
+    if (!is.null(fill_extrusion_translate)) paint[["fill-extrusion-translate"]] <- fill_extrusion_translate
+    if (!is.null(fill_extrusion_translate_anchor)) paint[["fill-extrusion-translate-anchor"]] <- fill_extrusion_translate_anchor
 
-  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+    if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
+    map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
 
-  return(map)
+    return(map)
 }
 
 #' Add a circle layer to a Mapbox GL map
@@ -600,57 +602,65 @@ add_fill_extrusion_layer <- function(map,
 #' set.seed(1234)
 #'
 #' # Define the bounding box for Washington DC (approximately)
-#' bbox <- st_bbox(c(
-#'   xmin = -77.119759,
-#'   ymin = 38.791645,
-#'   xmax = -76.909393,
-#'   ymax = 38.995548
-#' ),
-#' crs = st_crs(4326))
+#' bbox <- st_bbox(
+#'     c(
+#'         xmin = -77.119759,
+#'         ymin = 38.791645,
+#'         xmax = -76.909393,
+#'         ymax = 38.995548
+#'     ),
+#'     crs = st_crs(4326)
+#' )
 #'
 #' # Generate 30 random points within the bounding box
 #' random_points <- st_as_sf(
-#'   data.frame(
-#'     id = 1:30,
-#'     lon = runif(30, bbox["xmin"], bbox["xmax"]),
-#'     lat = runif(30, bbox["ymin"], bbox["ymax"])
-#'   ),
-#'   coords = c("lon", "lat"),
-#'   crs = 4326
+#'     data.frame(
+#'         id = 1:30,
+#'         lon = runif(30, bbox["xmin"], bbox["xmax"]),
+#'         lat = runif(30, bbox["ymin"], bbox["ymax"])
+#'     ),
+#'     coords = c("lon", "lat"),
+#'     crs = 4326
 #' )
 #'
 #' # Assign random categories
-#' categories <- c('music', 'bar', 'theatre', 'bicycle')
+#' categories <- c("music", "bar", "theatre", "bicycle")
 #' random_points <- random_points %>%
-#'   mutate(category = sample(categories, n(), replace = TRUE))
+#'     mutate(category = sample(categories, n(), replace = TRUE))
 #'
 #' # Map with circle layer
 #' mapboxgl(style = mapbox_style("light")) %>%
-#'   fit_bounds(random_points, animate = FALSE) %>%
-#'   add_circle_layer(
-#'     id = "poi-layer",
-#'     source = random_points,
-#'     circle_color = match_expr(
-#'       "category",
-#'       values = c("music", "bar", "theatre",
-#'                  "bicycle"),
-#'       stops = c("#1f78b4", "#33a02c",
-#'                 "#e31a1c", "#ff7f00")
-#'     ),
-#'     circle_radius = 8,
-#'     circle_stroke_color = "#ffffff",
-#'     circle_stroke_width = 2,
-#'     circle_opacity = 0.8,
-#'     tooltip = "category",
-#'     hover_options = list(circle_radius = 12,
-#'                          circle_color = "#ffff99")
-#'   ) %>%
-#'   add_categorical_legend(
-#'     legend_title = "Points of Interest",
-#'     values = c("Music", "Bar", "Theatre", "Bicycle"),
-#'     colors = c("#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"),
-#'     circular_patches = TRUE
-#'   )
+#'     fit_bounds(random_points, animate = FALSE) %>%
+#'     add_circle_layer(
+#'         id = "poi-layer",
+#'         source = random_points,
+#'         circle_color = match_expr(
+#'             "category",
+#'             values = c(
+#'                 "music", "bar", "theatre",
+#'                 "bicycle"
+#'             ),
+#'             stops = c(
+#'                 "#1f78b4", "#33a02c",
+#'                 "#e31a1c", "#ff7f00"
+#'             )
+#'         ),
+#'         circle_radius = 8,
+#'         circle_stroke_color = "#ffffff",
+#'         circle_stroke_width = 2,
+#'         circle_opacity = 0.8,
+#'         tooltip = "category",
+#'         hover_options = list(
+#'             circle_radius = 12,
+#'             circle_color = "#ffff99"
+#'         )
+#'     ) %>%
+#'     add_categorical_legend(
+#'         legend_title = "Points of Interest",
+#'         values = c("Music", "Bar", "Theatre", "Bicycle"),
+#'         colors = c("#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"),
+#'         circular_patches = TRUE
+#'     )
 #' }
 add_circle_layer <- function(map,
                              id,
@@ -675,41 +685,41 @@ add_circle_layer <- function(map,
                              hover_options = NULL,
                              before_id = NULL,
                              filter = NULL) {
-  paint <- list()
-  layout <- list()
+    paint <- list()
+    layout <- list()
 
-  if (!is.null(circle_blur)) paint[["circle-blur"]] <- circle_blur
-  if (!is.null(circle_color)) paint[["circle-color"]] <- circle_color
-  if (!is.null(circle_opacity)) paint[["circle-opacity"]] <- circle_opacity
-  if (!is.null(circle_radius)) paint[["circle-radius"]] <- circle_radius
-  if (!is.null(circle_stroke_color)) paint[["circle-stroke-color"]] <- circle_stroke_color
-  if (!is.null(circle_stroke_opacity)) paint[["circle-stroke-opacity"]] <- circle_stroke_opacity
-  if (!is.null(circle_stroke_width)) paint[["circle-stroke-width"]] <- circle_stroke_width
-  if (!is.null(circle_translate)) paint[["circle-translate"]] <- circle_translate
-  if (!is.null(circle_translate_anchor)) paint[["circle-translate-anchor"]] <- circle_translate_anchor
+    if (!is.null(circle_blur)) paint[["circle-blur"]] <- circle_blur
+    if (!is.null(circle_color)) paint[["circle-color"]] <- circle_color
+    if (!is.null(circle_opacity)) paint[["circle-opacity"]] <- circle_opacity
+    if (!is.null(circle_radius)) paint[["circle-radius"]] <- circle_radius
+    if (!is.null(circle_stroke_color)) paint[["circle-stroke-color"]] <- circle_stroke_color
+    if (!is.null(circle_stroke_opacity)) paint[["circle-stroke-opacity"]] <- circle_stroke_opacity
+    if (!is.null(circle_stroke_width)) paint[["circle-stroke-width"]] <- circle_stroke_width
+    if (!is.null(circle_translate)) paint[["circle-translate"]] <- circle_translate
+    if (!is.null(circle_translate_anchor)) paint[["circle-translate-anchor"]] <- circle_translate_anchor
 
-  if (!is.null(circle_sort_key)) layout[["circle-sort-key"]] <- circle_sort_key
-  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+    if (!is.null(circle_sort_key)) layout[["circle-sort-key"]] <- circle_sort_key
+    if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(
-    map,
-    id,
-    "circle",
-    source,
-    source_layer,
-    paint,
-    layout,
-    slot,
-    min_zoom,
-    max_zoom,
-    popup,
-    tooltip,
-    hover_options,
-    before_id,
-    filter
-  )
+    map <- add_layer(
+        map,
+        id,
+        "circle",
+        source,
+        source_layer,
+        paint,
+        layout,
+        slot,
+        min_zoom,
+        max_zoom,
+        popup,
+        tooltip,
+        hover_options,
+        before_id,
+        filter
+    )
 
-  return(map)
+    return(map)
 }
 
 #' Add a raster layer to a Mapbox GL map
@@ -737,24 +747,26 @@ add_circle_layer <- function(map,
 #'
 #' @examples
 #' \dontrun{
-#' mapboxgl(style = mapbox_style("dark"),
-#'          zoom = 5,
-#'          center = c(-75.789, 41.874)) |>
-#'   add_image_source(
-#'     id = "radar",
-#'     url = "https://docs.mapbox.com/mapbox-gl-js/assets/radar.gif",
-#'     coordinates = list(
-#'       c(-80.425, 46.437),
-#'       c(-71.516, 46.437),
-#'       c(-71.516, 37.936),
-#'       c(-80.425, 37.936)
+#' mapboxgl(
+#'     style = mapbox_style("dark"),
+#'     zoom = 5,
+#'     center = c(-75.789, 41.874)
+#' ) |>
+#'     add_image_source(
+#'         id = "radar",
+#'         url = "https://docs.mapbox.com/mapbox-gl-js/assets/radar.gif",
+#'         coordinates = list(
+#'             c(-80.425, 46.437),
+#'             c(-71.516, 46.437),
+#'             c(-71.516, 37.936),
+#'             c(-80.425, 37.936)
+#'         )
+#'     ) |>
+#'     add_raster_layer(
+#'         id = "radar-layer",
+#'         source = "radar",
+#'         raster_fade_duration = 0
 #'     )
-#'   ) |>
-#'   add_raster_layer(
-#'     id = 'radar-layer',
-#'     source = 'radar',
-#'     raster_fade_duration = 0
-#'   )
 #' }
 add_raster_layer <- function(map,
                              id,
@@ -773,23 +785,23 @@ add_raster_layer <- function(map,
                              min_zoom = NULL,
                              max_zoom = NULL,
                              before_id = NULL) {
-  paint <- list()
-  layout <- list()
+    paint <- list()
+    layout <- list()
 
-  if (!is.null(raster_brightness_max)) paint[["raster-brightness-max"]] <- raster_brightness_max
-  if (!is.null(raster_brightness_min)) paint[["raster-brightness-min"]] <- raster_brightness_min
-  if (!is.null(raster_contrast)) paint[["raster-contrast"]] <- raster_contrast
-  if (!is.null(raster_fade_duration)) paint[["raster-fade-duration"]] <- raster_fade_duration
-  if (!is.null(raster_hue_rotate)) paint[["raster-hue-rotate"]] <- raster_hue_rotate
-  if (!is.null(raster_opacity)) paint[["raster-opacity"]] <- raster_opacity
-  if (!is.null(raster_resampling)) paint[["raster-resampling"]] <- raster_resampling
-  if (!is.null(raster_saturation)) paint[["raster-saturation"]] <- raster_saturation
+    if (!is.null(raster_brightness_max)) paint[["raster-brightness-max"]] <- raster_brightness_max
+    if (!is.null(raster_brightness_min)) paint[["raster-brightness-min"]] <- raster_brightness_min
+    if (!is.null(raster_contrast)) paint[["raster-contrast"]] <- raster_contrast
+    if (!is.null(raster_fade_duration)) paint[["raster-fade-duration"]] <- raster_fade_duration
+    if (!is.null(raster_hue_rotate)) paint[["raster-hue-rotate"]] <- raster_hue_rotate
+    if (!is.null(raster_opacity)) paint[["raster-opacity"]] <- raster_opacity
+    if (!is.null(raster_resampling)) paint[["raster-resampling"]] <- raster_resampling
+    if (!is.null(raster_saturation)) paint[["raster-saturation"]] <- raster_saturation
 
-  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+    if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "raster", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id)
+    map <- add_layer(map, id, "raster", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id)
 
-  return(map)
+    return(map)
 }
 
 
@@ -885,40 +897,42 @@ add_raster_layer <- function(map,
 #' set.seed(1234)
 #'
 #' # Define the bounding box for Washington DC (approximately)
-#' bbox <- st_bbox(c(
-#'   xmin = -77.119759,
-#'   ymin = 38.791645,
-#'   xmax = -76.909393,
-#'   ymax = 38.995548
-#' ),
-#' crs = st_crs(4326))
+#' bbox <- st_bbox(
+#'     c(
+#'         xmin = -77.119759,
+#'         ymin = 38.791645,
+#'         xmax = -76.909393,
+#'         ymax = 38.995548
+#'     ),
+#'     crs = st_crs(4326)
+#' )
 #'
 #' # Generate 30 random points within the bounding box
 #' random_points <- st_as_sf(
-#'   data.frame(
-#'     id = 1:30,
-#'     lon = runif(30, bbox["xmin"], bbox["xmax"]),
-#'     lat = runif(30, bbox["ymin"], bbox["ymax"])
-#'   ),
-#'   coords = c("lon", "lat"),
-#'   crs = 4326
+#'     data.frame(
+#'         id = 1:30,
+#'         lon = runif(30, bbox["xmin"], bbox["xmax"]),
+#'         lat = runif(30, bbox["ymin"], bbox["ymax"])
+#'     ),
+#'     coords = c("lon", "lat"),
+#'     crs = 4326
 #' )
 #'
 #' # Assign random icons
-#' icons <- c('music', 'bar', 'theatre', 'bicycle')
+#' icons <- c("music", "bar", "theatre", "bicycle")
 #' random_points <- random_points |>
-#'   mutate(icon = sample(icons, n(), replace = TRUE))
+#'     mutate(icon = sample(icons, n(), replace = TRUE))
 #'
 #' # Map with icons
 #' mapboxgl(style = mapbox_style("light")) |>
-#'   fit_bounds(random_points, animate = FALSE) |>
-#'   add_symbol_layer(
-#'     id = "points-of-interest",
-#'     source = random_points,
-#'     icon_image = c("get", "icon"),
-#'     icon_allow_overlap = TRUE,
-#'     tooltip = "icon"
-#'   )
+#'     fit_bounds(random_points, animate = FALSE) |>
+#'     add_symbol_layer(
+#'         id = "points-of-interest",
+#'         source = random_points,
+#'         icon_image = c("get", "icon"),
+#'         icon_allow_overlap = TRUE,
+#'         tooltip = "icon"
+#'     )
 #' }
 add_symbol_layer <- function(map,
                              id,
@@ -996,78 +1010,78 @@ add_symbol_layer <- function(map,
                              hover_options = NULL,
                              before_id = NULL,
                              filter = NULL) {
-  paint <- list()
-  layout <- list()
+    paint <- list()
+    layout <- list()
 
-  if (!is.null(icon_allow_overlap)) layout[["icon-allow-overlap"]] <- icon_allow_overlap
-  if (!is.null(icon_anchor)) layout[["icon-anchor"]] <- icon_anchor
-  if (!is.null(icon_color)) paint[["icon-color"]] <- icon_color
-  if (!is.null(icon_color_brightness_max)) paint[["icon-color-brightness-max"]] <- icon_color_brightness_max
-  if (!is.null(icon_color_brightness_min)) paint[["icon-color-brightness-min"]] <- icon_color_brightness_min
-  if (!is.null(icon_color_contrast)) paint[["icon-color-contrast"]] <- icon_color_contrast
-  if (!is.null(icon_color_saturation)) paint[["icon-color-saturation"]] <- icon_color_saturation
-  if (!is.null(icon_emissive_strength)) paint[["icon-emissive-strength"]] <- icon_emissive_strength
-  if (!is.null(icon_halo_blur)) paint[["icon-halo-blur"]] <- icon_halo_blur
-  if (!is.null(icon_halo_color)) paint[["icon-halo-color"]] <- icon_halo_color
-  if (!is.null(icon_halo_width)) paint[["icon-halo-width"]] <- icon_halo_width
-  if (!is.null(icon_ignore_placement)) layout[["icon-ignore-placement"]] <- icon_ignore_placement
-  if (!is.null(icon_image)) layout[["icon-image"]] <- icon_image
-  if (!is.null(icon_image_cross_fade)) layout[["icon-image-cross-fade"]] <- icon_image_cross_fade
-  if (!is.null(icon_keep_upright)) layout[["icon-keep-upright"]] <- icon_keep_upright
-  if (!is.null(icon_offset)) layout[["icon-offset"]] <- icon_offset
-  if (!is.null(icon_opacity)) paint[["icon-opacity"]] <- icon_opacity
-  if (!is.null(icon_optional)) layout[["icon-optional"]] <- icon_optional
-  if (!is.null(icon_padding)) layout[["icon-padding"]] <- icon_padding
-  if (!is.null(icon_pitch_alignment)) layout[["icon-pitch-alignment"]] <- icon_pitch_alignment
-  if (!is.null(icon_rotate)) layout[["icon-rotate"]] <- icon_rotate
-  if (!is.null(icon_rotation_alignment)) layout[["icon-rotation-alignment"]] <- icon_rotation_alignment
-  if (!is.null(icon_size)) layout[["icon-size"]] <- icon_size
-  if (!is.null(icon_text_fit)) layout[["icon-text-fit"]] <- icon_text_fit
-  if (!is.null(icon_text_fit_padding)) layout[["icon-text-fit-padding"]] <- icon_text_fit_padding
-  if (!is.null(icon_translate)) paint[["icon-translate"]] <- icon_translate
-  if (!is.null(icon_translate_anchor)) paint[["icon-translate-anchor"]] <- icon_translate_anchor
+    if (!is.null(icon_allow_overlap)) layout[["icon-allow-overlap"]] <- icon_allow_overlap
+    if (!is.null(icon_anchor)) layout[["icon-anchor"]] <- icon_anchor
+    if (!is.null(icon_color)) paint[["icon-color"]] <- icon_color
+    if (!is.null(icon_color_brightness_max)) paint[["icon-color-brightness-max"]] <- icon_color_brightness_max
+    if (!is.null(icon_color_brightness_min)) paint[["icon-color-brightness-min"]] <- icon_color_brightness_min
+    if (!is.null(icon_color_contrast)) paint[["icon-color-contrast"]] <- icon_color_contrast
+    if (!is.null(icon_color_saturation)) paint[["icon-color-saturation"]] <- icon_color_saturation
+    if (!is.null(icon_emissive_strength)) paint[["icon-emissive-strength"]] <- icon_emissive_strength
+    if (!is.null(icon_halo_blur)) paint[["icon-halo-blur"]] <- icon_halo_blur
+    if (!is.null(icon_halo_color)) paint[["icon-halo-color"]] <- icon_halo_color
+    if (!is.null(icon_halo_width)) paint[["icon-halo-width"]] <- icon_halo_width
+    if (!is.null(icon_ignore_placement)) layout[["icon-ignore-placement"]] <- icon_ignore_placement
+    if (!is.null(icon_image)) layout[["icon-image"]] <- icon_image
+    if (!is.null(icon_image_cross_fade)) layout[["icon-image-cross-fade"]] <- icon_image_cross_fade
+    if (!is.null(icon_keep_upright)) layout[["icon-keep-upright"]] <- icon_keep_upright
+    if (!is.null(icon_offset)) layout[["icon-offset"]] <- icon_offset
+    if (!is.null(icon_opacity)) paint[["icon-opacity"]] <- icon_opacity
+    if (!is.null(icon_optional)) layout[["icon-optional"]] <- icon_optional
+    if (!is.null(icon_padding)) layout[["icon-padding"]] <- icon_padding
+    if (!is.null(icon_pitch_alignment)) layout[["icon-pitch-alignment"]] <- icon_pitch_alignment
+    if (!is.null(icon_rotate)) layout[["icon-rotate"]] <- icon_rotate
+    if (!is.null(icon_rotation_alignment)) layout[["icon-rotation-alignment"]] <- icon_rotation_alignment
+    if (!is.null(icon_size)) layout[["icon-size"]] <- icon_size
+    if (!is.null(icon_text_fit)) layout[["icon-text-fit"]] <- icon_text_fit
+    if (!is.null(icon_text_fit_padding)) layout[["icon-text-fit-padding"]] <- icon_text_fit_padding
+    if (!is.null(icon_translate)) paint[["icon-translate"]] <- icon_translate
+    if (!is.null(icon_translate_anchor)) paint[["icon-translate-anchor"]] <- icon_translate_anchor
 
-  if (!is.null(symbol_avoid_edges)) layout[["symbol-avoid-edges"]] <- symbol_avoid_edges
-  if (!is.null(symbol_placement)) layout[["symbol-placement"]] <- symbol_placement
-  if (!is.null(symbol_sort_key)) layout[["symbol-sort-key"]] <- symbol_sort_key
-  if (!is.null(symbol_spacing)) layout[["symbol-spacing"]] <- symbol_spacing
-  if (!is.null(symbol_z_elevate)) paint[["symbol-z-elevate"]] <- symbol_z_elevate
-  if (!is.null(symbol_z_order)) layout[["symbol-z-order"]] <- symbol_z_order
+    if (!is.null(symbol_avoid_edges)) layout[["symbol-avoid-edges"]] <- symbol_avoid_edges
+    if (!is.null(symbol_placement)) layout[["symbol-placement"]] <- symbol_placement
+    if (!is.null(symbol_sort_key)) layout[["symbol-sort-key"]] <- symbol_sort_key
+    if (!is.null(symbol_spacing)) layout[["symbol-spacing"]] <- symbol_spacing
+    if (!is.null(symbol_z_elevate)) paint[["symbol-z-elevate"]] <- symbol_z_elevate
+    if (!is.null(symbol_z_order)) layout[["symbol-z-order"]] <- symbol_z_order
 
-  if (!is.null(text_allow_overlap)) layout[["text-allow-overlap"]] <- text_allow_overlap
-  if (!is.null(text_anchor)) layout[["text-anchor"]] <- text_anchor
-  if (!is.null(text_color)) paint[["text-color"]] <- text_color
-  if (!is.null(text_emissive_strength)) paint[["text-emissive-strength"]] <- text_emissive_strength
-  if (!is.null(text_field)) layout[["text-field"]] <- text_field
-  if (!is.null(text_font)) layout[["text-font"]] <- text_font
-  if (!is.null(text_halo_blur)) paint[["text-halo-blur"]] <- text_halo_blur
-  if (!is.null(text_halo_color)) paint[["text-halo-color"]] <- text_halo_color
-  if (!is.null(text_halo_width)) paint[["text-halo-width"]] <- text_halo_width
-  if (!is.null(text_ignore_placement)) layout[["text-ignore-placement"]] <- text_ignore_placement
-  if (!is.null(text_justify)) layout[["text-justify"]] <- text_justify
-  if (!is.null(text_keep_upright)) layout[["text-keep-upright"]] <- text_keep_upright
-  if (!is.null(text_letter_spacing)) layout[["text-letter-spacing"]] <- text_letter_spacing
-  if (!is.null(text_line_height)) layout[["text-line-height"]] <- text_line_height
-  if (!is.null(text_max_angle)) layout[["text-max-angle"]] <- text_max_angle
-  if (!is.null(text_max_width)) layout[["text-max-width"]] <- text_max_width
-  if (!is.null(text_offset)) layout[["text-offset"]] <- text_offset
-  if (!is.null(text_opacity)) paint[["text-opacity"]] <- text_opacity
-  if (!is.null(text_optional)) layout[["text-optional"]] <- text_optional
-  if (!is.null(text_padding)) layout[["text-padding"]] <- text_padding
-  if (!is.null(text_pitch_alignment)) layout[["text-pitch-alignment"]] <- text_pitch_alignment
-  if (!is.null(text_radial_offset)) layout[["text-radial-offset"]] <- text_radial_offset
-  if (!is.null(text_rotate)) layout[["text-rotate"]] <- text_rotate
-  if (!is.null(text_rotation_alignment)) layout[["text-rotation-alignment"]] <- text_rotation_alignment
-  if (!is.null(text_size)) layout[["text-size"]] <- text_size
-  if (!is.null(text_transform)) layout[["text-transform"]] <- text_transform
-  if (!is.null(text_translate)) paint[["text-translate"]] <- text_translate
-  if (!is.null(text_translate_anchor)) paint[["text-translate-anchor"]] <- text_translate_anchor
-  if (!is.null(text_variable_anchor)) layout[["text-variable-anchor"]] <- text_variable_anchor
-  if (!is.null(text_writing_mode)) layout[["text-writing-mode"]] <- text_writing_mode
+    if (!is.null(text_allow_overlap)) layout[["text-allow-overlap"]] <- text_allow_overlap
+    if (!is.null(text_anchor)) layout[["text-anchor"]] <- text_anchor
+    if (!is.null(text_color)) paint[["text-color"]] <- text_color
+    if (!is.null(text_emissive_strength)) paint[["text-emissive-strength"]] <- text_emissive_strength
+    if (!is.null(text_field)) layout[["text-field"]] <- text_field
+    if (!is.null(text_font)) layout[["text-font"]] <- text_font
+    if (!is.null(text_halo_blur)) paint[["text-halo-blur"]] <- text_halo_blur
+    if (!is.null(text_halo_color)) paint[["text-halo-color"]] <- text_halo_color
+    if (!is.null(text_halo_width)) paint[["text-halo-width"]] <- text_halo_width
+    if (!is.null(text_ignore_placement)) layout[["text-ignore-placement"]] <- text_ignore_placement
+    if (!is.null(text_justify)) layout[["text-justify"]] <- text_justify
+    if (!is.null(text_keep_upright)) layout[["text-keep-upright"]] <- text_keep_upright
+    if (!is.null(text_letter_spacing)) layout[["text-letter-spacing"]] <- text_letter_spacing
+    if (!is.null(text_line_height)) layout[["text-line-height"]] <- text_line_height
+    if (!is.null(text_max_angle)) layout[["text-max-angle"]] <- text_max_angle
+    if (!is.null(text_max_width)) layout[["text-max-width"]] <- text_max_width
+    if (!is.null(text_offset)) layout[["text-offset"]] <- text_offset
+    if (!is.null(text_opacity)) paint[["text-opacity"]] <- text_opacity
+    if (!is.null(text_optional)) layout[["text-optional"]] <- text_optional
+    if (!is.null(text_padding)) layout[["text-padding"]] <- text_padding
+    if (!is.null(text_pitch_alignment)) layout[["text-pitch-alignment"]] <- text_pitch_alignment
+    if (!is.null(text_radial_offset)) layout[["text-radial-offset"]] <- text_radial_offset
+    if (!is.null(text_rotate)) layout[["text-rotate"]] <- text_rotate
+    if (!is.null(text_rotation_alignment)) layout[["text-rotation-alignment"]] <- text_rotation_alignment
+    if (!is.null(text_size)) layout[["text-size"]] <- text_size
+    if (!is.null(text_transform)) layout[["text-transform"]] <- text_transform
+    if (!is.null(text_translate)) paint[["text-translate"]] <- text_translate
+    if (!is.null(text_translate_anchor)) paint[["text-translate-anchor"]] <- text_translate_anchor
+    if (!is.null(text_variable_anchor)) layout[["text-variable-anchor"]] <- text_variable_anchor
+    if (!is.null(text_writing_mode)) layout[["text-writing-mode"]] <- text_writing_mode
 
-  if (!is.null(visibility)) layout[["visibility"]] <- visibility
+    if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-  map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
+    map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
 
-  return(map)
+    return(map)
 }

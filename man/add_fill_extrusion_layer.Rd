@@ -79,35 +79,37 @@ Add a fill-extrusion layer to a Mapbox GL map
 library(mapgl)
 
 maplibre(
-  style = maptiler_style("basic"),
-  center = c(-74.0066, 40.7135),
-  zoom = 15.5,
-  pitch = 45,
-  bearing = -17.6
+    style = maptiler_style("basic"),
+    center = c(-74.0066, 40.7135),
+    zoom = 15.5,
+    pitch = 45,
+    bearing = -17.6
 ) |>
-  add_vector_source(
-    id = "openmaptiles",
-    url = paste0("https://api.maptiler.com/tiles/v3/tiles.json?key=",
-                 Sys.getenv("MAPTILER_API_KEY"))
-  ) |>
-  add_fill_extrusion_layer(
-    id = "3d-buildings",
-    source = 'openmaptiles',
-    source_layer = 'building',
-    fill_extrusion_color = interpolate(
-      column = 'render_height',
-      values = c(0, 200, 400),
-      stops = c('lightgray', 'royalblue', 'lightblue')
-    ),
-    fill_extrusion_height = list(
-      'interpolate',
-      list('linear'),
-      list('zoom'),
-      15,
-      0,
-      16,
-      list('get', 'render_height')
+    add_vector_source(
+        id = "openmaptiles",
+        url = paste0(
+            "https://api.maptiler.com/tiles/v3/tiles.json?key=",
+            Sys.getenv("MAPTILER_API_KEY")
+        )
+    ) |>
+    add_fill_extrusion_layer(
+        id = "3d-buildings",
+        source = "openmaptiles",
+        source_layer = "building",
+        fill_extrusion_color = interpolate(
+            column = "render_height",
+            values = c(0, 200, 400),
+            stops = c("lightgray", "royalblue", "lightblue")
+        ),
+        fill_extrusion_height = list(
+            "interpolate",
+            list("linear"),
+            list("zoom"),
+            15,
+            0,
+            16,
+            list("get", "render_height")
+        )
     )
-  )
 }
 }
