@@ -345,6 +345,9 @@ get_drawn_features <- function(map) {
 #' Add a geocoder control to a map
 #'
 #' This function adds a Geocoder search bar to a Mapbox GL or MapLibre GL map.
+#' By default, a marker will be added at the selected location and the map will
+#' fly to that location.  The results of the geocode are accessible in a Shiny
+#' session at `input$MAPID_geocoder$result`, where `MAPID` is the name of your map.
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param position The position of the control. Can be one of "top-left", "top-right", "bottom-left", or "bottom-right". Default is "top-right".

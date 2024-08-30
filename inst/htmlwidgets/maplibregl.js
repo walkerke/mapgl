@@ -451,18 +451,18 @@ HTMLWidgets.widget({
 
             map.addControl(
               geocoder,
-              x.geocoder_control.position || "top-right"
+              x.geocoder_control.position || "top-right",
             );
             map.controls.push(geocoder);
-          // Handle geocoder results in Shiny mode
-          if (HTMLWidgets.shinyMode) {
-            geocoder.on("result", function (e) {
-              Shiny.setInputValue(el.id + "_geocoder_result", {
-                result: e.result,
-                time: new Date(),
+            // Handle geocoder results in Shiny mode
+            if (HTMLWidgets.shinyMode) {
+              geocoder.on("result", function (e) {
+                Shiny.setInputValue(el.id + "_geocoder", {
+                  result: e.result,
+                  time: new Date(),
+                });
               });
-            });
-          }
+            }
           }
 
           if (x.draw_control && x.draw_control.enabled) {
@@ -1001,7 +1001,7 @@ if (HTMLWidgets.shinyMode) {
         // Handle geocoder results in Shiny mode
         if (HTMLWidgets.shinyMode) {
           geocoder.on("result", function (e) {
-            Shiny.setInputValue(data.id + "_geocoder_result", {
+            Shiny.setInputValue(data.id + "_geocoder", {
               result: e.result,
               time: new Date(),
             });

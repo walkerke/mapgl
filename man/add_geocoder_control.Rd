@@ -28,6 +28,9 @@ The modified map object with the geocoder control added.
 }
 \description{
 This function adds a Geocoder search bar to a Mapbox GL or MapLibre GL map.
+By default, a marker will be added at the selected location and the map will
+fly to that location.  The results of the geocode are accessible in a Shiny
+session at \code{input$MAPID_geocoder$result}, where \code{MAPID} is the name of your map.
 }
 \examples{
 \dontrun{
