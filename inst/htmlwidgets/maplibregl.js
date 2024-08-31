@@ -456,9 +456,9 @@ HTMLWidgets.widget({
             map.controls.push(geocoder);
             // Handle geocoder results in Shiny mode
             if (HTMLWidgets.shinyMode) {
-              geocoder.on("result", function (e) {
+              geocoder.on("results", function (e) {
                 Shiny.setInputValue(el.id + "_geocoder", {
-                  result: e.result,
+                  result: e,
                   time: new Date(),
                 });
               });
@@ -1002,7 +1002,7 @@ if (HTMLWidgets.shinyMode) {
         if (HTMLWidgets.shinyMode) {
           geocoder.on("result", function (e) {
             Shiny.setInputValue(data.id + "_geocoder", {
-              result: e.result,
+              result: e,
               time: new Date(),
             });
           });
