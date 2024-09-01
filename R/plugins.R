@@ -27,100 +27,99 @@
 #' }
 compare <- function(map1,
                     map2,
-                    width = '100%',
+                    width = "100%",
                     height = NULL,
                     elementId = NULL,
                     mousemove = FALSE,
-                    orientation = 'vertical'
-) {
-  if (inherits(map1, "mapboxgl") && inherits(map2, "mapboxgl")) {
-    compare.mapboxgl(map1, map2, width, height, elementId, mousemove, orientation)
-  } else if (inherits(map1, "maplibregl") && inherits(map2, "maplibregl")) {
-    compare.maplibre(map1, map2, width, height, elementId, mousemove, orientation)
-  } else {
-    stop("Both maps must be either mapboxgl or maplibregl objects.")
-  }
+                    orientation = "vertical") {
+    if (inherits(map1, "mapboxgl") && inherits(map2, "mapboxgl")) {
+        compare.mapboxgl(map1, map2, width, height, elementId, mousemove, orientation)
+    } else if (inherits(map1, "maplibregl") && inherits(map2, "maplibregl")) {
+        compare.maplibre(map1, map2, width, height, elementId, mousemove, orientation)
+    } else {
+        stop("Both maps must be either mapboxgl or maplibregl objects.")
+    }
 }
 
 # Mapbox GL comparison widget
 compare.mapboxgl <- function(map1, map2, width, height, elementId, mousemove, orientation) {
-  if (is.null(elementId)) {
-    elementId <- paste0("compare-container-", as.hexmode(sample(1:1000000, 1)))
-  }
+    if (is.null(elementId)) {
+        elementId <- paste0("compare-container-", as.hexmode(sample(1:1000000, 1)))
+    }
 
-  x <- list(
-    map1 = map1$x,
-    map2 = map2$x,
-    elementId = elementId,
-    mousemove = mousemove,
-    orientation = orientation
-  )
-
-  htmlwidgets::createWidget(
-    name = 'mapboxgl_compare',
-    x,
-    width = width,
-    height = height,
-    package = 'mapgl',
-    elementId = elementId,
-    sizingPolicy = htmlwidgets::sizingPolicy(
-      viewer.suppress = FALSE,
-      browser.fill = TRUE,
-      viewer.fill = TRUE,
-      knitr.figure = TRUE,
-      padding = 0,
-      knitr.defaultHeight = "500px",
-      viewer.defaultHeight = "100vh",
-      browser.defaultHeight = "100vh"
+    x <- list(
+        map1 = map1$x,
+        map2 = map2$x,
+        elementId = elementId,
+        mousemove = mousemove,
+        orientation = orientation
     )
-  )
+
+    htmlwidgets::createWidget(
+        name = "mapboxgl_compare",
+        x,
+        width = width,
+        height = height,
+        package = "mapgl",
+        elementId = elementId,
+        sizingPolicy = htmlwidgets::sizingPolicy(
+            viewer.suppress = FALSE,
+            browser.fill = TRUE,
+            viewer.fill = TRUE,
+            knitr.figure = TRUE,
+            padding = 0,
+            knitr.defaultHeight = "500px",
+            viewer.defaultHeight = "100vh",
+            browser.defaultHeight = "100vh"
+        )
+    )
 }
 
 # Maplibre comparison widget
 compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, orientation) {
-  if (is.null(elementId)) {
-    elementId <- paste0("compare-container-", as.hexmode(sample(1:1000000, 1)))
-  }
-
-  check_for_popups_or_tooltips <- function(map) {
-    if (!is.null(map$x$layers)) {
-      for (layer in map$x$layers) {
-        if (!is.null(layer$popup) || !is.null(layer$tooltip)) {
-          return(TRUE)
-        }
-      }
+    if (is.null(elementId)) {
+        elementId <- paste0("compare-container-", as.hexmode(sample(1:1000000, 1)))
     }
-    return(FALSE)
-  }
 
-  if (check_for_popups_or_tooltips(map1) || check_for_popups_or_tooltips(map2)) {
-    rlang::warn("Popups and tooltips are not currently supported for `compare()` with maplibre maps.")
-  }
+    check_for_popups_or_tooltips <- function(map) {
+        if (!is.null(map$x$layers)) {
+            for (layer in map$x$layers) {
+                if (!is.null(layer$popup) || !is.null(layer$tooltip)) {
+                    return(TRUE)
+                }
+            }
+        }
+        return(FALSE)
+    }
 
-  x <- list(
-    map1 = map1$x,
-    map2 = map2$x,
-    elementId = elementId,
-    mousemove = mousemove,
-    orientation = orientation
-  )
+    if (check_for_popups_or_tooltips(map1) || check_for_popups_or_tooltips(map2)) {
+        rlang::warn("Popups and tooltips are not currently supported for `compare()` with maplibre maps.")
+    }
 
-  htmlwidgets::createWidget(
-    name = 'maplibregl_compare',
-    x,
-    width = width,
-    height = height,
-    package = 'mapgl',
-    elementId = elementId,
-    sizingPolicy = htmlwidgets::sizingPolicy(
-      viewer.suppress = FALSE,
-      browser.fill = TRUE,
-      viewer.fill = TRUE,
-      knitr.figure = TRUE,
-      padding = 0,
-      knitr.defaultHeight = "500px",
-      viewer.defaultHeight = "100vh",
-      browser.defaultHeight = "100vh"
+    x <- list(
+        map1 = map1$x,
+        map2 = map2$x,
+        elementId = elementId,
+        mousemove = mousemove,
+        orientation = orientation
     )
-  )
+
+    htmlwidgets::createWidget(
+        name = "maplibregl_compare",
+        x,
+        width = width,
+        height = height,
+        package = "mapgl",
+        elementId = elementId,
+        sizingPolicy = htmlwidgets::sizingPolicy(
+            viewer.suppress = FALSE,
+            browser.fill = TRUE,
+            viewer.fill = TRUE,
+            knitr.figure = TRUE,
+            padding = 0,
+            knitr.defaultHeight = "500px",
+            viewer.defaultHeight = "100vh",
+            browser.defaultHeight = "100vh"
+        )
+    )
 }
