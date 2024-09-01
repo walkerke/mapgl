@@ -580,6 +580,13 @@ HTMLWidgets.widget({
                         resetControl.style.display = "flex";
                         resetControl.style.justifyContent = "center";
                         resetControl.style.alignItems = "center";
+                        resetControl.style.transition = "background-color 0.2s";
+                        resetControl.addEventListener("mouseover", function () {
+                            this.style.backgroundColor = "#f0f0f0";
+                        });
+                        resetControl.addEventListener("mouseout", function () {
+                            this.style.backgroundColor = "white";
+                        });
 
                         const resetContainer = document.createElement("div");
                         resetContainer.className =
@@ -1041,6 +1048,13 @@ if (HTMLWidgets.shinyMode) {
                 resetControl.style.display = "flex";
                 resetControl.style.justifyContent = "center";
                 resetControl.style.alignItems = "center";
+                resetControl.style.transition = "background-color 0.2s";
+                resetControl.addEventListener("mouseover", function () {
+                    this.style.backgroundColor = "#f0f0f0";
+                });
+                resetControl.addEventListener("mouseout", function () {
+                    this.style.backgroundColor = "white";
+                });
 
                 const resetContainer = document.createElement("div");
                 resetContainer.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
