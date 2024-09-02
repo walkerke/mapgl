@@ -29,6 +29,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_dem_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_source.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/add_reset_control.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_scale_control.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_symbol_layer.html</loc></url>
@@ -39,6 +40,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/clear_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_legend.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_markers.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/cluster_options.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/compare.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/ease_to.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/fit_bounds.html</loc></url>
