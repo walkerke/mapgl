@@ -80,7 +80,8 @@ add_symbol_layer(
   tooltip = NULL,
   hover_options = NULL,
   before_id = NULL,
-  filter = NULL
+  filter = NULL,
+  cluster_options = NULL
 )
 }
 \arguments{
@@ -235,6 +236,8 @@ add_symbol_layer(
 \item{before_id}{The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).}
 
 \item{filter}{An optional filter expression to subset features in the layer.}
+
+\item{cluster_options}{A list of options for clustering symbols, created by the \code{cluster_options()} function.}
 }
 \value{
 The modified map object with the new symbol layer added.
