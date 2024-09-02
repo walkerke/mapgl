@@ -6,22 +6,37 @@
 \usage{
 cluster_options(
   max_zoom = 14,
-  radius = 50,
+  cluster_radius = 50,
   color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
   radius_stops = c(20, 30, 40),
-  count_stops = c(0, 100, 750)
+  count_stops = c(0, 100, 750),
+  circle_blur = NULL,
+  circle_opacity = NULL,
+  circle_stroke_color = NULL,
+  circle_stroke_opacity = NULL,
+  circle_stroke_width = NULL
 )
 }
 \arguments{
 \item{max_zoom}{The maximum zoom level at which to cluster points.}
 
-\item{radius}{The radius of each cluster when clustering points.}
+\item{cluster_radius}{The radius of each cluster when clustering points.}
 
 \item{color_stops}{A vector of colors for the circle color step expression.}
 
 \item{radius_stops}{A vector of radii for the circle radius step expression.}
 
 \item{count_stops}{A vector of point counts for both color and radius step expressions.}
+
+\item{circle_blur}{Amount to blur the circle.}
+
+\item{circle_opacity}{The opacity of the circle.}
+
+\item{circle_stroke_color}{The color of the circle's stroke.}
+
+\item{circle_stroke_opacity}{The opacity of the circle's stroke.}
+
+\item{circle_stroke_width}{The width of the circle's stroke.}
 }
 \value{
 A list of cluster options.
@@ -32,9 +47,13 @@ This function creates a list of options for clustering circle layers.
 \examples{
 cluster_options(
     max_zoom = 14,
-    radius = 50,
+    cluster_radius = 50,
     color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
     radius_stops = c(20, 30, 40),
-    count_stops = c(0, 100, 750)
+    count_stops = c(0, 100, 750),
+    circle_blur = 1,
+    circle_opacity = 0.8,
+    circle_stroke_color = "#ffffff",
+    circle_stroke_width = 2
 )
 }

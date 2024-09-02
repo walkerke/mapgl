@@ -568,10 +568,15 @@ add_fill_extrusion_layer <- function(map,
 #' This function creates a list of options for clustering circle layers.
 #'
 #' @param max_zoom The maximum zoom level at which to cluster points.
-#' @param radius The radius of each cluster when clustering points.
+#' @param cluster_radius The radius of each cluster when clustering points.
 #' @param color_stops A vector of colors for the circle color step expression.
 #' @param radius_stops A vector of radii for the circle radius step expression.
 #' @param count_stops A vector of point counts for both color and radius step expressions.
+#' @param circle_blur Amount to blur the circle.
+#' @param circle_opacity The opacity of the circle.
+#' @param circle_stroke_color The color of the circle's stroke.
+#' @param circle_stroke_opacity The opacity of the circle's stroke.
+#' @param circle_stroke_width The width of the circle's stroke.
 #'
 #' @return A list of cluster options.
 #' @export
@@ -579,22 +584,36 @@ add_fill_extrusion_layer <- function(map,
 #' @examples
 #' cluster_options(
 #'     max_zoom = 14,
-#'     radius = 50,
+#'     cluster_radius = 50,
 #'     color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
 #'     radius_stops = c(20, 30, 40),
-#'     count_stops = c(0, 100, 750)
+#'     count_stops = c(0, 100, 750),
+#'     circle_blur = 1,
+#'     circle_opacity = 0.8,
+#'     circle_stroke_color = "#ffffff",
+#'     circle_stroke_width = 2
 #' )
 cluster_options <- function(max_zoom = 14,
-                            radius = 50,
+                            cluster_radius = 50,
                             color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
                             radius_stops = c(20, 30, 40),
-                            count_stops = c(0, 100, 750)) {
+                            count_stops = c(0, 100, 750),
+                            circle_blur = NULL,
+                            circle_opacity = NULL,
+                            circle_stroke_color = NULL,
+                            circle_stroke_opacity = NULL,
+                            circle_stroke_width = NULL) {
     list(
         max_zoom = max_zoom,
-        radius = radius,
+        cluster_radius = cluster_radius,
         color_stops = color_stops,
         radius_stops = radius_stops,
-        count_stops = count_stops
+        count_stops = count_stops,
+        circle_blur = circle_blur,
+        circle_opacity = circle_opacity,
+        circle_stroke_color = circle_stroke_color,
+        circle_stroke_opacity = circle_stroke_opacity,
+        circle_stroke_width = circle_stroke_width
     )
 }
 
@@ -746,7 +765,7 @@ add_circle_layer <- function(map,
             data = source,
             cluster = TRUE,
             clusterMaxZoom = cluster_options$max_zoom,
-            clusterRadius = cluster_options$radius
+            clusterRadius = cluster_options$cluster_radius
         )
 
         # Add clustered circles layer
@@ -771,6 +790,21 @@ add_circle_layer <- function(map,
                 )
             )
         )
+
+        # Add optional paint properties if they are not NULL
+        optional_paint <- list(
+            "circle-blur" = cluster_options$circle_blur,
+            "circle-opacity" = cluster_options$circle_opacity,
+            "circle-stroke-color" = cluster_options$circle_stroke_color,
+            "circle-stroke-opacity" = cluster_options$circle_stroke_opacity,
+            "circle-stroke-width" = cluster_options$circle_stroke_width
+        )
+
+        for (prop in names(optional_paint)) {
+            if (!is.null(optional_paint[[prop]])) {
+                map$x$layers[[length(map$x$layers)]]$paint[[prop]] <- optional_paint[[prop]]
+            }
+        }
 
         # Add cluster count labels
         map <- add_symbol_layer(
@@ -1191,7 +1225,7 @@ add_symbol_layer <- function(map,
             data = source,
             cluster = TRUE,
             clusterMaxZoom = cluster_options$max_zoom,
-            clusterRadius = cluster_options$radius
+            clusterRadius = cluster_options$cluster_radius
         )
 
         # Add clustered symbols layer
@@ -1216,6 +1250,21 @@ add_symbol_layer <- function(map,
                 )
             )
         )
+
+        # Add optional paint properties if they are not NULL
+        optional_paint <- list(
+            "circle-blur" = cluster_options$circle_blur,
+            "circle-opacity" = cluster_options$circle_opacity,
+            "circle-stroke-color" = cluster_options$circle_stroke_color,
+            "circle-stroke-opacity" = cluster_options$circle_stroke_opacity,
+            "circle-stroke-width" = cluster_options$circle_stroke_width
+        )
+
+        for (prop in names(optional_paint)) {
+            if (!is.null(optional_paint[[prop]])) {
+                map$x$calls[[length(map$x$calls)]]$args[[4]]$paint[[prop]] <- optional_paint[[prop]]
+            }
+        }
 
         # Add cluster count labels
         map <- add_symbol_layer(
