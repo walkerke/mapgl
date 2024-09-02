@@ -769,6 +769,36 @@ HTMLWidgets.widget({
                         }
                     }
 
+                    // If clusters are present, add event handling
+                    map.getStyle().layers.forEach((layer) => {
+                        if (layer.id.includes("-clusters")) {
+                            map.on("click", layer.id, async (e) => {
+                                const features = map.queryRenderedFeatures(
+                                    e.point,
+                                    {
+                                        layers: [layer.id],
+                                    },
+                                );
+                                const clusterId =
+                                    features[0].properties.cluster_id;
+                                const zoom = await map
+                                    .getSource(layer.source)
+                                    .getClusterExpansionZoom(clusterId);
+                                map.easeTo({
+                                    center: features[0].geometry.coordinates,
+                                    zoom,
+                                });
+                            });
+
+                            map.on("mouseenter", layer.id, () => {
+                                map.getCanvas().style.cursor = "pointer";
+                            });
+                            map.on("mouseleave", layer.id, () => {
+                                map.getCanvas().style.cursor = "";
+                            });
+                        }
+                    });
+
                     // Add click event listener in shinyMode
                     if (HTMLWidgets.shinyMode) {
                         map.on("click", function (e) {

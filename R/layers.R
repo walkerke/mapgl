@@ -563,6 +563,41 @@ add_fill_extrusion_layer <- function(map,
     return(map)
 }
 
+#' Prepare cluster options for circle layers
+#'
+#' This function creates a list of options for clustering circle layers.
+#'
+#' @param max_zoom The maximum zoom level at which to cluster points.
+#' @param radius The radius of each cluster when clustering points.
+#' @param color_stops A vector of colors for the circle color step expression.
+#' @param radius_stops A vector of radii for the circle radius step expression.
+#' @param count_stops A vector of point counts for both color and radius step expressions.
+#'
+#' @return A list of cluster options.
+#' @export
+#'
+#' @examples
+#' cluster_options(
+#'     max_zoom = 14,
+#'     radius = 50,
+#'     color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
+#'     radius_stops = c(20, 30, 40),
+#'     count_stops = c(0, 100, 750)
+#' )
+cluster_options <- function(max_zoom = 14,
+                            radius = 50,
+                            color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
+                            radius_stops = c(20, 30, 40),
+                            count_stops = c(0, 100, 750)) {
+    list(
+        max_zoom = max_zoom,
+        radius = radius,
+        color_stops = color_stops,
+        radius_stops = radius_stops,
+        count_stops = count_stops
+    )
+}
+
 #' Add a circle layer to a Mapbox GL map
 #'
 #' @param map A map object created by the `mapboxgl` function.
@@ -588,6 +623,7 @@ add_fill_extrusion_layer <- function(map,
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
+#' @param cluster_options A list of options for clustering circles, created by the `cluster_options()` function.
 #'
 #' @return The modified map object with the new circle layer added.
 #' @export
@@ -684,7 +720,8 @@ add_circle_layer <- function(map,
                              tooltip = NULL,
                              hover_options = NULL,
                              before_id = NULL,
-                             filter = NULL) {
+                             filter = NULL,
+                             cluster_options = NULL) {
     paint <- list()
     layout <- list()
 
@@ -701,23 +738,86 @@ add_circle_layer <- function(map,
     if (!is.null(circle_sort_key)) layout[["circle-sort-key"]] <- circle_sort_key
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-    map <- add_layer(
-        map,
-        id,
-        "circle",
-        source,
-        source_layer,
-        paint,
-        layout,
-        slot,
-        min_zoom,
-        max_zoom,
-        popup,
-        tooltip,
-        hover_options,
-        before_id,
-        filter
-    )
+    if (!is.null(cluster_options)) {
+        # Add clustering to the source
+        map <- add_source(
+            map,
+            id = id,
+            data = source,
+            cluster = TRUE,
+            clusterMaxZoom = cluster_options$max_zoom,
+            clusterRadius = cluster_options$radius
+        )
+
+        # Add clustered circles layer
+        map <- add_layer(
+            map,
+            id = paste0(id, "-clusters"),
+            type = "circle",
+            source = id,
+            filter = c("has", "point_count"),
+            paint = list(
+                "circle-color" = step_expr(
+                    column = "point_count",
+                    base = cluster_options$color_stops[1],
+                    stops = cluster_options$color_stops[-1],
+                    values = cluster_options$count_stops[-1]
+                ),
+                "circle-radius" = step_expr(
+                    column = "point_count",
+                    base = cluster_options$radius_stops[1],
+                    stops = cluster_options$radius_stops[-1],
+                    values = cluster_options$count_stops[-1]
+                )
+            )
+        )
+
+        # Add cluster count labels
+        map <- add_symbol_layer(
+            map,
+            id = paste0(id, "-cluster-count"),
+            source = id,
+            filter = c("has", "point_count"),
+            text_field = get_column("point_count_abbreviated"),
+            text_size = 12
+        )
+
+        # Add unclustered points
+        map <- add_layer(
+            map,
+            id = id,
+            type = "circle",
+            source = id,
+            filter = list("!", c("has", "point_count")),
+            paint = paint,
+            layout = layout,
+            popup = popup,
+            tooltip = tooltip,
+            hover_options = hover_options,
+            slot = slot,
+            min_zoom = min_zoom,
+            max_zoom = max_zoom,
+            before_id = before_id
+        )
+    } else {
+        map <- add_layer(
+            map,
+            id,
+            "circle",
+            source,
+            source_layer,
+            paint,
+            layout,
+            slot,
+            min_zoom,
+            max_zoom,
+            popup,
+            tooltip,
+            hover_options,
+            before_id,
+            filter
+        )
+    }
 
     return(map)
 }
@@ -883,6 +983,7 @@ add_raster_layer <- function(map,
 #' @param hover_options A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
+#' @param cluster_options A list of options for clustering symbols, created by the `cluster_options()` function.
 #'
 #' @return The modified map object with the new symbol layer added.
 #' @export
@@ -1009,7 +1110,8 @@ add_symbol_layer <- function(map,
                              tooltip = NULL,
                              hover_options = NULL,
                              before_id = NULL,
-                             filter = NULL) {
+                             filter = NULL,
+                             cluster_options = NULL) {
     paint <- list()
     layout <- list()
 
@@ -1081,7 +1183,70 @@ add_symbol_layer <- function(map,
 
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-    map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
+    if (!is.null(cluster_options)) {
+        # Add clustering to the source
+        map <- add_source(
+            map,
+            id = id,
+            data = source,
+            cluster = TRUE,
+            clusterMaxZoom = cluster_options$max_zoom,
+            clusterRadius = cluster_options$radius
+        )
+
+        # Add clustered symbols layer
+        map <- add_layer(
+            map,
+            id = paste0(id, "-clusters"),
+            type = "circle",
+            source = id,
+            filter = c("has", "point_count"),
+            paint = list(
+                "circle-color" = step_expr(
+                    column = "point_count",
+                    base = cluster_options$color_stops[1],
+                    stops = cluster_options$color_stops[-1],
+                    values = cluster_options$count_stops[-1]
+                ),
+                "circle-radius" = step_expr(
+                    column = "point_count",
+                    base = cluster_options$radius_stops[1],
+                    stops = cluster_options$radius_stops[-1],
+                    values = cluster_options$count_stops[-1]
+                )
+            )
+        )
+
+        # Add cluster count labels
+        map <- add_symbol_layer(
+            map,
+            id = paste0(id, "-cluster-count"),
+            source = id,
+            filter = c("has", "point_count"),
+            text_field = get_column("point_count_abbreviated"),
+            text_size = 12
+        )
+
+        # Add unclustered symbols
+        map <- add_layer(
+            map,
+            id = id,
+            type = "symbol",
+            source = id,
+            filter = list("!", c("has", "point_count")),
+            paint = paint,
+            layout = layout,
+            popup = popup,
+            tooltip = tooltip,
+            hover_options = hover_options,
+            slot = slot,
+            min_zoom = min_zoom,
+            max_zoom = max_zoom,
+            before_id = before_id
+        )
+    } else {
+        map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
+    }
 
     return(map)
 }
