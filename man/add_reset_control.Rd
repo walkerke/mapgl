@@ -10,6 +10,10 @@ add_reset_control(map, position = "top-right", animate = TRUE, duration = NULL)
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{position}{The position of the control. Can be one of "top-left", "top-right", "bottom-left", or "bottom-right". Default is "top-right".}
+
+\item{animate}{Whether or not to animate the transition to the original map view; defaults to \code{TRUE}.  If \code{FALSE}, the view will "jump" to the original view with no transition.}
+
+\item{duration}{The length of the transition from the current view to the original view, specified in milliseconds.  This argument only works with \code{animate} is \code{TRUE}.}
 }
 \value{
 The modified map object with the reset control added.
