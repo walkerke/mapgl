@@ -61,36 +61,39 @@ add_navigation_control <- function(map,
                                    show_zoom = TRUE,
                                    visualize_pitch = FALSE,
                                    position = "top-right") {
-  nav_control <- list(
-    show_compass = show_compass,
-    show_zoom = show_zoom,
-    visualize_pitch = visualize_pitch,
-    position = position
-  )
-
-  if (any(inherits(map, "mapboxgl_proxy"),
-          inherits(map, "maplibre_proxy"))) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy"
-    else
-      "maplibre-proxy"
-
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(
-        type = "add_navigation_control",
-        options = nav_control,
+    nav_control <- list(
+        show_compass = show_compass,
+        show_zoom = show_zoom,
+        visualize_pitch = visualize_pitch,
         position = position
-      )
-    ))
-  } else {
-    if (is.null(map$x$navigation_control)) {
-      map$x$navigation_control <- list()
-    }
-    map$x$navigation_control <- nav_control
-  }
+    )
 
-  return(map)
+    if (any(
+        inherits(map, "mapboxgl_proxy"),
+        inherits(map, "maplibre_proxy")
+    )) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+            "mapboxgl-proxy"
+        } else {
+            "maplibre-proxy"
+        }
+
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(
+                type = "add_navigation_control",
+                options = nav_control,
+                position = position
+            )
+        ))
+    } else {
+        if (is.null(map$x$navigation_control)) {
+            map$x$navigation_control <- list()
+        }
+        map$x$navigation_control <- nav_control
+    }
+
+    return(map)
 }
 
 
@@ -129,54 +132,55 @@ add_layers_control <- function(map,
                                position = "top-left",
                                layers = NULL,
                                collapsible = FALSE) {
-  control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
+    control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
 
-  # Create the control container
-  control_html <- paste0(
-    '<nav id="',
-    control_id,
-    '" class="layers-control',
-    ifelse(collapsible, " collapsible", ""),
-    '" style="',
-    position,
-    ': 10px;"></nav>'
-  )
-
-  # If layers is NULL, get the layers added by the user
-  if (is.null(layers)) {
-    layers <- unlist(lapply(map$x$layers, function(y) {
-      y$id
-    }))
-  }
-
-  # Add control to map
-  if (inherits(map, "mapboxgl_proxy") ||
-      inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy"
-    else
-      "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(
-        type = "add_layers_control",
-        control_id = control_id,
-        position = position,
-        layers = layers,
-        collapsible = collapsible
-      )
-    ))
-  } else {
-    map$x$layers_control <- list(
-      control_id = control_id,
-      position = position,
-      layers = layers,
-      collapsible = collapsible
+    # Create the control container
+    control_html <- paste0(
+        '<nav id="',
+        control_id,
+        '" class="layers-control',
+        ifelse(collapsible, " collapsible", ""),
+        '" style="',
+        position,
+        ': 10px;"></nav>'
     )
-    map$x$control_html <- control_html
-  }
 
-  return(map)
+    # If layers is NULL, get the layers added by the user
+    if (is.null(layers)) {
+        layers <- unlist(lapply(map$x$layers, function(y) {
+            y$id
+        }))
+    }
+
+    # Add control to map
+    if (inherits(map, "mapboxgl_proxy") ||
+        inherits(map, "maplibre_proxy")) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+            "mapboxgl-proxy"
+        } else {
+            "maplibre-proxy"
+        }
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(
+                type = "add_layers_control",
+                control_id = control_id,
+                position = position,
+                layers = layers,
+                collapsible = collapsible
+            )
+        ))
+    } else {
+        map$x$layers_control <- list(
+            control_id = control_id,
+            position = position,
+            layers = layers,
+            collapsible = collapsible
+        )
+        map$x$control_html <- control_html
+    }
+
+    return(map)
 }
 
 #' Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app
@@ -186,18 +190,19 @@ add_layers_control <- function(map,
 #' @return The modified map object with all controls removed.
 #' @export
 clear_controls <- function(map) {
-  if (inherits(map, "mapboxgl_proxy") ||
-      inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy"
-    else
-      "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "clear_controls")
-    ))
-  }
-  return(map)
+    if (inherits(map, "mapboxgl_proxy") ||
+        inherits(map, "maplibre_proxy")) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+            "mapboxgl-proxy"
+        } else {
+            "maplibre-proxy"
+        }
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "clear_controls")
+        ))
+    }
+    return(map)
 }
 
 #' Add a scale control to a map
@@ -223,28 +228,31 @@ add_scale_control <- function(map,
                               position = "bottom-left",
                               unit = "metric",
                               max_width = 100) {
-  scale_control <- list(position = position,
-                        unit = unit,
-                        maxWidth = max_width)
+    scale_control <- list(
+        position = position,
+        unit = unit,
+        maxWidth = max_width
+    )
 
-  if (inherits(map, "mapboxgl_proxy") ||
-      inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy"
-    else
-      "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "add_scale_control", options = scale_control)
-    ))
-  } else {
-    if (is.null(map$x$scale_control)) {
-      map$x$scale_control <- list()
+    if (inherits(map, "mapboxgl_proxy") ||
+        inherits(map, "maplibre_proxy")) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+            "mapboxgl-proxy"
+        } else {
+            "maplibre-proxy"
+        }
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "add_scale_control", options = scale_control)
+        ))
+    } else {
+        if (is.null(map$x$scale_control)) {
+            map$x$scale_control <- list()
+        }
+        map$x$scale_control <- scale_control
     }
-    map$x$scale_control <- scale_control
-  }
 
-  return(map)
+    return(map)
 }
 
 #' Add a draw control to a map
@@ -253,6 +261,7 @@ add_scale_control <- function(map,
 #' @param position A string specifying the position of the draw control.
 #'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
 #' @param freehand Logical, whether to enable freehand drawing mode. Default is FALSE.
+#' @param simplify_freehand Logical, whether to apply simplification to freehand drawings. Default is FALSE.
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -267,43 +276,47 @@ add_scale_control <- function(map,
 #'     center = c(-74.50, 40),
 #'     zoom = 9
 #' ) |>
-#'     add_draw_control(position = "top-left", freehand = TRUE)
+#'     add_draw_control(position = "top-left", freehand = TRUE, simplify_freehand = TRUE)
 #' }
 add_draw_control <- function(map,
                              position = "top-left",
                              freehand = FALSE,
+                             simplify_freehand = FALSE,
                              ...) {
-  # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
-  #   rlang::abort("The draw control is not yet supported for MapLibre maps.")
-  # }
+    # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
+    #   rlang::abort("The draw control is not yet supported for MapLibre maps.")
+    # }
 
-  options <- list(...)
+    options <- list(...)
 
-  map$x$draw_control <- list(
-    enabled = TRUE,
-    position = position,
-    freehand = freehand,
-    options = options
-  )
-
-  if (inherits(map, "mapboxgl_proxy") ||
-      inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy"
-    else
-      "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(
-        type = "add_draw_control",
+    map$x$draw_control <- list(
+        enabled = TRUE,
         position = position,
-        options = options,
-        freehand = freehand
-      )
-    ))
-  }
+        freehand = freehand,
+        simplify_freehand = simplify_freehand,
+        options = options
+    )
 
-  map
+    if (inherits(map, "mapboxgl_proxy") ||
+        inherits(map, "maplibre_proxy")) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+            "mapboxgl-proxy"
+        } else {
+            "maplibre-proxy"
+        }
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(
+                type = "add_draw_control",
+                position = position,
+                options = options,
+                freehand = freehand,
+                simplify_freehand = simplify_freehand
+            )
+        ))
+    }
+
+    map
 }
 
 #' Get drawn features from the map
@@ -346,64 +359,64 @@ add_draw_control <- function(map,
 #' shinyApp(ui, server)
 #' }
 get_drawn_features <- function(map) {
-  if (!shiny::is.reactive(map) &&
-      !inherits(map, c("mapboxgl", "mapboxgl_proxy"))) {
-    stop(
-      "Invalid map object. Expected mapboxgl or mapboxgl_proxy object within a Shiny context."
-    )
-  }
+    if (!shiny::is.reactive(map) &&
+        !inherits(map, c("mapboxgl", "mapboxgl_proxy"))) {
+        stop(
+            "Invalid map object. Expected mapboxgl or mapboxgl_proxy object within a Shiny context."
+        )
+    }
 
-  # If map is reactive (e.g., output$map in Shiny), evaluate it
-  if (shiny::is.reactive(map)) {
-    map <- map()
-  }
+    # If map is reactive (e.g., output$map in Shiny), evaluate it
+    if (shiny::is.reactive(map)) {
+        map <- map()
+    }
 
-  # Determine if we're in a Shiny session
-  in_shiny <- shiny::isRunning()
+    # Determine if we're in a Shiny session
+    in_shiny <- shiny::isRunning()
 
-  if (!in_shiny) {
-    warning(
-      "Getting drawn features outside of a Shiny context is not supported. Please use this function within a Shiny application."
-    )
-    return(sf::st_sf(geometry = sf::st_sfc())) # Return an empty sf object
-  }
+    if (!in_shiny) {
+        warning(
+            "Getting drawn features outside of a Shiny context is not supported. Please use this function within a Shiny application."
+        )
+        return(sf::st_sf(geometry = sf::st_sfc())) # Return an empty sf object
+    }
 
-  # Get the session object
-  session <- shiny::getDefaultReactiveDomain()
+    # Get the session object
+    session <- shiny::getDefaultReactiveDomain()
 
-  if (inherits(map, "mapboxgl")) {
-    # Initial map object in Shiny
-    map_id <- map$elementId
-  } else if (inherits(map, "mapboxgl_proxy")) {
-    # Proxy object
-    map_id <- map$id
-  } else {
-    stop("Unexpected map object type.")
-  }
+    if (inherits(map, "mapboxgl")) {
+        # Initial map object in Shiny
+        map_id <- map$elementId
+    } else if (inherits(map, "mapboxgl_proxy")) {
+        # Proxy object
+        map_id <- map$id
+    } else {
+        stop("Unexpected map object type.")
+    }
 
-  # Send message to get drawn features
-  session$sendCustomMessage("mapboxgl-proxy", list(
-    id = map_id,
-    message = list(type = "get_drawn_features")
-  ))
+    # Send message to get drawn features
+    session$sendCustomMessage("mapboxgl-proxy", list(
+        id = map_id,
+        message = list(type = "get_drawn_features")
+    ))
 
-  # Wait for response
-  features_json <- NULL
-  wait_time <- 0
-  while (is.null(features_json) &&
-         wait_time < 3) {
-    # Wait up to 3 seconds
-    features_json <- session$input[[paste0(map_id, "_drawn_features")]]
-    Sys.sleep(0.1)
-    wait_time <- wait_time + 0.1
-  }
+    # Wait for response
+    features_json <- NULL
+    wait_time <- 0
+    while (is.null(features_json) &&
+        wait_time < 3) {
+        # Wait up to 3 seconds
+        features_json <- session$input[[paste0(map_id, "_drawn_features")]]
+        Sys.sleep(0.1)
+        wait_time <- wait_time + 0.1
+    }
 
-  if (!is.null(features_json) &&
-      features_json != "null" && nchar(features_json) > 0) {
-    sf::st_read(features_json, quiet = TRUE)
-  } else {
-    sf::st_sf(geometry = sf::st_sfc()) # Return an empty sf object if no features
-  }
+    if (!is.null(features_json) &&
+        features_json != "null" && nchar(features_json) > 0) {
+        sf::st_read(features_json, quiet = TRUE)
+    } else {
+        sf::st_sf(geometry = sf::st_sfc()) # Return an empty sf object if no features
+    }
 }
 
 #' Add a geocoder control to a map
@@ -437,31 +450,32 @@ add_geocoder_control <- function(map,
                                  placeholder = "Search",
                                  collapsed = FALSE,
                                  ...) {
-  geocoder_options <- list(
-    position = position,
-    placeholder = placeholder,
-    collapsed = collapsed,
-    ...
-  )
+    geocoder_options <- list(
+        position = position,
+        placeholder = placeholder,
+        collapsed = collapsed,
+        ...
+    )
 
-  if (inherits(map, "mapboxgl_proxy") ||
-      inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy"
-    else
-      "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "add_geocoder_control", options = geocoder_options)
-    ))
-  } else {
-    if (is.null(map$x$geocoder_control)) {
-      map$x$geocoder_control <- list()
+    if (inherits(map, "mapboxgl_proxy") ||
+        inherits(map, "maplibre_proxy")) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+            "mapboxgl-proxy"
+        } else {
+            "maplibre-proxy"
+        }
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "add_geocoder_control", options = geocoder_options)
+        ))
+    } else {
+        if (is.null(map$x$geocoder_control)) {
+            map$x$geocoder_control <- list()
+        }
+        map$x$geocoder_control <- geocoder_options
     }
-    map$x$geocoder_control <- geocoder_options
-  }
 
-  return(map)
+    return(map)
 }
 
 #' Add a reset control to a map
@@ -488,28 +502,29 @@ add_reset_control <- function(map,
                               position = "top-right",
                               animate = TRUE,
                               duration = NULL) {
-  reset_control <- list(position = position, animate = animate)
+    reset_control <- list(position = position, animate = animate)
 
-  if (!is.null(duration)) {
-    if (!animate) {
-      rlang::warn("duration is ignored when `animate` is `FALSE`.")
+    if (!is.null(duration)) {
+        if (!animate) {
+            rlang::warn("duration is ignored when `animate` is `FALSE`.")
+        }
+        reset_control$duration <- duration
     }
-    reset_control$duration <- duration
-  }
 
-  if (inherits(map, "mapboxgl_proxy") ||
-      inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy"
-    else
-      "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "add_reset_control", options = reset_control)
-    ))
-  } else {
-    map$x$reset_control <- reset_control
-  }
+    if (inherits(map, "mapboxgl_proxy") ||
+        inherits(map, "maplibre_proxy")) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+            "mapboxgl-proxy"
+        } else {
+            "maplibre-proxy"
+        }
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "add_reset_control", options = reset_control)
+        ))
+    } else {
+        map$x$reset_control <- reset_control
+    }
 
-  return(map)
+    return(map)
 }
