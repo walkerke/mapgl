@@ -540,8 +540,23 @@ HTMLWidgets.widget({
                         if (x.draw_control.freehand) {
                             drawOptions = Object.assign({}, drawOptions, {
                                 modes: Object.assign({}, MapboxDraw.modes, {
-                                    draw_polygon:
+                                    draw_polygon: Object.assign(
+                                        {},
                                         MapboxDraw.modes.draw_freehand,
+                                        {
+                                            // Store the simplify_freehand option on the map object
+                                            onSetup: function (opts) {
+                                                const state =
+                                                    MapboxDraw.modes.draw_freehand.onSetup.call(
+                                                        this,
+                                                        opts,
+                                                    );
+                                                this.map.simplify_freehand =
+                                                    x.draw_control.simplify_freehand;
+                                                return state;
+                                            },
+                                        },
+                                    ),
                                 }),
                                 // defaultMode: 'draw_polygon' # Don't set the default yet
                             });
