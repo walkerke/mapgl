@@ -413,7 +413,7 @@ get_drawn_features <- function(map) {
 
     if (!is.null(features_json) &&
         features_json != "null" && nchar(features_json) > 0) {
-        sf::st_read(features_json, quiet = TRUE)
+        sf::st_make_valid(sf::st_read(features_json, quiet = TRUE))
     } else {
         sf::st_sf(geometry = sf::st_sfc()) # Return an empty sf object if no features
     }
