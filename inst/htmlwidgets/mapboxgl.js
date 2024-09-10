@@ -1170,11 +1170,26 @@ if (HTMLWidgets.shinyMode) {
                 map.on("draw.delete", updateDrawnFeatures);
                 map.on("draw.update", updateDrawnFeatures);
             } else if (message.type === "get_drawn_features") {
-                const features = draw ? draw.getAll() : null;
-                Shiny.setInputValue(
-                    data.id + "_drawn_features",
-                    JSON.stringify(features),
-                );
+                if (
+                    map.controls &&
+                    map.controls.some(
+                        (control) => control instanceof MapboxDraw,
+                    )
+                ) {
+                    const drawControl = map.controls.find(
+                        (control) => control instanceof MapboxDraw,
+                    );
+                    const features = drawControl ? drawControl.getAll() : null;
+                    Shiny.setInputValue(
+                        data.id + "_drawn_features",
+                        JSON.stringify(features),
+                    );
+                } else {
+                    Shiny.setInputValue(
+                        data.id + "_drawn_features",
+                        JSON.stringify(null),
+                    );
+                }
             } else if (message.type === "clear_drawn_features") {
                 if (draw) {
                     draw.deleteAll();
