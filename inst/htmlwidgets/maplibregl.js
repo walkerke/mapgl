@@ -1035,11 +1035,41 @@ if (HTMLWidgets.shinyMode) {
                     message.value,
                 );
             } else if (message.type === "set_paint_property") {
-                map.setPaintProperty(
-                    message.layer,
-                    message.name,
-                    message.value,
+                const layerId = message.layer;
+                const propertyName = message.name;
+                const newValue = message.value;
+
+                // Check if the layer has hover options
+                const layerStyle = map
+                    .getStyle()
+                    .layers.find((layer) => layer.id === layerId);
+                const currentPaintProperty = map.getPaintProperty(
+                    layerId,
+                    propertyName,
                 );
+
+                if (
+                    currentPaintProperty &&
+                    Array.isArray(currentPaintProperty) &&
+                    currentPaintProperty[0] === "case"
+                ) {
+                    // This property has hover options, so we need to preserve them
+                    const hoverValue = currentPaintProperty[2];
+                    const newPaintProperty = [
+                        "case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        hoverValue,
+                        newValue,
+                    ];
+                    map.setPaintProperty(
+                        layerId,
+                        propertyName,
+                        newPaintProperty,
+                    );
+                } else {
+                    // No hover options, just set the new value directly
+                    map.setPaintProperty(layerId, propertyName, newValue);
+                }
             } else if (message.type === "query_rendered_features") {
                 const features = map.queryRenderedFeatures(message.geometry, {
                     layers: message.layers,
