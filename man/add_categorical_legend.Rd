@@ -12,7 +12,8 @@ add_categorical_legend(
   circular_patches = FALSE,
   position = "top-left",
   unique_id = NULL,
-  sizes = NULL
+  sizes = NULL,
+  add = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ add_categorical_legend(
 \item{unique_id}{A unique ID for the legend container. If NULL, a random ID will be generated.}
 
 \item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as \code{values}. If \code{circular_patches} is \code{FALSE} (for square patches), sizes represent the width and height of the patch in pixels.  If \code{circular_patches} is \code{TRUE}, sizes represent the radius of the circle.}
+
+\item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 }
 \value{
 The updated map object with the legend added.
@@ -43,15 +46,15 @@ customizable colors, sizes, and shapes for legend items.
 \dontrun{
 library(mapboxgl)
 map <- mapboxgl(
-  center = c(-96, 37.8),
-  zoom = 3
+    center = c(-96, 37.8),
+    zoom = 3
 )
 map \%>\% add_categorical_legend(
-  legend_title = "Population",
-  values = c("Low", "Medium", "High"),
-  colors = c("#FED976", "#FEB24C", "#FD8D3C"),
-  circular_patches = TRUE,
-  sizes = c(10, 15, 20)
+    legend_title = "Population",
+    values = c("Low", "Medium", "High"),
+    colors = c("#FED976", "#FEB24C", "#FD8D3C"),
+    circular_patches = TRUE,
+    sizes = c(10, 15, 20)
 )
 }
 }

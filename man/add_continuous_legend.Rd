@@ -10,7 +10,8 @@ add_continuous_legend(
   values,
   colors,
   position = "top-left",
-  unique_id = NULL
+  unique_id = NULL,
+  add = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ add_continuous_legend(
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 
 \item{unique_id}{A unique ID for the legend container. Defaults to NULL.}
+
+\item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 }
 \value{
 The updated map object with the legend added.

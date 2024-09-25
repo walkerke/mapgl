@@ -12,7 +12,8 @@ add_legend(
   type = c("continuous", "categorical"),
   circular_patches = FALSE,
   position = "top-left",
-  sizes = NULL
+  sizes = NULL,
+  add = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ add_legend(
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 
 \item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).}
+
+\item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 }
 \value{
 The updated map object with the legend added.

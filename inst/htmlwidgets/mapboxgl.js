@@ -538,10 +538,10 @@ HTMLWidgets.widget({
                         }
                     }
 
-                    const existingLegend =
-                        document.getElementById("mapboxgl-legend");
-                    if (existingLegend) {
-                        existingLegend.remove();
+                    if (!x.add) {
+                        const existingLegends =
+                            el.querySelectorAll(".mapboxgl-legend");
+                        existingLegends.forEach((legend) => legend.remove());
                     }
 
                     if (x.legend_html && x.legend_css) {
@@ -551,7 +551,7 @@ HTMLWidgets.widget({
 
                         const legend = document.createElement("div");
                         legend.innerHTML = x.legend_html;
-                        // legend.classList.add("mapboxgl-legend");
+                        legend.classList.add("mapboxgl-legend");
                         el.appendChild(legend);
                     }
 
@@ -1071,11 +1071,11 @@ if (HTMLWidgets.shinyMode) {
                     map.setPaintProperty(layerId, propertyName, newValue);
                 }
             } else if (message.type === "add_legend") {
-                const existingLegend = document.querySelector(
-                    `#${data.id} .mapboxgl-legend`,
-                );
-                if (existingLegend) {
-                    existingLegend.remove();
+                if (!message.add) {
+                    const existingLegends = document.querySelectorAll(
+                        `#${data.id} .mapboxgl-legend`,
+                    );
+                    existingLegends.forEach((legend) => legend.remove());
                 }
 
                 const legendCss = document.createElement("style");
@@ -1393,12 +1393,12 @@ if (HTMLWidgets.shinyMode) {
                     );
                 }
             } else if (message.type === "clear_legend") {
-                const existingLegend = document.querySelector(
+                const existingLegends = document.querySelectorAll(
                     `#${data.id} .mapboxgl-legend`,
                 );
-                if (existingLegend) {
-                    existingLegend.remove();
-                }
+                existingLegends.forEach((legend) => {
+                    legend.remove();
+                });
             } else if (message.type === "clear_controls") {
                 map.controls.forEach((control) => {
                     map.removeControl(control);
