@@ -1440,12 +1440,30 @@ if (HTMLWidgets.shinyMode) {
                     );
                 }
             } else if (message.type === "clear_legend") {
-                const existingLegends = document.querySelectorAll(
-                    `#${data.id} .mapboxgl-legend`,
-                );
-                existingLegends.forEach((legend) => {
-                    legend.remove();
-                });
+                if (message.ids && Array.isArray(message.ids)) {
+                    message.ids.forEach((id) => {
+                        const legend = document.querySelector(
+                            `#${data.id} div[id="${id}"]`,
+                        );
+                        if (legend) {
+                            legend.remove();
+                        }
+                    });
+                } else if (message.ids) {
+                    const legend = document.querySelector(
+                        `#${data.id} div[id="${message.ids}"]`,
+                    );
+                    if (legend) {
+                        legend.remove();
+                    }
+                } else {
+                    const existingLegends = document.querySelectorAll(
+                        `#${data.id} .mapboxgl-legend`,
+                    );
+                    existingLegends.forEach((legend) => {
+                        legend.remove();
+                    });
+                }
             } else if (message.type === "clear_controls") {
                 map.controls.forEach((control) => {
                     map.removeControl(control);

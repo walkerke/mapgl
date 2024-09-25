@@ -13,7 +13,8 @@ add_legend(
   circular_patches = FALSE,
   position = "top-left",
   sizes = NULL,
-  add = FALSE
+  add = FALSE,
+  unique_id = NULL
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ add_legend(
 \item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).}
 
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
+
+\item{unique_id}{Optional. A unique identifier for the legend. If not provided, a random ID will be generated.}
 }
 \value{
 The updated map object with the legend added.
