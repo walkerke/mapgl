@@ -318,46 +318,59 @@ HTMLWidgets.widget({
                                     map.on("mousemove", layer.id, function (e) {
                                         if (e.features.length > 0) {
                                             if (hoveredFeatureId !== null) {
-                                                map.setFeatureState(
-                                                    {
-                                                        source:
-                                                            typeof layer.source ===
-                                                            "string"
-                                                                ? layer.source
-                                                                : layer.id,
-                                                        id: hoveredFeatureId,
-                                                    },
-                                                    { hover: false },
-                                                );
-                                            }
-                                            hoveredFeatureId = e.features[0].id;
-                                            map.setFeatureState(
-                                                {
+                                                const featureState = {
                                                     source:
                                                         typeof layer.source ===
                                                         "string"
                                                             ? layer.source
                                                             : layer.id,
                                                     id: hoveredFeatureId,
-                                                },
-                                                { hover: true },
-                                            );
+                                                };
+                                                if (layer.source_layer) {
+                                                    featureState.sourceLayer =
+                                                        layer.source_layer;
+                                                }
+                                                map.setFeatureState(
+                                                    featureState,
+                                                    { hover: false },
+                                                );
+                                            }
+                                            hoveredFeatureId = e.features[0].id;
+                                            const featureState = {
+                                                source:
+                                                    typeof layer.source ===
+                                                    "string"
+                                                        ? layer.source
+                                                        : layer.id,
+                                                id: hoveredFeatureId,
+                                            };
+                                            if (layer.source_layer) {
+                                                featureState.sourceLayer =
+                                                    layer.source_layer;
+                                            }
+                                            map.setFeatureState(featureState, {
+                                                hover: true,
+                                            });
                                         }
                                     });
 
                                     map.on("mouseleave", layer.id, function () {
                                         if (hoveredFeatureId !== null) {
-                                            map.setFeatureState(
-                                                {
-                                                    source:
-                                                        typeof layer.source ===
-                                                        "string"
-                                                            ? layer.source
-                                                            : layer.id,
-                                                    id: hoveredFeatureId,
-                                                },
-                                                { hover: false },
-                                            );
+                                            const featureState = {
+                                                source:
+                                                    typeof layer.source ===
+                                                    "string"
+                                                        ? layer.source
+                                                        : layer.id,
+                                                id: hoveredFeatureId,
+                                            };
+                                            if (layer.source_layer) {
+                                                featureState.sourceLayer =
+                                                    layer.source_layer;
+                                            }
+                                            map.setFeatureState(featureState, {
+                                                hover: false,
+                                            });
                                         }
                                         hoveredFeatureId = null;
                                     });
@@ -946,46 +959,56 @@ if (HTMLWidgets.shinyMode) {
                         map.on("mousemove", message.layer.id, function (e) {
                             if (e.features.length > 0) {
                                 if (hoveredFeatureId !== null) {
-                                    map.setFeatureState(
-                                        {
-                                            source:
-                                                typeof message.layer.source ===
-                                                "string"
-                                                    ? message.layer.source
-                                                    : message.layer.id,
-                                            id: hoveredFeatureId,
-                                        },
-                                        { hover: false },
-                                    );
-                                }
-                                hoveredFeatureId = e.features[0].id;
-                                map.setFeatureState(
-                                    {
+                                    const featureState = {
                                         source:
                                             typeof message.layer.source ===
                                             "string"
                                                 ? message.layer.source
                                                 : message.layer.id,
                                         id: hoveredFeatureId,
-                                    },
-                                    { hover: true },
-                                );
+                                    };
+                                    if (message.layer.source_layer) {
+                                        featureState.sourceLayer =
+                                            message.layer.source_layer;
+                                    }
+                                    map.setFeatureState(featureState, {
+                                        hover: false,
+                                    });
+                                }
+                                hoveredFeatureId = e.features[0].id;
+                                const featureState = {
+                                    source:
+                                        typeof message.layer.source === "string"
+                                            ? message.layer.source
+                                            : message.layer.id,
+                                    id: hoveredFeatureId,
+                                };
+                                if (message.layer.source_layer) {
+                                    featureState.sourceLayer =
+                                        message.layer.source_layer;
+                                }
+                                map.setFeatureState(featureState, {
+                                    hover: true,
+                                });
                             }
                         });
 
                         map.on("mouseleave", message.layer.id, function () {
                             if (hoveredFeatureId !== null) {
-                                map.setFeatureState(
-                                    {
-                                        source:
-                                            typeof message.layer.source ===
-                                            "string"
-                                                ? message.layer.source
-                                                : message.layer.id,
-                                        id: hoveredFeatureId,
-                                    },
-                                    { hover: false },
-                                );
+                                const featureState = {
+                                    source:
+                                        typeof message.layer.source === "string"
+                                            ? message.layer.source
+                                            : message.layer.id,
+                                    id: hoveredFeatureId,
+                                };
+                                if (message.layer.source_layer) {
+                                    featureState.sourceLayer =
+                                        message.layer.source_layer;
+                                }
+                                map.setFeatureState(featureState, {
+                                    hover: false,
+                                });
                             }
                             hoveredFeatureId = null;
                         });

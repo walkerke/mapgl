@@ -13,7 +13,8 @@ add_categorical_legend(
   position = "top-left",
   unique_id = NULL,
   sizes = NULL,
-  add = FALSE
+  add = FALSE,
+  width = NULL
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ add_categorical_legend(
 \item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as \code{values}. If \code{circular_patches} is \code{FALSE} (for square patches), sizes represent the width and height of the patch in pixels.  If \code{circular_patches} is \code{TRUE}, sizes represent the radius of the circle.}
 
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
+
+\item{width}{The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.}
 }
 \value{
 The updated map object with the legend added.
@@ -54,7 +57,8 @@ map \%>\% add_categorical_legend(
     values = c("Low", "Medium", "High"),
     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
     circular_patches = TRUE,
-    sizes = c(10, 15, 20)
+    sizes = c(10, 15, 20),
+    width = "300px"
 )
 }
 }
