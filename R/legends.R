@@ -9,23 +9,21 @@
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
-#' @param unique_id Optional. A unique identifier for the legend. If not provided, a random ID will be generated.
+#' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
 #'
 #' @return The updated map object with the legend added.
 #' @export
 add_legend <- function(map, legend_title, values, colors,
                        type = c("continuous", "categorical"),
                        circular_patches = FALSE, position = "top-left",
-                       sizes = NULL, add = FALSE, unique_id = NULL) {
+                       sizes = NULL, add = FALSE, width = NULL) {
     type <- match.arg(type)
-    if (is.null(unique_id)) {
-        unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
-    }
+    unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
 
     if (type == "continuous") {
-        add_continuous_legend(map, legend_title, values, colors, position, unique_id, add)
+        add_continuous_legend(map, legend_title, values, colors, position, unique_id, add, width)
     } else {
-        add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id, sizes, add)
+        add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id, sizes, add, width)
     }
 }
 
@@ -43,6 +41,7 @@ add_legend <- function(map, legend_title, values, colors,
 #' @param unique_id A unique ID for the legend container. If NULL, a random ID will be generated.
 #' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as `values`. If `circular_patches` is `FALSE` (for square patches), sizes represent the width and height of the patch in pixels.  If `circular_patches` is `TRUE`, sizes represent the radius of the circle.
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
+#' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
 #'
 #' @return The updated map object with the legend added.
 #' @export
@@ -59,10 +58,11 @@ add_legend <- function(map, legend_title, values, colors,
 #'     values = c("Low", "Medium", "High"),
 #'     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
 #'     circular_patches = TRUE,
-#'     sizes = c(10, 15, 20)
+#'     sizes = c(10, 15, 20),
+#'     width = "300px"
 #' )
 #' }
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left", unique_id = NULL, sizes = NULL, add = FALSE) {
+add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left", unique_id = NULL, sizes = NULL, add = FALSE, width = NULL) {
     # Validate and prepare inputs
     if (length(colors) == 1) {
         colors <- rep(colors, length(values))
@@ -115,6 +115,8 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
         "</div>"
     )
 
+    width_style <- if (!is.null(width)) paste0("width: ", width, ";") else "max-width: 250px;"
+
     legend_css <- paste0("
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
     #", unique_id, " h2 {
@@ -132,7 +134,7 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       position: absolute;
       border-radius: 10px;
       margin: 10px;
-      max-width: 250px;
+      ", width_style, "
       background-color: #ffffff80;
       padding: 10px 20px;
       z-index: 1002;
@@ -204,10 +206,11 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #' @param unique_id A unique ID for the legend container. Defaults to NULL.
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
+#' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL, add = FALSE) {
+add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL, add = FALSE, width = NULL) {
     if (is.null(unique_id)) {
         unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
     }
@@ -232,6 +235,8 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
         "</div>"
     )
 
+    width_style <- if (!is.null(width)) paste0("width: ", width, ";") else "width: 200px;"
+
     legend_css <- paste0("
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
@@ -247,7 +252,7 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
       position: absolute;
       border-radius: 10px;
       margin: 10px;
-      width: 200px;
+      ", width_style, "
       background-color: #ffffff80;
       padding: 10px 20px;
       z-index: 1002;
@@ -309,22 +314,16 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
 }
 
 
-#' Clear legend(s) from a map in a proxy session
+#' Clear legend from a map in a proxy session
 #'
 #' @param map A map object created by the `mapboxgl_proxy` or `maplibre_proxy` function.
-#' @param legend_ids Optional. A character vector of legend IDs to clear. If not provided, all legends will be cleared.
 #'
-#' @return The updated map object with the specified legend(s) cleared.
+#' @return The updated map object with the legend cleared.
 #' @export
-clear_legend <- function(map, legend_ids = NULL) {
+clear_legend <- function(map) {
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
         proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
-        message <- if (is.null(legend_ids)) {
-            list(type = "clear_legend")
-        } else {
-            list(type = "clear_legend", ids = legend_ids)
-        }
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = message))
+        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_legend")))
     } else {
         stop("clear_legend can only be used with mapboxgl_proxy or maplibre_proxy objects.")
     }

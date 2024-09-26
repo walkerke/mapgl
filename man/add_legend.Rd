@@ -14,7 +14,7 @@ add_legend(
   position = "top-left",
   sizes = NULL,
   add = FALSE,
-  unique_id = NULL
+  width = NULL
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ add_legend(
 
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 
-\item{unique_id}{Optional. A unique identifier for the legend. If not provided, a random ID will be generated.}
+\item{width}{The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.}
 }
 \value{
 The updated map object with the legend added.
