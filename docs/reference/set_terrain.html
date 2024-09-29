@@ -71,13 +71,25 @@
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="st">"mapbox://styles/mapbox/satellite-streets-v12"</span>,</span></span>
-<span class="r-in"><span>                center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">114.26608</span>, <span class="fl">32.7213</span><span class="op">)</span>, zoom <span class="op">=</span> <span class="fl">14</span>, pitch <span class="op">=</span> <span class="fl">80</span>, bearing <span class="op">=</span> <span class="fl">41</span>,</span></span>
-<span class="r-in"><span>                access_token <span class="op">=</span> <span class="st">"your_token_here"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="add_source.html">add_source</a></span><span class="op">(</span><span class="va">map</span>, id <span class="op">=</span> <span class="st">"mapbox-dem"</span>, type <span class="op">=</span> <span class="st">"raster-dem"</span>,</span></span>
-<span class="r-in"><span>                  url <span class="op">=</span> <span class="st">"mapbox://mapbox.mapbox-terrain-dem-v1"</span>,</span></span>
-<span class="r-in"><span>                  tileSize <span class="op">=</span> <span class="fl">512</span>, maxzoom <span class="op">=</span> <span class="fl">14</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu">set_terrain</span><span class="op">(</span><span class="va">map</span>, source <span class="op">=</span> <span class="st">"mapbox-dem"</span>, exaggeration <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  style <span class="op">=</span> <span class="fu"><a href="mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"standard-satellite"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">114.26608</span>, <span class="fl">32.7213</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  zoom <span class="op">=</span> <span class="fl">14</span>,</span></span>
+<span class="r-in"><span>  pitch <span class="op">=</span> <span class="fl">80</span>,</span></span>
+<span class="r-in"><span>  bearing <span class="op">=</span> <span class="fl">41</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="add_raster_dem_source.html">add_raster_dem_source</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    id <span class="op">=</span> <span class="st">"mapbox-dem"</span>,</span></span>
+<span class="r-in"><span>    url <span class="op">=</span> <span class="st">"mapbox://mapbox.mapbox-terrain-dem-v1"</span>,</span></span>
+<span class="r-in"><span>    tileSize <span class="op">=</span> <span class="fl">512</span>,</span></span>
+<span class="r-in"><span>    maxzoom <span class="op">=</span> <span class="fl">14</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">set_terrain</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    source <span class="op">=</span> <span class="st">"mapbox-dem"</span>,</span></span>
+<span class="r-in"><span>    exaggeration <span class="op">=</span> <span class="fl">1.5</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

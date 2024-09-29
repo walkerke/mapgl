@@ -50,7 +50,9 @@
 <span>  <span class="va">values</span>,</span>
 <span>  <span class="va">colors</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"top-left"</span>,</span>
-<span>  unique_id <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  unique_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  add <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,6 +82,14 @@
 
 <dt id="arg-unique-id">unique_id<a class="anchor" aria-label="anchor" href="#arg-unique-id"></a></dt>
 <dd><p>A unique ID for the legend container. Defaults to NULL.</p></dd>
+
+
+<dt id="arg-add">add<a class="anchor" aria-label="anchor" href="#arg-add"></a></dt>
+<dd><p>Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.</p></dd>
+
+
+<dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
+<dd><p>The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.</p></dd>
 
 </dl></div>
     <div class="section level2">

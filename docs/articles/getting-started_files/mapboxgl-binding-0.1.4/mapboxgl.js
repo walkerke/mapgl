@@ -318,46 +318,59 @@ HTMLWidgets.widget({
                                     map.on("mousemove", layer.id, function (e) {
                                         if (e.features.length > 0) {
                                             if (hoveredFeatureId !== null) {
-                                                map.setFeatureState(
-                                                    {
-                                                        source:
-                                                            typeof layer.source ===
-                                                            "string"
-                                                                ? layer.source
-                                                                : layer.id,
-                                                        id: hoveredFeatureId,
-                                                    },
-                                                    { hover: false },
-                                                );
-                                            }
-                                            hoveredFeatureId = e.features[0].id;
-                                            map.setFeatureState(
-                                                {
+                                                const featureState = {
                                                     source:
                                                         typeof layer.source ===
                                                         "string"
                                                             ? layer.source
                                                             : layer.id,
                                                     id: hoveredFeatureId,
-                                                },
-                                                { hover: true },
-                                            );
+                                                };
+                                                if (layer.source_layer) {
+                                                    featureState.sourceLayer =
+                                                        layer.source_layer;
+                                                }
+                                                map.setFeatureState(
+                                                    featureState,
+                                                    { hover: false },
+                                                );
+                                            }
+                                            hoveredFeatureId = e.features[0].id;
+                                            const featureState = {
+                                                source:
+                                                    typeof layer.source ===
+                                                    "string"
+                                                        ? layer.source
+                                                        : layer.id,
+                                                id: hoveredFeatureId,
+                                            };
+                                            if (layer.source_layer) {
+                                                featureState.sourceLayer =
+                                                    layer.source_layer;
+                                            }
+                                            map.setFeatureState(featureState, {
+                                                hover: true,
+                                            });
                                         }
                                     });
 
                                     map.on("mouseleave", layer.id, function () {
                                         if (hoveredFeatureId !== null) {
-                                            map.setFeatureState(
-                                                {
-                                                    source:
-                                                        typeof layer.source ===
-                                                        "string"
-                                                            ? layer.source
-                                                            : layer.id,
-                                                    id: hoveredFeatureId,
-                                                },
-                                                { hover: false },
-                                            );
+                                            const featureState = {
+                                                source:
+                                                    typeof layer.source ===
+                                                    "string"
+                                                        ? layer.source
+                                                        : layer.id,
+                                                id: hoveredFeatureId,
+                                            };
+                                            if (layer.source_layer) {
+                                                featureState.sourceLayer =
+                                                    layer.source_layer;
+                                            }
+                                            map.setFeatureState(featureState, {
+                                                hover: false,
+                                            });
                                         }
                                         hoveredFeatureId = null;
                                     });
@@ -538,10 +551,10 @@ HTMLWidgets.widget({
                         }
                     }
 
-                    const existingLegend =
-                        document.getElementById("mapboxgl-legend");
-                    if (existingLegend) {
-                        existingLegend.remove();
+                    if (!x.add) {
+                        const existingLegends =
+                            el.querySelectorAll(".mapboxgl-legend");
+                        existingLegends.forEach((legend) => legend.remove());
                     }
 
                     if (x.legend_html && x.legend_css) {
@@ -551,7 +564,7 @@ HTMLWidgets.widget({
 
                         const legend = document.createElement("div");
                         legend.innerHTML = x.legend_html;
-                        // legend.classList.add("mapboxgl-legend");
+                        legend.classList.add("mapboxgl-legend");
                         el.appendChild(legend);
                     }
 
@@ -946,46 +959,56 @@ if (HTMLWidgets.shinyMode) {
                         map.on("mousemove", message.layer.id, function (e) {
                             if (e.features.length > 0) {
                                 if (hoveredFeatureId !== null) {
-                                    map.setFeatureState(
-                                        {
-                                            source:
-                                                typeof message.layer.source ===
-                                                "string"
-                                                    ? message.layer.source
-                                                    : message.layer.id,
-                                            id: hoveredFeatureId,
-                                        },
-                                        { hover: false },
-                                    );
-                                }
-                                hoveredFeatureId = e.features[0].id;
-                                map.setFeatureState(
-                                    {
+                                    const featureState = {
                                         source:
                                             typeof message.layer.source ===
                                             "string"
                                                 ? message.layer.source
                                                 : message.layer.id,
                                         id: hoveredFeatureId,
-                                    },
-                                    { hover: true },
-                                );
+                                    };
+                                    if (message.layer.source_layer) {
+                                        featureState.sourceLayer =
+                                            message.layer.source_layer;
+                                    }
+                                    map.setFeatureState(featureState, {
+                                        hover: false,
+                                    });
+                                }
+                                hoveredFeatureId = e.features[0].id;
+                                const featureState = {
+                                    source:
+                                        typeof message.layer.source === "string"
+                                            ? message.layer.source
+                                            : message.layer.id,
+                                    id: hoveredFeatureId,
+                                };
+                                if (message.layer.source_layer) {
+                                    featureState.sourceLayer =
+                                        message.layer.source_layer;
+                                }
+                                map.setFeatureState(featureState, {
+                                    hover: true,
+                                });
                             }
                         });
 
                         map.on("mouseleave", message.layer.id, function () {
                             if (hoveredFeatureId !== null) {
-                                map.setFeatureState(
-                                    {
-                                        source:
-                                            typeof message.layer.source ===
-                                            "string"
-                                                ? message.layer.source
-                                                : message.layer.id,
-                                        id: hoveredFeatureId,
-                                    },
-                                    { hover: false },
-                                );
+                                const featureState = {
+                                    source:
+                                        typeof message.layer.source === "string"
+                                            ? message.layer.source
+                                            : message.layer.id,
+                                    id: hoveredFeatureId,
+                                };
+                                if (message.layer.source_layer) {
+                                    featureState.sourceLayer =
+                                        message.layer.source_layer;
+                                }
+                                map.setFeatureState(featureState, {
+                                    hover: false,
+                                });
                             }
                             hoveredFeatureId = null;
                         });
@@ -1035,17 +1058,47 @@ if (HTMLWidgets.shinyMode) {
                     message.value,
                 );
             } else if (message.type === "set_paint_property") {
-                map.setPaintProperty(
-                    message.layer,
-                    message.name,
-                    message.value,
+                const layerId = message.layer;
+                const propertyName = message.name;
+                const newValue = message.value;
+
+                // Check if the layer has hover options
+                const layerStyle = map
+                    .getStyle()
+                    .layers.find((layer) => layer.id === layerId);
+                const currentPaintProperty = map.getPaintProperty(
+                    layerId,
+                    propertyName,
                 );
+
+                if (
+                    currentPaintProperty &&
+                    Array.isArray(currentPaintProperty) &&
+                    currentPaintProperty[0] === "case"
+                ) {
+                    // This property has hover options, so we need to preserve them
+                    const hoverValue = currentPaintProperty[2];
+                    const newPaintProperty = [
+                        "case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        hoverValue,
+                        newValue,
+                    ];
+                    map.setPaintProperty(
+                        layerId,
+                        propertyName,
+                        newPaintProperty,
+                    );
+                } else {
+                    // No hover options, just set the new value directly
+                    map.setPaintProperty(layerId, propertyName, newValue);
+                }
             } else if (message.type === "add_legend") {
-                const existingLegend = document.querySelector(
-                    `#${data.id} .mapboxgl-legend`,
-                );
-                if (existingLegend) {
-                    existingLegend.remove();
+                if (!message.add) {
+                    const existingLegends = document.querySelectorAll(
+                        `#${data.id} .mapboxgl-legend`,
+                    );
+                    existingLegends.forEach((legend) => legend.remove());
                 }
 
                 const legendCss = document.createElement("style");
@@ -1170,11 +1223,26 @@ if (HTMLWidgets.shinyMode) {
                 map.on("draw.delete", updateDrawnFeatures);
                 map.on("draw.update", updateDrawnFeatures);
             } else if (message.type === "get_drawn_features") {
-                const features = draw ? draw.getAll() : null;
-                Shiny.setInputValue(
-                    data.id + "_drawn_features",
-                    JSON.stringify(features),
-                );
+                if (
+                    map.controls &&
+                    map.controls.some(
+                        (control) => control instanceof MapboxDraw,
+                    )
+                ) {
+                    const drawControl = map.controls.find(
+                        (control) => control instanceof MapboxDraw,
+                    );
+                    const features = drawControl ? drawControl.getAll() : null;
+                    Shiny.setInputValue(
+                        data.id + "_drawn_features",
+                        JSON.stringify(features),
+                    );
+                } else {
+                    Shiny.setInputValue(
+                        data.id + "_drawn_features",
+                        JSON.stringify(null),
+                    );
+                }
             } else if (message.type === "clear_drawn_features") {
                 if (draw) {
                     draw.deleteAll();
@@ -1348,11 +1416,29 @@ if (HTMLWidgets.shinyMode) {
                     );
                 }
             } else if (message.type === "clear_legend") {
-                const existingLegend = document.querySelector(
-                    `#${data.id} .mapboxgl-legend`,
-                );
-                if (existingLegend) {
-                    existingLegend.remove();
+                if (message.ids && Array.isArray(message.ids)) {
+                    message.ids.forEach((id) => {
+                        const legend = document.querySelector(
+                            `#${data.id} div[id="${id}"]`,
+                        );
+                        if (legend) {
+                            legend.remove();
+                        }
+                    });
+                } else if (message.ids) {
+                    const legend = document.querySelector(
+                        `#${data.id} div[id="${message.ids}"]`,
+                    );
+                    if (legend) {
+                        legend.remove();
+                    }
+                } else {
+                    const existingLegends = document.querySelectorAll(
+                        `#${data.id} .mapboxgl-legend`,
+                    );
+                    existingLegends.forEach((legend) => {
+                        legend.remove();
+                    });
                 }
             } else if (message.type === "clear_controls") {
                 map.controls.forEach((control) => {

@@ -9,13 +9,25 @@
 #'
 #' @examples
 #' \dontrun{
-#' map <- mapboxgl(style = "mapbox://styles/mapbox/satellite-streets-v12",
-#'                 center = c(-114.26608, 32.7213), zoom = 14, pitch = 80, bearing = 41,
-#'                 access_token = "your_token_here")
-#' map <- add_source(map, id = "mapbox-dem", type = "raster-dem",
-#'                   url = "mapbox://mapbox.mapbox-terrain-dem-v1",
-#'                   tileSize = 512, maxzoom = 14)
-#' map <- set_terrain(map, source = "mapbox-dem", exaggeration = 1.5)
+#' library(mapgl)
+#'
+#' mapboxgl(
+#'   style = mapbox_style("standard-satellite"),
+#'   center = c(-114.26608, 32.7213),
+#'   zoom = 14,
+#'   pitch = 80,
+#'   bearing = 41
+#' ) |>
+#'   add_raster_dem_source(
+#'     id = "mapbox-dem",
+#'     url = "mapbox://mapbox.mapbox-terrain-dem-v1",
+#'     tileSize = 512,
+#'     maxzoom = 14
+#'   ) |>
+#'   set_terrain(
+#'     source = "mapbox-dem",
+#'     exaggeration = 1.5
+#'   )
 #' }
 set_terrain <- function(map, source, exaggeration = 1.0) {
   map$x$terrain <- list(
