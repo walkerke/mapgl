@@ -570,6 +570,17 @@ HTMLWidgets.widget({
                         map.on("draw.create", updateDrawnFeatures);
                         map.on("draw.delete", updateDrawnFeatures);
                         map.on("draw.update", updateDrawnFeatures);
+
+                        // Apply orientation styling
+                        if (x.draw_control.orientation === "horizontal") {
+                            const drawBar = map
+                                .getContainer()
+                                .querySelector(".maplibregl-ctrl-group");
+                            if (drawBar) {
+                                drawBar.style.display = "flex";
+                                drawBar.style.flexDirection = "row";
+                            }
+                        }
                     }
 
                     function updateDrawnFeatures() {
@@ -1136,13 +1147,24 @@ if (HTMLWidgets.shinyMode) {
                 }
 
                 draw = new MapboxDraw(drawOptions);
-                map.addControl(draw, x.draw_control.position);
+                map.addControl(draw, message.position);
                 map.controls.push(draw);
 
                 // Add event listeners
                 map.on("draw.create", updateDrawnFeatures);
                 map.on("draw.delete", updateDrawnFeatures);
                 map.on("draw.update", updateDrawnFeatures);
+
+                // Apply orientation styling
+                if (message.orientation === "horizontal") {
+                    const drawBar = map
+                        .getContainer()
+                        .querySelector(".maplibregl-ctrl-group");
+                    if (drawBar) {
+                        drawBar.style.display = "flex";
+                        drawBar.style.flexDirection = "row";
+                    }
+                }
             } else if (message.type === "get_drawn_features") {
                 if (
                     map.controls &&

@@ -262,6 +262,8 @@ add_scale_control <- function(map,
 #'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
 #' @param freehand Logical, whether to enable freehand drawing mode. Default is FALSE.
 #' @param simplify_freehand Logical, whether to apply simplification to freehand drawings. Default is FALSE.
+#' @param orientation A string specifying the orientation of the draw control.
+#'        Either "vertical" (default) or "horizontal".
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -276,12 +278,13 @@ add_scale_control <- function(map,
 #'     center = c(-74.50, 40),
 #'     zoom = 9
 #' ) |>
-#'     add_draw_control(position = "top-left", freehand = TRUE, simplify_freehand = TRUE)
+#'     add_draw_control(position = "top-left", freehand = TRUE, simplify_freehand = TRUE, orientation = "horizontal")
 #' }
 add_draw_control <- function(map,
                              position = "top-left",
                              freehand = FALSE,
                              simplify_freehand = FALSE,
+                             orientation = "vertical",
                              ...) {
     # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
     #   rlang::abort("The draw control is not yet supported for MapLibre maps.")
@@ -294,6 +297,7 @@ add_draw_control <- function(map,
         position = position,
         freehand = freehand,
         simplify_freehand = simplify_freehand,
+        orientation = orientation,
         options = options
     )
 
@@ -311,7 +315,8 @@ add_draw_control <- function(map,
                 position = position,
                 options = options,
                 freehand = freehand,
-                simplify_freehand = simplify_freehand
+                simplify_freehand = simplify_freehand,
+                orientation = orientation
             )
         ))
     }

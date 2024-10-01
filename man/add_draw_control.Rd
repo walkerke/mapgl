@@ -9,6 +9,7 @@ add_draw_control(
   position = "top-left",
   freehand = FALSE,
   simplify_freehand = FALSE,
+  orientation = "vertical",
   ...
 )
 }
@@ -21,6 +22,9 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 \item{freehand}{Logical, whether to enable freehand drawing mode. Default is FALSE.}
 
 \item{simplify_freehand}{Logical, whether to apply simplification to freehand drawings. Default is FALSE.}
+
+\item{orientation}{A string specifying the orientation of the draw control.
+Either "vertical" (default) or "horizontal".}
 
 \item{...}{Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.}
 }
@@ -39,6 +43,6 @@ mapboxgl(
     center = c(-74.50, 40),
     zoom = 9
 ) |>
-    add_draw_control(position = "top-left", freehand = TRUE, simplify_freehand = TRUE)
+    add_draw_control(position = "top-left", freehand = TRUE, simplify_freehand = TRUE, orientation = "horizontal")
 }
 }
