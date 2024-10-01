@@ -1,6 +1,6 @@
 dependencies:
   - name: maplibre-gl
-    version: "4.6.0"
+    version: "4.7.1"
     src: "htmlwidgets/lib/maplibre-gl"
     script:
       - "maplibre-gl.js"
@@ -8,8 +8,7 @@ dependencies:
       - "maplibre-gl.css"
   - name: mapbox-gl-draw
     version: "1.4.3"
-    src:
-      href: "https://www.unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist"
+    src: "htmlwidgets/lib/mapbox-gl-draw"
     script:
       - "mapbox-gl-draw.js"
     stylesheet:
@@ -21,8 +20,7 @@ dependencies:
       - "freehand-mode.js"
   - name: maplibre-gl-geocoder
     version: 1.5.0
-    src:
-      href: "https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/"
+    src: "htmlwidgets/lib/maplibre-gl-geocoder"
     script:
       - "maplibre-gl-geocoder.min.js"
     stylesheet:
