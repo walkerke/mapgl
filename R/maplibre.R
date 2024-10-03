@@ -34,6 +34,8 @@ maplibre <- function(style = carto_style("voyager"),
       bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
     }
     additional_params$bounds <- bounds
+    center <- bounds_to_center(bounds)
+    zoom <- bounds_to_zoom(bounds)
   }
 
   control_css <- htmltools::htmlDependency(
