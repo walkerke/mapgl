@@ -638,6 +638,18 @@ HTMLWidgets.widget({
                         });
                         map.addControl(nav, x.navigation_control.position);
                         map.controls.push(nav);
+
+                        if (x.navigation_control.orientation === "horizontal") {
+                            const navBar = map
+                                .getContainer()
+                                .querySelector(
+                                    ".maplibregl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
+                                );
+                            if (navBar) {
+                                navBar.style.display = "flex";
+                                navBar.style.flexDirection = "row";
+                            }
+                        }
                     }
 
                     // Add reset control if enabled
@@ -1129,6 +1141,18 @@ if (HTMLWidgets.shinyMode) {
                 });
                 map.addControl(nav, message.position);
                 map.controls.push(nav);
+
+                if (message.orientation === "horizontal") {
+                    const navBar = map
+                        .getContainer()
+                        .querySelector(
+                            ".maplibregl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
+                        );
+                    if (navBar) {
+                        navBar.style.display = "flex";
+                        navBar.style.flexDirection = "row";
+                    }
+                }
             } else if (message.type === "add_draw_control") {
                 MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
                 MapboxDraw.constants.classes.CONTROL_PREFIX =

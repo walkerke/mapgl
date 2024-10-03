@@ -46,6 +46,7 @@ add_fullscreen_control <- function(map, position = "top-right") {
 #' @param show_zoom Whether to show the zoom-in and zoom-out buttons.
 #' @param visualize_pitch Whether to visualize the pitch by rotating the X-axis of the compass.
 #' @param position The position on the map where the control will be added. Possible values are "top-left", "top-right", "bottom-left", and "bottom-right".
+#' @param orientation The orientation of the navigation control. Can be "vertical" (default) or "horizontal".
 #'
 #' @return The updated map object with the navigation control added.
 #' @export
@@ -60,12 +61,14 @@ add_navigation_control <- function(map,
                                    show_compass = TRUE,
                                    show_zoom = TRUE,
                                    visualize_pitch = FALSE,
-                                   position = "top-right") {
+                                   position = "top-right",
+                                   orientation = "vertical") {
     nav_control <- list(
         show_compass = show_compass,
         show_zoom = show_zoom,
         visualize_pitch = visualize_pitch,
-        position = position
+        position = position,
+        orientation = orientation
     )
 
     if (any(
@@ -83,7 +86,8 @@ add_navigation_control <- function(map,
             message = list(
                 type = "add_navigation_control",
                 options = nav_control,
-                position = position
+                position = position,
+                orientation = orientation
             )
         ))
     } else {

@@ -9,7 +9,8 @@ add_navigation_control(
   show_compass = TRUE,
   show_zoom = TRUE,
   visualize_pitch = FALSE,
-  position = "top-right"
+  position = "top-right",
+  orientation = "vertical"
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ add_navigation_control(
 \item{visualize_pitch}{Whether to visualize the pitch by rotating the X-axis of the compass.}
 
 \item{position}{The position on the map where the control will be added. Possible values are "top-left", "top-right", "bottom-left", and "bottom-right".}
+
+\item{orientation}{The orientation of the navigation control. Can be "vertical" (default) or "horizontal".}
 }
 \value{
 The updated map object with the navigation control added.
