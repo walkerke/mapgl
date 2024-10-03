@@ -17,8 +17,6 @@
 #' \dontrun{
 #' library(mapgl)
 #'
-#' library(mapgl)
-#'
 #' m1 <- mapboxgl(style = mapbox_style("light"))
 #'
 #' m2 <- mapboxgl(style = mapbox_style("dark"))

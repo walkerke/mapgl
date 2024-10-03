@@ -39,8 +39,6 @@ This function creates a comparison view between two Mapbox GL or Maplibre GL map
 \dontrun{
 library(mapgl)
 
-library(mapgl)
-
 m1 <- mapboxgl(style = mapbox_style("light"))
 
 m2 <- mapboxgl(style = mapbox_style("dark"))
