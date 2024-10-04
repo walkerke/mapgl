@@ -570,6 +570,17 @@ HTMLWidgets.widget({
                         map.on("draw.create", updateDrawnFeatures);
                         map.on("draw.delete", updateDrawnFeatures);
                         map.on("draw.update", updateDrawnFeatures);
+
+                        // Apply orientation styling
+                        if (x.draw_control.orientation === "horizontal") {
+                            const drawBar = map
+                                .getContainer()
+                                .querySelector(".maplibregl-ctrl-group");
+                            if (drawBar) {
+                                drawBar.style.display = "flex";
+                                drawBar.style.flexDirection = "row";
+                            }
+                        }
                     }
 
                     function updateDrawnFeatures() {
@@ -627,6 +638,18 @@ HTMLWidgets.widget({
                         });
                         map.addControl(nav, x.navigation_control.position);
                         map.controls.push(nav);
+
+                        if (x.navigation_control.orientation === "horizontal") {
+                            const navBar = map
+                                .getContainer()
+                                .querySelector(
+                                    ".maplibregl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
+                                );
+                            if (navBar) {
+                                navBar.style.display = "flex";
+                                navBar.style.flexDirection = "row";
+                            }
+                        }
                     }
 
                     // Add reset control if enabled
@@ -1118,6 +1141,18 @@ if (HTMLWidgets.shinyMode) {
                 });
                 map.addControl(nav, message.position);
                 map.controls.push(nav);
+
+                if (message.orientation === "horizontal") {
+                    const navBar = map
+                        .getContainer()
+                        .querySelector(
+                            ".maplibregl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
+                        );
+                    if (navBar) {
+                        navBar.style.display = "flex";
+                        navBar.style.flexDirection = "row";
+                    }
+                }
             } else if (message.type === "add_draw_control") {
                 MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
                 MapboxDraw.constants.classes.CONTROL_PREFIX =
@@ -1136,13 +1171,24 @@ if (HTMLWidgets.shinyMode) {
                 }
 
                 draw = new MapboxDraw(drawOptions);
-                map.addControl(draw, x.draw_control.position);
+                map.addControl(draw, message.position);
                 map.controls.push(draw);
 
                 // Add event listeners
                 map.on("draw.create", updateDrawnFeatures);
                 map.on("draw.delete", updateDrawnFeatures);
                 map.on("draw.update", updateDrawnFeatures);
+
+                // Apply orientation styling
+                if (message.orientation === "horizontal") {
+                    const drawBar = map
+                        .getContainer()
+                        .querySelector(".maplibregl-ctrl-group");
+                    if (drawBar) {
+                        drawBar.style.display = "flex";
+                        drawBar.style.flexDirection = "row";
+                    }
+                }
             } else if (message.type === "get_drawn_features") {
                 if (
                     map.controls &&
