@@ -204,7 +204,7 @@ set_style <- function(map, style, config = NULL, diff = TRUE) {
 #'
 #' @param proxy A proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
 #' @param layer_id The ID of the layer to move.
-#' @param before_id The ID of an existing layer to insert the new layer before. If omitted, the layer will be appended to the end of the layers array.
+#' @param before_id The ID of an existing layer to insert the new layer before. __Important__: this means that the layer will appear _immediately behind_ the layer defined in `before_id`. If omitted, the layer will be appended to the end of the layers array and appear above all other layers.
 #'
 #' @return The updated proxy object.
 #' @export

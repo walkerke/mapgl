@@ -11,7 +11,7 @@ move_layer(proxy, layer_id, before_id = NULL)
 
 \item{layer_id}{The ID of the layer to move.}
 
-\item{before_id}{The ID of an existing layer to insert the new layer before. If omitted, the layer will be appended to the end of the layers array.}
+\item{before_id}{The ID of an existing layer to insert the new layer before. \strong{Important}: this means that the layer will appear \emph{immediately behind} the layer defined in \code{before_id}. If omitted, the layer will be appended to the end of the layers array and appear above all other layers.}
 }
 \value{
 The updated proxy object.
