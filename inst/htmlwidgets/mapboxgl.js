@@ -1497,6 +1497,16 @@ if (HTMLWidgets.shinyMode) {
                 if (layersControl) {
                     layersControl.remove();
                 }
+            } else if (message.type === "move_layer") {
+                if (map.getLayer(message.layer)) {
+                    if (message.before) {
+                        map.moveLayer(message.layer, message.before);
+                    } else {
+                        map.moveLayer(message.layer);
+                    }
+                } else {
+                    console.error("Layer not found:", message.layer);
+                }
             }
         }
     });

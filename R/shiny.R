@@ -8,19 +8,19 @@
 #' @return A proxy object for the Mapbox GL map.
 #' @export
 mapboxgl_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
-  if (is.null(session)) {
-    stop("mapboxgl_proxy must be called from within a Shiny session")
-  }
+    if (is.null(session)) {
+        stop("mapboxgl_proxy must be called from within a Shiny session")
+    }
 
-  if (!is.null(session$ns) &&
-    nzchar(session$ns(NULL)) &&
-    substring(mapId, 1, nchar(session$ns(""))) != session$ns("")) {
-    mapId <- session$ns(mapId)
-  }
+    if (!is.null(session$ns) &&
+        nzchar(session$ns(NULL)) &&
+        substring(mapId, 1, nchar(session$ns(""))) != session$ns("")) {
+        mapId <- session$ns(mapId)
+    }
 
-  proxy <- list(id = mapId, session = session)
-  class(proxy) <- "mapboxgl_proxy"
-  proxy
+    proxy <- list(id = mapId, session = session)
+    class(proxy) <- "mapboxgl_proxy"
+    proxy
 }
 
 #' Create a proxy object for a Maplibre GL map in Shiny
@@ -33,19 +33,19 @@ mapboxgl_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
 #' @return A proxy object for the Maplibre GL map.
 #' @export
 maplibre_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
-  if (is.null(session)) {
-    stop("maplibre_proxy must be called from within a Shiny session")
-  }
+    if (is.null(session)) {
+        stop("maplibre_proxy must be called from within a Shiny session")
+    }
 
-  if (!is.null(session$ns) &&
-    nzchar(session$ns(NULL)) &&
-    substring(mapId, 1, nchar(session$ns(""))) != session$ns("")) {
-    mapId <- session$ns(mapId)
-  }
+    if (!is.null(session$ns) &&
+        nzchar(session$ns(NULL)) &&
+        substring(mapId, 1, nchar(session$ns(""))) != session$ns("")) {
+        mapId <- session$ns(mapId)
+    }
 
-  proxy <- list(id = mapId, session = session)
-  class(proxy) <- "maplibre_proxy"
-  proxy
+    proxy <- list(id = mapId, session = session)
+    class(proxy) <- "maplibre_proxy"
+    proxy
 }
 
 #' Set a filter on a map layer
@@ -59,17 +59,17 @@ maplibre_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
 #' @return The updated map object.
 #' @export
 set_filter <- function(map, layer_id, filter) {
-  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "set_filter", layer = layer_id, filter = filter)
-    ))
-  } else {
-    if (is.null(map$x$setFilter)) map$x$setFilter <- list()
-    map$x$setFilter[[length(map$x$setFilter) + 1]] <- list(layer = layer_id, filter = filter)
-  }
-  return(map)
+    if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "set_filter", layer = layer_id, filter = filter)
+        ))
+    } else {
+        if (is.null(map$x$setFilter)) map$x$setFilter <- list()
+        map$x$setFilter[[length(map$x$setFilter) + 1]] <- list(layer = layer_id, filter = filter)
+    }
+    return(map)
 }
 
 #' Clear a layer from a map using a proxy
@@ -82,15 +82,15 @@ set_filter <- function(map, layer_id, filter) {
 #' @return The updated proxy object.
 #' @export
 clear_layer <- function(proxy, layer_id) {
-  if (!any(inherits(proxy, "mapboxgl_proxy"), inherits(proxy, "maplibre_proxy"))) {
-    stop("Invalid proxy object")
-  }
+    if (!any(inherits(proxy, "mapboxgl_proxy"), inherits(proxy, "maplibre_proxy"))) {
+        stop("Invalid proxy object")
+    }
 
-  proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
 
-  message <- list(type = "remove_layer", layer = layer_id)
-  proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
-  proxy
+    message <- list(type = "remove_layer", layer = layer_id)
+    proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
+    proxy
 }
 
 #' Set a layout property on a map layer
@@ -103,17 +103,17 @@ clear_layer <- function(proxy, layer_id) {
 #' @return The updated map object.
 #' @export
 set_layout_property <- function(map, layer, name, value) {
-  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "set_layout_property", layer = layer, name = name, value = value)
-    ))
-  } else {
-    if (is.null(map$x$setLayoutProperty)) map$x$setLayoutProperty <- list()
-    map$x$setLayoutProperty[[length(map$x$setLayoutProperty) + 1]] <- list(layer = layer, name = name, value = value)
-  }
-  return(map)
+    if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "set_layout_property", layer = layer, name = name, value = value)
+        ))
+    } else {
+        if (is.null(map$x$setLayoutProperty)) map$x$setLayoutProperty <- list()
+        map$x$setLayoutProperty[[length(map$x$setLayoutProperty) + 1]] <- list(layer = layer, name = name, value = value)
+    }
+    return(map)
 }
 
 #' Set a paint property on a map layer
@@ -126,17 +126,17 @@ set_layout_property <- function(map, layer, name, value) {
 #' @return The updated map object.
 #' @export
 set_paint_property <- function(map, layer, name, value) {
-  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "set_paint_property", layer = layer, name = name, value = value)
-    ))
-  } else {
-    if (is.null(map$x$setPaintProperty)) map$x$setPaintProperty <- list()
-    map$x$setPaintProperty[[length(map$x$setPaintProperty) + 1]] <- list(layer = layer, name = name, value = value)
-  }
-  return(map)
+    if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "set_paint_property", layer = layer, name = name, value = value)
+        ))
+    } else {
+        if (is.null(map$x$setPaintProperty)) map$x$setPaintProperty <- list()
+        map$x$setPaintProperty[[length(map$x$setPaintProperty) + 1]] <- list(layer = layer, name = name, value = value)
+    }
+    return(map)
 }
 
 #' Clear markers from a map in a Shiny session
@@ -146,13 +146,13 @@ set_paint_property <- function(map, layer, name, value) {
 #' @return The modified map object with the markers cleared.
 #' @export
 clear_markers <- function(map) {
-  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_markers")))
-  } else {
-    stop("clear_markers() can only be used with mapboxgl_proxy() or maplibre_proxy()")
-  }
-  return(map)
+    if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_markers")))
+    } else {
+        stop("clear_markers() can only be used with mapboxgl_proxy() or maplibre_proxy()")
+    }
+    return(map)
 }
 
 #' Update the style of a map
@@ -168,32 +168,59 @@ clear_markers <- function(map) {
 #' @examples
 #' \dontrun{
 #' map <- mapboxgl(
-#'   style = mapbox_style("streets"),
-#'   center = c(-74.006, 40.7128),
-#'   zoom = 10,
-#'   access_token = "your_mapbox_access_token"
+#'     style = mapbox_style("streets"),
+#'     center = c(-74.006, 40.7128),
+#'     zoom = 10,
+#'     access_token = "your_mapbox_access_token"
 #' )
 #'
 #' # Update the map style in a Shiny app
 #' observeEvent(input$change_style, {
-#'   mapboxgl_proxy("map", session) %>%
-#'     set_style(mapbox_style("dark"), config = list(showLabels = FALSE), diff = TRUE)
+#'     mapboxgl_proxy("map", session) %>%
+#'         set_style(mapbox_style("dark"), config = list(showLabels = FALSE), diff = TRUE)
 #' })
 #' }
 set_style <- function(map, style, config = NULL, diff = TRUE) {
-  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(
-        type = "set_style",
-        style = style,
-        config = config,
-        diff = diff
-      )
-    ))
-  } else {
-    stop("set_style can only be used with mapboxgl_proxy or maplibre_proxy.")
-  }
-  return(map)
+    if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(
+                type = "set_style",
+                style = style,
+                config = config,
+                diff = diff
+            )
+        ))
+    } else {
+        stop("set_style can only be used with mapboxgl_proxy or maplibre_proxy.")
+    }
+    return(map)
+}
+
+#' Move a layer to a different z-position
+#'
+#' This function allows a layer to be moved to a different z-position in an existing Mapbox GL or Maplibre GL map using a proxy object.
+#'
+#' @param proxy A proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
+#' @param layer_id The ID of the layer to move.
+#' @param before_id The ID of an existing layer to insert the new layer before. If omitted, the layer will be appended to the end of the layers array.
+#'
+#' @return The updated proxy object.
+#' @export
+move_layer <- function(proxy, layer_id, before_id = NULL) {
+    if (!any(inherits(proxy, "mapboxgl_proxy"), inherits(proxy, "maplibre_proxy"))) {
+        stop("Invalid proxy object")
+    }
+
+    proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+
+    message <- list(
+        type = "move_layer",
+        layer = layer_id,
+        before = before_id
+    )
+
+    proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
+    proxy
 }

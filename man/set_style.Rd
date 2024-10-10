@@ -24,16 +24,16 @@ Update the style of a map
 \examples{
 \dontrun{
 map <- mapboxgl(
-  style = mapbox_style("streets"),
-  center = c(-74.006, 40.7128),
-  zoom = 10,
-  access_token = "your_mapbox_access_token"
+    style = mapbox_style("streets"),
+    center = c(-74.006, 40.7128),
+    zoom = 10,
+    access_token = "your_mapbox_access_token"
 )
 
 # Update the map style in a Shiny app
 observeEvent(input$change_style, {
-  mapboxgl_proxy("map", session) \%>\%
-    set_style(mapbox_style("dark"), config = list(showLabels = FALSE), diff = TRUE)
+    mapboxgl_proxy("map", session) \%>\%
+        set_style(mapbox_style("dark"), config = list(showLabels = FALSE), diff = TRUE)
 })
 }
 }
