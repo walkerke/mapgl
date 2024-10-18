@@ -271,6 +271,17 @@ HTMLWidgets.widget({
                                             .setHTML(description)
                                             .addTo(map);
                                     });
+
+                                    // Change cursor to pointer when hovering over the layer
+                                    map.on("mouseenter", layer.id, function () {
+                                        map.getCanvas().style.cursor =
+                                            "pointer";
+                                    });
+
+                                    // Change cursor back to default when leaving the layer
+                                    map.on("mouseleave", layer.id, function () {
+                                        map.getCanvas().style.cursor = "";
+                                    });
                                 }
 
                                 if (layer.tooltip) {
@@ -961,6 +972,16 @@ if (HTMLWidgets.shinyMode) {
                                 .setLngLat(e.lngLat)
                                 .setHTML(description)
                                 .addTo(map);
+                        });
+
+                        // Change cursor to pointer when hovering over the layer
+                        map.on("mouseenter", message.layer.id, function () {
+                            map.getCanvas().style.cursor = "pointer";
+                        });
+
+                        // Change cursor back to default when leaving the layer
+                        map.on("mouseleave", message.layer.id, function () {
+                            map.getCanvas().style.cursor = "";
                         });
                     }
 
