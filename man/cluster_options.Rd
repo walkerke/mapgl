@@ -14,7 +14,8 @@ cluster_options(
   circle_opacity = NULL,
   circle_stroke_color = NULL,
   circle_stroke_opacity = NULL,
-  circle_stroke_width = NULL
+  circle_stroke_width = NULL,
+  text_color = "black"
 )
 }
 \arguments{

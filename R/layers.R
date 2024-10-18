@@ -602,7 +602,8 @@ cluster_options <- function(max_zoom = 14,
                             circle_opacity = NULL,
                             circle_stroke_color = NULL,
                             circle_stroke_opacity = NULL,
-                            circle_stroke_width = NULL) {
+                            circle_stroke_width = NULL,
+                            text_color = "black") {
     list(
         max_zoom = max_zoom,
         cluster_radius = cluster_radius,
@@ -613,7 +614,8 @@ cluster_options <- function(max_zoom = 14,
         circle_opacity = circle_opacity,
         circle_stroke_color = circle_stroke_color,
         circle_stroke_opacity = circle_stroke_opacity,
-        circle_stroke_width = circle_stroke_width
+        circle_stroke_width = circle_stroke_width,
+        text_color = text_color
     )
 }
 
@@ -813,7 +815,8 @@ add_circle_layer <- function(map,
             source = id,
             filter = c("has", "point_count"),
             text_field = get_column("point_count_abbreviated"),
-            text_size = 12
+            text_size = 12,
+            text_color = cluster_options$text_color
         )
 
         # Add unclustered points
@@ -1267,7 +1270,7 @@ add_symbol_layer <- function(map,
 
         for (prop in names(optional_paint)) {
             if (!is.null(optional_paint[[prop]])) {
-                map$x$calls[[length(map$x$calls)]]$args[[4]]$paint[[prop]] <- optional_paint[[prop]]
+                map$x$layers[[length(map$x$layers)]]$paint[[prop]] <- optional_paint[[prop]]
             }
         }
 
@@ -1278,7 +1281,8 @@ add_symbol_layer <- function(map,
             source = id,
             filter = c("has", "point_count"),
             text_field = get_column("point_count_abbreviated"),
-            text_size = 12
+            text_size = 12,
+            text_color = cluster_options$text_color
         )
 
         # Add unclustered symbols
