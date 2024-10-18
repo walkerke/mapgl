@@ -194,7 +194,9 @@
 
 
 <dt id="arg-icon-image">icon_image<a class="anchor" aria-label="anchor" href="#arg-icon-image"></a></dt>
-<dd><p>Name of image in sprite to use for drawing an image background. To use values in a column of your input dataset, use <code>c('get', 'YOUR_ICON_COLUMN_NAME')</code>.</p></dd>
+<dd><p>Name of image in sprite to use for drawing an image background.
+To use values in a column of your input dataset, use <code>get_column('YOUR_ICON_COLUMN_NAME')</code>.
+Images can also be loaded with the <code><a href="add_image.html">add_image()</a></code> function which should precede the <code>add_symbol_layer()</code> function.</p></dd>
 
 
 <dt id="arg-icon-image-cross-fade">icon_image_cross_fade<a class="anchor" aria-label="anchor" href="#arg-icon-image-cross-fade"></a></dt>
@@ -234,7 +236,10 @@
 
 
 <dt id="arg-icon-size">icon_size<a class="anchor" aria-label="anchor" href="#arg-icon-size"></a></dt>
-<dd><p>The size of the icon.</p></dd>
+<dd><p>The size of the icon, specified relative to the original size
+of the image. For example, a value of 5 would make the icon
+5 times larger than the original size, whereas a value of 0.5 would
+make the icon half the size of the original.</p></dd>
 
 
 <dt id="arg-icon-text-fit">icon_text_fit<a class="anchor" aria-label="anchor" href="#arg-icon-text-fit"></a></dt>

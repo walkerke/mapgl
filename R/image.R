@@ -21,17 +21,21 @@
 #' \dontrun{
 #' library(mapgl)
 #'
-#' map <- mapboxgl() |>
-#'     add_image("cat", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Cat_silhouette.svg/400px-Cat_silhouette.svg.png") |>
-#'     add_image("border-image", "https://upload.wikimedia.org/wikipedia/commons/8/89/Black_and_White_Boxed_%28bordered%29.png",
-#'         content = c(16, 16, 300, 384),
-#'         stretch_x = list(c(16, 584)),
-#'         stretch_y = list(c(16, 384))
-#'     )
+#' # Path to your local image file OR a URL to a remote image file
+#' # that is not blocked by CORS restrictions
+#' image_path <- "/path/to/your/image.png"
 #'
-#' # Using a local image file
-#' map <- mapboxgl() |>
-#'     add_image("local_icon", "path/to/your/local/image.png")
+#' pts <- tigris::landmarks("DE")[1:100, ]
+#'
+#' maplibre(bounds = pts) |>
+#'     add_image("local_icon", image_path) |>
+#'     add_symbol_layer(
+#'         id = "local_icons",
+#'         source = pts,
+#'         icon_image = "local_icon",
+#'         icon_size = 0.5,
+#'         icon_allow_overlap = TRUE
+#'     )
 #' }
 add_image <- function(map, id, url, content = NULL, pixel_ratio = 1, sdf = FALSE,
                       stretch_x = NULL, stretch_y = NULL) {
