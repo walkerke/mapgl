@@ -25,9 +25,9 @@ This function generates a match expression that can be used to style your data.
 }
 \examples{
 match_expr(
-  column = "category",
-  values = c("A", "B", "C"),
-  stops = c("#ff0000", "#00ff00", "#0000ff"),
-  default = "#cccccc"
+    column = "category",
+    values = c("A", "B", "C"),
+    stops = c("#ff0000", "#00ff00", "#0000ff"),
+    default = "#cccccc"
 )
 }

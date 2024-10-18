@@ -27,9 +27,9 @@ This function generates a step expression that can be used in your styles.
 }
 \examples{
 step_expr(
-  column = "value",
-  base = "#ffffff",
-  values = c(1000, 5000, 10000),
-  stops = c("#ff0000", "#00ff00", "#0000ff")
+    column = "value",
+    base = "#ffffff",
+    values = c(1000, 5000, 10000),
+    stops = c("#ff0000", "#00ff00", "#0000ff")
 )
 }

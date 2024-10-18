@@ -18,7 +18,7 @@ interpolate(
 
 \item{property}{The name of the property to use for the interpolation. If specified, \code{column} should be NULL.}
 
-\item{type}{The interpolation type. Can be one of \code{"linear"}, \code{c("exponential", base)} where \code{base} specifies the rate at which the output increases, or \code{c("cubic-bezier", x1, y1, x2, y2)} where you define a cubic bezier curve with control points.}
+\item{type}{The interpolation type. Can be one of \code{"linear"}, \code{list("exponential", base)} where \code{base} specifies the rate at which the output increases, or \code{list("cubic-bezier", x1, y1, x2, y2)} where you define a cubic bezier curve with control points.}
 
 \item{values}{A numeric vector of values at which stops occur.}
 
@@ -34,9 +34,9 @@ This function generates an interpolation expression that can be used to style yo
 }
 \examples{
 interpolate(
-  column = "estimate",
-  type = "linear",
-  values = c(1000, 200000),
-  stops = c("#eff3ff", "#08519c")
+    column = "estimate",
+    type = "linear",
+    values = c(1000, 200000),
+    stops = c("#eff3ff", "#08519c")
 )
 }
