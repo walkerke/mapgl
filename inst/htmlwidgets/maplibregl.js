@@ -726,6 +726,27 @@ HTMLWidgets.widget({
                         });
                     }
 
+                    if (x.images && Array.isArray(x.images)) {
+                        x.images.forEach(async function (imageInfo) {
+                            try {
+                                const image = await map.loadImage(
+                                    imageInfo.url,
+                                );
+                                if (!map.hasImage(imageInfo.id)) {
+                                    map.addImage(
+                                        imageInfo.id,
+                                        image.data,
+                                        imageInfo.options,
+                                    );
+                                }
+                            } catch (error) {
+                                console.error("Error loading image:", error);
+                            }
+                        });
+                    } else if (x.images) {
+                        console.error("x.images is not an array:", x.images);
+                    }
+
                     // Add the layers control if provided
                     if (x.layers_control) {
                         const layersControl = document.createElement("div");
@@ -1531,6 +1552,40 @@ if (HTMLWidgets.shinyMode) {
                     }
                 } else {
                     console.error("Layer not found:", message.layer);
+                }
+            } else if (message.type === "add_image") {
+                if (Array.isArray(message.images)) {
+                    message.images.forEach(function (imageInfo) {
+                        map.loadImage(imageInfo.url)
+                            .then((image) => {
+                                if (!map.hasImage(imageInfo.id)) {
+                                    map.addImage(
+                                        imageInfo.id,
+                                        image.data,
+                                        imageInfo.options,
+                                    );
+                                }
+                            })
+                            .catch((error) => {
+                                console.error("Error loading image:", error);
+                            });
+                    });
+                } else if (message.url) {
+                    map.loadImage(message.url)
+                        .then((image) => {
+                            if (!map.hasImage(message.imageId)) {
+                                map.addImage(
+                                    message.imageId,
+                                    image.data,
+                                    message.options,
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error loading image:", error);
+                        });
+                } else {
+                    console.error("Invalid image data:", message);
                 }
             }
         }
