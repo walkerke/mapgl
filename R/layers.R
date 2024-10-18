@@ -957,7 +957,9 @@ add_raster_layer <- function(map,
 #' @param icon_halo_color The color of the icon's halo.
 #' @param icon_halo_width The width of the icon's halo.
 #' @param icon_ignore_placement If TRUE, the icon will be visible even if it collides with other symbols.
-#' @param icon_image Name of image in sprite to use for drawing an image background. To use values in a column of your input dataset, use `c('get', 'YOUR_ICON_COLUMN_NAME')`.
+#' @param icon_image Name of image in sprite to use for drawing an image background.
+#'        To use values in a column of your input dataset, use `get_column('YOUR_ICON_COLUMN_NAME')`.
+#'        Images can also be loaded with the `add_image()` function which should precede the `add_symbol_layer()` function.
 #' @param icon_image_cross_fade The cross-fade parameter for the icon image.
 #' @param icon_keep_upright If TRUE, the icon will be kept upright.
 #' @param icon_offset Offset distance of icon.
@@ -967,7 +969,10 @@ add_raster_layer <- function(map,
 #' @param icon_pitch_alignment Alignment of the icon with respect to the pitch of the map.
 #' @param icon_rotate Rotates the icon clockwise.
 #' @param icon_rotation_alignment Alignment of the icon with respect to the map.
-#' @param icon_size The size of the icon.
+#' @param icon_size The size of the icon, specified relative to the original size
+#'        of the image. For example, a value of 5 would make the icon
+#'        5 times larger than the original size, whereas a value of 0.5 would
+#'        make the icon half the size of the original.
 #' @param icon_text_fit Scales the text to fit the icon.
 #' @param icon_text_fit_padding Padding for text fitting the icon.
 #' @param icon_translate The offset distance of the icon.

@@ -5,7 +5,8 @@
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A string specifying the ID of the image.
-#' @param url A string specifying the URL of the image to be loaded.
+#' @param url A string specifying the URL of the image to be loaded or a path
+#'        to a local image file. Must be PNG or JPEG format.
 #' @param content A vector of four numbers `c(x1, y1, x2, y2)` defining the part of the image
 #'        that can be covered by the content in text-field if icon-text-fit is used.
 #' @param pixel_ratio A number specifying the ratio of pixels in the image to physical pixels on the screen.
@@ -27,6 +28,10 @@
 #'         stretch_x = list(c(16, 584)),
 #'         stretch_y = list(c(16, 384))
 #'     )
+#'
+#' # Using a local image file
+#' map <- mapboxgl() |>
+#'     add_image("local_icon", "path/to/your/local/image.png")
 #' }
 add_image <- function(map, id, url, content = NULL, pixel_ratio = 1, sdf = FALSE,
                       stretch_x = NULL, stretch_y = NULL) {
@@ -38,6 +43,20 @@ add_image <- function(map, id, url, content = NULL, pixel_ratio = 1, sdf = FALSE
     if (!is.null(content)) options$content <- content
     if (!is.null(stretch_x)) options$stretchX <- stretch_x
     if (!is.null(stretch_y)) options$stretchY <- stretch_y
+
+    # Check if the URL is a local file path
+    if (file.exists(url)) {
+        # Read the image file and encode it as a data URI
+        file_ext <- tolower(tools::file_ext(url))
+        if (file_ext == "png") {
+            mime_type <- "image/png"
+        } else if (file_ext %in% c("jpg", "jpeg")) {
+            mime_type <- "image/jpeg"
+        } else {
+            stop("Image must be PNG or JPEG format")
+        }
+        url <- base64enc::dataURI(file = url, mime = mime_type)
+    }
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
         proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"

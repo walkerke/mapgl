@@ -117,7 +117,9 @@ add_symbol_layer(
 
 \item{icon_ignore_placement}{If TRUE, the icon will be visible even if it collides with other symbols.}
 
-\item{icon_image}{Name of image in sprite to use for drawing an image background. To use values in a column of your input dataset, use \code{c('get', 'YOUR_ICON_COLUMN_NAME')}.}
+\item{icon_image}{Name of image in sprite to use for drawing an image background.
+To use values in a column of your input dataset, use \code{get_column('YOUR_ICON_COLUMN_NAME')}.
+Images can also be loaded with the \code{add_image()} function which should precede the \code{add_symbol_layer()} function.}
 
 \item{icon_image_cross_fade}{The cross-fade parameter for the icon image.}
 
@@ -137,7 +139,10 @@ add_symbol_layer(
 
 \item{icon_rotation_alignment}{Alignment of the icon with respect to the map.}
 
-\item{icon_size}{The size of the icon.}
+\item{icon_size}{The size of the icon, specified relative to the original size
+of the image. For example, a value of 5 would make the icon
+5 times larger than the original size, whereas a value of 0.5 would
+make the icon half the size of the original.}
 
 \item{icon_text_fit}{Scales the text to fit the icon.}
 

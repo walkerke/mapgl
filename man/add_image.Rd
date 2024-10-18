@@ -20,7 +20,8 @@ add_image(
 
 \item{id}{A string specifying the ID of the image.}
 
-\item{url}{A string specifying the URL of the image to be loaded.}
+\item{url}{A string specifying the URL of the image to be loaded or a path
+to a local image file. Must be PNG or JPEG format.}
 
 \item{content}{A vector of four numbers \code{c(x1, y1, x2, y2)} defining the part of the image
 that can be covered by the content in text-field if icon-text-fit is used.}
@@ -51,5 +52,9 @@ map <- mapboxgl() |>
         stretch_x = list(c(16, 584)),
         stretch_y = list(c(16, 384))
     )
+
+# Using a local image file
+map <- mapboxgl() |>
+    add_image("local_icon", "path/to/your/local/image.png")
 }
 }
