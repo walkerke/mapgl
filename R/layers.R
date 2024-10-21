@@ -165,6 +165,7 @@ add_layer <- function(map,
 #' @param fill_sort_key Sorts features in ascending order based on this value.
 #' @param fill_translate The geometry's offset. Values are `c(x, y)` where negatives indicate left and up.
 #' @param fill_translate_anchor Controls the frame of reference for `fill-translate`.
+#' @param fill_z_offset Specifies an uniform elevation in meters.
 #' @param visibility Whether this layer is displayed.
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
@@ -217,6 +218,7 @@ add_fill_layer <- function(map,
                            fill_sort_key = NULL,
                            fill_translate = NULL,
                            fill_translate_anchor = "map",
+                           fill_z_offset = NULL,
                            visibility = "visible",
                            slot = NULL,
                            min_zoom = NULL,
@@ -239,6 +241,7 @@ add_fill_layer <- function(map,
     if (!is.null(fill_pattern)) paint[["fill-pattern"]] <- fill_pattern
     if (!is.null(fill_translate)) paint[["fill-translate"]] <- fill_translate
     if (!is.null(fill_translate_anchor)) paint[["fill-translate-anchor"]] <- fill_translate_anchor
+    if (!is.null(fill_z_offset)) paint[["fill-z-offset"]] <- fill_z_offset
 
     if (!is.null(fill_sort_key)) layout[["fill-sort-key"]] <- fill_sort_key
     if (!is.null(visibility)) layout[["visibility"]] <- visibility

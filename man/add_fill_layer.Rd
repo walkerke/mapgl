@@ -18,6 +18,7 @@ add_fill_layer(
   fill_sort_key = NULL,
   fill_translate = NULL,
   fill_translate_anchor = "map",
+  fill_z_offset = NULL,
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
@@ -55,6 +56,8 @@ add_fill_layer(
 \item{fill_translate}{The geometry's offset. Values are \code{c(x, y)} where negatives indicate left and up.}
 
 \item{fill_translate_anchor}{Controls the frame of reference for \code{fill-translate}.}
+
+\item{fill_z_offset}{Specifies an uniform elevation in meters.}
 
 \item{visibility}{Whether this layer is displayed.}
 
