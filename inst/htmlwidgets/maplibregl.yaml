@@ -1,27 +1,32 @@
 dependencies:
-  - name: maplibre-gl
-    version: "4.7.1"
-    src: "htmlwidgets/lib/maplibre-gl"
-    script:
-      - "maplibre-gl.js"
-    stylesheet:
-      - "maplibre-gl.css"
-  - name: mapbox-gl-draw
-    version: "1.4.3"
-    src: "htmlwidgets/lib/mapbox-gl-draw"
-    script:
-      - "mapbox-gl-draw.js"
-    stylesheet:
-      - "mapbox-gl-draw.css"
-  - name: freehand-mode
-    version: 1.0.0
-    src: "htmlwidgets/lib/freehand-mode"
-    script:
-      - "freehand-mode.js"
-  - name: maplibre-gl-geocoder
-    version: 1.5.0
-    src: "htmlwidgets/lib/maplibre-gl-geocoder"
-    script:
-      - "maplibre-gl-geocoder.min.js"
-    stylesheet:
-      - "maplibre-gl-geocoder.css"
+    - name: maplibre-gl
+      version: "4.7.1"
+      src: "htmlwidgets/lib/maplibre-gl"
+      script:
+          - "maplibre-gl.js"
+      stylesheet:
+          - "maplibre-gl.css"
+    - name: mapbox-gl-draw
+      version: "1.4.3"
+      src: "htmlwidgets/lib/mapbox-gl-draw"
+      script:
+          - "mapbox-gl-draw.js"
+      stylesheet:
+          - "mapbox-gl-draw.css"
+    - name: freehand-mode
+      version: 1.0.0
+      src: "htmlwidgets/lib/freehand-mode"
+      script:
+          - "freehand-mode.js"
+    - name: maplibre-gl-geocoder
+      version: 1.5.0
+      src: "htmlwidgets/lib/maplibre-gl-geocoder"
+      script:
+          - "maplibre-gl-geocoder.min.js"
+      stylesheet:
+          - "maplibre-gl-geocoder.css"
+    - name: mapbox-gl-globe-minimap
+      version: 1.2.1
+      src: "htmlwidgets/lib/mapbox-gl-globe-minimap"
+      script:
+          - "bundle.js"

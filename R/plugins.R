@@ -123,3 +123,76 @@ compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, or
         )
     )
 }
+
+#' Add a Globe Minimap to a map
+#'
+#' This function adds a globe minimap control to a Mapbox GL or Maplibre map.
+#'
+#' @param map A `mapboxgl` or `maplibre` object.
+#' @param position A string specifying the position of the minimap.
+#' @param globe_size Number of pixels for the diameter of the globe. Default is 82.
+#' @param land_color HTML color to use for land areas on the globe. Default is 'white'.
+#' @param water_color HTML color to use for water areas on the globe. Default is 'rgba(30 40 70/60%)'.
+#' @param marker_color HTML color to use for the center point marker. Default is '#ff2233'.
+#' @param marker_size Scale ratio for the center point marker. Default is 1.
+#'
+#' @return The modified map object with the globe minimap added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' m <- mapboxgl() %>%
+#'     add_globe_minimap()
+#'
+#' m <- maplibre() %>%
+#'     add_globe_minimap()
+#' }
+add_globe_minimap <- function(map, position = "bottom-right", globe_size = 82,
+                              land_color = "white", water_color = "rgba(30 40 70/60%)",
+                              marker_color = "#ff2233", marker_size = 1) {
+    if (!inherits(map, c("mapboxgl", "maplibregl"))) {
+        stop("Globe minimap is only supported for mapboxgl or maplibre maps.")
+    }
+
+    map$x$globe_minimap <- list(
+        enabled = TRUE,
+        position = position,
+        globe_size = globe_size,
+        land_color = land_color,
+        water_color = water_color,
+        marker_color = marker_color,
+        marker_size = marker_size
+    )
+
+    if (inherits(map, "mapboxgl_proxy")) {
+        map$session$sendCustomMessage("mapboxgl-proxy", list(
+            id = map$id,
+            message = list(
+                type = "add_globe_minimap",
+                position = position,
+                globe_size = globe_size,
+                land_color = land_color,
+                water_color = water_color,
+                marker_color = marker_color,
+                marker_size = marker_size
+            )
+        ))
+    } else if (inherits(map, "maplibre_proxy")) {
+        map$session$sendCustomMessage("maplibre-proxy", list(
+            id = map$id,
+            message = list(
+                type = "add_globe_minimap",
+                position = position,
+                globe_size = globe_size,
+                land_color = land_color,
+                water_color = water_color,
+                marker_color = marker_color,
+                marker_size = marker_size
+            )
+        ))
+    }
+
+    map
+}
