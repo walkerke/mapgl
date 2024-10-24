@@ -99,7 +99,7 @@ HTMLWidgets.widget({
                                 mapMarker.setPopup(
                                     new maplibregl.Popup({
                                         offset: 25,
-                                    }).setText(marker.popup),
+                                    }).setHTML(marker.popup),
                                 );
                             }
 
@@ -1291,7 +1291,7 @@ if (HTMLWidgets.shinyMode) {
 
                     if (marker.popup) {
                         mapMarker.setPopup(
-                            new maplibregl.Popup({ offset: 25 }).setText(
+                            new maplibregl.Popup({ offset: 25 }).setHTML(
                                 marker.popup,
                             ),
                         );

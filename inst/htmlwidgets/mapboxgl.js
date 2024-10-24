@@ -100,7 +100,7 @@ HTMLWidgets.widget({
 
                             if (marker.popup) {
                                 mapMarker.setPopup(
-                                    new mapboxgl.Popup({ offset: 25 }).setText(
+                                    new mapboxgl.Popup({ offset: 25 }).setHTML(
                                         marker.popup,
                                     ),
                                 );
@@ -1374,7 +1374,7 @@ if (HTMLWidgets.shinyMode) {
 
                     if (marker.popup) {
                         mapMarker.setPopup(
-                            new mapboxgl.Popup({ offset: 25 }).setText(
+                            new mapboxgl.Popup({ offset: 25 }).setHTML(
                                 marker.popup,
                             ),
                         );
