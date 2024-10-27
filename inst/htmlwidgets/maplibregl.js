@@ -946,7 +946,9 @@ HTMLWidgets.widget({
 
 if (HTMLWidgets.shinyMode) {
     Shiny.addCustomMessageHandler("maplibre-proxy", function (data) {
-        var map = HTMLWidgets.find("#" + data.id).getMap();
+        var widget = HTMLWidgets.find("#" + data.id);
+        if (!widget) return;
+        var map = widget.getMap();
         if (map) {
             var message = data.message;
             if (message.type === "set_filter") {
