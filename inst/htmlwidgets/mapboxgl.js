@@ -615,6 +615,26 @@ HTMLWidgets.widget({
                         map.controls.push(fullscreen);
                     }
 
+                    // Add geolocate control if enabled
+                    if (x.geolocate_control) {
+                        const geolocate = new mapboxgl.GeolocateControl({
+                            positionOptions:
+                                x.geolocate_control.positionOptions,
+                            trackUserLocation:
+                                x.geolocate_control.trackUserLocation,
+                            showAccuracyCircle:
+                                x.geolocate_control.showAccuracyCircle,
+                            showUserLocation:
+                                x.geolocate_control.showUserLocation,
+                            showUserHeading:
+                                x.geolocate_control.showUserHeading,
+                            fitBoundsOptions:
+                                x.geolocate_control.fitBoundsOptions,
+                        });
+                        map.addControl(geolocate, x.geolocate_control.position);
+                        map.controls.push(geolocate);
+                    }
+
                     // Add navigation control if enabled
                     if (x.navigation_control) {
                         const nav = new mapboxgl.NavigationControl({
@@ -1425,6 +1445,17 @@ if (HTMLWidgets.shinyMode) {
                 });
                 map.addControl(scaleControl, message.options.position);
                 map.controls.push(scaleControl);
+            } else if (message.type === "add_geolocate_control") {
+                const geolocate = new mapboxgl.GeolocateControl({
+                    positionOptions: message.options.positionOptions,
+                    trackUserLocation: message.options.trackUserLocation,
+                    showAccuracyCircle: message.options.showAccuracyCircle,
+                    showUserLocation: message.options.showUserLocation,
+                    showUserHeading: message.options.showUserHeading,
+                    fitBoundsOptions: message.options.fitBoundsOptions,
+                });
+                map.addControl(geolocate, message.options.position);
+                map.controls.push(geolocate);
             } else if (message.type === "add_geocoder_control") {
                 const geocoderOptions = {
                     accessToken: mapboxgl.accessToken,
