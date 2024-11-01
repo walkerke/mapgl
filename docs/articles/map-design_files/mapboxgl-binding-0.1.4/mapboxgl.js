@@ -100,7 +100,7 @@ HTMLWidgets.widget({
 
                             if (marker.popup) {
                                 mapMarker.setPopup(
-                                    new mapboxgl.Popup({ offset: 25 }).setText(
+                                    new mapboxgl.Popup({ offset: 25 }).setHTML(
                                         marker.popup,
                                     ),
                                 );
@@ -270,6 +270,17 @@ HTMLWidgets.widget({
                                             .setLngLat(e.lngLat)
                                             .setHTML(description)
                                             .addTo(map);
+                                    });
+
+                                    // Change cursor to pointer when hovering over the layer
+                                    map.on("mouseenter", layer.id, function () {
+                                        map.getCanvas().style.cursor =
+                                            "pointer";
+                                    });
+
+                                    // Change cursor back to default when leaving the layer
+                                    map.on("mouseleave", layer.id, function () {
+                                        map.getCanvas().style.cursor = "";
                                     });
                                 }
 
@@ -461,6 +472,22 @@ HTMLWidgets.widget({
                         map.controls.push(scaleControl);
                     }
 
+                    // Add globe minimap if enabled
+                    if (x.globe_minimap && x.globe_minimap.enabled) {
+                        const globeMinimapOptions = {
+                            globeSize: x.globe_minimap.globe_size,
+                            landColor: x.globe_minimap.land_color,
+                            waterColor: x.globe_minimap.water_color,
+                            markerColor: x.globe_minimap.marker_color,
+                            markerSize: x.globe_minimap.marker_size,
+                        };
+                        const globeMinimap = new GlobeMinimap(
+                            globeMinimapOptions,
+                        );
+                        map.addControl(globeMinimap, x.globe_minimap.position);
+                        map.controls.push(globeMinimap);
+                    }
+
                     // Add geocoder control if enabled
                     if (x.geocoder_control) {
                         const geocoderOptions = {
@@ -586,6 +613,26 @@ HTMLWidgets.widget({
                         const fullscreen = new mapboxgl.FullscreenControl();
                         map.addControl(fullscreen, position);
                         map.controls.push(fullscreen);
+                    }
+
+                    // Add geolocate control if enabled
+                    if (x.geolocate_control) {
+                        const geolocate = new mapboxgl.GeolocateControl({
+                            positionOptions:
+                                x.geolocate_control.positionOptions,
+                            trackUserLocation:
+                                x.geolocate_control.trackUserLocation,
+                            showAccuracyCircle:
+                                x.geolocate_control.showAccuracyCircle,
+                            showUserLocation:
+                                x.geolocate_control.showUserLocation,
+                            showUserHeading:
+                                x.geolocate_control.showUserHeading,
+                            fitBoundsOptions:
+                                x.geolocate_control.fitBoundsOptions,
+                        });
+                        map.addControl(geolocate, x.geolocate_control.position);
+                        map.controls.push(geolocate);
                     }
 
                     // Add navigation control if enabled
@@ -891,7 +938,9 @@ HTMLWidgets.widget({
 
 if (HTMLWidgets.shinyMode) {
     Shiny.addCustomMessageHandler("mapboxgl-proxy", function (data) {
-        var map = HTMLWidgets.find("#" + data.id).getMap();
+        var widget = HTMLWidgets.find("#" + data.id);
+        if (!widget) return;
+        var map = widget.getMap();
         if (map) {
             var message = data.message;
             if (message.type === "set_filter") {
@@ -961,6 +1010,16 @@ if (HTMLWidgets.shinyMode) {
                                 .setLngLat(e.lngLat)
                                 .setHTML(description)
                                 .addTo(map);
+                        });
+
+                        // Change cursor to pointer when hovering over the layer
+                        map.on("mouseenter", message.layer.id, function () {
+                            map.getCanvas().style.cursor = "pointer";
+                        });
+
+                        // Change cursor back to default when leaving the layer
+                        map.on("mouseleave", message.layer.id, function () {
+                            map.getCanvas().style.cursor = "";
                         });
                     }
 
@@ -1337,7 +1396,7 @@ if (HTMLWidgets.shinyMode) {
 
                     if (marker.popup) {
                         mapMarker.setPopup(
-                            new mapboxgl.Popup({ offset: 25 }).setText(
+                            new mapboxgl.Popup({ offset: 25 }).setHTML(
                                 marker.popup,
                             ),
                         );
@@ -1386,6 +1445,17 @@ if (HTMLWidgets.shinyMode) {
                 });
                 map.addControl(scaleControl, message.options.position);
                 map.controls.push(scaleControl);
+            } else if (message.type === "add_geolocate_control") {
+                const geolocate = new mapboxgl.GeolocateControl({
+                    positionOptions: message.options.positionOptions,
+                    trackUserLocation: message.options.trackUserLocation,
+                    showAccuracyCircle: message.options.showAccuracyCircle,
+                    showUserLocation: message.options.showUserLocation,
+                    showUserHeading: message.options.showUserHeading,
+                    fitBoundsOptions: message.options.fitBoundsOptions,
+                });
+                map.addControl(geolocate, message.options.position);
+                map.controls.push(geolocate);
             } else if (message.type === "add_geocoder_control") {
                 const geocoderOptions = {
                     accessToken: mapboxgl.accessToken,

@@ -1,3 +1,13 @@
+# mapgl 0.1.4
+
+* `add_image()` allows you to add your own image to the map's sprite for use as an icon / symbol layer
+* `add_geolocate_control()` adds a Geolocate control to the map
+* `add_globe_minimap()` adds a mini globe overview map that tracks how your map moves around the globe
+* Support for multiple legends with the argument `add = TRUE`
+* A `move_layer()` function that gives you more fine-grained control over layer ordering in a Shiny session
+* Various bug fixes and performance improvements.
+
+
 # mapgl 0.1.3
 
 * Geocoding support for Mapbox and MapLibre maps added with `add_geocoder_control()`

@@ -38,6 +38,8 @@ cluster_options(
 \item{circle_stroke_opacity}{The opacity of the circle's stroke.}
 
 \item{circle_stroke_width}{The width of the circle's stroke.}
+
+\item{text_color}{The color to use for labels on the cluster circles.}
 }
 \value{
 A list of cluster options.

@@ -50,16 +50,27 @@
 <span>  <span class="va">source</span>,</span>
 <span>  source_layer <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_blur <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_cap <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_dasharray <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_emissive_strength <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_gap_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_gradient <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_join <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_miter_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_occlusion_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_pattern <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_round_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_sort_key <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_translate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_translate_anchor <span class="op">=</span> <span class="st">"map"</span>,</span>
+<span>  line_trim_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_trim_fade_range <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_trim_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_z_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  visibility <span class="op">=</span> <span class="st">"visible"</span>,</span>
 <span>  slot <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_zoom <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -85,7 +96,9 @@
 
 
 <dt id="arg-source">source<a class="anchor" aria-label="anchor" href="#arg-source"></a></dt>
-<dd><p>The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies <code>type</code> and <code>url</code> for a remote source.</p></dd>
+<dd><p>The ID of the source, alternatively an sf object (which will be
+converted to a GeoJSON source) or a named list that specifies <code>type</code> and
+<code>url</code> for a remote source.</p></dd>
 
 
 <dt id="arg-source-layer">source_layer<a class="anchor" aria-label="anchor" href="#arg-source-layer"></a></dt>
@@ -93,7 +106,11 @@
 
 
 <dt id="arg-line-blur">line_blur<a class="anchor" aria-label="anchor" href="#arg-line-blur"></a></dt>
-<dd><p>Amount to blur the line.</p></dd>
+<dd><p>Amount to blur the line, in pixels.</p></dd>
+
+
+<dt id="arg-line-cap">line_cap<a class="anchor" aria-label="anchor" href="#arg-line-cap"></a></dt>
+<dd><p>The display of line endings. One of "butt", "round", "square".</p></dd>
 
 
 <dt id="arg-line-color">line_color<a class="anchor" aria-label="anchor" href="#arg-line-color"></a></dt>
@@ -101,11 +118,37 @@
 
 
 <dt id="arg-line-dasharray">line_dasharray<a class="anchor" aria-label="anchor" href="#arg-line-dasharray"></a></dt>
-<dd><p>Specifies the lengths of the alternating dashes and gaps that form the dash pattern.</p></dd>
+<dd><p>Specifies the lengths of the alternating dashes and
+gaps that form the dash pattern.</p></dd>
+
+
+<dt id="arg-line-emissive-strength">line_emissive_strength<a class="anchor" aria-label="anchor" href="#arg-line-emissive-strength"></a></dt>
+<dd><p>Controls the intensity of light emitted on the
+source features.</p></dd>
 
 
 <dt id="arg-line-gap-width">line_gap_width<a class="anchor" aria-label="anchor" href="#arg-line-gap-width"></a></dt>
-<dd><p>The width of the gap between a dashed line's individual dashes.</p></dd>
+<dd><p>Draws a line casing outside of a line's actual path.
+Value indicates the width of the inner gap.</p></dd>
+
+
+<dt id="arg-line-gradient">line_gradient<a class="anchor" aria-label="anchor" href="#arg-line-gradient"></a></dt>
+<dd><p>A gradient used to color a line feature at various
+distances along its length.</p></dd>
+
+
+<dt id="arg-line-join">line_join<a class="anchor" aria-label="anchor" href="#arg-line-join"></a></dt>
+<dd><p>The display of lines when joining.</p></dd>
+
+
+<dt id="arg-line-miter-limit">line_miter_limit<a class="anchor" aria-label="anchor" href="#arg-line-miter-limit"></a></dt>
+<dd><p>Used to automatically convert miter joins to bevel
+joins for sharp angles.</p></dd>
+
+
+<dt id="arg-line-occlusion-opacity">line_occlusion_opacity<a class="anchor" aria-label="anchor" href="#arg-line-occlusion-opacity"></a></dt>
+<dd><p>Opacity multiplier of the line part that is
+occluded by 3D objects.</p></dd>
 
 
 <dt id="arg-line-offset">line_offset<a class="anchor" aria-label="anchor" href="#arg-line-offset"></a></dt>
@@ -117,7 +160,12 @@
 
 
 <dt id="arg-line-pattern">line_pattern<a class="anchor" aria-label="anchor" href="#arg-line-pattern"></a></dt>
-<dd><p>Name of image in sprite to use for drawing image fills.</p></dd>
+<dd><p>Name of image in sprite to use for drawing image lines.</p></dd>
+
+
+<dt id="arg-line-round-limit">line_round_limit<a class="anchor" aria-label="anchor" href="#arg-line-round-limit"></a></dt>
+<dd><p>Used to automatically convert round joins to miter
+joins for shallow angles.</p></dd>
 
 
 <dt id="arg-line-sort-key">line_sort_key<a class="anchor" aria-label="anchor" href="#arg-line-sort-key"></a></dt>
@@ -125,15 +173,33 @@
 
 
 <dt id="arg-line-translate">line_translate<a class="anchor" aria-label="anchor" href="#arg-line-translate"></a></dt>
-<dd><p>The geometry's offset. Values are <code>c(x, y)</code> where negatives indicate left and up.</p></dd>
+<dd><p>The geometry's offset. Values are <code>c(x, y)</code> where
+negatives indicate left and up, respectively.</p></dd>
 
 
 <dt id="arg-line-translate-anchor">line_translate_anchor<a class="anchor" aria-label="anchor" href="#arg-line-translate-anchor"></a></dt>
 <dd><p>Controls the frame of reference for <code>line-translate</code>.</p></dd>
 
 
+<dt id="arg-line-trim-color">line_trim_color<a class="anchor" aria-label="anchor" href="#arg-line-trim-color"></a></dt>
+<dd><p>The color to be used for rendering the trimmed line section.</p></dd>
+
+
+<dt id="arg-line-trim-fade-range">line_trim_fade_range<a class="anchor" aria-label="anchor" href="#arg-line-trim-fade-range"></a></dt>
+<dd><p>The fade range for the trim-start and trim-end points.</p></dd>
+
+
+<dt id="arg-line-trim-offset">line_trim_offset<a class="anchor" aria-label="anchor" href="#arg-line-trim-offset"></a></dt>
+<dd><p>The line part between <code>c(trim_start, trim_end)</code> will be
+painted using <code>line_trim_color</code>.</p></dd>
+
+
 <dt id="arg-line-width">line_width<a class="anchor" aria-label="anchor" href="#arg-line-width"></a></dt>
 <dd><p>Stroke thickness.</p></dd>
+
+
+<dt id="arg-line-z-offset">line_z_offset<a class="anchor" aria-label="anchor" href="#arg-line-z-offset"></a></dt>
+<dd><p>Vertical offset from ground, in meters.</p></dd>
 
 
 <dt id="arg-visibility">visibility<a class="anchor" aria-label="anchor" href="#arg-visibility"></a></dt>
@@ -141,7 +207,7 @@
 
 
 <dt id="arg-slot">slot<a class="anchor" aria-label="anchor" href="#arg-slot"></a></dt>
-<dd><p>An optional slot for layer order. Only available when using the Mapbox Standard style.</p></dd>
+<dd><p>An optional slot for layer order.</p></dd>
 
 
 <dt id="arg-min-zoom">min_zoom<a class="anchor" aria-label="anchor" href="#arg-min-zoom"></a></dt>
@@ -153,19 +219,23 @@
 
 
 <dt id="arg-popup">popup<a class="anchor" aria-label="anchor" href="#arg-popup"></a></dt>
-<dd><p>A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.</p></dd>
+<dd><p>A column name containing information to display in a popup on click.
+Columns containing HTML will be parsed.</p></dd>
 
 
 <dt id="arg-tooltip">tooltip<a class="anchor" aria-label="anchor" href="#arg-tooltip"></a></dt>
-<dd><p>A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.</p></dd>
+<dd><p>A column name containing information to display in a tooltip on hover.
+Columns containing HTML will be parsed.</p></dd>
 
 
 <dt id="arg-hover-options">hover_options<a class="anchor" aria-label="anchor" href="#arg-hover-options"></a></dt>
-<dd><p>A named list of options for highlighting features in the layer on hover.</p></dd>
+<dd><p>A named list of options for highlighting features in the
+layer on hover.</p></dd>
 
 
 <dt id="arg-before-id">before_id<a class="anchor" aria-label="anchor" href="#arg-before-id"></a></dt>
-<dd><p>The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels)</p></dd>
+<dd><p>The name of the layer that this layer appears "before",
+allowing you to insert layers below other layers in your basemap (e.g. labels)</p></dd>
 
 
 <dt id="arg-filter">filter<a class="anchor" aria-label="anchor" href="#arg-filter"></a></dt>

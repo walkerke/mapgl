@@ -99,8 +99,8 @@ negatives indicate left and up, respectively.}
 
 \item{line_trim_fade_range}{The fade range for the trim-start and trim-end points.}
 
-\item{line_trim_offset}{The line part between \link{trim-start, trim-end} will be
-painted using line-trim-color.}
+\item{line_trim_offset}{The line part between \code{c(trim_start, trim_end)} will be
+painted using \code{line_trim_color}.}
 
 \item{line_width}{Stroke thickness.}
 

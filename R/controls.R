@@ -282,7 +282,7 @@ add_scale_control <- function(map,
 #'     center = c(-74.50, 40),
 #'     zoom = 9
 #' ) |>
-#'     add_draw_control(position = "top-left", freehand = TRUE, simplify_freehand = TRUE, orientation = "horizontal")
+#'     add_draw_control()
 #' }
 add_draw_control <- function(map,
                              position = "top-left",

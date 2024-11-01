@@ -302,8 +302,8 @@ add_fill_layer <- function(map,
 #' @param line_translate_anchor Controls the frame of reference for `line-translate`.
 #' @param line_trim_color The color to be used for rendering the trimmed line section.
 #' @param line_trim_fade_range The fade range for the trim-start and trim-end points.
-#' @param line_trim_offset The line part between [trim-start, trim-end] will be
-#'   painted using line-trim-color.
+#' @param line_trim_offset The line part between `c(trim_start, trim_end)` will be
+#'   painted using `line_trim_color`.
 #' @param line_width Stroke thickness.
 #' @param line_z_offset Vertical offset from ground, in meters.
 #' @param visibility Whether this layer is displayed.
@@ -628,6 +628,7 @@ add_fill_extrusion_layer <- function(map,
 #' @param circle_stroke_color The color of the circle's stroke.
 #' @param circle_stroke_opacity The opacity of the circle's stroke.
 #' @param circle_stroke_width The width of the circle's stroke.
+#' @param text_color The color to use for labels on the cluster circles.
 #'
 #' @return A list of cluster options.
 #' @export
