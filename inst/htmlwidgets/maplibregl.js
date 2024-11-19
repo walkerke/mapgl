@@ -673,6 +673,48 @@ HTMLWidgets.widget({
                         });
                         map.addControl(geolocate, x.geolocate_control.position);
                         map.controls.push(geolocate);
+
+                        if (HTMLWidgets.shinyMode) {
+                            geolocate.on("geolocate", function (event) {
+                                Shiny.setInputValue(el.id + "_geolocate", {
+                                    coords: event.coords,
+                                    time: new Date(),
+                                });
+                            });
+
+                            geolocate.on("trackuserlocationstart", function () {
+                                Shiny.setInputValue(
+                                    el.id + "_geolocate_tracking",
+                                    {
+                                        status: "start",
+                                        time: new Date(),
+                                    },
+                                );
+                            });
+
+                            geolocate.on("trackuserlocationend", function () {
+                                Shiny.setInputValue(
+                                    el.id + "_geolocate_tracking",
+                                    {
+                                        status: "end",
+                                        time: new Date(),
+                                    },
+                                );
+                            });
+
+                            geolocate.on("error", function (error) {
+                                if (error.error.code === 1) {
+                                    Shiny.setInputValue(
+                                        el.id + "_geolocate_error",
+                                        {
+                                            message:
+                                                "Location permission denied",
+                                            time: new Date(),
+                                        },
+                                    );
+                                }
+                            });
+                        }
                     }
 
                     // Add navigation control if enabled
@@ -1442,6 +1484,38 @@ if (HTMLWidgets.shinyMode) {
                 });
                 map.addControl(geolocate, message.options.position);
                 map.controls.push(geolocate);
+
+                if (HTMLWidgets.shinyMode) {
+                    geolocate.on("geolocate", function (event) {
+                        Shiny.setInputValue(el.id + "_geolocate", {
+                            coords: event.coords,
+                            time: new Date(),
+                        });
+                    });
+
+                    geolocate.on("trackuserlocationstart", function () {
+                        Shiny.setInputValue(el.id + "_geolocate_tracking", {
+                            status: "start",
+                            time: new Date(),
+                        });
+                    });
+
+                    geolocate.on("trackuserlocationend", function () {
+                        Shiny.setInputValue(el.id + "_geolocate_tracking", {
+                            status: "end",
+                            time: new Date(),
+                        });
+                    });
+
+                    geolocate.on("error", function (error) {
+                        if (error.error.code === 1) {
+                            Shiny.setInputValue(el.id + "_geolocate_error", {
+                                message: "Location permission denied",
+                                time: new Date(),
+                            });
+                        }
+                    });
+                }
             } else if (message.type === "add_geocoder_control") {
                 const geocoderApi = {
                     forwardGeocode: async (config) => {
