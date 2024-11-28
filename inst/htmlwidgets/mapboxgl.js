@@ -989,6 +989,7 @@ if (HTMLWidgets.shinyMode) {
         var map = widget.getMap();
         if (map) {
             var message = data.message;
+            const { sourceId, ...sourceDetails } = message.source;
             if (message.type === "set_filter") {
                 map.setFilter(message.layer, message.filter);
             } else if (message.type === "add_source") {
@@ -999,9 +1000,7 @@ if (HTMLWidgets.shinyMode) {
                     });
                 } else if (message.source.type === "geojson") {
                     map.addSource(message.source.id, {
-                        type: "geojson",
-                        data: message.source.data,
-                        generateId: message.source.generateId,
+                      ...sourceDetails
                     });
                 } else if (message.source.type === "raster") {
                     if (message.source.url) {
