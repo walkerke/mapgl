@@ -124,6 +124,41 @@ compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, or
     )
 }
 
+#' Create a Compare slider widget for Shiny
+#' 
+#' @param outputId The output variable to read from
+#' @param type The type of map comparison, either 'maplibregl' or 'mapboxgl'
+#' @param width The width of the element
+#' @param height The height of the element
+#' 
+#' @return A Compare output element for use in a Shiny UI
+#' @export
+compareOutput <- function(outputId, type, width = "100%", height = "400px"){
+    stopifnot("Type must be either 'maplibregl' or 'mapboxgl'" = type == "maplibregl" | type == "mapboxgl") |> try()
+    if(
+         type == "maplibregl")
+    {
+        htmlwidgets::shinyWidgetOutput(outputId, "maplibregl_compare", width, height, package = "mapgl")
+    } else if(
+        type == "mapboxgl")
+    {
+        htmlwidgets::shinyWidgetOutput(outputId, "mapboxgl_compare", width, height, package, "mapgl")
+    }
+}
+
+#' Render a Compare output element in Shiny
+#' 
+#' @param expr An expression that generates a Compare element
+#' @param env The environment in which to evaluate `expr`
+#' @param quoted Is `expr` a quoted expression
+#' 
+#' @return A rendered Compare element for use in a Shiny server
+#' @export
+renderCompare <- function(expr, env = parent.frame(), quoted = FALSE){
+    if (!quoted) { expr <- substitute(expr) } # force quoted
+    htmlwidgets::shinyRenderWidget(expr, compareOutput, env, quoted = TRUE)
+}
+
 #' Add a Globe Minimap to a map
 #'
 #' This function adds a globe minimap control to a Mapbox GL or Maplibre map.
