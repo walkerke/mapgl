@@ -1092,27 +1092,27 @@ if (HTMLWidgets.shinyMode) {
                             closeOnClick: false,
                         });
 
-                        map.on("mousemove", message.layer.id, function (e) {
-                            map.getCanvas().style.cursor = "pointer";
+                        // Define named handler functions:
+                        const mouseMoveHandler = function(e) {
+                            onMouseMoveTooltip(e, map, tooltip, message.layer.tooltip);
+                        };
 
-                            if (e.features.length > 0) {
-                                const description =
-                                    e.features[0].properties[
-                                        message.layer.tooltip
-                                    ];
-                                tooltip
-                                    .setLngLat(e.lngLat)
-                                    .setHTML(description)
-                                    .addTo(map);
-                            } else {
-                                tooltip.remove();
-                            }
-                        });
+                        const mouseLeaveHandler = function() {
+                            onMouseLeaveTooltip(map, tooltip);
+                        };
 
-                        map.on("mouseleave", message.layer.id, function () {
-                            map.getCanvas().style.cursor = "";
-                            tooltip.remove();
-                        });
+                        // Attach handlers by reference:
+                        map.on("mousemove", message.layer.id, mouseMoveHandler);
+                        map.on("mouseleave", message.layer.id, mouseLeaveHandler);
+
+                        // Store these handler references for later removal:
+                        if (!window._mapboxHandlers) {
+                            window._mapboxHandlers = {};
+                        }
+                        window._mapboxHandlers[message.layer.id] = {
+                            mousemove: mouseMoveHandler,
+                            mouseleave: mouseLeaveHandler
+                        };
                     }
 
                     // Add hover effect if provided
