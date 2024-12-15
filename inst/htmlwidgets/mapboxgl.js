@@ -1808,7 +1808,27 @@ if (HTMLWidgets.shinyMode) {
                   mousemove: mouseMoveHandler,
                   mouseleave: mouseLeaveHandler
                 };
+          } else if (message.type === "set_source") {
+              const layerId = message.layer;
+              const newData = message.source;
+              const layerObject = map.getLayer(layerId);
+
+              if (!layerObject) {
+                console.error("Layer not found: ", layerId);
+                return;
               }
+
+              const sourceId = layerObject.source;
+              const sourceObject = map.getSource(sourceId);
+
+              if (!sourceObject) {
+                console.error("Source not found: ", sourceId);
+                return;
+              }
+
+              // Update the geojson data
+              sourceObject.setData(newData);
+            }
         }
     });
 }

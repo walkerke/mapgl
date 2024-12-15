@@ -225,7 +225,7 @@ move_layer <- function(proxy, layer_id, before_id = NULL) {
     proxy
 }
 
-#' Set a paint property on a map layer
+#' Set tooltip on a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param layer The ID of the layer to update.
@@ -242,6 +242,27 @@ set_tooltip  <- function(map, layer, tooltip) {
     ))
   } else {
     stop("set_tooltip can only be used with mapboxgl_proxy or maplibre_proxy.")
+  }
+  return(map)
+}
+
+#' Set source of a map layer
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
+#' @param source The source as geojson
+#' @param layer The ID of the layer to update.
+#'
+#' @return The updated map object.
+#' @export
+set_source  <- function(map, layer, source) {
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(proxy_class, list(
+      id = map$id,
+      message = list(type = "set_source", layer = layer, source = source)
+    ))
+  } else {
+    stop("set_source can only be used with mapboxgl_proxy or maplibre_proxy.")
   }
   return(map)
 }
