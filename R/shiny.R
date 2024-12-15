@@ -224,3 +224,24 @@ move_layer <- function(proxy, layer_id, before_id = NULL) {
     proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
     proxy
 }
+
+#' Set a paint property on a map layer
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
+#' @param layer The ID of the layer to update.
+#' @param tooltip The name of the new tooltip variable which should be set.
+#'
+#' @return The updated map object.
+#' @export
+set_tooltip  <- function(map, layer, tooltip) {
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(proxy_class, list(
+      id = map$id,
+      message = list(type = "set_tooltip", layer = layer, tooltip = tooltip)
+    ))
+  } else {
+    stop("set_tooltip can only be used with mapboxgl_proxy or maplibre_proxy.")
+  }
+  return(map)
+}

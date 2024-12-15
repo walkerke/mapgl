@@ -1760,7 +1760,49 @@ if (HTMLWidgets.shinyMode) {
                 } else {
                     console.error("Invalid image data:", message);
                 }
-            }
+            } else if (message.type === "set_tooltip") {
+                const layerId = message.layer;
+                const newTooltipProperty = message.tooltip;
+
+                // Remove old handlers if any
+                if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
+                  const handlers = window._mapboxHandlers[layerId];
+                  if (handlers.mousemove) {
+                    map.off("mousemove", layerId, handlers.mousemove);
+                  }
+                  if (handlers.mouseleave) {
+                    map.off("mouseleave", layerId, handlers.mouseleave);
+                  }
+                  delete window._mapboxHandlers[layerId];
+                }
+
+                // Create a new tooltip popup
+                const tooltip = new mapboxgl.Popup({
+                  closeButton: false,
+                  closeOnClick: false,
+                });
+
+                // Define new handlers referencing the updated tooltip property
+                const mouseMoveHandler = function(e) {
+                  onMouseMoveTooltip(e, map, tooltip, newTooltipProperty);
+                };
+                const mouseLeaveHandler = function() {
+                  onMouseLeaveTooltip(map, tooltip);
+                };
+
+                // Add the new event handlers
+                map.on("mousemove", layerId, mouseMoveHandler);
+                map.on("mouseleave", layerId, mouseLeaveHandler);
+
+                // Store these handlers so we can remove/update them in the future
+                if (!window._mapboxHandlers) {
+                  window._mapboxHandlers = {};
+                }
+                window._mapboxHandlers[layerId] = {
+                  mousemove: mouseMoveHandler,
+                  mouseleave: mouseLeaveHandler
+                };
+          }
         }
     });
 }
