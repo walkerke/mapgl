@@ -3,14 +3,24 @@ function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
   if (e.features.length > 0) {
     const description = e.features[0].properties[tooltipProperty];
     tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
+
+    // Store reference to currently active tooltip
+    window._activeTooltip = tooltipPopup;
   } else {
     tooltipPopup.remove();
+    // If this was the active tooltip, clear the reference
+    if (window._activeTooltip === tooltipPopup) {
+      delete window._activeTooltip;
+    }
   }
 }
 
 function onMouseLeaveTooltip(map, tooltipPopup) {
   map.getCanvas().style.cursor = "";
   tooltipPopup.remove();
+  if (window._activeTooltip === tooltipPopup) {
+    delete window._activeTooltip;
+  }
 }
 
 HTMLWidgets.widget({
@@ -1204,6 +1214,12 @@ if (HTMLWidgets.shinyMode) {
                     );
                 }
             } else if (message.type === "remove_layer") {
+                // If there's an active tooltip, remove it first
+                if (window._activeTooltip) {
+                  window._activeTooltip.remove();
+                  delete window._activeTooltip;
+                }
+
                 if (map.getLayer(message.layer)) {
                     // Check if we have stored handlers for this layer
                     if (window._mapboxHandlers && window._mapboxHandlers[message.layer]) {
