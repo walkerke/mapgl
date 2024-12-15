@@ -1764,6 +1764,12 @@ if (HTMLWidgets.shinyMode) {
                 const layerId = message.layer;
                 const newTooltipProperty = message.tooltip;
 
+                // If there's an active tooltip open, remove it first
+                if (window._activeTooltip) {
+                  window._activeTooltip.remove();
+                  delete window._activeTooltip;
+                }
+
                 // Remove old handlers if any
                 if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
                   const handlers = window._mapboxHandlers[layerId];
@@ -1802,7 +1808,7 @@ if (HTMLWidgets.shinyMode) {
                   mousemove: mouseMoveHandler,
                   mouseleave: mouseLeaveHandler
                 };
-          }
+              }
         }
     });
 }
