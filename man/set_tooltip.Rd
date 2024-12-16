@@ -11,7 +11,7 @@ set_tooltip(map, layer, tooltip)
 
 \item{layer}{The ID of the layer to update.}
 
-\item{tooltip}{The name of the new tooltip variable which should be set.}
+\item{tooltip}{The name of the tooltip to set.}
 }
 \value{
 The updated map object.

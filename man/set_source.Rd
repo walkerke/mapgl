@@ -11,7 +11,7 @@ set_source(map, layer, source)
 
 \item{layer}{The ID of the layer to update.}
 
-\item{source}{The source as geojson}
+\item{source}{An sf object (which will be converted to a GeoJSON source).}
 }
 \value{
 The updated map object.
