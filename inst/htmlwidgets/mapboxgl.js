@@ -1760,6 +1760,74 @@ if (HTMLWidgets.shinyMode) {
                 } else {
                     console.error("Invalid image data:", message);
                 }
+            } else if (message.type === "set_tooltip") {
+                const layerId = message.layer;
+                const newTooltipProperty = message.tooltip;
+
+                // If there's an active tooltip open, remove it first
+                if (window._activeTooltip) {
+                  window._activeTooltip.remove();
+                  delete window._activeTooltip;
+                }
+
+                // Remove old handlers if any
+                if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
+                  const handlers = window._mapboxHandlers[layerId];
+                  if (handlers.mousemove) {
+                    map.off("mousemove", layerId, handlers.mousemove);
+                  }
+                  if (handlers.mouseleave) {
+                    map.off("mouseleave", layerId, handlers.mouseleave);
+                  }
+                  delete window._mapboxHandlers[layerId];
+                }
+
+                // Create a new tooltip popup
+                const tooltip = new mapboxgl.Popup({
+                  closeButton: false,
+                  closeOnClick: false,
+                });
+
+                // Define new handlers referencing the updated tooltip property
+                const mouseMoveHandler = function(e) {
+                  onMouseMoveTooltip(e, map, tooltip, newTooltipProperty);
+                };
+                const mouseLeaveHandler = function() {
+                  onMouseLeaveTooltip(map, tooltip);
+                };
+
+                // Add the new event handlers
+                map.on("mousemove", layerId, mouseMoveHandler);
+                map.on("mouseleave", layerId, mouseLeaveHandler);
+
+                // Store these handlers so we can remove/update them in the future
+                if (!window._mapboxHandlers) {
+                  window._mapboxHandlers = {};
+                }
+                window._mapboxHandlers[layerId] = {
+                  mousemove: mouseMoveHandler,
+                  mouseleave: mouseLeaveHandler
+                };
+          } else if (message.type === "set_source") {
+              const layerId = message.layer;
+              const newData = message.source;
+              const layerObject = map.getLayer(layerId);
+
+              if (!layerObject) {
+                console.error("Layer not found: ", layerId);
+                return;
+              }
+
+              const sourceId = layerObject.source;
+              const sourceObject = map.getSource(sourceId);
+
+              if (!sourceObject) {
+                console.error("Source not found: ", sourceId);
+                return;
+              }
+
+              // Update the geojson data
+              sourceObject.setData(newData);
             }
         }
     });
