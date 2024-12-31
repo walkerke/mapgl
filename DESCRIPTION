@@ -13,7 +13,11 @@ URL: https://walker-data.com/mapgl/
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
+<<<<<<< HEAD
 RoxygenNote: 7.3.2
+=======
+RoxygenNote: 7.3.2.9000
+>>>>>>> d77c15d4602871d52c138c6d69b5a6dca2ce85f1
 Imports:
   htmlwidgets,
   geojsonsf,
