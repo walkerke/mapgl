@@ -220,9 +220,13 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     num_values <- length(values)
 
     value_labels <- paste0(
-        '<span style="position: absolute; left: ', seq(0, 100, length.out = num_values),
-        '%; transform: translateX(-50%);">', values, "</span>",
-        collapse = ""
+        '<div class="legend-labels">',
+        paste0(
+            '<span style="position: absolute; left: ', seq(0, 100, length.out = num_values),
+            '%;">', values, "</span>",
+            collapse = ""
+        ),
+        "</div>"
     )
 
     legend_html <- paste0(
@@ -280,19 +284,22 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
 
     #", unique_id, " .legend-gradient {
       height: 20px;
-      margin-bottom: 5px;
+      margin: 5px 10px 5px 10px;
     }
 
     #", unique_id, " .legend-labels {
-      display: flex;
-      justify-content: space-between;
-      font-family: 'Open Sans';
+      position: relative;
+      height: 20px;
+      margin: 0 10px;
     }
 
     #", unique_id, " .legend-labels span {
+      font-size: 12px;
       position: absolute;
-      transform: translateX(-50%);
+      transform: translateX(-50%);  /* Center all labels by default */
+      white-space: nowrap;
     }
+
 ")
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
