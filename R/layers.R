@@ -1036,7 +1036,9 @@ add_raster_layer <- function(map,
 #' @param symbol_placement Placement of the symbol on the map.
 #' @param symbol_sort_key Sorts features in ascending order based on this value.
 #' @param symbol_spacing Spacing between symbols.
-#' @param symbol_z_elevate Elevates the symbol z-axis.
+#' @param symbol_z_elevate If `TRUE`, positions the symbol on top of a `fill-extrusion` layer.
+#'        Requires `symbol_placement` to be set to `"point"` and `symbol-z-order` to be set to `"auto"`.
+#' @param symbol_z_offset The elevation of the symbol, in meters.  Use `get_column()` to get elevations from a column in the dataset.
 #' @param symbol_z_order Orders the symbol z-axis.
 #' @param text_allow_overlap If TRUE, the text will be visible even if it collides with other previously drawn symbols.
 #' @param text_anchor Part of the text placed closest to the anchor.
@@ -1165,6 +1167,7 @@ add_symbol_layer <- function(map,
                              symbol_sort_key = NULL,
                              symbol_spacing = NULL,
                              symbol_z_elevate = NULL,
+                             symbol_z_offset = NULL,
                              symbol_z_order = NULL,
                              text_allow_overlap = NULL,
                              text_anchor = NULL,
@@ -1241,8 +1244,9 @@ add_symbol_layer <- function(map,
     if (!is.null(symbol_placement)) layout[["symbol-placement"]] <- symbol_placement
     if (!is.null(symbol_sort_key)) layout[["symbol-sort-key"]] <- symbol_sort_key
     if (!is.null(symbol_spacing)) layout[["symbol-spacing"]] <- symbol_spacing
-    if (!is.null(symbol_z_elevate)) paint[["symbol-z-elevate"]] <- symbol_z_elevate
+    if (!is.null(symbol_z_elevate)) layout[["symbol-z-elevate"]] <- symbol_z_elevate
     if (!is.null(symbol_z_order)) layout[["symbol-z-order"]] <- symbol_z_order
+    if (!is.null(symbol_z_offset)) paint[["symbol-z-offset"]] <- symbol_z_offset
 
     if (!is.null(text_allow_overlap)) layout[["text-allow-overlap"]] <- text_allow_overlap
     if (!is.null(text_anchor)) layout[["text-anchor"]] <- text_anchor

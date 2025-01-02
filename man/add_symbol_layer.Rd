@@ -41,6 +41,7 @@ add_symbol_layer(
   symbol_sort_key = NULL,
   symbol_spacing = NULL,
   symbol_z_elevate = NULL,
+  symbol_z_offset = NULL,
   symbol_z_order = NULL,
   text_allow_overlap = NULL,
   text_anchor = NULL,
@@ -160,7 +161,10 @@ make the icon half the size of the original.}
 
 \item{symbol_spacing}{Spacing between symbols.}
 
-\item{symbol_z_elevate}{Elevates the symbol z-axis.}
+\item{symbol_z_elevate}{If \code{TRUE}, positions the symbol on top of a \code{fill-extrusion} layer.
+Requires \code{symbol_placement} to be set to \code{"point"} and \code{symbol-z-order} to be set to \code{"auto"}.}
+
+\item{symbol_z_offset}{The elevation of the symbol, in meters.  Use \code{get_column()} to get elevations from a column in the dataset.}
 
 \item{symbol_z_order}{Orders the symbol z-axis.}
 
