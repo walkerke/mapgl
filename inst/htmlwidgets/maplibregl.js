@@ -4,6 +4,7 @@ HTMLWidgets.widget({
     type: "output",
 
     factory: function (el, width, height) {
+
         let map;
 
         return {
@@ -12,6 +13,9 @@ HTMLWidgets.widget({
                     console.error("Maplibre GL JS is not loaded.");
                     return;
                 }
+
+                let protocol = new pmtiles.Protocol({metadata: true});
+                maplibregl.addProtocol("pmtiles",protocol.tile);
 
                 map = new maplibregl.Map({
                     container: el.id,
