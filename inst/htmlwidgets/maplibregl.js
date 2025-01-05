@@ -473,6 +473,19 @@ HTMLWidgets.widget({
                         map.controls.push(globeMinimap);
                     }
 
+                    if (x.setProjection) {
+                        x.setProjection.forEach(function (projectionConfig) {
+                            if (projectionConfig.projection) {
+                                const projection =
+                                    typeof projectionConfig.projection ===
+                                    "string"
+                                        ? { type: projectionConfig.projection }
+                                        : projectionConfig.projection;
+                                map.setProjection(projection);
+                            }
+                        });
+                    }
+
                     // Add geocoder control if enabled
                     if (x.geocoder_control) {
                         const geocoderApi = {
@@ -1731,6 +1744,21 @@ if (HTMLWidgets.shinyMode) {
                 } else {
                     console.error("Invalid image data:", message);
                 }
+            }
+        } else if (message.type === "set_projection") {
+            if (map.loaded()) {
+                const projection =
+                    typeof message.projection === "string"
+                        ? { type: message.projection }
+                        : message.projection;
+
+                try {
+                    map.setProjection(projection);
+                } catch (e) {
+                    console.error("Failed to set projection:", e);
+                }
+            } else {
+                console.error("Map not loaded yet");
             }
         }
     });

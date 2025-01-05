@@ -303,3 +303,25 @@ trim_hex_colors <- function(colors) {
         colors
     )
 }
+
+#' Set Projection for a Mapbox/Maplibre Map
+#'
+#' This function sets the projection dynamically after map initialization.
+#'
+#' @param map A map object created by mapboxgl() or maplibre() functions, or their respective proxy objects
+#' @param projection A string representing the projection name (e.g., "mercator", "globe", "albers", "equalEarth", etc.)
+#' @return The modified map object
+#' @export
+set_projection <- function(map, projection) {
+    if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        map$session$sendCustomMessage(proxy_class, list(
+            id = map$id,
+            message = list(type = "set_projection", projection = projection)
+        ))
+    } else {
+        if (is.null(map$x$setProjection)) map$x$setProjection <- list()
+        map$x$setProjection[[length(map$x$setProjection) + 1]] <- list(projection = projection)
+    }
+    return(map)
+}

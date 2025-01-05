@@ -1,26 +1,26 @@
 function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
-  map.getCanvas().style.cursor = "pointer";
-  if (e.features.length > 0) {
-    const description = e.features[0].properties[tooltipProperty];
-    tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
+    map.getCanvas().style.cursor = "pointer";
+    if (e.features.length > 0) {
+        const description = e.features[0].properties[tooltipProperty];
+        tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
 
-    // Store reference to currently active tooltip
-    window._activeTooltip = tooltipPopup;
-  } else {
-    tooltipPopup.remove();
-    // If this was the active tooltip, clear the reference
-    if (window._activeTooltip === tooltipPopup) {
-      delete window._activeTooltip;
+        // Store reference to currently active tooltip
+        window._activeTooltip = tooltipPopup;
+    } else {
+        tooltipPopup.remove();
+        // If this was the active tooltip, clear the reference
+        if (window._activeTooltip === tooltipPopup) {
+            delete window._activeTooltip;
+        }
     }
-  }
 }
 
 function onMouseLeaveTooltip(map, tooltipPopup) {
-  map.getCanvas().style.cursor = "";
-  tooltipPopup.remove();
-  if (window._activeTooltip === tooltipPopup) {
-    delete window._activeTooltip;
-  }
+    map.getCanvas().style.cursor = "";
+    tooltipPopup.remove();
+    if (window._activeTooltip === tooltipPopup) {
+        delete window._activeTooltip;
+    }
 }
 
 HTMLWidgets.widget({
@@ -317,19 +317,32 @@ HTMLWidgets.widget({
 
                                     // Create a reference to the mousemove handler function.
                                     // We need to pass 'e', 'map', 'tooltip', and 'layer.tooltip' to onMouseMoveTooltip.
-                                    const mouseMoveHandler = function(e) {
-                                        onMouseMoveTooltip(e, map, tooltip, layer.tooltip);
+                                    const mouseMoveHandler = function (e) {
+                                        onMouseMoveTooltip(
+                                            e,
+                                            map,
+                                            tooltip,
+                                            layer.tooltip,
+                                        );
                                     };
 
                                     // Create a reference to the mouseleave handler function.
                                     // We need to pass 'map' and 'tooltip' to onMouseLeaveTooltip.
-                                    const mouseLeaveHandler = function() {
+                                    const mouseLeaveHandler = function () {
                                         onMouseLeaveTooltip(map, tooltip);
                                     };
 
                                     // Attach the named handler references, not anonymous functions.
-                                    map.on("mousemove", layer.id, mouseMoveHandler);
-                                    map.on("mouseleave", layer.id, mouseLeaveHandler);
+                                    map.on(
+                                        "mousemove",
+                                        layer.id,
+                                        mouseMoveHandler,
+                                    );
+                                    map.on(
+                                        "mouseleave",
+                                        layer.id,
+                                        mouseLeaveHandler,
+                                    );
 
                                     // Store these handler references so you can remove them later if needed
                                     if (!window._mapboxHandlers) {
@@ -337,7 +350,7 @@ HTMLWidgets.widget({
                                     }
                                     window._mapboxHandlers[layer.id] = {
                                         mousemove: mouseMoveHandler,
-                                        mouseleave: mouseLeaveHandler
+                                        mouseleave: mouseLeaveHandler,
                                     };
                                 }
 
@@ -806,6 +819,14 @@ HTMLWidgets.widget({
                         });
                     }
 
+                    if (x.setProjection) {
+                        x.setProjection.forEach(function (projectionConfig) {
+                            if (projectionConfig.projection) {
+                                map.setProjection(projectionConfig.projection);
+                            }
+                        });
+                    }
+
                     if (x.images && Array.isArray(x.images)) {
                         x.images.forEach(function (imageInfo) {
                             map.loadImage(
@@ -1103,17 +1124,26 @@ if (HTMLWidgets.shinyMode) {
                         });
 
                         // Define named handler functions:
-                        const mouseMoveHandler = function(e) {
-                            onMouseMoveTooltip(e, map, tooltip, message.layer.tooltip);
+                        const mouseMoveHandler = function (e) {
+                            onMouseMoveTooltip(
+                                e,
+                                map,
+                                tooltip,
+                                message.layer.tooltip,
+                            );
                         };
 
-                        const mouseLeaveHandler = function() {
+                        const mouseLeaveHandler = function () {
                             onMouseLeaveTooltip(map, tooltip);
                         };
 
                         // Attach handlers by reference:
                         map.on("mousemove", message.layer.id, mouseMoveHandler);
-                        map.on("mouseleave", message.layer.id, mouseLeaveHandler);
+                        map.on(
+                            "mouseleave",
+                            message.layer.id,
+                            mouseLeaveHandler,
+                        );
 
                         // Store these handler references for later removal:
                         if (!window._mapboxHandlers) {
@@ -1121,7 +1151,7 @@ if (HTMLWidgets.shinyMode) {
                         }
                         window._mapboxHandlers[message.layer.id] = {
                             mousemove: mouseMoveHandler,
-                            mouseleave: mouseLeaveHandler
+                            mouseleave: mouseLeaveHandler,
                         };
                     }
 
@@ -1216,19 +1246,30 @@ if (HTMLWidgets.shinyMode) {
             } else if (message.type === "remove_layer") {
                 // If there's an active tooltip, remove it first
                 if (window._activeTooltip) {
-                  window._activeTooltip.remove();
-                  delete window._activeTooltip;
+                    window._activeTooltip.remove();
+                    delete window._activeTooltip;
                 }
 
                 if (map.getLayer(message.layer)) {
                     // Check if we have stored handlers for this layer
-                    if (window._mapboxHandlers && window._mapboxHandlers[message.layer]) {
+                    if (
+                        window._mapboxHandlers &&
+                        window._mapboxHandlers[message.layer]
+                    ) {
                         const handlers = window._mapboxHandlers[message.layer];
                         if (handlers.mousemove) {
-                            map.off("mousemove", message.layer, handlers.mousemove);
+                            map.off(
+                                "mousemove",
+                                message.layer,
+                                handlers.mousemove,
+                            );
                         }
                         if (handlers.mouseleave) {
-                            map.off("mouseleave", message.layer, handlers.mouseleave);
+                            map.off(
+                                "mouseleave",
+                                message.layer,
+                                handlers.mouseleave,
+                            );
                         }
                         // Clean up the reference
                         delete window._mapboxHandlers[message.layer];
@@ -1766,34 +1807,34 @@ if (HTMLWidgets.shinyMode) {
 
                 // If there's an active tooltip open, remove it first
                 if (window._activeTooltip) {
-                  window._activeTooltip.remove();
-                  delete window._activeTooltip;
+                    window._activeTooltip.remove();
+                    delete window._activeTooltip;
                 }
 
                 // Remove old handlers if any
                 if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
-                  const handlers = window._mapboxHandlers[layerId];
-                  if (handlers.mousemove) {
-                    map.off("mousemove", layerId, handlers.mousemove);
-                  }
-                  if (handlers.mouseleave) {
-                    map.off("mouseleave", layerId, handlers.mouseleave);
-                  }
-                  delete window._mapboxHandlers[layerId];
+                    const handlers = window._mapboxHandlers[layerId];
+                    if (handlers.mousemove) {
+                        map.off("mousemove", layerId, handlers.mousemove);
+                    }
+                    if (handlers.mouseleave) {
+                        map.off("mouseleave", layerId, handlers.mouseleave);
+                    }
+                    delete window._mapboxHandlers[layerId];
                 }
 
                 // Create a new tooltip popup
                 const tooltip = new mapboxgl.Popup({
-                  closeButton: false,
-                  closeOnClick: false,
+                    closeButton: false,
+                    closeOnClick: false,
                 });
 
                 // Define new handlers referencing the updated tooltip property
-                const mouseMoveHandler = function(e) {
-                  onMouseMoveTooltip(e, map, tooltip, newTooltipProperty);
+                const mouseMoveHandler = function (e) {
+                    onMouseMoveTooltip(e, map, tooltip, newTooltipProperty);
                 };
-                const mouseLeaveHandler = function() {
-                  onMouseLeaveTooltip(map, tooltip);
+                const mouseLeaveHandler = function () {
+                    onMouseLeaveTooltip(map, tooltip);
                 };
 
                 // Add the new event handlers
@@ -1802,33 +1843,36 @@ if (HTMLWidgets.shinyMode) {
 
                 // Store these handlers so we can remove/update them in the future
                 if (!window._mapboxHandlers) {
-                  window._mapboxHandlers = {};
+                    window._mapboxHandlers = {};
                 }
                 window._mapboxHandlers[layerId] = {
-                  mousemove: mouseMoveHandler,
-                  mouseleave: mouseLeaveHandler
+                    mousemove: mouseMoveHandler,
+                    mouseleave: mouseLeaveHandler,
                 };
-          } else if (message.type === "set_source") {
-              const layerId = message.layer;
-              const newData = message.source;
-              const layerObject = map.getLayer(layerId);
+            } else if (message.type === "set_source") {
+                const layerId = message.layer;
+                const newData = message.source;
+                const layerObject = map.getLayer(layerId);
 
-              if (!layerObject) {
-                console.error("Layer not found: ", layerId);
-                return;
-              }
+                if (!layerObject) {
+                    console.error("Layer not found: ", layerId);
+                    return;
+                }
 
-              const sourceId = layerObject.source;
-              const sourceObject = map.getSource(sourceId);
+                const sourceId = layerObject.source;
+                const sourceObject = map.getSource(sourceId);
 
-              if (!sourceObject) {
-                console.error("Source not found: ", sourceId);
-                return;
-              }
+                if (!sourceObject) {
+                    console.error("Source not found: ", sourceId);
+                    return;
+                }
 
-              // Update the geojson data
-              sourceObject.setData(newData);
+                // Update the geojson data
+                sourceObject.setData(newData);
             }
+        } else if (message.type === "set_projection") {
+            const projection = message.projection;
+            map.setProjection(projection);
         }
     });
 }
