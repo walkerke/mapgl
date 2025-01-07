@@ -18,7 +18,6 @@ navbar:
     - reference
     - articles
     - news
-    right: github
   components:
     home:
       icon: fa-home fa-lg
@@ -37,7 +36,3 @@ navbar:
         href: articles/map-design.html
       - text: Using mapgl with Shiny
         href: articles/margins-of-error.html
-
-    github:
-      icon: fa-github fa-lg
-      href: https://github.com/walkerke/mapgl
