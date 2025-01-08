@@ -21,7 +21,11 @@ story_section <- function(
   # Calculate margin based on position
   margin_style <- switch(position,
                          "left" = "margin-left: 50px;",
-                         "center" = sprintf("margin-left: calc(50%% - %dpx);", width/2),
+                         "center" = if (is.numeric(width)) {
+                           sprintf("margin-left: calc(50%% - %dpx);", width/2)
+                         } else {
+                           sprintf("margin-left: calc(50%% - (%s/2));", width)
+                         },
                          "right" = sprintf("margin-right: 50px; margin-left: auto;")
   )
 
@@ -50,14 +54,19 @@ story_section <- function(
 }
 
 #' Create a scrollytelling story map
-#' @param map_id The ID of your mapboxgl/maplibre output
-#' @param sections Named list of story_section objects
+#' @param map_id The ID of your mapboxgl, maplibre, or leaflet output defined in the server
+#' @param sections A named list of story_section objects. Names will correspond to map events defined within
+#'        the server using `on_section()`.
+#' @param map_type One of `"mapboxgl"`, `"maplibre"`, or `"leaflet"`. This will use either
+#'        `mapboxglOutput()`, `maplibreOutput()`, or `leafletOutput()` respectively, and must
+#'        correspond to the appropriate `render*()` function used in the server.
 #' @param root_margin Margin around viewport for triggering sections
 #' @param styles Optional custom CSS styles
 #' @export
 story_map <- function(
     map_id,
     sections,
+    map_type = c("mapboxgl", "maplibre", "leaflet"),
     root_margin = '-20% 0px -20% 0px',
     styles = NULL
 ) {
@@ -115,11 +124,17 @@ story_map <- function(
     });
   ", root_margin, map_id)
 
+  map_output_fn <- switch(match.arg(map_type),
+                          mapboxgl = mapboxglOutput,
+                          maplibre = maplibreOutput,
+                          leaflet = leaflet::leafletOutput
+  )
+
   # Create container structure
   tagList(
     div(
       style = "position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1;",
-      mapboxglOutput(map_id, height = "100%")
+      map_output_fn(map_id, height = "100%")
     ),
     div(
       class = "scroll-container",
@@ -142,10 +157,15 @@ story_map <- function(
   )
 }
 
-#' Handle story map section visibility
-#' @param map_id The ID of your mapboxgl/maplibre output
-#' @param section_id The ID of the section to trigger on
-#' @param handler Expression to execute when section becomes visible
+#' Observe events on story map section transitions
+#'
+#' For a given `story_section()`, you may want to trigger an event when the section becomes visible.
+#' This function wraps `shiny::observeEvent()` to allow you to modify the state of your map or
+#' invoke other Shiny actions on user scroll.
+#'
+#' @param map_id The ID of your map output
+#' @param section_id The ID of the section to trigger on, defined in `story_section()`
+#' @param handler Expression to execute when section becomes visible.
 #' @export
 on_section <- function(map_id, section_id, handler) {
   # Get the current reactive domain

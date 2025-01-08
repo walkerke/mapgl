@@ -2,17 +2,19 @@
 % Please edit documentation in R/storymaps.R
 \name{on_section}
 \alias{on_section}
-\title{Handle story map section visibility}
+\title{Observe events on story map section transitions}
 \usage{
 on_section(map_id, section_id, handler)
 }
 \arguments{
-\item{map_id}{The ID of your mapboxgl/maplibre output}
+\item{map_id}{The ID of your map output}
 
-\item{section_id}{The ID of the section to trigger on}
+\item{section_id}{The ID of the section to trigger on, defined in \code{story_section()}}
 
-\item{handler}{Expression to execute when section becomes visible}
+\item{handler}{Expression to execute when section becomes visible.}
 }
 \description{
-Handle story map section visibility
+For a given \code{story_section()}, you may want to trigger an event when the section becomes visible.
+This function wraps \code{shiny::observeEvent()} to allow you to modify the state of your map or
+invoke other Shiny actions on user scroll.
 }

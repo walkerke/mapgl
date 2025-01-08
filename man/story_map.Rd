@@ -4,12 +4,23 @@
 \alias{story_map}
 \title{Create a scrollytelling story map}
 \usage{
-story_map(map_id, sections, root_margin = "-20\% 0px -20\% 0px", styles = NULL)
+story_map(
+  map_id,
+  sections,
+  map_type = c("mapboxgl", "maplibre", "leaflet"),
+  root_margin = "-20\% 0px -20\% 0px",
+  styles = NULL
+)
 }
 \arguments{
-\item{map_id}{The ID of your mapboxgl/maplibre output}
+\item{map_id}{The ID of your mapboxgl, maplibre, or leaflet output defined in the server}
 
-\item{sections}{Named list of story_section objects}
+\item{sections}{A named list of story_section objects. Names will correspond to map events defined within
+the server using \code{on_section()}.}
+
+\item{map_type}{One of \code{"mapboxgl"}, \code{"maplibre"}, or \code{"leaflet"}. This will use either
+\code{mapboxglOutput()}, \code{maplibreOutput()}, or \code{leafletOutput()} respectively, and must
+correspond to the appropriate \verb{render*()} function used in the server.}
 
 \item{root_margin}{Margin around viewport for triggering sections}
 
