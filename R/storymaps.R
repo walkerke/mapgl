@@ -31,8 +31,8 @@ story_section <- function(
 
   # Create style
   panel_style <- sprintf(
-    "width: %dpx; %s background: %s; color: %s;%s",
-    width,
+    "width: %s; %s background: %s; color: %s;%s",
+    if (is.numeric(width)) paste0(width, "px") else width,
     margin_style,
     bg_color,
     text_color,
@@ -70,7 +70,7 @@ story_map <- function(
     root_margin = '-20% 0px -20% 0px',
     styles = NULL
 ) {
-  # Default styles (simplified as some styling moves to story_section)
+
   default_styles <- tags$style("
     .text-panel {
       padding: 20px;
