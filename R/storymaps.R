@@ -175,10 +175,15 @@ on_section <- function(map_id, section_id, handler) {
     # Capture the handler expression
     handler_expr <- substitute(handler)
 
+    # Create a reactive environment for evaluation
+    parent_env <- parent.frame()
+    
     observeEvent(domain$input[[paste0(map_id, "_active_section")]], {
         active_section <- domain$input[[paste0(map_id, "_active_section")]]
         if (active_section == section_id) {
-            eval(handler_expr, envir = parent.frame())
+            local({
+                eval(handler_expr, envir = parent_env)
+            })
         }
     })
 }
