@@ -14,43 +14,42 @@ story_section <- function(
     width = 400,
     bg_color = "rgba(255,255,255,0.9)",
     text_color = "#34495e",
-    font_family = NULL
-) {
-  position <- match.arg(position)
+    font_family = NULL) {
+    position <- match.arg(position)
 
-  # Calculate margin based on position
-  margin_style <- switch(position,
-                         "left" = "margin-left: 50px;",
-                         "center" = if (is.numeric(width)) {
-                           sprintf("margin-left: calc(50%% - %dpx);", width/2)
-                         } else {
-                           sprintf("margin-left: calc(50%% - (%s/2));", width)
-                         },
-                         "right" = sprintf("margin-right: 50px; margin-left: auto;")
-  )
+    # Calculate margin based on position
+    margin_style <- switch(position,
+        "left" = "margin-left: 50px;",
+        "center" = if (is.numeric(width)) {
+            sprintf("margin-left: calc(50%% - %dpx);", width / 2)
+        } else {
+            sprintf("margin-left: calc(50%% - (%s/2));", width)
+        },
+        "right" = sprintf("margin-right: 50px; margin-left: auto;")
+    )
 
-  # Create style
-  panel_style <- sprintf(
-    "width: %s; %s background: %s; color: %s;%s",
-    if (is.numeric(width)) paste0(width, "px") else width,
-    margin_style,
-    bg_color,
-    text_color,
-    if (!is.null(font_family)) sprintf("font-family: %s;", font_family) else ""
-  )
+    # Create style
+    panel_style <- sprintf(
+      "width: %s; %s background: %s; color: %s;%s",
+      if (is.numeric(width)) paste0(width, "px") else width,
+      margin_style,
+      bg_color,
+      text_color,
+      if (!is.null(font_family)) sprintf("font-family: %s;", font_family) else ""
+    )
 
-  div(
-    class = "text-panel",
-    style = panel_style,
-    h2(title),
-    # If content is a list or multiple elements, wrap them
-    if (is.list(content) || length(content) > 1) {
-      div(class = "section-content", content)
-    } else {
-      # Single string or element
-      div(class = "section-content", p(content))
-    }
-  )
+    div(
+        class = "text-panel",
+        style = panel_style,
+        h2(title),
+        # If content is a list or multiple elements, wrap them
+        if (is.list(content) || length(content) > 1) {
+            div(class = "section-content", content)
+        } else {
+            # Single string or element
+            div(class = "section-content", p(content))
+        }
+    )
 }
 
 #' Create a scrollytelling story map
@@ -67,11 +66,10 @@ story_map <- function(
     map_id,
     sections,
     map_type = c("mapboxgl", "maplibre", "leaflet"),
-    root_margin = '-20% 0px -20% 0px',
-    styles = NULL
-) {
-
-  default_styles <- tags$style("
+    root_margin = "-20% 0px -20% 0px",
+    styles = NULL) {
+    # Default styles (simplified as some styling moves to story_section)
+    default_styles <- tags$style("
     .text-panel {
       padding: 20px;
       margin-top: 20vh;
@@ -97,8 +95,8 @@ story_map <- function(
     }
   ")
 
-  # Intersection Observer setup (same as before)
-  observer_js <- sprintf("
+    # Intersection Observer setup (same as before)
+    observer_js <- sprintf("
     var observer;
 
     $(document).ready(function() {
@@ -124,37 +122,37 @@ story_map <- function(
     });
   ", root_margin, map_id)
 
-  map_output_fn <- switch(match.arg(map_type),
-                          mapboxgl = mapboxglOutput,
-                          maplibre = maplibreOutput,
-                          leaflet = leaflet::leafletOutput
-  )
-
-  # Create container structure
-  tagList(
-    div(
-      style = "position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1;",
-      map_output_fn(map_id, height = "100%")
-    ),
-    div(
-      class = "scroll-container",
-      tags$head(
-        default_styles,
-        if (!is.null(styles)) styles,
-        tags$script(observer_js)
-      ),
-      Map(function(id, section) {
-        tagList(
-          div(
-            class = "section",
-            id = id,
-            section  # story_section object
-          ),
-          div(class = "spacer")
-        )
-      }, names(sections), sections)
+    map_output_fn <- switch(match.arg(map_type),
+        mapboxgl = mapboxglOutput,
+        maplibre = maplibreOutput,
+        leaflet = leaflet::leafletOutput
     )
-  )
+
+    # Create container structure
+    tagList(
+        div(
+            style = "position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1;",
+            map_output_fn(map_id, height = "100%")
+        ),
+        div(
+            class = "scroll-container",
+            tags$head(
+                default_styles,
+                if (!is.null(styles)) styles,
+                tags$script(observer_js)
+            ),
+            Map(function(id, section) {
+                tagList(
+                    div(
+                        class = "section",
+                        id = id,
+                        section # story_section object
+                    ),
+                    div(class = "spacer")
+                )
+            }, names(sections), sections)
+        )
+    )
 }
 
 #' Observe events on story map section transitions
@@ -168,19 +166,19 @@ story_map <- function(
 #' @param handler Expression to execute when section becomes visible.
 #' @export
 on_section <- function(map_id, section_id, handler) {
-  # Get the current reactive domain
-  domain <- shiny::getDefaultReactiveDomain()
-  if (is.null(domain)) {
-    stop("on_section() must be called from within a Shiny reactive context")
-  }
-
-  # Capture the handler expression
-  handler_expr <- substitute(handler)
-
-  observeEvent(domain$input[[paste0(map_id, "_active_section")]], {
-    active_section <- domain$input[[paste0(map_id, "_active_section")]]
-    if (active_section == section_id) {
-      eval(handler_expr, envir = parent.frame())
+    # Get the current reactive domain
+    domain <- shiny::getDefaultReactiveDomain()
+    if (is.null(domain)) {
+        stop("on_section() must be called from within a Shiny reactive context")
     }
-  })
+
+    # Capture the handler expression
+    handler_expr <- substitute(handler)
+
+    observeEvent(domain$input[[paste0(map_id, "_active_section")]], {
+        active_section <- domain$input[[paste0(map_id, "_active_section")]]
+        if (active_section == section_id) {
+            eval(handler_expr, envir = parent.frame())
+        }
+    })
 }
