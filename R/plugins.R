@@ -152,10 +152,6 @@ compare.maplibre <- function(map1, map2, width, height, elementId, mousemove, or
 add_globe_minimap <- function(map, position = "bottom-right", globe_size = 82,
                               land_color = "white", water_color = "rgba(30 40 70/60%)",
                               marker_color = "#ff2233", marker_size = 1) {
-    if (!inherits(map, c("mapboxgl", "maplibregl"))) {
-        stop("Globe minimap is only supported for mapboxgl or maplibre maps.")
-    }
-
     map$x$globe_minimap <- list(
         enabled = TRUE,
         position = position,

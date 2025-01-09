@@ -1757,6 +1757,14 @@ if (HTMLWidgets.shinyMode) {
                 if (layersControl) {
                     layersControl.remove();
                 }
+
+                // Remove globe minimap if it exists
+                const globeMinimap = document.querySelector(
+                    ".mapboxgl-ctrl-globe-minimap",
+                );
+                if (globeMinimap) {
+                    globeMinimap.remove();
+                }
             } else if (message.type === "move_layer") {
                 if (map.getLayer(message.layer)) {
                     if (message.before) {
@@ -1873,6 +1881,17 @@ if (HTMLWidgets.shinyMode) {
         } else if (message.type === "set_projection") {
             const projection = message.projection;
             map.setProjection(projection);
+        } else if (message.type === "add_globe_minimap") {
+            const globeMinimapOptions = {
+                globeSize: message.options.globe_size || 100,
+                landColor: message.options.land_color || "#404040",
+                waterColor: message.options.water_color || "#090909",
+                markerColor: message.options.marker_color || "#1da1f2",
+                markerSize: message.options.marker_size || 2,
+            };
+            const globeMinimap = new GlobeMinimap(globeMinimapOptions);
+            map.addControl(globeMinimap, message.position || "bottom-left");
+            map.controls.push(globeMinimap);
         }
     });
 }
