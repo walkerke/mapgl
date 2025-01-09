@@ -30,12 +30,12 @@ story_section <- function(
 
     # Create style
     panel_style <- sprintf(
-      "width: %s; %s background: %s; color: %s;%s",
-      if (is.numeric(width)) paste0(width, "px") else width,
-      margin_style,
-      bg_color,
-      text_color,
-      if (!is.null(font_family)) sprintf("font-family: %s;", font_family) else ""
+        "width: %s; %s background: %s; color: %s;%s",
+        if (is.numeric(width)) paste0(width, "px") else width,
+        margin_style,
+        bg_color,
+        text_color,
+        if (!is.null(font_family)) sprintf("font-family: %s;", font_family) else ""
     )
 
     div(
@@ -68,7 +68,6 @@ story_map <- function(
     map_type = c("mapboxgl", "maplibre", "leaflet"),
     root_margin = "-20% 0px -20% 0px",
     styles = NULL) {
-    # Default styles (simplified as some styling moves to story_section)
     default_styles <- tags$style("
     .text-panel {
       padding: 20px;
@@ -142,6 +141,10 @@ story_map <- function(
                 tags$script(observer_js)
             ),
             Map(function(id, section) {
+                # Modify the section's class and id to include the list name
+                section$attribs$class <- paste(section$attribs$class, id)
+                section$attribs$id <- paste0("panel-", id)
+
                 tagList(
                     div(
                         class = "section",
@@ -177,7 +180,7 @@ on_section <- function(map_id, section_id, handler) {
 
     # Create a reactive environment for evaluation
     parent_env <- parent.frame()
-    
+
     observeEvent(domain$input[[paste0(map_id, "_active_section")]], {
         active_section <- domain$input[[paste0(map_id, "_active_section")]]
         if (active_section == section_id) {
