@@ -141,6 +141,11 @@ story_map <- function(
                 tags$script(observer_js)
             ),
             Map(function(id, section) {
+
+              # Modify the section's class and id to include the list name
+                section$attribs$class <- paste(section$attribs$class, id)
+                section$attribs$id <- paste0("panel-", id)
+                
                 tagList(
                     div(
                         class = "section",
