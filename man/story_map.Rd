@@ -9,22 +9,34 @@ story_map(
   sections,
   map_type = c("mapboxgl", "maplibre", "leaflet"),
   root_margin = "-20\% 0px -20\% 0px",
+  threshold = 0,
   styles = NULL
 )
 }
 \arguments{
-\item{map_id}{The ID of your mapboxgl, maplibre, or leaflet output defined in the server}
+\item{map_id}{The ID of your mapboxgl, maplibre, or leaflet output
+defined in the server, e.g. \code{"map"}}
 
-\item{sections}{A named list of story_section objects. Names will correspond to map events defined within
+\item{sections}{A named list of story_section objects.
+Names will correspond to map events defined within
 the server using \code{on_section()}.}
 
-\item{map_type}{One of \code{"mapboxgl"}, \code{"maplibre"}, or \code{"leaflet"}. This will use either
-\code{mapboxglOutput()}, \code{maplibreOutput()}, or \code{leafletOutput()} respectively, and must
+\item{map_type}{One of \code{"mapboxgl"}, \code{"maplibre"}, or \code{"leaflet"}.
+This will use either \code{mapboxglOutput()}, \code{maplibreOutput()},
+or \code{leafletOutput()} respectively, and must
 correspond to the appropriate \verb{render*()} function used in the server.}
 
-\item{root_margin}{Margin around viewport for triggering sections}
+\item{root_margin}{The margin around the viewport for triggering sections by
+the intersection observer. Should be specified as a string,
+e.g. \code{"-20\% 0px -20\% 0px"}.}
 
-\item{styles}{Optional custom CSS styles}
+\item{threshold}{A number that indicates the visibility ratio for a story
+'       panel to be used to trigger a section; should be a number between
+0 and 1. Defaults to 0, meaning that the section is triggered as soon
+as the first pixel is visible.}
+
+\item{styles}{Optional custom CSS styles. Should be specified as a
+character string within \code{shiny::tags$style()}.}
 }
 \description{
 Create a scrollytelling story map

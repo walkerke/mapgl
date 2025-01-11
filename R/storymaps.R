@@ -53,20 +53,31 @@ story_section <- function(
 }
 
 #' Create a scrollytelling story map
-#' @param map_id The ID of your mapboxgl, maplibre, or leaflet output defined in the server
-#' @param sections A named list of story_section objects. Names will correspond to map events defined within
+#' @param map_id The ID of your mapboxgl, maplibre, or leaflet output
+#'        defined in the server, e.g. `"map"`
+#' @param sections A named list of story_section objects.
+#'        Names will correspond to map events defined within
 #'        the server using `on_section()`.
-#' @param map_type One of `"mapboxgl"`, `"maplibre"`, or `"leaflet"`. This will use either
-#'        `mapboxglOutput()`, `maplibreOutput()`, or `leafletOutput()` respectively, and must
+#' @param map_type One of `"mapboxgl"`, `"maplibre"`, or `"leaflet"`.
+#'        This will use either `mapboxglOutput()`, `maplibreOutput()`,
+#'        or `leafletOutput()` respectively, and must
 #'        correspond to the appropriate `render*()` function used in the server.
-#' @param root_margin Margin around viewport for triggering sections
-#' @param styles Optional custom CSS styles
+#' @param root_margin The margin around the viewport for triggering sections by
+#'        the intersection observer. Should be specified as a string,
+#'        e.g. `"-20% 0px -20% 0px"`.
+#' @param threshold A number that indicates the visibility ratio for a story
+#''       panel to be used to trigger a section; should be a number between
+#'        0 and 1. Defaults to 0, meaning that the section is triggered as soon
+#'        as the first pixel is visible.
+#' @param styles Optional custom CSS styles. Should be specified as a
+#'        character string within `shiny::tags$style()`.
 #' @export
 story_map <- function(
     map_id,
     sections,
     map_type = c("mapboxgl", "maplibre", "leaflet"),
     root_margin = "-20% 0px -20% 0px",
+    threshold = 0,
     styles = NULL) {
     default_styles <- tags$style("
     .text-panel {
@@ -102,7 +113,7 @@ story_map <- function(
       var options = {
         root: null,
         rootMargin: '%s',
-        threshold: 0
+        threshold: %s
       };
 
       var callback = function(entries) {
@@ -119,7 +130,7 @@ story_map <- function(
         observer.observe(this);
       });
     });
-  ", root_margin, map_id)
+  ", root_margin, threshold, map_id)
 
     map_output_fn <- switch(match.arg(map_type),
         mapboxgl = mapboxglOutput,
