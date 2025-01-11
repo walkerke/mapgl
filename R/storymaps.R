@@ -201,3 +201,41 @@ on_section <- function(map_id, section_id, handler) {
         }
     })
 }
+
+#' Create a scrollytelling story map with MapLibre
+#' @inheritParams story_map
+#' @export
+story_maplibre <- function(
+    map_id,
+    sections,
+    root_margin = "-20% 0px -20% 0px",
+    threshold = 0,
+    styles = NULL) {
+    story_map(
+        map_id = map_id,
+        sections = sections,
+        map_type = "maplibre",
+        root_margin = root_margin,
+        threshold = threshold,
+        styles = styles
+    )
+}
+
+#' Create a scrollytelling story map with Leaflet
+#' @inheritParams story_map
+#' @export
+story_leaflet <- function(
+    map_id,
+    sections,
+    root_margin = "-20% 0px -20% 0px",
+    threshold = 0,
+    styles = NULL) {
+    story_map(
+        map_id = map_id,
+        sections = sections,
+        map_type = "leaflet",
+        root_margin = root_margin,
+        threshold = threshold,
+        styles = styles
+    )
+}
