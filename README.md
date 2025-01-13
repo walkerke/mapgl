@@ -24,6 +24,8 @@ Read through these vignettes to learn how to use the package:
 
 -   [Using __mapgl__ with Shiny](https://walker-data.com/mapgl/articles/shiny.html)
 
+-   [Building story maps with __mapgl__](https://walker-data.com/mapgl/articles/story-maps.html)
+
 ## Recommended training and how to learn more
 
 If you find this project useful in your work and would like to ensure continued development of the package, you can provide support in the following ways: 

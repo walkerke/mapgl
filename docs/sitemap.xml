@@ -7,6 +7,7 @@
 <url><loc>https://walker-data.com/mapgl/articles/layers-overview.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/articles/map-design.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/articles/shiny.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/articles/story-maps.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/authors.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/index.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/news/index.html</loc></url>
@@ -64,6 +65,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/maptiler_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/match_expr.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/move_layer.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/on_section.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMapboxgl.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMaplibre.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_config_property.html</loc></url>
@@ -71,9 +73,16 @@
 <url><loc>https://walker-data.com/mapgl/reference/set_fog.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_layout_property.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_paint_property.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/set_projection.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/set_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_terrain.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/set_tooltip.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_view.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/step_expr.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/story_leaflet.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/story_map.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/story_maplibre.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/story_section.html</loc></url>
 </urlset>
 
