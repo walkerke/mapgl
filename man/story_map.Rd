@@ -10,7 +10,10 @@ story_map(
   map_type = c("mapboxgl", "maplibre", "leaflet"),
   root_margin = "-20\% 0px -20\% 0px",
   threshold = 0,
-  styles = NULL
+  styles = NULL,
+  bg_color = "rgba(255,255,255,0.9)",
+  text_color = "#34495e",
+  font_family = NULL
 )
 }
 \arguments{
@@ -37,6 +40,12 @@ as the first pixel is visible.}
 
 \item{styles}{Optional custom CSS styles. Should be specified as a
 character string within \code{shiny::tags$style()}.}
+
+\item{bg_color}{Default background color for all sections}
+
+\item{text_color}{Default text color for all sections}
+
+\item{font_family}{Default font family for all sections}
 }
 \description{
 Create a scrollytelling story map

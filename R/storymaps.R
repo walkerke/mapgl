@@ -39,7 +39,7 @@ story_section <- function(
     )
 
     div(
-        class = "text-panel",
+        class = "section-panel",
         style = panel_style,
         h2(title),
         # If content is a list or multiple elements, wrap them
@@ -71,6 +71,9 @@ story_section <- function(
 #'        as the first pixel is visible.
 #' @param styles Optional custom CSS styles. Should be specified as a
 #'        character string within `shiny::tags$style()`.
+#' @param bg_color Default background color for all sections
+#' @param text_color Default text color for all sections
+#' @param font_family Default font family for all sections
 #' @export
 story_map <- function(
     map_id,
@@ -78,9 +81,39 @@ story_map <- function(
     map_type = c("mapboxgl", "maplibre", "leaflet"),
     root_margin = "-20% 0px -20% 0px",
     threshold = 0,
-    styles = NULL) {
+    styles = NULL,
+    bg_color = "rgba(255,255,255,0.9)",
+    text_color = "#34495e",
+    font_family = NULL) {
+    # Apply global styles to sections that don't override them
+    sections <- lapply(sections, function(section) {
+        # Only update attributes if they weren't explicitly set
+        if (is.null(section$attribs$style)) {
+            section$attribs$style <- ""
+        }
+
+        # Parse existing style string to get current values
+        current_style <- section$attribs$style
+        current_bg <- if (grepl("background:", current_style)) NULL else bg_color
+        current_color <- if (grepl("color:", current_style)) NULL else text_color
+        current_font <- if (grepl("font-family:", current_style)) NULL else font_family
+
+        # Update section with global styles if not already set
+        if (!is.null(current_bg)) {
+            section$attribs$style <- paste(section$attribs$style, sprintf("background: %s;", current_bg))
+        }
+        if (!is.null(current_color)) {
+            section$attribs$style <- paste(section$attribs$style, sprintf("color: %s;", current_color))
+        }
+        if (!is.null(current_font)) {
+            section$attribs$style <- paste(section$attribs$style, sprintf("font-family: %s;", current_font))
+        }
+
+        section
+    })
+
     default_styles <- tags$style("
-    .text-panel {
+    .section-panel {
       padding: 20px;
       margin-top: 20vh;
       margin-bottom: 20vh;
@@ -88,10 +121,10 @@ story_map <- function(
       border-radius: 8px;
       pointer-events: auto;
     }
-    .text-panel h2 {
+    .section-panel h2 {
       margin-bottom: 15px;
     }
-    .text-panel p {
+    .section-panel p {
       line-height: 1.6;
     }
     .spacer {

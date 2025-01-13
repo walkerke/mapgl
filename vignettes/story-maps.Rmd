@@ -1,0 +1,186 @@
+---
+title: "Building story maps with mapgl"
+format: html
+editor: visual
+---
+
+*Story maps* are effective tools for communicating map-based narratives. In a story map, users typically scroll through a web page in which different map views and elements of the "story" are shown as the user scrolls down. The **mapgl** package brings story maps in Shiny to R users, and supports both Mapbox and MapLibre backends as well as Leaflet.
+
+This tutorial will help you learn how to build a basic story map Shiny app with mapgl. You'll rely on the following three functions when building your story:
+
+-   `story_map()` sets up the user interface component for your story map. You'll wrap this in a Shiny layout function; it is recommended to use `fluidPage()` (or `bslib::page_fluid()`) which will get you a standard full-screen story map template. `story_map()` defaults to Mapbox maps; you can use `story_maplibre()` for MapLibre maps, and `story_leaflet()` for Leaflet.
+
+-   Within `story_map()`, you'll define a named list of sections to be passed to the `sections` parameter. You'll use the `story_section()` function to build each section. In `story_section()`, you'll specify a `title` (set to NULL or `""` to omit it) as well as `content`, which will be a list of UI elements you want to put in your section panel. This can be HTML elements (defined with `tags$p()`, `tags$a()`, `tags$img()`, etc.) as well as Shiny inputs or outputs.
+
+-   Within your `server` function, you'll then use the `on_section()` function to bring your story map to life. `on_section()` allows you to link Shiny events to specific story sections. This means that you can trigger map movements, add data, or even perform analyses on user scroll.
+
+## Moving the map on scroll
+
+Let's take a look at how this works with a basic example. We'll build a story map with two sections: an introductory section, and a second section where the map "flies to" a location when the user scrolls.
+
+To get started, let's build a basic user interface without any map actions. In `ui`, we set up `story_map()` inside a fluid page with two sections. In `server`, we'll create a Mapbox globe with `mapboxgl()` and `renderMapboxgl()`. In most cases you'll want to set the option `scrollZoom = FALSE` when you initialize your map so map scrolling behavior doesn't interfere with story scrolling.
+
+```{r, eval = FALSE}
+library(shiny)
+library(mapgl)
+
+ui <- fluidPage(
+  story_map(
+    map_id = "map",
+    sections = list(
+      "intro" = story_section(
+        "Introduction",
+        "This is a story map."
+      ),
+      "location" = story_section(
+        "Location",
+        "Check out this interesting location."
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  output$map <- renderMapboxgl({
+    mapboxgl(scrollZoom = FALSE)
+  })
+}
+
+shinyApp(ui, server)
+```
+
+You'll note that scrolling will transition between story sections, and that you can still interact with the map by clicking and panning. However, because we haven't set up any actions in `server`, nothing else happens when you scroll between sections.
+
+We can change this by using the `on_section()` function. In `on_section()`, you'll specify the map ID (in this case, `"map"`) and the section ID to link to an action; the section ID is the name of the corresponding list element defined in the list passed to `sections` in the UI. You'll then define an expression, much like you would in `observeEvent()` in Shiny, to be executed when a given section appears.
+
+```{r, eval = FALSE}
+library(shiny)
+library(mapgl)
+
+ui <- fluidPage(
+  story_map(
+    map_id = "map",
+    sections = list(
+      "intro" = story_section(
+        "Introduction",
+        "This is a story map."
+      ),
+      "location" = story_section(
+        "Location",
+        "Check out this interesting location."
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  output$map <- renderMapboxgl({
+    mapboxgl(scrollZoom = FALSE)
+  })
+  
+  on_section("map", "location", {
+    mapboxgl_proxy("map") |> 
+      fly_to(center = c(12.49257, 41.890233), 
+             zoom = 17.5,
+             pitch = 49,
+             bearing = 12.8)
+  })
+  
+}
+
+shinyApp(ui, server)
+```
+
+The map zooms into the Colosseum in Rome on user scroll. If you scroll back up to the top, however, you'll notice that the view does not return to the original globe. This can be remedied by tying an `on_section()` event to the introductory section.
+
+```{r, eval = FALSE}
+library(shiny)
+library(mapgl)
+
+ui <- fluidPage(
+  story_map(
+    map_id = "map",
+    sections = list(
+      "intro" = story_section(
+        "Introduction",
+        "This is a story map."
+      ),
+      "location" = story_section(
+        "Location",
+        "Check out this interesting location."
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  output$map <- renderMapboxgl({
+    mapboxgl(scrollZoom = FALSE)
+  })
+  
+  on_section("map", "intro", {
+    mapboxgl_proxy("map") |> 
+      fly_to(center = c(0, 0),
+             zoom = 0,
+             pitch = 0,
+             bearing = 0)
+  })
+  
+  on_section("map", "location", {
+    mapboxgl_proxy("map") |> 
+      fly_to(center = c(12.49257, 41.890233), 
+             zoom = 17.5,
+             pitch = 49,
+             bearing = 12.8)
+  })
+  
+}
+
+shinyApp(ui, server)
+```
+
+For map transitions, in addition to `fly_to()`, you might consider using `ease_to()` and `jump_to()` depending on your use case. Map transition functions support [camera options](https://docs.mapbox.com/mapbox-gl-js/api/properties/#cameraoptions) and [animation options](https://docs.mapbox.com/mapbox-gl-js/api/properties/#animationoptions) as keyword arguments when applicable.
+
+## Adding data and modifying story appearance
+
+In many cases, you'll want to use story maps to visualize data that you'll add to a Mapbox / MapLibre basemap. Let's build a minimal example of how a real estate firm might build a story map to market a property.
+
+```{r, eval = FALSE}
+library(shiny)
+library(mapgl)
+
+ui <- fluidPage(
+  story_map(
+    map_id = "map",
+    sections = list(
+      "intro" = story_section(
+        "Introduction",
+        "This is a story map."
+      ),
+      "location" = story_section(
+        "Location",
+        "Check out this interesting location."
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  output$map <- renderMapboxgl({
+    mapboxgl(scrollZoom = FALSE)
+  })
+  
+  on_section("map", "location", {
+    mapboxgl_proxy("map") |> 
+      fly_to(center = c(12.49257, 41.890233), 
+             zoom = 17.5,
+             pitch = 49,
+             bearing = 12.8)
+  })
+  
+}
+
+shinyApp(ui, server)
+```
+
+## Integrating Shiny inputs and outputs
