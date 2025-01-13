@@ -243,14 +243,20 @@ story_maplibre <- function(
     sections,
     root_margin = "-20% 0px -20% 0px",
     threshold = 0,
-    styles = NULL) {
+    styles = NULL,
+    bg_color = "rgba(255,255,255,0.9)",
+    text_color = "#34495e",
+    font_family = NULL) {
     story_map(
         map_id = map_id,
         sections = sections,
         map_type = "maplibre",
         root_margin = root_margin,
         threshold = threshold,
-        styles = styles
+        styles = styles,
+        bg_color = bg_color,
+        text_color = text_color,
+        font_family = font_family
     )
 }
 
@@ -262,13 +268,19 @@ story_leaflet <- function(
     sections,
     root_margin = "-20% 0px -20% 0px",
     threshold = 0,
-    styles = NULL) {
+    styles = NULL,
+    bg_color = "rgba(255,255,255,0.9)",
+    text_color = "#34495e",
+    font_family = NULL) {
     story_map(
         map_id = map_id,
         sections = sections,
         map_type = "leaflet",
         root_margin = root_margin,
         threshold = threshold,
-        styles = styles
+        styles = styles,
+        bg_color = bg_color,
+        text_color = text_color,
+        font_family = font_family
     )
 }
