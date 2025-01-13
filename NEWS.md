@@ -1,3 +1,8 @@
+# mapgl 0.2.0
+
+* A new "story map" feature allows users to build interactive story maps.  [View the story mapping vignette](https://walker-data.com/mapgl/articles/story-maps.html) for more information.
+* Various bug fixes and performance improvements; [visit the package GitHub page for more details](https://github.com/walkerke/mapgl).
+
 # mapgl 0.1.4
 
 * `add_image()` allows you to add your own image to the map's sprite for use as an icon / symbol layer
