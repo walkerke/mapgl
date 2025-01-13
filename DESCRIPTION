@@ -10,6 +10,7 @@ Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.c
     filled maps, circle maps, 'heatmaps', and three-dimensional graphics; and customize map styles and views.  The package
     also includes utilities to use 'Mapbox' and 'MapLibre' maps in 'Shiny' web applications.
 URL: https://walker-data.com/mapgl/
+BugReports: https://github.com/walkerke/mapgl/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
