@@ -2,12 +2,12 @@
 # addH3JSource
 #' Add a hexagon source from the H3 geospatial indexing system.
 #' @references https://h3geo.org, https://github.com/INSPIDE/h3j-h3t
-#' @inheritParams add_sources
+#' @inheritParams add_vector_source
 #' @export
 #' @examplesIf interactive()
 #' url = "https://inspide.github.io/h3j-h3t/examples/h3j/sample.h3j"
 #' maplibre(center=c(-3.704, 40.417), zoom=15, pitch=30) |>
-#'   add_h3j_sources("h3j_testsource",
+#'   add_h3j_source("h3j_testsource",
 #'                   url = url
 #'   )  |>
 #'   add_fill_extrusion_layer(
@@ -30,7 +30,7 @@
 #'     fill_extrusion_opacity = 0.7
 #'   )
 #'
-add_h3j_sources <- function(map, id, url) {
+add_h3j_source <- function(map, id, url) {
   h3j_sources <- list(
     id = id,
     url = url
