@@ -12,8 +12,8 @@ story_section <- function(
     content,
     position = c("left", "center", "right"),
     width = 400,
-    bg_color = "rgba(255,255,255,0.9)",
-    text_color = "#34495e",
+    bg_color = NULL,
+    text_color = NULL,
     font_family = NULL) {
     position <- match.arg(position)
 
@@ -30,12 +30,12 @@ story_section <- function(
 
     # Create style
     panel_style <- sprintf(
-        "width: %s; %s background: %s; color: %s;%s",
+        "width: %s; %s%s%s%s",
         if (is.numeric(width)) paste0(width, "px") else width,
         margin_style,
-        bg_color,
-        text_color,
-        if (!is.null(font_family)) sprintf("font-family: %s;", font_family) else ""
+        if (!is.null(bg_color)) sprintf(" background: %s;", bg_color) else "",
+        if (!is.null(text_color)) sprintf(" color: %s;", text_color) else "",
+        if (!is.null(font_family)) sprintf(" font-family: %s;", font_family) else ""
     )
 
     div(
@@ -95,7 +95,7 @@ story_map <- function(
         # Parse existing style string to get current values
         current_style <- section$attribs$style
         current_bg <- if (grepl("background:", current_style)) NULL else bg_color
-        current_color <- if (grepl("color:", current_style)) NULL else text_color
+        current_color <- if (grepl("(?:^|;)\\s*color:", current_style)) NULL else text_color
         current_font <- if (grepl("font-family:", current_style)) NULL else font_family
 
         # Update section with global styles if not already set
@@ -112,15 +112,19 @@ story_map <- function(
         section
     })
 
-    default_styles <- tags$style("
+    default_styles <- tags$style(sprintf(
+        "
     .section-panel {
-      padding: 20px;
-      margin-top: 20vh;
-      margin-bottom: 20vh;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      pointer-events: auto;
-    }
+          padding: 20px;
+          margin-top: 20vh;
+          margin-bottom: 20vh;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          border-radius: 8px;
+          pointer-events: auto;
+          background: %s;
+          color: %s;
+          %s
+        }
     .section-panel h2 {
       margin-bottom: 15px;
     }
@@ -136,7 +140,11 @@ story_map <- function(
       z-index: 2;
       pointer-events: none;
     }
-  ")
+  ",
+        bg_color,
+        text_color,
+        if (!is.null(font_family)) sprintf("font-family: %s;", font_family) else ""
+    ))
 
     # Intersection Observer setup (same as before)
     observer_js <- sprintf("

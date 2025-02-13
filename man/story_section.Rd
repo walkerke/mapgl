@@ -9,8 +9,8 @@ story_section(
   content,
   position = c("left", "center", "right"),
   width = 400,
-  bg_color = "rgba(255,255,255,0.9)",
-  text_color = "#34495e",
+  bg_color = NULL,
+  text_color = NULL,
   font_family = NULL
 )
 }
