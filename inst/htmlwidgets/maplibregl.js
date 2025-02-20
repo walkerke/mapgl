@@ -234,9 +234,8 @@ HTMLWidgets.widget({
                         });
                     }
 
-                    // Add layers if provided
-                    if (x.layers) {
-                        x.layers.forEach(function (layer) {
+
+                    function add_my_layers(layer) {
                             try {
                                 const layerConfig = {
                                     id: layer.id,
@@ -448,7 +447,24 @@ HTMLWidgets.widget({
                                     e,
                                 );
                             }
+                        }
+                    if (x.h3j_sources) {
+                        x.h3j_sources.forEach(async function (source) {
+
+                            await map.addH3JSource(source.id, {
+                                data: source.url
+                            })
+
+                            // A bit hacky?
+                            if (x.layers) {
+                              x.layers.forEach((layer) => add_my_layers(layer));
+                            }
                         });
+                    }
+
+                    // Add layers if provided
+                    if (x.layers) {
+                        x.layers.forEach((layer) => add_my_layers(layer));
                     }
 
                     // Apply setFilter if provided
