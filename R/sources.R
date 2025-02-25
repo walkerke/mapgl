@@ -165,10 +165,10 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
             rlang::warn("This function does not support existing color tables, but this feature is in progress.")
         }
 
-        # First project to Web Mercator (like Leaflet does)
+        # Project to Web Mercator
         data_mercator <- terra::project(data, "EPSG:3857")
 
-        # Then get the extent in WGS84
+        # Get extent in WGS84 for coordinates
         data_wgs84 <- terra::project(data_mercator, "EPSG:4326")
 
         if (terra::nlyr(data) == 3) {
@@ -177,45 +177,86 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
             terra::writeRaster(data_mercator, png_path, overwrite = TRUE)
             url <- base64enc::dataURI(file = png_path, mime = "image/png")
         } else {
-            # Same for single band data
+            # For single band data
             if (is.null(colors)) {
-                colors <- grDevices::colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(256)
-            } else if (length(colors) < 256) {
-                colors <- grDevices::colorRampPalette(colors)(256)
+                # Get 255 colors for data (0-254), reserving index 255 for NA
+                colors <- grDevices::colorRampPalette(c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725"))(255)
+            } else if (length(colors) >= 255) {
+                # Use first 255 colors if more provided
+                colors <- colors[1:255]
+            } else {
+                # Interpolate to 255 colors
+                colors <- grDevices::colorRampPalette(colors)(255)
             }
 
-            data_mercator <- data_mercator / max(terra::values(data_mercator), na.rm = TRUE) * 254
-            data_mercator <- round(data_mercator)
-            data_mercator[is.na(terra::values(data_mercator))] <- 255
-            coltb <- data.frame(value = 0:255, col = colors)
+            # Extract values
+            values <- terra::values(data_mercator)
 
-            # Create color table
+            # Handle NA values
+            na_mask <- is.na(values)
+
+            # Rescale to 0-254 range
+            if (all(is.na(values))) {
+                # Handle the case where all values are NA
+                scaled_values <- values # Keep all as NA
+            } else {
+                # Get min/max excluding NAs
+                min_val <- min(values, na.rm = TRUE)
+                max_val <- max(values, na.rm = TRUE)
+
+                if (min_val == max_val) {
+                    # Handle case where all non-NA values are the same
+                    scaled_values <- values
+                    scaled_values[!na_mask] <- 127 # Middle value
+                } else {
+                    # Normal rescaling
+                    scaled_values <- (values - min_val) / (max_val - min_val) * 254
+                }
+            }
+
+            # Round to integers
+            scaled_values <- round(scaled_values)
+
+            # Ensure values are in 0-254 range
+            scaled_values[scaled_values < 0] <- 0
+            scaled_values[scaled_values > 254] <- 254
+
+            # Set NA values to 255 (which we'll make transparent)
+            scaled_values[na_mask] <- 255
+
+            # Update the raster
+            terra::values(data_mercator) <- scaled_values
+
+            # Create color table (255 colors + transparent for NA)
+            transparent_color <- "#00000000" # Fully transparent
+            coltb <- data.frame(value = 0:255, col = c(colors, transparent_color))
+
+            # Apply color table
             terra::coltab(data_mercator) <- coltb
 
+            # Write to PNG with appropriate datatype
             png_path <- tempfile(fileext = ".png")
-            terra::writeRaster(data_mercator, png_path, overwrite = TRUE, NAflag = 255, datatype = "INT1U")
+            terra::writeRaster(data_mercator, png_path, overwrite = TRUE, datatype = "INT1U")
             url <- base64enc::dataURI(file = png_path, mime = "image/png")
         }
 
         # Compute coordinates from the WGS84 version
         if (is.null(coordinates)) {
             ext <- terra::ext(data_wgs84)
+
             coordinates <- list(
-                c(ext[1], ext[4]), # top-left (west, north)
-                c(ext[2], ext[4]), # top-right (east, north)
-                c(ext[2], ext[3]), # bottom-right (east, south)
-                c(ext[1], ext[3]) # bottom-left (west, south)
+                c(ext[1], ext[4]), # top-left
+                c(ext[2], ext[4]), # top-right
+                c(ext[2], ext[3]), # bottom-right
+                c(ext[1], ext[3]) # bottom-left
             )
 
-            # Ensure coordinates are numeric vectors, not any other type
+            # Ensure coordinates are numeric vectors
             coordinates <- lapply(coordinates, as.numeric)
-
-            # Ensure proper naming for debugging
             names(coordinates) <- NULL
         }
     }
 
-    # Rest of the function remains the same
     if (is.null(url)) {
         stop("Either 'url' or 'data' must be provided.")
     }
