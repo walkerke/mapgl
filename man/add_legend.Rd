@@ -14,7 +14,12 @@ add_legend(
   position = "top-left",
   sizes = NULL,
   add = FALSE,
-  width = NULL
+  width = NULL,
+  layer_id = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL
 )
 }
 \arguments{
@@ -37,6 +42,16 @@ add_legend(
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 
 \item{width}{The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.}
+
+\item{layer_id}{The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.}
+
+\item{margin_top}{Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).}
+
+\item{margin_right}{Custom right margin in pixels. Default is NULL.}
+
+\item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
+
+\item{margin_left}{Custom left margin in pixels. Default is NULL.}
 }
 \value{
 The updated map object with the legend added.

@@ -885,7 +885,23 @@ HTMLWidgets.widget({
                             link.id = layerId;
                             link.href = "#";
                             link.textContent = layerId;
-                            link.className = "active";
+                            
+                            // Check if the layer visibility is set to "none" initially
+                            const initialVisibility = map.getLayoutProperty(
+                                layerId,
+                                "visibility"
+                            );
+                            link.className = initialVisibility === "none" ? "" : "active";
+                            
+                            // Also hide any associated legends if the layer is initially hidden
+                            if (initialVisibility === "none") {
+                                const associatedLegends = document.querySelectorAll(
+                                    `.mapboxgl-legend[data-layer-id="${layerId}"]`
+                                );
+                                associatedLegends.forEach(legend => {
+                                    legend.style.display = "none";
+                                });
+                            }
 
                             // Show or hide layer when the toggle is clicked
                             link.onclick = function (e) {
@@ -906,6 +922,14 @@ HTMLWidgets.widget({
                                         "none",
                                     );
                                     this.className = "";
+                                    
+                                    // Hide associated legends
+                                    const associatedLegends = document.querySelectorAll(
+                                        `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`
+                                    );
+                                    associatedLegends.forEach(legend => {
+                                        legend.style.display = "none";
+                                    });
                                 } else {
                                     this.className = "active";
                                     map.setLayoutProperty(
@@ -913,6 +937,14 @@ HTMLWidgets.widget({
                                         "visibility",
                                         "visible",
                                     );
+                                    
+                                    // Show associated legends
+                                    const associatedLegends = document.querySelectorAll(
+                                        `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`
+                                    );
+                                    associatedLegends.forEach(legend => {
+                                        legend.style.display = "";
+                                    });
                                 }
                             };
 
@@ -1670,7 +1702,23 @@ if (HTMLWidgets.shinyMode) {
                     link.id = layerId;
                     link.href = "#";
                     link.textContent = layerId;
-                    link.className = "active";
+                    
+                    // Check if the layer visibility is set to "none" initially
+                    const initialVisibility = map.getLayoutProperty(
+                        layerId,
+                        "visibility"
+                    );
+                    link.className = initialVisibility === "none" ? "" : "active";
+                    
+                    // Also hide any associated legends if the layer is initially hidden
+                    if (initialVisibility === "none") {
+                        const associatedLegends = document.querySelectorAll(
+                            `.mapboxgl-legend[data-layer-id="${layerId}"]`
+                        );
+                        associatedLegends.forEach(legend => {
+                            legend.style.display = "none";
+                        });
+                    }
 
                     link.onclick = function (e) {
                         const clickedLayer = this.textContent;
@@ -1689,6 +1737,14 @@ if (HTMLWidgets.shinyMode) {
                                 "none",
                             );
                             this.className = "";
+                            
+                            // Hide associated legends
+                            const associatedLegends = document.querySelectorAll(
+                                `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`
+                            );
+                            associatedLegends.forEach(legend => {
+                                legend.style.display = "none";
+                            });
                         } else {
                             this.className = "active";
                             map.setLayoutProperty(
@@ -1696,6 +1752,14 @@ if (HTMLWidgets.shinyMode) {
                                 "visibility",
                                 "visible",
                             );
+                            
+                            // Show associated legends
+                            const associatedLegends = document.querySelectorAll(
+                                `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`
+                            );
+                            associatedLegends.forEach(legend => {
+                                legend.style.display = "";
+                            });
                         }
                     };
 

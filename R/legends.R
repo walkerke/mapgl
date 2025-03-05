@@ -10,20 +10,29 @@
 #' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
 #' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
+#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
+#' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
+#' @param margin_left Custom left margin in pixels. Default is NULL.
+#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
+#' @param margin_right Custom right margin in pixels. Default is NULL.
 #'
 #' @return The updated map object with the legend added.
 #' @export
 add_legend <- function(map, legend_title, values, colors,
                        type = c("continuous", "categorical"),
                        circular_patches = FALSE, position = "top-left",
-                       sizes = NULL, add = FALSE, width = NULL) {
+                       sizes = NULL, add = FALSE, width = NULL, layer_id = NULL,
+                       margin_top = NULL, margin_right = NULL, 
+                       margin_bottom = NULL, margin_left = NULL) {
     type <- match.arg(type)
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
 
     if (type == "continuous") {
-        add_continuous_legend(map, legend_title, values, colors, position, unique_id, add, width)
+        add_continuous_legend(map, legend_title, values, colors, position, unique_id, add, width, layer_id,
+                              margin_top, margin_right, margin_bottom, margin_left)
     } else {
-        add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id, sizes, add, width)
+        add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id, sizes, add, width, layer_id,
+                               margin_top, margin_right, margin_bottom, margin_left)
     }
 }
 
@@ -42,6 +51,11 @@ add_legend <- function(map, legend_title, values, colors,
 #' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as `values`. If `circular_patches` is `FALSE` (for square patches), sizes represent the width and height of the patch in pixels.  If `circular_patches` is `TRUE`, sizes represent the radius of the circle.
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
 #' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
+#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
+#' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
+#' @param margin_left Custom left margin in pixels. Default is NULL.
+#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
+#' @param margin_right Custom right margin in pixels. Default is NULL.
 #'
 #' @return The updated map object with the legend added.
 #' @export
@@ -62,7 +76,10 @@ add_legend <- function(map, legend_title, values, colors,
 #'     width = "300px"
 #' )
 #' }
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, position = "top-left", unique_id = NULL, sizes = NULL, add = FALSE, width = NULL) {
+add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, 
+                                  position = "top-left", unique_id = NULL, sizes = NULL, add = FALSE, 
+                                  width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL, 
+                                  margin_bottom = NULL, margin_left = NULL) {
     # Validate and prepare inputs
     if (length(colors) == 1) {
         colors <- rep(colors, length(values))
@@ -108,8 +125,15 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
         unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
     }
 
+    # Add data-layer-id attribute if layer_id is provided
+    layer_attr <- if (!is.null(layer_id)) {
+        paste0(' data-layer-id="', layer_id, '"')
+    } else {
+        ""
+    }
+    
     legend_html <- paste0(
-        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '">',
+        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, '>',
         "<h2>", legend_title, "</h2>",
         paste0(legend_items, collapse = ""),
         "</div>"
@@ -140,20 +164,20 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       z-index: 1002;
     }
     #", unique_id, ".top-left {
-      top: 10px;
-      left: 10px;
+      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
+      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
     }
     #", unique_id, ".bottom-left {
-      bottom: 10px;
-      left: 10px;
+      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
+      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
     }
     #", unique_id, ".top-right {
-      top: 10px;
-      right: 10px;
+      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
+      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
     }
     #", unique_id, ".bottom-right {
-      bottom: 10px;
-      right: 10px;
+      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
+      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
     }
     #", unique_id, " .legend-item {
       display: flex;
@@ -207,10 +231,17 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 #' @param unique_id A unique ID for the legend container. Defaults to NULL.
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
 #' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
+#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
+#' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
+#' @param margin_left Custom left margin in pixels. Default is NULL.
+#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
+#' @param margin_right Custom right margin in pixels. Default is NULL.
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL, add = FALSE, width = NULL) {
+add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL, 
+                                 add = FALSE, width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL, 
+                                 margin_bottom = NULL, margin_left = NULL) {
     if (is.null(unique_id)) {
         unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
     }
@@ -229,8 +260,15 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
         "</div>"
     )
 
+    # Add data-layer-id attribute if layer_id is provided
+    layer_attr <- if (!is.null(layer_id)) {
+        paste0(' data-layer-id="', layer_id, '"')
+    } else {
+        ""
+    }
+    
     legend_html <- paste0(
-        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '">',
+        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, '>',
         "<h2>", legend_title, "</h2>",
         '<div class="legend-gradient" style="background:', color_gradient, '"></div>',
         '<div class="legend-labels" style="position: relative; height: 20px;">',
@@ -263,23 +301,23 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     }
 
     #", unique_id, ".top-left {
-      top: 10px;
-      left: 10px;
+      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
+      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
     }
 
     #", unique_id, ".bottom-left {
-      bottom: 10px;
-      left: 10px;
+      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
+      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
     }
 
     #", unique_id, ".top-right {
-      top: 10px;
-      right: 10px;
+      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
+      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
     }
 
     #", unique_id, ".bottom-right {
-      bottom: 10px;
-      right: 10px;
+      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
+      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
     }
 
     #", unique_id, " .legend-gradient {
