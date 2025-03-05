@@ -1,9 +1,12 @@
-# mapgl 0.2.0
+# mapgl 0.2.1
 
-* A new "story map" feature allows users to build interactive story maps.  [View the story mapping vignette](https://walker-data.com/mapgl/articles/story-maps.html) for more information.
 * Added ability to link legends to specific layers with the new `layer_id` parameter in `add_legend()`. When a layer is toggled in the layer control, its associated legend will automatically show or hide.
 * Added support for custom legend positioning with new margin parameters (`margin_top`, `margin_right`, `margin_bottom`, `margin_left`) that allow fine-grained control over legend placement.
 * Fixed layer control toggle button state to correctly reflect the initial visibility of layers, resolving the issue with layers set to `visibility = "none"` showing as active in the control.
+
+# mapgl 0.2.0
+
+* A new "story map" feature allows users to build interactive story maps.  [View the story mapping vignette](https://walker-data.com/mapgl/articles/story-maps.html) for more information.
 * Various bug fixes and performance improvements; [visit the package GitHub page for more details](https://github.com/walkerke/mapgl).
 
 # mapgl 0.1.4
