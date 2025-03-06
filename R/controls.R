@@ -369,9 +369,9 @@ add_draw_control <- function(map,
 #' }
 get_drawn_features <- function(map) {
     if (!shiny::is.reactive(map) &&
-        !inherits(map, c("mapboxgl", "mapboxgl_proxy"))) {
+        !inherits(map, c("mapboxgl", "mapboxgl_proxy", "maplibregl", "maplibre_proxy"))) {
         stop(
-            "Invalid map object. Expected mapboxgl or mapboxgl_proxy object within a Shiny context."
+            "Invalid map object. Expected mapboxgl, mapboxgl_proxy, maplibre or maplibre_proxy object within a Shiny context."
         )
     }
 
@@ -393,10 +393,10 @@ get_drawn_features <- function(map) {
     # Get the session object
     session <- shiny::getDefaultReactiveDomain()
 
-    if (inherits(map, "mapboxgl")) {
+    if (inherits(map, "mapboxgl") || inherits(map, "maplibregl")) {
         # Initial map object in Shiny
         map_id <- map$elementId
-    } else if (inherits(map, "mapboxgl_proxy")) {
+    } else if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
         # Proxy object
         map_id <- map$id
     } else {
