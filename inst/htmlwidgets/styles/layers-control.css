@@ -5,8 +5,8 @@
     border-radius: 4px;
     width: 120px;
     border: 1px solid rgba(0, 0, 0, 0.15);
-    font-family: 'Open Sans', sans-serif;
-    margin: 10px;
+    font-family: "Open Sans", sans-serif;
+    margin: 5px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     transition: all 0.2s ease-in-out;
@@ -75,7 +75,9 @@
     display: none;
     opacity: 0;
     max-height: 0;
-    transition: opacity 0.25s ease, max-height 0.25s ease;
+    transition:
+        opacity 0.25s ease,
+        max-height 0.25s ease;
 }
 
 .layers-control.collapsible.open .layers-list {
@@ -90,7 +92,9 @@
     min-width: 36px;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transform: translateZ(0); /* Force hardware acceleration for smoother animations */
+    transform: translateZ(
+        0
+    ); /* Force hardware acceleration for smoother animations */
 }
 
 .layers-control.collapsible.icon-only .toggle-button {
