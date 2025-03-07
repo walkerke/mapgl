@@ -1,8 +1,9 @@
 # mapgl 0.2.1
 
-* Added ability to link legends to specific layers with the new `layer_id` parameter in `add_legend()`. When a layer is toggled in the layer control, its associated legend will automatically show or hide.
+* Improved styling and positioning behavior of the layers control. Users can now customize the appearance of the layers control, and the layers control is collapsed by default with cleaner appearance.
+Added ability to link legends to specific layers with the new `layer_id` parameter in `add_legend()`. When a layer is toggled in the layers control, its associated legend will automatically show or hide.
 * Added support for custom legend positioning with new margin parameters (`margin_top`, `margin_right`, `margin_bottom`, `margin_left`) that allow fine-grained control over legend placement.
-* Fixed layer control toggle button state to correctly reflect the initial visibility of layers, resolving the issue with layers set to `visibility = "none"` showing as active in the control.
+* Fixed layers control toggle button state to correctly reflect the initial visibility of layers, resolving the issue with layers set to `visibility = "none"` showing as active in the control.
 
 # mapgl 0.2.0
 
