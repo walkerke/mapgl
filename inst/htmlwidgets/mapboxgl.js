@@ -861,9 +861,58 @@ HTMLWidgets.widget({
                             ? "layers-control collapsible"
                             : "layers-control";
                         layersControl.style.position = "absolute";
-                        layersControl.style[
-                            x.layers_control.position || "top-right"
-                        ] = "10px";
+                        
+                        // Set the position correctly - fix position bug by using correct CSS positioning
+                        const position = x.layers_control.position || "top-left";
+                        if (position === "top-left") {
+                            layersControl.style.top = "10px";
+                            layersControl.style.left = "10px";
+                        } else if (position === "top-right") {
+                            layersControl.style.top = "10px";
+                            layersControl.style.right = "10px";
+                        } else if (position === "bottom-left") {
+                            layersControl.style.bottom = "10px";
+                            layersControl.style.left = "10px";
+                        } else if (position === "bottom-right") {
+                            layersControl.style.bottom = "10px";
+                            layersControl.style.right = "10px";
+                        }
+                        
+                        // Apply custom colors if provided
+                        if (x.layers_control.custom_colors) {
+                            const colors = x.layers_control.custom_colors;
+                            
+                            // Create a style element for custom colors
+                            const styleEl = document.createElement('style');
+                            let css = '';
+                            
+                            if (colors.background) {
+                                css += `#${x.layers_control.control_id} { background-color: ${colors.background}; }\n`;
+                            }
+                            
+                            if (colors.text) {
+                                css += `#${x.layers_control.control_id} a { color: ${colors.text}; }\n`;
+                            }
+                            
+                            if (colors.active) {
+                                css += `#${x.layers_control.control_id} a.active { background-color: ${colors.active}; }\n`;
+                                css += `#${x.layers_control.control_id} .toggle-button { background-color: ${colors.active}; }\n`;
+                            }
+                            
+                            if (colors.activeText) {
+                                css += `#${x.layers_control.control_id} a.active { color: ${colors.activeText}; }\n`;
+                                css += `#${x.layers_control.control_id} .toggle-button { color: ${colors.activeText}; }\n`;
+                            }
+                            
+                            if (colors.hover) {
+                                css += `#${x.layers_control.control_id} a:hover { background-color: ${colors.hover}; }\n`;
+                                css += `#${x.layers_control.control_id} .toggle-button:hover { background-color: ${colors.hover}; }\n`;
+                            }
+                            
+                            styleEl.textContent = css;
+                            document.head.appendChild(styleEl);
+                        }
+                        
                         el.appendChild(layersControl);
 
                         const layersList = document.createElement("div");
@@ -955,7 +1004,25 @@ HTMLWidgets.widget({
                         if (x.layers_control.collapsible) {
                             const toggleButton = document.createElement("div");
                             toggleButton.className = "toggle-button";
-                            toggleButton.textContent = "Layers";
+                            
+                            // Use stacked layers icon instead of text if requested
+                            if (x.layers_control.use_icon) {
+                                // Add icon-only class to the control for compact styling
+                                layersControl.classList.add("icon-only");
+                                
+                                // More GIS-like layers stack icon
+                                toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>`;
+                                toggleButton.style.display = "flex";
+                                toggleButton.style.alignItems = "center";
+                                toggleButton.style.justifyContent = "center";
+                            } else {
+                                toggleButton.textContent = "Layers";
+                            }
+                            
                             toggleButton.onclick = function () {
                                 layersControl.classList.toggle("open");
                             };
@@ -1684,7 +1751,57 @@ if (HTMLWidgets.shinyMode) {
                     ? "layers-control collapsible"
                     : "layers-control";
                 layersControl.style.position = "absolute";
-                layersControl.style[message.position || "top-right"] = "10px";
+                
+                // Set the position correctly
+                const position = message.position || "top-left";
+                if (position === "top-left") {
+                    layersControl.style.top = "10px";
+                    layersControl.style.left = "10px";
+                } else if (position === "top-right") {
+                    layersControl.style.top = "10px";
+                    layersControl.style.right = "10px";
+                } else if (position === "bottom-left") {
+                    layersControl.style.bottom = "10px";
+                    layersControl.style.left = "10px";
+                } else if (position === "bottom-right") {
+                    layersControl.style.bottom = "10px";
+                    layersControl.style.right = "10px";
+                }
+                
+                // Apply custom colors if provided
+                if (message.custom_colors) {
+                    const colors = message.custom_colors;
+                    
+                    // Create a style element for custom colors
+                    const styleEl = document.createElement('style');
+                    let css = '';
+                    
+                    if (colors.background) {
+                        css += `#${message.control_id} { background-color: ${colors.background}; }\n`;
+                    }
+                    
+                    if (colors.text) {
+                        css += `#${message.control_id} a { color: ${colors.text}; }\n`;
+                    }
+                    
+                    if (colors.active) {
+                        css += `#${message.control_id} a.active { background-color: ${colors.active}; }\n`;
+                        css += `#${message.control_id} .toggle-button { background-color: ${colors.active}; }\n`;
+                    }
+                    
+                    if (colors.activeText) {
+                        css += `#${message.control_id} a.active { color: ${colors.activeText}; }\n`;
+                        css += `#${message.control_id} .toggle-button { color: ${colors.activeText}; }\n`;
+                    }
+                    
+                    if (colors.hover) {
+                        css += `#${message.control_id} a:hover { background-color: ${colors.hover}; }\n`;
+                        css += `#${message.control_id} .toggle-button:hover { background-color: ${colors.hover}; }\n`;
+                    }
+                    
+                    styleEl.textContent = css;
+                    document.head.appendChild(styleEl);
+                }
 
                 const layersList = document.createElement("div");
                 layersList.className = "layers-list";
@@ -1769,7 +1886,25 @@ if (HTMLWidgets.shinyMode) {
                 if (message.collapsible) {
                     const toggleButton = document.createElement("div");
                     toggleButton.className = "toggle-button";
-                    toggleButton.textContent = "Layers";
+                    
+                    // Use stacked layers icon instead of text if requested
+                    if (message.use_icon) {
+                        // Add icon-only class to the control for compact styling
+                        layersControl.classList.add("icon-only");
+                        
+                        // More GIS-like layers stack icon
+                        toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>`;
+                        toggleButton.style.display = "flex";
+                        toggleButton.style.alignItems = "center";
+                        toggleButton.style.justifyContent = "center";
+                    } else {
+                        toggleButton.textContent = "Layers";
+                    }
+                    
                     toggleButton.onclick = function () {
                         layersControl.classList.toggle("open");
                     };

@@ -22,17 +22,21 @@ add_legend <- function(map, legend_title, values, colors,
                        type = c("continuous", "categorical"),
                        circular_patches = FALSE, position = "top-left",
                        sizes = NULL, add = FALSE, width = NULL, layer_id = NULL,
-                       margin_top = NULL, margin_right = NULL, 
+                       margin_top = NULL, margin_right = NULL,
                        margin_bottom = NULL, margin_left = NULL) {
     type <- match.arg(type)
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
 
     if (type == "continuous") {
-        add_continuous_legend(map, legend_title, values, colors, position, unique_id, add, width, layer_id,
-                              margin_top, margin_right, margin_bottom, margin_left)
+        add_continuous_legend(
+            map, legend_title, values, colors, position, unique_id, add, width, layer_id,
+            margin_top, margin_right, margin_bottom, margin_left
+        )
     } else {
-        add_categorical_legend(map, legend_title, values, colors, circular_patches, position, unique_id, sizes, add, width, layer_id,
-                               margin_top, margin_right, margin_bottom, margin_left)
+        add_categorical_legend(
+            map, legend_title, values, colors, circular_patches, position, unique_id, sizes, add, width, layer_id,
+            margin_top, margin_right, margin_bottom, margin_left
+        )
     }
 }
 
@@ -76,10 +80,10 @@ add_legend <- function(map, legend_title, values, colors,
 #'     width = "300px"
 #' )
 #' }
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE, 
-                                  position = "top-left", unique_id = NULL, sizes = NULL, add = FALSE, 
-                                  width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL, 
-                                  margin_bottom = NULL, margin_left = NULL) {
+add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE,
+                                   position = "top-left", unique_id = NULL, sizes = NULL, add = FALSE,
+                                   width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL,
+                                   margin_bottom = NULL, margin_left = NULL) {
     # Validate and prepare inputs
     if (length(colors) == 1) {
         colors <- rep(colors, length(values))
@@ -131,9 +135,9 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     } else {
         ""
     }
-    
+
     legend_html <- paste0(
-        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, '>',
+        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, ">",
         "<h2>", legend_title, "</h2>",
         paste0(legend_items, collapse = ""),
         "</div>"
@@ -239,9 +243,9 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL, 
-                                 add = FALSE, width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL, 
-                                 margin_bottom = NULL, margin_left = NULL) {
+add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL,
+                                  add = FALSE, width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL,
+                                  margin_bottom = NULL, margin_left = NULL) {
     if (is.null(unique_id)) {
         unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
     }
@@ -266,9 +270,9 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     } else {
         ""
     }
-    
+
     legend_html <- paste0(
-        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, '>',
+        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, ">",
         "<h2>", legend_title, "</h2>",
         '<div class="legend-gradient" style="background:', color_gradient, '"></div>',
         '<div class="legend-labels" style="position: relative; height: 20px;">',

@@ -8,7 +8,13 @@ add_layers_control(
   map,
   position = "top-left",
   layers = NULL,
-  collapsible = FALSE
+  collapsible = TRUE,
+  use_icon = TRUE,
+  background_color = NULL,
+  active_color = NULL,
+  hover_color = NULL,
+  active_text_color = NULL,
+  inactive_text_color = NULL
 )
 }
 \arguments{
@@ -19,6 +25,19 @@ add_layers_control(
 \item{layers}{A vector of layer IDs to be included in the control. If NULL, all layers will be included.}
 
 \item{collapsible}{Whether the control should be collapsible.}
+
+\item{use_icon}{Whether to use a stacked layers icon instead of the "Layers" text when collapsed. Only applies when collapsible = TRUE.}
+
+\item{background_color}{The background color for the layers control; this will be the
+color used for inactive layer items.}
+
+\item{active_color}{The background color for active layer items.}
+
+\item{hover_color}{The background color for layer items when hovered.}
+
+\item{active_text_color}{The text color for active layer items.}
+
+\item{inactive_text_color}{The text color for inactive layer items.}
 }
 \value{
 The modified map object with the layers control added.
@@ -47,6 +66,10 @@ maplibre() |>
         source = rds,
         line_color = "pink"
     ) |>
-    add_layers_control(collapsible = TRUE)
+    add_layers_control(
+        position = "top-left",
+        background_color = "#ffffff",
+        active_color = "#4a90e2"
+    )
 }
 }

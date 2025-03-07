@@ -107,6 +107,13 @@ add_navigation_control <- function(map,
 #' @param position The position of the control on the map (one of "top-left", "top-right", "bottom-left", "bottom-right").
 #' @param layers A vector of layer IDs to be included in the control. If NULL, all layers will be included.
 #' @param collapsible Whether the control should be collapsible.
+#' @param use_icon Whether to use a stacked layers icon instead of the "Layers" text when collapsed. Only applies when collapsible = TRUE.
+#' @param background_color The background color for the layers control; this will be the
+#'        color used for inactive layer items.
+#' @param active_color The background color for active layer items.
+#' @param hover_color The background color for layer items when hovered.
+#' @param active_text_color The text color for active layer items.
+#' @param inactive_text_color The text color for inactive layer items.
 #'
 #' @return The modified map object with the layers control added.
 #' @export
@@ -130,30 +137,41 @@ add_navigation_control <- function(map,
 #'         source = rds,
 #'         line_color = "pink"
 #'     ) |>
-#'     add_layers_control(collapsible = TRUE)
+#'     add_layers_control(
+#'         position = "top-left",
+#'         background_color = "#ffffff",
+#'         active_color = "#4a90e2"
+#'     )
 #' }
 add_layers_control <- function(map,
                                position = "top-left",
                                layers = NULL,
-                               collapsible = FALSE) {
+                               collapsible = TRUE,
+                               use_icon = TRUE,
+                               background_color = NULL,
+                               active_color = NULL,
+                               hover_color = NULL,
+                               active_text_color = NULL,
+                               inactive_text_color = NULL) {
     control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
-
-    # Create the control container
-    control_html <- paste0(
-        '<nav id="',
-        control_id,
-        '" class="layers-control',
-        ifelse(collapsible, " collapsible", ""),
-        '" style="',
-        position,
-        ': 10px;"></nav>'
-    )
 
     # If layers is NULL, get the layers added by the user
     if (is.null(layers)) {
         layers <- unlist(lapply(map$x$layers, function(y) {
             y$id
         }))
+    }
+
+    # Create custom colors object if any color options were specified
+    custom_colors <- NULL
+    if (!is.null(background_color) || !is.null(active_color) ||
+        !is.null(hover_color) || !is.null(inactive_text_color) || !is.null(active_text_color)) {
+        custom_colors <- list()
+        if (!is.null(background_color)) custom_colors$background <- background_color
+        if (!is.null(active_color)) custom_colors$active <- active_color
+        if (!is.null(hover_color)) custom_colors$hover <- hover_color
+        if (!is.null(inactive_text_color)) custom_colors$text <- inactive_text_color
+        if (!is.null(active_text_color)) custom_colors$activeText <- active_text_color
     }
 
     # Add control to map
@@ -171,7 +189,9 @@ add_layers_control <- function(map,
                 control_id = control_id,
                 position = position,
                 layers = layers,
-                collapsible = collapsible
+                collapsible = collapsible,
+                use_icon = use_icon,
+                custom_colors = custom_colors
             )
         ))
     } else {
@@ -179,9 +199,10 @@ add_layers_control <- function(map,
             control_id = control_id,
             position = position,
             layers = layers,
-            collapsible = collapsible
+            collapsible = collapsible,
+            use_icon = use_icon,
+            custom_colors = custom_colors
         )
-        map$x$control_html <- control_html
     }
 
     return(map)
