@@ -2,7 +2,7 @@
 % Please edit documentation in R/plugins.R
 \name{compare}
 \alias{compare}
-\title{Create a Compare slider widget}
+\title{Create a Compare widget}
 \usage{
 compare(
   map1,
@@ -11,7 +11,8 @@ compare(
   height = NULL,
   elementId = NULL,
   mousemove = FALSE,
-  orientation = "vertical"
+  orientation = "vertical",
+  mode = "swipe"
 )
 }
 \arguments{
@@ -25,26 +26,95 @@ compare(
 
 \item{elementId}{An optional string specifying the ID of the container for the comparison. If NULL, a unique ID will be generated.}
 
-\item{mousemove}{A logical value indicating whether to enable swiping during cursor movement (rather than only when clicked).}
+\item{mousemove}{A logical value indicating whether to enable swiping during cursor movement (rather than only when clicked). Only applicable when \code{mode="swipe"}.}
 
-\item{orientation}{A string specifying the orientation of the swiper, either "horizontal" or "vertical".}
+\item{orientation}{A string specifying the orientation of the swiper or the side-by-side layout, either "horizontal" or "vertical".}
+
+\item{mode}{A string specifying the comparison mode: "swipe" (default) for a swipeable comparison with a slider, or "sync" for synchronized maps displayed next to each other.}
 }
 \value{
 A comparison widget.
 }
 \description{
-This function creates a comparison view between two Mapbox GL or Maplibre GL maps, allowing users to swipe between the two maps to compare different styles or data layers.
+This function creates a comparison view between two Mapbox GL or Maplibre GL maps, allowing users to either swipe between the two maps or view them side-by-side with synchronized navigation.
+}
+\details{
+\subsection{Comparison modes}{
+
+The \code{compare()} function supports two modes:
+\itemize{
+\item \code{mode="swipe"} (default) - Creates a swipeable interface with a slider to reveal portions of each map
+\item \code{mode="sync"} - Places the maps next to each other with synchronized navigation
+}
+
+In both modes, navigation (panning, zooming, rotating, tilting) is synchronized between the maps.
+}
+
+\subsection{Using the compare widget in Shiny}{
+
+The compare widget can be used in Shiny applications with the following functions:
+\itemize{
+\item \code{mapboxglCompareOutput()} / \code{renderMapboxglCompare()} - For Mapbox GL comparisons
+\item \code{maplibreCompareOutput()} / \code{renderMaplibreCompare()} - For Maplibre GL comparisons
+\item \code{mapboxgl_compare_proxy()} / \code{maplibre_compare_proxy()} - For updating maps in a compare widget
+}
+
+After creating a compare widget in a Shiny app, you can use the proxy functions to update either the "before"
+(left/top) or "after" (right/bottom) map. The proxy objects work with all the regular map update functions like \code{set_style()},
+\code{set_paint_property()}, etc.
+
+To get a proxy that targets a specific map in the comparison:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{# Access the left/top map
+left_proxy <- maplibre_compare_proxy("compare_id", map_side = "before")
+
+# Access the right/bottom map
+right_proxy <- maplibre_compare_proxy("compare_id", map_side = "after")
+}\if{html}{\out{</div>}}
+
+The compare widget also provides Shiny input values for view state and clicks. For a compare widget with ID "mycompare", you'll have:
+\itemize{
+\item \code{input$mycompare_before_view} - View state (center, zoom, bearing, pitch) of the left/top map
+\item \code{input$mycompare_after_view} - View state of the right/bottom map
+\item \code{input$mycompare_before_click} - Click events on the left/top map
+\item \code{input$mycompare_after_click} - Click events on the right/bottom map
+}
+}
 }
 \examples{
 \dontrun{
 library(mapgl)
 
-library(mapgl)
-
 m1 <- mapboxgl(style = mapbox_style("light"))
-
 m2 <- mapboxgl(style = mapbox_style("dark"))
 
+# Default swipe mode
 compare(m1, m2)
+
+# Synchronized side-by-side mode
+compare(m1, m2, mode = "sync")
+
+# Shiny example
+library(shiny)
+
+ui <- fluidPage(
+  maplibreCompareOutput("comparison")
+)
+
+server <- function(input, output, session) {
+  output$comparison <- renderMaplibreCompare({
+    compare(
+      maplibre(style = carto_style("positron")),
+      maplibre(style = carto_style("dark-matter")),
+      mode = "sync"
+    )
+  })
+  
+  # Update the right map
+  observe({
+    right_proxy <- maplibre_compare_proxy("comparison", map_side = "after")
+    set_style(right_proxy, carto_style("voyager"))
+  })
+}
 }
 }

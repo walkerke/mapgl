@@ -4,6 +4,9 @@ HTMLWidgets.widget({
     type: "output",
 
     factory: function (el, width, height) {
+        // Store maps and compare object to allow access during Shiny updates
+        let beforeMap, afterMap, compareControl;
+        
         return {
             renderValue: function (x) {
                 if (typeof maplibregl === "undefined") {
@@ -14,14 +17,44 @@ HTMLWidgets.widget({
                     console.error("Maplibre GL Compare plugin is not loaded.");
                     return;
                 }
+                
+                // Add PMTiles support
+                if (typeof pmtiles !== "undefined") {
+                    let protocol = new pmtiles.Protocol({ metadata: true });
+                    maplibregl.addProtocol("pmtiles", protocol.tile);
+                }
 
-                el.innerHTML = `
-          <div id="${x.elementId}-before" class="map" style="width: 100%; height: 100%; position: absolute;"></div>
-          <div id="${x.elementId}-after" class="map" style="width: 100%; height: 100%; position: absolute;"></div>
-        `;
+                // Create container divs for the maps
+                const beforeContainerId = `${el.id}-before`;
+                const afterContainerId = `${el.id}-after`;
+                
+                // Different HTML structure based on mode
+                if (x.mode === "sync") {
+                    // Side-by-side sync mode
+                    const containerStyle = x.orientation === "horizontal" 
+                        ? `display: flex; flex-direction: column; width: 100%; height: 100%;` 
+                        : `display: flex; flex-direction: row; width: 100%; height: 100%;`;
+                    
+                    const mapStyle = x.orientation === "horizontal"
+                        ? `width: 100%; height: 50%; position: relative;`
+                        : `width: 50%; height: 100%; position: relative;`;
+                    
+                    el.innerHTML = `
+                      <div style="${containerStyle}">
+                        <div id="${beforeContainerId}" class="map" style="${mapStyle}"></div>
+                        <div id="${afterContainerId}" class="map" style="${mapStyle}"></div>
+                      </div>
+                    `;
+                } else {
+                    // Default swipe mode
+                    el.innerHTML = `
+                      <div id="${beforeContainerId}" class="map" style="width: 100%; height: 100%; position: absolute;"></div>
+                      <div id="${afterContainerId}" class="map" style="width: 100%; height: 100%; position: absolute;"></div>
+                    `;
+                }
 
-                var beforeMap = new maplibregl.Map({
-                    container: `${x.elementId}-before`,
+                beforeMap = new maplibregl.Map({
+                    container: beforeContainerId,
                     style: x.map1.style,
                     center: x.map1.center,
                     zoom: x.map1.zoom,
@@ -31,8 +64,8 @@ HTMLWidgets.widget({
                     ...x.map1.additional_params,
                 });
 
-                var afterMap = new maplibregl.Map({
-                    container: `${x.elementId}-after`,
+                afterMap = new maplibregl.Map({
+                    container: afterContainerId,
                     style: x.map2.style,
                     center: x.map2.center,
                     zoom: x.map2.zoom,
@@ -42,23 +75,280 @@ HTMLWidgets.widget({
                     ...x.map2.additional_params,
                 });
 
-                new maplibregl.Compare(beforeMap, afterMap, `#${x.elementId}`, {
-                    mousemove: x.mousemove,
-                    orientation: x.orientation,
-                });
+                if (x.mode === "swipe") {
+                    // Only create the swiper in swipe mode
+                    compareControl = new maplibregl.Compare(beforeMap, afterMap, `#${el.id}`, {
+                        mousemove: x.mousemove,
+                        orientation: x.orientation,
+                    });
+                } else {
+                    // For sync mode, we directly leverage the sync-move module's approach
+
+                    // Function to synchronize maps as seen in the mapbox-gl-sync-move module
+                    const syncMaps = () => {
+                        // Array of maps to sync
+                        const maps = [beforeMap, afterMap];
+                        // Array of move event handlers
+                        const moveHandlers = [];
+                        
+                        // Setup the sync between maps
+                        maps.forEach((map, index) => {
+                            // Create a handler for each map that syncs all other maps
+                            moveHandlers[index] = (e) => {
+                                // Disable all move events temporarily
+                                maps.forEach((m, i) => {
+                                    m.off('move', moveHandlers[i]);
+                                });
+                                
+                                // Get the state from the map that triggered the event
+                                const center = map.getCenter();
+                                const zoom = map.getZoom();
+                                const bearing = map.getBearing();
+                                const pitch = map.getPitch();
+                                
+                                // Apply this state to all other maps
+                                maps.filter((m, i) => i !== index).forEach(m => {
+                                    m.jumpTo({
+                                        center: center,
+                                        zoom: zoom,
+                                        bearing: bearing,
+                                        pitch: pitch
+                                    });
+                                });
+                                
+                                // Re-enable move events
+                                maps.forEach((m, i) => {
+                                    m.on('move', moveHandlers[i]);
+                                });
+                            };
+                            
+                            // Add the move handler to each map
+                            map.on('move', moveHandlers[index]);
+                        });
+                    };
+                    
+                    // Initialize the sync
+                    syncMaps();
+                }
 
                 // Ensure both maps resize correctly
                 beforeMap.on("load", function () {
                     beforeMap.resize();
                     applyMapModifications(beforeMap, x.map1);
+                    
+                    // Setup Shiny event handlers for the before map
+                    if (HTMLWidgets.shinyMode) {
+                        setupShinyEvents(beforeMap, el.id, "before");
+                    }
                 });
 
                 afterMap.on("load", function () {
                     afterMap.resize();
                     applyMapModifications(afterMap, x.map2);
+                    
+                    // Setup Shiny event handlers for the after map
+                    if (HTMLWidgets.shinyMode) {
+                        setupShinyEvents(afterMap, el.id, "after");
+                    }
                 });
-
+                
+                // Handle Shiny messages
+                if (HTMLWidgets.shinyMode) {
+                    Shiny.addCustomMessageHandler("maplibre-compare-proxy", function(message) {
+                        if(message.id !== el.id)
+                            return;
+                            
+                        processShinyMessage(message.message);
+                    });
+                }
+                
+                function processShinyMessage(message) {
+                    const map = message.map === "before" ? beforeMap : afterMap;
+                    
+                    switch(message.type) {
+                        case "set_style":
+                            map.setStyle(message.style);
+                            break;
+                        case "add_source":
+                            // Add or update a source
+                            if (map.getSource(message.source_id)) {
+                                map.removeSource(message.source_id);
+                            }
+                            map.addSource(message.source_id, message.source);
+                            break;
+                        case "add_layer":
+                            if (map.getLayer(message.layer.id)) {
+                                map.removeLayer(message.layer.id);
+                            }
+                            map.addLayer(message.layer);
+                            break;
+                        case "remove_layer":
+                            if (map.getLayer(message.layer_id)) {
+                                map.removeLayer(message.layer_id);
+                            }
+                            break;
+                        case "set_view":
+                            map.jumpTo({
+                                center: message.center,
+                                zoom: message.zoom,
+                                bearing: message.bearing,
+                                pitch: message.pitch
+                            });
+                            break;
+                        case "fly_to":
+                            map.flyTo(message.options);
+                            break;
+                        case "set_filter":
+                            map.setFilter(message.layer, message.filter);
+                            break;
+                        case "set_paint_property":
+                            map.setPaintProperty(message.layer, message.name, message.value);
+                            break;
+                        case "set_layout_property":
+                            map.setLayoutProperty(message.layer, message.name, message.value);
+                            break;
+                        case "set_pitch":
+                            map.setPitch(message.pitch);
+                            break;
+                        case "set_bearing":
+                            map.setBearing(message.bearing);
+                            break;
+                        case "set_zoom":
+                            map.setZoom(message.zoom);
+                            break;
+                        case "set_center":
+                            map.setCenter(message.center);
+                            break;
+                        case "set_projection":
+                            // Only if maplibre supports projection
+                            if (typeof map.setProjection === 'function') {
+                                map.setProjection(message.projection);
+                            }
+                            break;
+                        case "set_source":
+                            var layer = map.getLayer(message.layer);
+                            if (layer) {
+                                var source = layer.source;
+                                map.getSource(source).setData(JSON.parse(message.source));
+                            }
+                            break;
+                        case "set_tooltip":
+                            // Implement tooltip functionality 
+                            if (map.getLayer(message.layer)) {
+                                // Remove any existing tooltip handlers
+                                map.off('mousemove', message.layer);
+                                map.off('mouseleave', message.layer);
+                                
+                                const tooltip = new maplibregl.Popup({
+                                    closeButton: false,
+                                    closeOnClick: false
+                                });
+                                
+                                map.on('mousemove', message.layer, function(e) {
+                                    map.getCanvas().style.cursor = 'pointer';
+                                    if (e.features.length > 0) {
+                                        const description = e.features[0].properties[message.tooltip];
+                                        tooltip
+                                            .setLngLat(e.lngLat)
+                                            .setHTML(description)
+                                            .addTo(map);
+                                    }
+                                });
+                                
+                                map.on('mouseleave', message.layer, function() {
+                                    map.getCanvas().style.cursor = '';
+                                    tooltip.remove();
+                                });
+                            }
+                            break;
+                        case "clear_markers":
+                            if (window.maplibreglMarkers) {
+                                window.maplibreglMarkers.forEach(function(marker) {
+                                    marker.remove();
+                                });
+                                window.maplibreglMarkers = [];
+                            }
+                            break;
+                        case "move_layer":
+                            if (map.getLayer(message.layer)) {
+                                if (message.before) {
+                                    map.moveLayer(message.layer, message.before);
+                                } else {
+                                    map.moveLayer(message.layer);
+                                }
+                            }
+                            break;
+                        case "set_opacity":
+                            // Set opacity for all fill layers
+                            const style = map.getStyle();
+                            if (style && style.layers) {
+                                style.layers.forEach(function(layer) {
+                                    if (layer.type === 'fill' && map.getLayer(layer.id)) {
+                                        map.setPaintProperty(layer.id, 'fill-opacity', message.opacity);
+                                    }
+                                });
+                            }
+                            break;
+                    }
+                }
+                
+                function setupShinyEvents(map, parentId, mapType) {
+                    // Set view state on move end
+                    map.on("moveend", function() {
+                        const center = map.getCenter();
+                        const zoom = map.getZoom();
+                        const bearing = map.getBearing();
+                        const pitch = map.getPitch();
+                        
+                        if (window.Shiny) {
+                            Shiny.setInputValue(parentId + "_" + mapType + "_view", {
+                                center: [center.lng, center.lat],
+                                zoom: zoom,
+                                bearing: bearing,
+                                pitch: pitch
+                            });
+                        }
+                    });
+                    
+                    // Send clicked point coordinates to Shiny
+                    map.on("click", function(e) {
+                        if (window.Shiny) {
+                            Shiny.setInputValue(parentId + "_" + mapType + "_click", {
+                                lng: e.lngLat.lng,
+                                lat: e.lngLat.lat,
+                                time: Date.now()
+                            });
+                        }
+                    });
+                }
+                
                 function applyMapModifications(map, mapData) {
+                    // Define the tooltip handler functions to match the ones in maplibregl.js
+                    function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
+                        map.getCanvas().style.cursor = "pointer";
+                        if (e.features.length > 0) {
+                            const description = e.features[0].properties[tooltipProperty];
+                            tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
+                    
+                            // Store reference to currently active tooltip
+                            window._activeTooltip = tooltipPopup;
+                        } else {
+                            tooltipPopup.remove();
+                            // If this was the active tooltip, clear the reference
+                            if (window._activeTooltip === tooltipPopup) {
+                                delete window._activeTooltip;
+                            }
+                        }
+                    }
+                    
+                    function onMouseLeaveTooltip(map, tooltipPopup) {
+                        map.getCanvas().style.cursor = "";
+                        tooltipPopup.remove();
+                        if (window._activeTooltip === tooltipPopup) {
+                            delete window._activeTooltip;
+                        }
+                    }
+
                     // Set config properties if provided
                     if (mapData.config_properties) {
                         mapData.config_properties.forEach(function (config) {
@@ -67,6 +357,15 @@ HTMLWidgets.widget({
                                 config.configName,
                                 config.value,
                             );
+                        });
+                    }
+                    
+                    // Process H3J sources if provided
+                    if (mapData.h3j_sources) {
+                        mapData.h3j_sources.forEach(async function (source) {
+                            await map.addH3JSource(source.id, {
+                                data: source.url,
+                            });
                         });
                     }
 
@@ -225,40 +524,66 @@ HTMLWidgets.widget({
                                 }
 
                                 // Add popups or tooltips if provided
-                                //                if (layer.popup) {
-                                //                  map.on('click', layer.id, function(e) {
-                                //                    const description = e.features[0].properties[layer.popup];
-                                //
-                                //                    new maplibregl.Popup()
-                                //                      .setLngLat(e.lngLat)
-                                //                      .setHTML(description)
-                                //                      .addTo(map);
-                                //                  });
-                                //                }
-                                //
-                                //                if (layer.tooltip) {
-                                //                  const tooltip = new maplibregl.Popup({
-                                //                    closeButton: false,
-                                //                    closeOnClick: false
-                                //                  });
-                                //
-                                //                  map.on('mousemove', layer.id, function(e) {
-                                //                    map.getCanvas().style.cursor = 'pointer';
-                                //
-                                //                    if (e.features.length > 0) {
-                                //                      const description = e.features[0].properties[layer.tooltip];
-                                //                      tooltip.setLngLat(e.lngLat).setHTML(description).addTo(map);
-                                //                    } else {
-                                //                      tooltip.remove();
-                                //                    }
-                                //                  });
-                                //
-                                //                  map.on('mouseleave', layer.id, function() {
-                                //                    map.getCanvas().style.cursor = '';
-                                //                    tooltip.remove();
-                                //                  });
-                                //
-                                //                }
+                                if (layer.popup) {
+                                    map.on("click", layer.id, function (e) {
+                                        const description =
+                                            e.features[0].properties[layer.popup];
+
+                                        new maplibregl.Popup()
+                                            .setLngLat(e.lngLat)
+                                            .setHTML(description)
+                                            .addTo(map);
+                                    });
+
+                                    // Change cursor to pointer when hovering over the layer
+                                    map.on("mouseenter", layer.id, function () {
+                                        map.getCanvas().style.cursor = "pointer";
+                                    });
+
+                                    // Change cursor back to default when leaving the layer
+                                    map.on("mouseleave", layer.id, function () {
+                                        map.getCanvas().style.cursor = "";
+                                    });
+                                }
+
+                                if (layer.tooltip) {
+                                    const tooltip = new maplibregl.Popup({
+                                        closeButton: false,
+                                        closeOnClick: false,
+                                    });
+
+                                    // Create a reference to the mousemove handler function
+                                    const mouseMoveHandler = function (e) {
+                                        onMouseMoveTooltip(
+                                            e,
+                                            map,
+                                            tooltip,
+                                            layer.tooltip,
+                                        );
+                                    };
+
+                                    // Create a reference to the mouseleave handler function
+                                    const mouseLeaveHandler = function () {
+                                        onMouseLeaveTooltip(map, tooltip);
+                                    };
+
+                                    // Attach the named handler references
+                                    map.on("mousemove", layer.id, mouseMoveHandler);
+                                    map.on(
+                                        "mouseleave",
+                                        layer.id,
+                                        mouseLeaveHandler,
+                                    );
+
+                                    // Store these handler references
+                                    if (!window._mapboxHandlers) {
+                                        window._mapboxHandlers = {};
+                                    }
+                                    window._mapboxHandlers[layer.id] = {
+                                        mousemove: mouseMoveHandler,
+                                        mouseleave: mouseLeaveHandler,
+                                    };
+                                }
 
                                 // Add hover effect if provided
                                 if (layer.hover_options) {
@@ -390,6 +715,28 @@ HTMLWidgets.widget({
                     if (mapData.jumpTo) {
                         map.jumpTo(mapData.jumpTo);
                     }
+                    
+                    // Add custom images if provided
+                    if (mapData.images && Array.isArray(mapData.images)) {
+                        mapData.images.forEach(async function (imageInfo) {
+                            try {
+                                const image = await map.loadImage(
+                                    imageInfo.url,
+                                );
+                                if (!map.hasImage(imageInfo.id)) {
+                                    map.addImage(
+                                        imageInfo.id,
+                                        image.data,
+                                        imageInfo.options,
+                                    );
+                                }
+                            } catch (error) {
+                                console.error("Error loading image:", error);
+                            }
+                        });
+                    } else if (mapData.images) {
+                        console.error("mapData.images is not an array:", mapData.images);
+                    }
 
                     const existingLegend =
                         document.getElementById("mapboxgl-legend");
@@ -435,7 +782,212 @@ HTMLWidgets.widget({
                             mapData.navigation_control.position,
                         );
                     }
+                    
+                    // Add geolocate control if enabled
+                    if (mapData.geolocate_control) {
+                        const geolocate = new maplibregl.GeolocateControl({
+                            positionOptions:
+                                mapData.geolocate_control.positionOptions,
+                            trackUserLocation:
+                                mapData.geolocate_control.trackUserLocation,
+                            showAccuracyCircle:
+                                mapData.geolocate_control.showAccuracyCircle,
+                            showUserLocation:
+                                mapData.geolocate_control.showUserLocation,
+                            showUserHeading:
+                                mapData.geolocate_control.showUserHeading,
+                            fitBoundsOptions:
+                                mapData.geolocate_control.fitBoundsOptions,
+                        });
+                        map.addControl(geolocate, mapData.geolocate_control.position);
 
+                        if (HTMLWidgets.shinyMode) {
+                            geolocate.on("geolocate", function (event) {
+                                Shiny.setInputValue(el.id + "_geolocate", {
+                                    coords: event.coords,
+                                    time: new Date(),
+                                });
+                            });
+
+                            geolocate.on("trackuserlocationstart", function () {
+                                Shiny.setInputValue(
+                                    el.id + "_geolocate_tracking",
+                                    {
+                                        status: "start",
+                                        time: new Date(),
+                                    },
+                                );
+                            });
+
+                            geolocate.on("trackuserlocationend", function () {
+                                Shiny.setInputValue(
+                                    el.id + "_geolocate_tracking",
+                                    {
+                                        status: "end",
+                                        time: new Date(),
+                                    },
+                                );
+                            });
+
+                            geolocate.on("error", function (error) {
+                                if (error.error.code === 1) {
+                                    Shiny.setInputValue(
+                                        el.id + "_geolocate_error",
+                                        {
+                                            message:
+                                                "Location permission denied",
+                                            time: new Date(),
+                                        },
+                                    );
+                                }
+                            });
+                        }
+                    }
+                    
+                    // Add geocoder control if enabled
+                    if (mapData.geocoder_control) {
+                        const geocoderApi = {
+                            forwardGeocode: async (config) => {
+                                const features = [];
+                                try {
+                                    const request = `https://nominatim.openstreetmap.org/search?q=${
+                                        config.query
+                                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                                    const response = await fetch(request);
+                                    const geojson = await response.json();
+                                    for (const feature of geojson.features) {
+                                        const center = [
+                                            feature.bbox[0] +
+                                                (feature.bbox[2] -
+                                                    feature.bbox[0]) /
+                                                    2,
+                                            feature.bbox[1] +
+                                                (feature.bbox[3] -
+                                                    feature.bbox[1]) /
+                                                    2,
+                                        ];
+                                        const point = {
+                                            type: "Feature",
+                                            geometry: {
+                                                type: "Point",
+                                                coordinates: center,
+                                            },
+                                            place_name:
+                                                feature.properties.display_name,
+                                            properties: feature.properties,
+                                            text: feature.properties
+                                                .display_name,
+                                            place_type: ["place"],
+                                            center,
+                                        };
+                                        features.push(point);
+                                    }
+                                } catch (e) {
+                                    console.error(
+                                        `Failed to forwardGeocode with error: ${e}`,
+                                    );
+                                }
+
+                                return {
+                                    features,
+                                };
+                            },
+                        };
+                        const geocoderOptions = {
+                            maplibregl: maplibregl,
+                            ...mapData.geocoder_control,
+                        };
+
+                        // Set default values if not provided
+                        if (!geocoderOptions.placeholder)
+                            geocoderOptions.placeholder = "Search";
+                        if (typeof geocoderOptions.collapsed === "undefined")
+                            geocoderOptions.collapsed = false;
+
+                        const geocoder = new MaplibreGeocoder(
+                            geocoderApi,
+                            geocoderOptions,
+                        );
+
+                        map.addControl(
+                            geocoder,
+                            mapData.geocoder_control.position || "top-right",
+                        );
+                        
+                        // Handle geocoder results in Shiny mode
+                        if (HTMLWidgets.shinyMode) {
+                            geocoder.on("results", function (e) {
+                                Shiny.setInputValue(el.id + "_geocoder", {
+                                    result: e,
+                                    time: new Date(),
+                                });
+                            });
+                        }
+                    }
+
+                    // Add reset control if enabled
+                    if (mapData.reset_control) {
+                        const resetControl = document.createElement("button");
+                        resetControl.className =
+                            "maplibregl-ctrl-icon maplibregl-ctrl-reset";
+                        resetControl.type = "button";
+                        resetControl.setAttribute("aria-label", "Reset");
+                        resetControl.innerHTML = "⟲";
+                        resetControl.style.fontSize = "30px";
+                        resetControl.style.fontWeight = "bold";
+                        resetControl.style.backgroundColor = "white";
+                        resetControl.style.border = "none";
+                        resetControl.style.cursor = "pointer";
+                        resetControl.style.padding = "0";
+                        resetControl.style.width = "30px";
+                        resetControl.style.height = "30px";
+                        resetControl.style.display = "flex";
+                        resetControl.style.justifyContent = "center";
+                        resetControl.style.alignItems = "center";
+                        resetControl.style.transition = "background-color 0.2s";
+                        resetControl.addEventListener("mouseover", function () {
+                            this.style.backgroundColor = "#f0f0f0";
+                        });
+                        resetControl.addEventListener("mouseout", function () {
+                            this.style.backgroundColor = "white";
+                        });
+
+                        const resetContainer = document.createElement("div");
+                        resetContainer.className =
+                            "maplibregl-ctrl maplibregl-ctrl-group";
+                        resetContainer.appendChild(resetControl);
+
+                        const initialView = {
+                            center: mapData.center,
+                            zoom: mapData.zoom,
+                            pitch: mapData.pitch,
+                            bearing: mapData.bearing,
+                            animate: mapData.reset_control.animate,
+                        };
+
+                        if (mapData.reset_control.duration) {
+                            initialView.duration = mapData.reset_control.duration;
+                        }
+
+                        resetControl.onclick = function () {
+                            map.easeTo(initialView);
+                        };
+
+                        map.addControl(
+                            {
+                                onAdd: function () {
+                                    return resetContainer;
+                                },
+                                onRemove: function () {
+                                    resetContainer.parentNode.removeChild(
+                                        resetContainer,
+                                    );
+                                },
+                            },
+                            mapData.reset_control.position,
+                        );
+                    }
+                    
                     // Add the layers control if provided
                     if (mapData.layers_control) {
                         const layersControl = document.createElement("div");
