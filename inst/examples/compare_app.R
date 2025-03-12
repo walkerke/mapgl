@@ -4,7 +4,7 @@ library(colourpicker)
 library(magrittr)
 
 ui <- fluidPage(
-  titlePanel("Maplibre Compare Widget Example"),
+  titlePanel("Compare North Carolina Counties"),
 
   sidebarLayout(
     sidebarPanel(
@@ -15,10 +15,10 @@ ui <- fluidPage(
                     "Voyager" = "voyager",
                     "Dark Matter" = "dark-matter")),
 
-      sliderInput("left_opacity", "Country Fill Opacity:",
+      sliderInput("left_opacity", "County Fill Opacity:",
                   min = 0, max = 1, value = 0.7, step = 0.1),
 
-      colourInput("left_fill", "Country Fill Color:", value = "#1e88e5"),
+      colourInput("left_fill", "County Fill Color:", value = "#1e88e5"),
 
       # Right (after) map controls
       h4("Right Map Controls"),
@@ -27,10 +27,10 @@ ui <- fluidPage(
                     "Voyager" = "voyager",
                     "Dark Matter" = "dark-matter")),
 
-      sliderInput("right_opacity", "Country Fill Opacity:",
+      sliderInput("right_opacity", "County Fill Opacity:",
                   min = 0, max = 1, value = 0.7, step = 0.1),
 
-      colourInput("right_fill", "Country Fill Color:", value = "#d81b60"),
+      colourInput("right_fill", "County Fill Color:", value = "#d81b60"),
 
       # Compare controls
       h4("Compare Controls"),
@@ -48,30 +48,30 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  # Create the world countries data
-  world <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+  # Load North Carolina counties data
+  nc_counties <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 
   # Create the left map
   left_map <- reactive({
-    maplibre(style = carto_style(input$left_style)) %>%
+    maplibre(style = carto_style("positron"), bounds = nc_counties) %>%
       add_navigation_control() %>%
       add_fill_layer(
         id = "counties-fill1",
-        source = world,
-        fill_color = input$left_fill,
-        fill_opacity = input$left_opacity
+        source = nc_counties,
+        fill_color = "red",
+        fill_opacity = 0.7
       )
   })
 
   # Create the right map
   right_map <- reactive({
-    maplibre(style = carto_style(input$right_style)) %>%
+    maplibre(style = carto_style("dark-matter"), bounds = nc_counties) %>%
       add_navigation_control() %>%
       add_fill_layer(
         id = "counties-fill2",
-        source = world,
-        fill_color = input$right_fill,
-        fill_opacity = input$right_opacity
+        source = nc_counties,
+        fill_color = "blue",
+        fill_opacity = 0.7
       )
   })
 
@@ -85,37 +85,43 @@ server <- function(input, output, session) {
     )
   })
 
-  # Update the left (before) map
+  # Update the left map style when style selection changes
+  # observe({
+  #   # Create proxy for the left map
+  #   proxy1 <- maplibre_compare_proxy("compare", session, map_side = "before")
+  #   # Update the style
+  #   set_style(proxy1, carto_style(input$left_style))
+  # }) %>% bindEvent(input$left_style)
+
+  # Update the left map fill color when color selection changes
   observe({
-    # Only make updates after compare widget is created
-    req(input$compare_before_view)
+    proxy1 <- maplibre_compare_proxy("compare", session, map_side = "before")
+    set_paint_property(proxy1, "counties-fill1", "fill-color", input$left_fill)
+  }) %>% bindEvent(input$left_fill)
 
-    # Create proxy for the left map
-    proxy <- maplibre_compare_proxy("compare", session, map_side = "before")
-
-    # Update the left map style
-    set_style(proxy, carto_style(input$left_style))
-
-    # Update the fill color and opacity for the left map
-    set_paint_property(proxy, "counties-fill1", "fill-color", input$left_fill)
-    set_paint_property(proxy, "counties-fill1", "fill-opacity", input$left_opacity)
-  })
-
-  # Update the right (after) map
+  # Update the left map opacity when opacity slider changes
   observe({
-    # Only make updates after compare widget is created
-    req(input$compare_after_view)
+    proxy1 <- maplibre_compare_proxy("compare", session, map_side = "before")
+    set_paint_property(proxy1, "counties-fill1", "fill-opacity", input$left_opacity)
+  }) %>% bindEvent(input$left_opacity)
 
-    # Create proxy for the right map
-    proxy <- maplibre_compare_proxy("compare", session, map_side = "after")
+  # Update the right map style when style selection changes
+  # observe({
+  #   proxy2 <- maplibre_compare_proxy("compare", session, map_side = "after")
+  #   set_style(proxy2, carto_style(input$right_style))
+  # }) %>% bindEvent(input$right_style)
 
-    # Update the right map style
-    set_style(proxy, carto_style(input$right_style))
+  # Update the right map fill color when color selection changes
+  observe({
+    proxy2 <- maplibre_compare_proxy("compare", session, map_side = "after")
+    set_paint_property(proxy2, "counties-fill2", "fill-color", input$right_fill)
+  }) %>% bindEvent(input$right_fill)
 
-    # Update the fill color and opacity for the right map
-    set_paint_property(proxy, "counties-fill2", "fill-color", input$right_fill)
-    set_paint_property(proxy, "counties-fill2", "fill-opacity", input$right_opacity)
-  })
+  # Update the right map opacity when opacity slider changes
+  observe({
+    proxy2 <- maplibre_compare_proxy("compare", session, map_side = "after")
+    set_paint_property(proxy2, "counties-fill2", "fill-opacity", input$right_opacity)
+  }) %>% bindEvent(input$right_opacity)
 
   # Display click information
   output$click_info <- renderPrint({
