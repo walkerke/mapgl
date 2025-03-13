@@ -335,32 +335,39 @@ add_globe_minimap <- function(map, position = "bottom-right", globe_size = 82,
         marker_size = marker_size
     )
 
-    if (inherits(map, "mapboxgl_proxy")) {
-        map$session$sendCustomMessage("mapboxgl-proxy", list(
-            id = map$id,
-            message = list(
-                type = "add_globe_minimap",
-                position = position,
-                globe_size = globe_size,
-                land_color = land_color,
-                water_color = water_color,
-                marker_color = marker_color,
-                marker_size = marker_size
-            )
-        ))
-    } else if (inherits(map, "maplibre_proxy")) {
-        map$session$sendCustomMessage("maplibre-proxy", list(
-            id = map$id,
-            message = list(
-                type = "add_globe_minimap",
-                position = position,
-                globe_size = globe_size,
-                land_color = land_color,
-                water_color = water_color,
-                marker_color = marker_color,
-                marker_size = marker_size
-            )
-        ))
+    if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_globe_minimap",
+                    position = position,
+                    globe_size = globe_size,
+                    land_color = land_color,
+                    water_color = water_color,
+                    marker_color = marker_color,
+                    marker_size = marker_size,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_globe_minimap",
+                    position = position,
+                    globe_size = globe_size,
+                    land_color = land_color,
+                    water_color = water_color,
+                    marker_color = marker_color,
+                    marker_size = marker_size
+                )
+            ))
+        }
     }
 
     map

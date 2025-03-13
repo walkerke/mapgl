@@ -136,13 +136,25 @@ add_layer <- function(map,
             layer$maxzoom <- max_zoom
         }
 
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "add_layer", layer = layer)
-        ))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_layer", 
+                    layer = layer,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "add_layer", layer = layer)
+            ))
+        }
 
         map
     } else {
