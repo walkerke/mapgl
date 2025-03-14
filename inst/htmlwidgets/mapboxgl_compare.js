@@ -5,7 +5,204 @@ HTMLWidgets.widget({
 
     factory: function (el, width, height) {
         // Store maps and compare object to allow access during Shiny updates
-        let beforeMap, afterMap, compareControl;
+        let beforeMap, afterMap, compareControl, draw;
+
+        // Function to load MapboxDraw if it's not already loaded
+        function loadMapboxDraw(callback) {
+            if (
+                typeof MapboxDraw !== "undefined" ||
+                typeof window.MapboxDraw !== "undefined"
+            ) {
+                if (callback) callback();
+                return;
+            }
+
+            // Load CSS
+            const cssLink = document.createElement("link");
+            cssLink.rel = "stylesheet";
+            cssLink.type = "text/css";
+            cssLink.href = "htmlwidgets/lib/mapbox-gl-draw/mapbox-gl-draw.css";
+            document.head.appendChild(cssLink);
+
+            // Load JS
+            const script = document.createElement("script");
+            script.src = "htmlwidgets/lib/mapbox-gl-draw/mapbox-gl-draw.js";
+            script.onload = function () {
+                // Wait a bit to ensure the script is fully processed
+                setTimeout(function () {
+                    if (callback) callback();
+                }, 100);
+            };
+            document.head.appendChild(script);
+        }
+
+        // Function to load MapboxGeocoder if it's not already loaded
+        function loadMapboxGeocoder(callback) {
+            if (
+                typeof MapboxGeocoder !== "undefined" ||
+                typeof window.MapboxGeocoder !== "undefined"
+            ) {
+                if (callback) callback();
+                return;
+            }
+
+            // Load CSS
+            const cssLink = document.createElement("link");
+            cssLink.rel = "stylesheet";
+            cssLink.type = "text/css";
+            cssLink.href =
+                "htmlwidgets/lib/maplibre-gl-geocoder/maplibre-gl-geocoder.css";
+            document.head.appendChild(cssLink);
+
+            // Load JS
+            const script = document.createElement("script");
+            script.src =
+                "htmlwidgets/lib/maplibre-gl-geocoder/maplibre-gl-geocoder.min.js";
+            script.onload = function () {
+                // Wait a bit to ensure the script is fully processed
+                setTimeout(function () {
+                    if (callback) callback();
+                }, 100);
+            };
+            document.head.appendChild(script);
+        }
+
+        // Add CSS for layers control directly in the script rather than loading external file
+        function addLayersControlCSS() {
+            const existingCSS = document.getElementById(
+                "mapboxgl-layers-control-css",
+            );
+            if (!existingCSS) {
+                const styleElement = document.createElement("style");
+                styleElement.id = "mapboxgl-layers-control-css";
+                styleElement.textContent = `
+                .layers-control {
+                    background: #fff;
+                    position: absolute;
+                    z-index: 1;
+                    border-radius: 4px;
+                    width: 120px;
+                    border: 1px solid rgba(0, 0, 0, 0.15);
+                    font-family: "Open Sans", sans-serif;
+                    margin: 0px;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                    overflow: hidden;
+                    transition: all 0.2s ease-in-out;
+                }
+
+                .layers-control a {
+                    font-size: 13px;
+                    color: #404040;
+                    display: block;
+                    margin: 0;
+                    padding: 10px;
+                    text-decoration: none;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                    text-align: center;
+                    transition: all 0.15s ease-in-out;
+                    font-weight: normal;
+                }
+
+                .layers-control a:last-child {
+                    border: none;
+                }
+
+                .layers-control a:hover {
+                    background-color: #f8f8f8;
+                    color: #1a1a1a;
+                }
+
+                .layers-control a.active {
+                    background-color: #4a90e2;
+                    color: #ffffff;
+                    font-weight: 500;
+                }
+
+                .layers-control a.active:hover {
+                    background: #3b7ed2;
+                }
+
+                .layers-control .toggle-button {
+                    display: none;
+                    background: #4a90e2;
+                    color: #ffffff;
+                    text-align: center;
+                    cursor: pointer;
+                    padding: 8px 0;
+                    border-radius: 4px 4px 0 0;
+                    font-weight: 500;
+                    letter-spacing: 0.3px;
+                    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05) inset;
+                    transition: all 0.15s ease-in-out;
+                }
+
+                .layers-control .toggle-button:hover {
+                    background: #3b7ed2;
+                }
+
+                .layers-control .layers-list {
+                    display: block;
+                }
+
+                .layers-control.collapsible .toggle-button {
+                    display: block;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+                }
+
+                .layers-control.collapsible .layers-list {
+                    display: none;
+                    opacity: 0;
+                    max-height: 0;
+                    transition:
+                        opacity 0.25s ease,
+                        max-height 0.25s ease;
+                }
+
+                .layers-control.collapsible.open .layers-list {
+                    display: block;
+                    opacity: 1;
+                    max-height: 500px;
+                }
+
+                /* Compact icon styling */
+                .layers-control.collapsible.icon-only {
+                    width: auto;
+                    min-width: 36px;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                    transform: translateZ(0); /* Force hardware acceleration for smoother animations */
+                }
+
+                .layers-control.collapsible.icon-only .toggle-button {
+                    border-radius: 4px;
+                    padding: 8px;
+                    width: 36px;
+                    height: 36px;
+                    box-sizing: border-box;
+                    margin: 0;
+                    border-bottom: none;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: none;
+                }
+
+                .layers-control.collapsible.icon-only.open {
+                    width: 120px;
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+                }
+
+                .layers-control.collapsible.icon-only.open .toggle-button {
+                    border-radius: 4px 4px 0 0;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                    width: 100%;
+                }`;
+                document.head.appendChild(styleElement);
+            }
+        }
+
+        // Add the CSS when widget is initialized
+        addLayersControlCSS();
 
         return {
             renderValue: function (x) {
@@ -737,42 +934,74 @@ HTMLWidgets.widget({
                                     message.position,
                                 );
                             } else if (message.type === "add_draw_control") {
-                                let drawOptions = message.options || {};
-                                if (message.freehand) {
-                                    drawOptions = Object.assign(
-                                        {},
-                                        drawOptions,
-                                        {
-                                            modes: Object.assign(
-                                                {},
-                                                MapboxDraw.modes,
-                                                {
-                                                    draw_polygon:
-                                                        MapboxDraw.modes
-                                                            .draw_freehand,
-                                                },
-                                            ),
-                                        },
-                                    );
-                                }
+                                // Load MapboxDraw if it's not already loaded
+                                loadMapboxDraw(function () {
+                                    let drawOptions = message.options || {};
+                                    // Use the global object if it's available there
+                                    const DrawClass =
+                                        typeof MapboxDraw !== "undefined"
+                                            ? MapboxDraw
+                                            : window.MapboxDraw;
 
-                                draw = new MapboxDraw(drawOptions);
-                                map.addControl(draw, message.position);
-
-                                // Add event listeners
-                                map.on("draw.create", updateDrawnFeatures);
-                                map.on("draw.delete", updateDrawnFeatures);
-                                map.on("draw.update", updateDrawnFeatures);
-
-                                if (message.orientation === "horizontal") {
-                                    const drawBar = map
-                                        .getContainer()
-                                        .querySelector(".mapboxgl-ctrl-group");
-                                    if (drawBar) {
-                                        drawBar.style.display = "flex";
-                                        drawBar.style.flexDirection = "row";
+                                    if (!DrawClass) {
+                                        console.error(
+                                            "MapboxDraw is still not available after loading",
+                                        );
+                                        return;
                                     }
-                                }
+
+                                    if (message.freehand) {
+                                        drawOptions = Object.assign(
+                                            {},
+                                            drawOptions,
+                                            {
+                                                modes: Object.assign(
+                                                    {},
+                                                    DrawClass.modes,
+                                                    {
+                                                        draw_polygon:
+                                                            DrawClass.modes
+                                                                .draw_freehand,
+                                                    },
+                                                ),
+                                            },
+                                        );
+                                    }
+
+                                    // Store in window scope for access across compare context
+                                    window.mapCompareDrawControl =
+                                        new DrawClass(drawOptions);
+                                    draw = window.mapCompareDrawControl;
+                                    map.addControl(draw, message.position);
+
+                                    // Helper function for updating drawn features
+                                    function updateDrawnFeatures() {
+                                        if (HTMLWidgets.shinyMode && draw) {
+                                            const features = draw.getAll();
+                                            Shiny.setInputValue(
+                                                data.id + "_drawn_features",
+                                                JSON.stringify(features),
+                                            );
+                                        }
+                                    }
+
+                                    // Add event listeners
+                                    map.on("draw.create", updateDrawnFeatures);
+                                    map.on("draw.delete", updateDrawnFeatures);
+                                    map.on("draw.update", updateDrawnFeatures);
+
+                                    if (message.orientation === "horizontal") {
+                                        const drawBar = map
+                                            .getContainer()
+                                            .querySelector(
+                                                ".mapboxgl-ctrl-group",
+                                            );
+                                        if (drawBar) {
+                                            drawBar.style.display = "flex";
+                                            drawBar.style.flexDirection = "row";
+                                        }
+                                    }
+                                });
                             } else if (message.type === "get_drawn_features") {
                                 if (draw) {
                                     const features = draw
@@ -953,44 +1182,73 @@ HTMLWidgets.widget({
                             } else if (
                                 message.type === "add_geocoder_control"
                             ) {
-                                const geocoderOptions = {
-                                    accessToken: mapboxgl.accessToken,
-                                    mapboxgl: mapboxgl,
-                                    ...message.options,
-                                };
+                                // Load MapboxGeocoder if not already loaded
+                                loadMapboxGeocoder(function () {
+                                    const geocoderOptions = {
+                                        accessToken: map.accessToken,
+                                        mapboxgl: mapboxgl,
+                                        ...message.options,
+                                    };
 
-                                // Set default values if not provided
-                                if (!geocoderOptions.placeholder)
-                                    geocoderOptions.placeholder = "Search";
-                                if (
-                                    typeof geocoderOptions.collapsed ===
-                                    "undefined"
-                                )
-                                    geocoderOptions.collapsed = false;
+                                    // Set default values if not provided
+                                    if (!geocoderOptions.placeholder)
+                                        geocoderOptions.placeholder = "Search";
+                                    if (
+                                        typeof geocoderOptions.collapsed ===
+                                        "undefined"
+                                    )
+                                        geocoderOptions.collapsed = false;
 
-                                const geocoder = new MapboxGeocoder(
-                                    geocoderOptions,
-                                );
+                                    // Use the global object if it's available there
+                                    const GeocoderClass =
+                                        typeof MapboxGeocoder !== "undefined"
+                                            ? MapboxGeocoder
+                                            : window.MapboxGeocoder;
 
-                                map.addControl(
-                                    geocoder,
-                                    message.position || "top-right",
-                                );
+                                    if (!GeocoderClass) {
+                                        console.error(
+                                            "MapboxGeocoder is still not available after loading",
+                                        );
+                                        return;
+                                    }
 
-                                // Handle geocoder results in Shiny mode
-                                geocoder.on("result", function (e) {
-                                    Shiny.setInputValue(data.id + "_geocoder", {
-                                        result: e.result,
-                                        time: new Date(),
-                                    });
+                                    const geocoder = new GeocoderClass(
+                                        geocoderOptions,
+                                    );
+
+                                    map.addControl(
+                                        geocoder,
+                                        message.position || "top-right",
+                                    );
+
+                                    // Handle geocoder results in Shiny mode
+                                    if (HTMLWidgets.shinyMode) {
+                                        geocoder.on("result", function (e) {
+                                            Shiny.setInputValue(
+                                                data.id + "_geocoder",
+                                                {
+                                                    result: e.result,
+                                                    time: new Date(),
+                                                },
+                                            );
+                                        });
+                                    }
                                 });
                             } else if (message.type === "add_layers_control") {
                                 const layersControl =
                                     document.createElement("div");
                                 layersControl.id = message.control_id;
-                                layersControl.className = message.collapsible
+
+                                // Handle use_icon parameter
+                                let className = message.collapsible
                                     ? "layers-control collapsible"
                                     : "layers-control";
+
+                                if (message.use_icon) {
+                                    className += " icon-only";
+                                }
+
+                                layersControl.className = className;
                                 layersControl.style.position = "absolute";
 
                                 // Set the position correctly
@@ -1784,65 +2042,10 @@ HTMLWidgets.widget({
 
                     // Add geocoder control if enabled
                     if (mapData.geocoder_control) {
-                        const geocoderApi = {
-                            forwardGeocode: async (config) => {
-                                const features = [];
-                                try {
-                                    const request = `https://nominatim.openstreetmap.org/search?q=${
-                                        config.query
-                                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                                    const response = await fetch(request);
-                                    const geojson = await response.json();
-                                    for (const feature of geojson.features) {
-                                        const center = [
-                                            feature.bbox[0] +
-                                                (feature.bbox[2] -
-                                                    feature.bbox[0]) /
-                                                    2,
-                                            feature.bbox[1] +
-                                                (feature.bbox[3] -
-                                                    feature.bbox[1]) /
-                                                    2,
-                                        ];
-                                        const point = {
-                                            type: "Feature",
-                                            geometry: {
-                                                type: "Point",
-                                                coordinates: center,
-                                            },
-                                            place_name:
-                                                feature.properties.display_name,
-                                            properties: feature.properties,
-                                            text: feature.properties
-                                                .display_name,
-                                            place_type: ["place"],
-                                            center,
-                                        };
-                                        features.push(point);
-                                    }
-                                } catch (e) {
-                                    console.error(
-                                        `Failed to forwardGeocode with error: ${e}`,
-                                    );
-                                }
-
-                                return {
-                                    features,
-                                };
-                            },
-                        };
-
-                        // For Mapbox, use MapboxGeocoder if it exists, otherwise fall back to similar implementation
-                        let geocoder;
-                        if (typeof MapboxGeocoder !== "undefined") {
-                            geocoder = new MapboxGeocoder({
-                                accessToken: mapboxgl.accessToken,
-                                mapboxgl: mapboxgl,
-                                ...mapData.geocoder_control,
-                            });
-                        } else {
-                            // Similar implementation as MapLibre
+                        // Load MapboxGeocoder if not already loaded
+                        loadMapboxGeocoder(function () {
                             const geocoderOptions = {
+                                accessToken: mapData.accessToken,
                                 mapboxgl: mapboxgl,
                                 ...mapData.geocoder_control,
                             };
@@ -1855,34 +2058,103 @@ HTMLWidgets.widget({
                             )
                                 geocoderOptions.collapsed = false;
 
-                            // Check if MapLibreGeocoder exists as fallback
-                            if (typeof MaplibreGeocoder !== "undefined") {
-                                geocoder = new MaplibreGeocoder(
-                                    geocoderApi,
-                                    geocoderOptions,
-                                );
-                            } else {
-                                console.warn(
-                                    "No geocoder implementation available",
+                            // Use the global object if it's available there
+                            const GeocoderClass =
+                                typeof MapboxGeocoder !== "undefined"
+                                    ? MapboxGeocoder
+                                    : window.MapboxGeocoder;
+
+                            if (!GeocoderClass) {
+                                console.error(
+                                    "MapboxGeocoder is still not available after loading",
                                 );
                                 return;
                             }
-                        }
 
-                        map.addControl(
-                            geocoder,
-                            mapData.geocoder_control.position || "top-right",
-                        );
+                            const geocoder = new GeocoderClass(geocoderOptions);
 
-                        // Handle geocoder results in Shiny mode
-                        if (HTMLWidgets.shinyMode) {
-                            geocoder.on("results", function (e) {
-                                Shiny.setInputValue(el.id + "_geocoder", {
-                                    result: e,
-                                    time: new Date(),
+                            map.addControl(
+                                geocoder,
+                                mapData.geocoder_control.position ||
+                                    "top-right",
+                            );
+
+                            // Handle geocoder results in Shiny mode
+                            if (HTMLWidgets.shinyMode) {
+                                geocoder.on("result", function (e) {
+                                    Shiny.setInputValue(el.id + "_geocoder", {
+                                        result: e.result,
+                                        time: new Date(),
+                                    });
                                 });
-                            });
-                        }
+                            }
+                        });
+                    }
+
+                    // Add draw control if enabled
+                    if (mapData.draw_control) {
+                        // Load MapboxDraw if it's not already loaded
+                        loadMapboxDraw(function () {
+                            let drawOptions =
+                                mapData.draw_control.options || {};
+
+                            // Use the global object if it's available there
+                            const DrawClass =
+                                typeof MapboxDraw !== "undefined"
+                                    ? MapboxDraw
+                                    : window.MapboxDraw;
+
+                            if (!DrawClass) {
+                                console.error(
+                                    "MapboxDraw is still not available after loading",
+                                );
+                                return;
+                            }
+
+                            if (mapData.draw_control.freehand) {
+                                drawOptions = Object.assign({}, drawOptions, {
+                                    modes: Object.assign({}, DrawClass.modes, {
+                                        draw_polygon:
+                                            DrawClass.modes.draw_freehand,
+                                    }),
+                                });
+                            }
+
+                            window.mapCompareDrawControl = new DrawClass(
+                                drawOptions,
+                            );
+                            draw = window.mapCompareDrawControl;
+                            map.addControl(draw, mapData.draw_control.position);
+
+                            // Helper function for updating drawn features
+                            function updateDrawnFeatures() {
+                                if (HTMLWidgets.shinyMode && draw) {
+                                    const features = draw.getAll();
+                                    Shiny.setInputValue(
+                                        el.id + "_drawn_features",
+                                        JSON.stringify(features),
+                                    );
+                                }
+                            }
+
+                            // Add event listeners
+                            map.on("draw.create", updateDrawnFeatures);
+                            map.on("draw.delete", updateDrawnFeatures);
+                            map.on("draw.update", updateDrawnFeatures);
+
+                            if (
+                                mapData.draw_control.orientation ===
+                                "horizontal"
+                            ) {
+                                const drawBar = map
+                                    .getContainer()
+                                    .querySelector(".mapboxgl-ctrl-group");
+                                if (drawBar) {
+                                    drawBar.style.display = "flex";
+                                    drawBar.style.flexDirection = "row";
+                                }
+                            }
+                        });
                     }
 
                     // Add reset control if enabled
@@ -1951,12 +2223,18 @@ HTMLWidgets.widget({
 
                     // Add the layers control if provided
                     if (mapData.layers_control) {
+                        // Ensure CSS is loaded
+                        addLayersControlCSS();
+
                         const layersControl = document.createElement("div");
                         layersControl.id = mapData.layers_control.control_id;
-                        layersControl.className = mapData.layers_control
-                            .collapsible
+
+                        // Handle use_icon parameter
+                        let className = mapData.layers_control.collapsible
                             ? "layers-control collapsible"
                             : "layers-control";
+
+                        layersControl.className = className;
                         layersControl.style.position = "absolute";
                         layersControl.style[
                             mapData.layers_control.position || "top-right"
@@ -2015,7 +2293,24 @@ HTMLWidgets.widget({
                         if (mapData.layers_control.collapsible) {
                             const toggleButton = document.createElement("div");
                             toggleButton.className = "toggle-button";
-                            toggleButton.textContent = "Layers";
+
+                            if (mapData.layers_control.use_icon) {
+                                // Add icon-only class to the control for compact styling
+                                layersControl.classList.add("icon-only");
+
+                                // More GIS-like layers stack icon
+                                toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>`;
+                                toggleButton.style.display = "flex";
+                                toggleButton.style.alignItems = "center";
+                                toggleButton.style.justifyContent = "center";
+                            } else {
+                                toggleButton.textContent = "Layers";
+                            }
+
                             toggleButton.onclick = function () {
                                 layersControl.classList.toggle("open");
                             };
