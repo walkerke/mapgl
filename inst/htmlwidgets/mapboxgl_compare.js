@@ -1732,6 +1732,19 @@ HTMLWidgets.widget({
                         );
                     }
 
+                    // Add scale control if enabled
+                    if (mapData.scale_control) {
+                        const scaleControl = new mapboxgl.ScaleControl({
+                            maxWidth: mapData.scale_control.maxWidth,
+                            unit: mapData.scale_control.unit,
+                        });
+                        map.addControl(
+                            scaleControl,
+                            mapData.scale_control.position,
+                        );
+                        map.controls.push(scaleControl);
+                    }
+
                     // Add geolocate control if enabled
                     if (mapData.geolocate_control) {
                         const geolocate = new mapboxgl.GeolocateControl({
