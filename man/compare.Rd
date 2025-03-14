@@ -109,7 +109,7 @@ server <- function(input, output, session) {
       mode = "sync"
     )
   })
-  
+
   # Update the right map
   observe({
     right_proxy <- maplibre_compare_proxy("comparison", map_side = "after")
