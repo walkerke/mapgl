@@ -1976,7 +1976,6 @@ HTMLWidgets.widget({
 
                     // Add the layers control if provided
                     if (mapData.layers_control) {
-                        // Ensure CSS is loaded
                         const layersControl = document.createElement("div");
                         layersControl.id = mapData.layers_control.control_id;
 

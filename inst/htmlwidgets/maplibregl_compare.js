@@ -5,7 +5,7 @@ HTMLWidgets.widget({
 
     factory: function (el, width, height) {
         // Store maps and compare object to allow access during Shiny updates
-        let beforeMap, afterMap, compareControl;
+        let beforeMap, afterMap, compareControl, draw;
 
         return {
             renderValue: function (x) {
@@ -66,6 +66,9 @@ HTMLWidgets.widget({
                     ...x.map1.additional_params,
                 });
 
+                // Initialize controls array
+                beforeMap.controls = [];
+
                 afterMap = new maplibregl.Map({
                     container: afterContainerId,
                     style: x.map2.style,
@@ -76,6 +79,9 @@ HTMLWidgets.widget({
                     accessToken: x.map2.access_token,
                     ...x.map2.additional_params,
                 });
+
+                // Initialize controls array
+                afterMap.controls = [];
 
                 if (x.mode === "swipe") {
                     // Only create the swiper in swipe mode
@@ -160,6 +166,17 @@ HTMLWidgets.widget({
                         setupShinyEvents(afterMap, el.id, "after");
                     }
                 });
+
+                // Define updateDrawnFeatures function for the draw tool
+                window.updateDrawnFeatures = function () {
+                    if (draw) {
+                        const features = draw.getAll();
+                        Shiny.setInputValue(
+                            el.id + "_drawn_features",
+                            JSON.stringify(features),
+                        );
+                    }
+                };
 
                 // Handle Shiny messages
                 if (HTMLWidgets.shinyMode) {
@@ -740,6 +757,8 @@ HTMLWidgets.widget({
                                     },
                                     message.position,
                                 );
+                                // Add to controls array
+                                map.controls.push(resetControl);
                             } else if (message.type === "add_draw_control") {
                                 let drawOptions = message.options || {};
                                 if (message.freehand) {
@@ -762,11 +781,21 @@ HTMLWidgets.widget({
 
                                 draw = new MapboxDraw(drawOptions);
                                 map.addControl(draw, message.position);
+                                map.controls.push(draw);
 
                                 // Add event listeners
-                                map.on("draw.create", updateDrawnFeatures);
-                                map.on("draw.delete", updateDrawnFeatures);
-                                map.on("draw.update", updateDrawnFeatures);
+                                map.on(
+                                    "draw.create",
+                                    window.updateDrawnFeatures,
+                                );
+                                map.on(
+                                    "draw.delete",
+                                    window.updateDrawnFeatures,
+                                );
+                                map.on(
+                                    "draw.update",
+                                    window.updateDrawnFeatures,
+                                );
 
                                 if (message.orientation === "horizontal") {
                                     const drawBar = map
@@ -800,7 +829,7 @@ HTMLWidgets.widget({
                                 if (draw) {
                                     draw.deleteAll();
                                     // Update the drawn features
-                                    updateDrawnFeatures();
+                                    window.updateDrawnFeatures();
                                 }
                             } else if (message.type === "add_markers") {
                                 if (!window.maplibreglMarkers) {
@@ -873,6 +902,7 @@ HTMLWidgets.widget({
                                 const fullscreen =
                                     new maplibregl.FullscreenControl();
                                 map.addControl(fullscreen, position);
+                                map.controls.push(fullscreen);
                             } else if (message.type === "add_scale_control") {
                                 const scaleControl =
                                     new maplibregl.ScaleControl({
@@ -883,6 +913,7 @@ HTMLWidgets.widget({
                                     scaleControl,
                                     message.options.position,
                                 );
+                                map.controls.push(scaleControl);
                             } else if (
                                 message.type === "add_geolocate_control"
                             ) {
@@ -905,6 +936,7 @@ HTMLWidgets.widget({
                                     geolocate,
                                     message.options.position,
                                 );
+                                map.controls.push(geolocate);
 
                                 if (HTMLWidgets.shinyMode) {
                                     geolocate.on("geolocate", function (event) {
@@ -1034,6 +1066,7 @@ HTMLWidgets.widget({
                                     geocoder,
                                     message.position || "top-right",
                                 );
+                                map.controls.push(geocoder);
 
                                 // Handle geocoder results in Shiny mode
                                 geocoder.on("results", function (e) {
@@ -1784,6 +1817,18 @@ HTMLWidgets.widget({
                         );
                     }
 
+                    if (mapData.scale_control) {
+                        const scaleControl = new maplibregl.ScaleControl({
+                            maxWidth: mapData.scale_control.maxWidth,
+                            unit: mapData.scale_control.unit,
+                        });
+                        map.addControl(
+                            scaleControl,
+                            mapData.scale_control.position,
+                        );
+                        map.controls.push(scaleControl);
+                    }
+
                     // Add navigation control if enabled
                     if (mapData.navigation_control) {
                         const nav = new maplibregl.NavigationControl({
@@ -1797,6 +1842,7 @@ HTMLWidgets.widget({
                             nav,
                             mapData.navigation_control.position,
                         );
+                        map.controls.push(nav);
                     }
 
                     // Add geolocate control if enabled
@@ -1819,6 +1865,8 @@ HTMLWidgets.widget({
                             geolocate,
                             mapData.geolocate_control.position,
                         );
+
+                        map.controls.push(geolocate);
 
                         if (HTMLWidgets.shinyMode) {
                             geolocate.on("geolocate", function (event) {
@@ -2012,14 +2060,32 @@ HTMLWidgets.widget({
                     if (mapData.layers_control) {
                         const layersControl = document.createElement("div");
                         layersControl.id = mapData.layers_control.control_id;
-                        layersControl.className = mapData.layers_control
-                            .collapsible
+
+                        // Handle use_icon parameter
+                        let className = mapData.layers_control.collapsible
                             ? "layers-control collapsible"
                             : "layers-control";
+
+                        layersControl.className = className;
                         layersControl.style.position = "absolute";
-                        layersControl.style[
-                            mapData.layers_control.position || "top-right"
-                        ] = "10px";
+
+                        // Set the position correctly - fix position bug by using correct CSS positioning
+                        const position =
+                            mapData.layers_control.position || "top-left";
+                        if (position === "top-left") {
+                            layersControl.style.top = "10px";
+                            layersControl.style.left = "10px";
+                        } else if (position === "top-right") {
+                            layersControl.style.top = "10px";
+                            layersControl.style.right = "10px";
+                        } else if (position === "bottom-left") {
+                            layersControl.style.bottom = "30px";
+                            layersControl.style.left = "10px";
+                        } else if (position === "bottom-right") {
+                            layersControl.style.bottom = "40px";
+                            layersControl.style.right = "10px";
+                        }
+
                         el.appendChild(layersControl);
 
                         const layersList = document.createElement("div");
@@ -2074,7 +2140,24 @@ HTMLWidgets.widget({
                         if (mapData.layers_control.collapsible) {
                             const toggleButton = document.createElement("div");
                             toggleButton.className = "toggle-button";
-                            toggleButton.textContent = "Layers";
+
+                            if (mapData.layers_control.use_icon) {
+                                // Add icon-only class to the control for compact styling
+                                layersControl.classList.add("icon-only");
+
+                                // More GIS-like layers stack icon
+                                toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>`;
+                                toggleButton.style.display = "flex";
+                                toggleButton.style.alignItems = "center";
+                                toggleButton.style.justifyContent = "center";
+                            } else {
+                                toggleButton.textContent = "Layers";
+                            }
+
                             toggleButton.onclick = function () {
                                 layersControl.classList.toggle("open");
                             };
