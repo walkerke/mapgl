@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -246,6 +246,25 @@ an expression.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
 <p><img src="images/clipboard-4076622643.png"></p>
+</div>
+<div class="section level3">
+<h3 id="comparison-maps-in-shiny">Comparison maps in Shiny<a class="anchor" aria-label="anchor" href="#comparison-maps-in-shiny"></a>
+</h3>
+<p>Because of the way that side-by-side maps generated with the
+<code><a href="../reference/compare.html">compare()</a></code> function work in <strong>mapgl</strong>,
+comparison maps require their own rendering functions. For Mapbox maps,
+you can use <code><a href="../reference/mapboxglCompareOutput.html">mapboxglCompareOutput()</a></code>,
+<code><a href="../reference/renderMapboxglCompare.html">renderMapboxglCompare()</a></code>; and
+<code><a href="../reference/mapboxgl_compare_proxy.html">mapboxgl_compare_proxy()</a></code>; for MapLibre, use
+<code><a href="../reference/maplibreCompareOutput.html">maplibreCompareOutput()</a></code>;
+<code><a href="../reference/renderMaplibreCompare.html">renderMaplibreCompare()</a></code>; and
+<code><a href="../reference/maplibre_compare_proxy.html">maplibre_compare_proxy()</a></code>. For compare proxies, you can
+target the side of the map you want to modify with the argument
+<code>map_side = "before"</code> (left or top) or
+<code>map_side = "after"</code> (right or bottom).</p>
+<p>Most proxy functionality should work in a compare environment, though
+do note that the MapLibre compare plugin is more limited than the Mapbox
+version.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,16 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.0" id="mapgl-020">mapgl 0.2.0<a class="anchor" aria-label="anchor" href="#mapgl-020"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.2.1" id="mapgl-021">mapgl 0.2.1<a class="anchor" aria-label="anchor" href="#mapgl-021"></a></h2>
+<ul><li>Improved styling and positioning behavior of the layers control. Users can now customize the appearance of the layers control, and the layers control is collapsed by default with cleaner appearance. Added ability to link legends to specific layers with the new <code>layer_id</code> parameter in <code><a href="../reference/add_legend.html">add_legend()</a></code>. When a layer is toggled in the layers control, its associated legend will automatically show or hide.</li>
+<li>Added support for custom legend positioning with new margin parameters (<code>margin_top</code>, <code>margin_right</code>, <code>margin_bottom</code>, <code>margin_left</code>) that allow fine-grained control over legend placement.</li>
+<li>Fixed layers control toggle button state to correctly reflect the initial visibility of layers, resolving the issue with layers set to <code>visibility = "none"</code> showing as active in the control.</li>
+<li>Support for the <code><a href="../reference/compare.html">compare()</a></code> plugin in Shiny applications, with new rendering and proxy functions for comparison apps in Mapbox and MapLibre.</li>
+<li>New <code>mode</code> parameter in <code><a href="../reference/compare.html">compare()</a></code> allowing users to choose between <code>"swipe"</code> mode with a comparison slider, and <code>"sync"</code> mode which displays synchronized maps side-by-side.</li>
+<li>Updates throughout the codebase to allow features to be used in comparison maps via Shiny proxy sessions.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="mapgl-020">mapgl 0.2.0<a class="anchor" aria-label="anchor" href="#mapgl-020"></a></h2><p class="text-muted">CRAN release: 2025-01-13</p>
 <ul><li>A new “story map” feature allows users to build interactive story maps. <a href="https://walker-data.com/mapgl/articles/story-maps.html">View the story mapping vignette</a> for more information.</li>
 <li>Various bug fixes and performance improvements; <a href="https://github.com/walkerke/mapgl" class="external-link">visit the package GitHub page for more details</a>.</li>
 </ul></div>
