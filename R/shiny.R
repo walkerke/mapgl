@@ -60,11 +60,26 @@ maplibre_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
 #' @export
 set_filter <- function(map, layer_id, filter) {
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "set_filter", layer = layer_id, filter = filter)
-        ))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies, use the appropriate message handler
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "set_filter", 
+                    layer = layer_id, 
+                    filter = filter,
+                    map = map$map_side  # Add which map to target
+                )
+            ))
+        } else {
+            # For regular proxies, use existing message handler
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "set_filter", layer = layer_id, filter = filter)
+            ))
+        }
     } else {
         if (is.null(map$x$setFilter)) map$x$setFilter <- list()
         map$x$setFilter[[length(map$x$setFilter) + 1]] <- list(layer = layer_id, filter = filter)
@@ -86,9 +101,20 @@ clear_layer <- function(proxy, layer_id) {
         stop("Invalid proxy object")
     }
 
-    proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-    message <- list(type = "remove_layer", layer = layer_id)
+    if (inherits(proxy, "mapboxgl_compare_proxy") || inherits(proxy, "maplibre_compare_proxy")) {
+        # For compare proxies
+        proxy_class <- if (inherits(proxy, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+        message <- list(
+            type = "remove_layer", 
+            layer = layer_id,
+            map = proxy$map_side
+        )
+    } else {
+        # For regular proxies
+        proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        message <- list(type = "remove_layer", layer = layer_id)
+    }
+    
     proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
     proxy
 }
@@ -104,11 +130,27 @@ clear_layer <- function(proxy, layer_id) {
 #' @export
 set_layout_property <- function(map, layer, name, value) {
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "set_layout_property", layer = layer, name = name, value = value)
-        ))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "set_layout_property", 
+                    layer = layer, 
+                    name = name, 
+                    value = value,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "set_layout_property", layer = layer, name = name, value = value)
+            ))
+        }
     } else {
         if (is.null(map$x$setLayoutProperty)) map$x$setLayoutProperty <- list()
         map$x$setLayoutProperty[[length(map$x$setLayoutProperty) + 1]] <- list(layer = layer, name = name, value = value)
@@ -127,11 +169,27 @@ set_layout_property <- function(map, layer, name, value) {
 #' @export
 set_paint_property <- function(map, layer, name, value) {
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "set_paint_property", layer = layer, name = name, value = value)
-        ))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "set_paint_property", 
+                    layer = layer, 
+                    name = name, 
+                    value = value,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "set_paint_property", layer = layer, name = name, value = value)
+            ))
+        }
     } else {
         if (is.null(map$x$setPaintProperty)) map$x$setPaintProperty <- list()
         map$x$setPaintProperty[[length(map$x$setPaintProperty) + 1]] <- list(layer = layer, name = name, value = value)
@@ -147,10 +205,23 @@ set_paint_property <- function(map, layer, name, value) {
 #' @export
 clear_markers <- function(map) {
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_markers")))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "clear_markers",
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_markers")))
+        }
     } else {
-        stop("clear_markers() can only be used with mapboxgl_proxy() or maplibre_proxy()")
+        stop("clear_markers() can only be used with mapboxgl_proxy(), maplibre_proxy(), mapboxgl_compare_proxy(), or maplibre_compare_proxy()")
     }
     return(map)
 }
@@ -182,18 +253,34 @@ clear_markers <- function(map) {
 #' }
 set_style <- function(map, style, config = NULL, diff = TRUE) {
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(
-                type = "set_style",
-                style = style,
-                config = config,
-                diff = diff
-            )
-        ))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "set_style",
+                    style = style,
+                    config = config,
+                    diff = diff,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "set_style",
+                    style = style,
+                    config = config,
+                    diff = diff
+                )
+            ))
+        }
     } else {
-        stop("set_style can only be used with mapboxgl_proxy or maplibre_proxy.")
+        stop("set_style can only be used with mapboxgl_proxy, maplibre_proxy, mapboxgl_compare_proxy, or maplibre_compare_proxy.")
     }
     return(map)
 }
@@ -213,13 +300,24 @@ move_layer <- function(proxy, layer_id, before_id = NULL) {
         stop("Invalid proxy object")
     }
 
-    proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-    message <- list(
-        type = "move_layer",
-        layer = layer_id,
-        before = before_id
-    )
+    if (inherits(proxy, "mapboxgl_compare_proxy") || inherits(proxy, "maplibre_compare_proxy")) {
+        # For compare proxies
+        proxy_class <- if (inherits(proxy, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+        message <- list(
+            type = "move_layer",
+            layer = layer_id,
+            before = before_id,
+            map = proxy$map_side
+        )
+    } else {
+        # For regular proxies
+        proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        message <- list(
+            type = "move_layer",
+            layer = layer_id,
+            before = before_id
+        )
+    }
 
     proxy$session$sendCustomMessage(proxy_class, list(id = proxy$id, message = message))
     proxy
@@ -235,13 +333,28 @@ move_layer <- function(proxy, layer_id, before_id = NULL) {
 #' @export
 set_tooltip  <- function(map, layer, tooltip) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "set_tooltip", layer = layer, tooltip = tooltip)
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "set_tooltip", 
+          layer = layer, 
+          tooltip = tooltip,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "set_tooltip", layer = layer, tooltip = tooltip)
+      ))
+    }
   } else {
-    stop("set_tooltip can only be used with mapboxgl_proxy or maplibre_proxy.")
+    stop("set_tooltip can only be used with mapboxgl_proxy, maplibre_proxy, mapboxgl_compare_proxy, or maplibre_compare_proxy.")
   }
   return(map)
 }
@@ -256,20 +369,33 @@ set_tooltip  <- function(map, layer, tooltip) {
 #' @export
 set_source  <- function(map, layer, source) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-
     # Convert sf objects to GeoJSON source
     if (inherits(source, "sf")) {
       source <- geojsonsf::sf_geojson(sf::st_transform(source, crs = 4326))
     }
 
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "set_source", layer = layer, source = source)
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "set_source", 
+          layer = layer, 
+          source = source,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "set_source", layer = layer, source = source)
+      ))
+    }
   } else {
-    stop("set_source can only be used with mapboxgl_proxy or maplibre_proxy.")
+    stop("set_source can only be used with mapboxgl_proxy, maplibre_proxy, mapboxgl_compare_proxy, or maplibre_compare_proxy.")
   }
   return(map)
 }

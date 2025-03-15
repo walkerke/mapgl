@@ -28,8 +28,28 @@ add_source <- function(map, id, data, ...) {
     source <- c(source, extra_args)
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source
+                )
+            ))
+        }
     } else {
         map$x$sources <- c(map$x$sources, list(source))
     }
@@ -52,8 +72,28 @@ add_vector_source <- function(map, id, url) {
     )
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source
+                )
+            ))
+        }
     } else {
         map$x$sources <- c(map$x$sources, list(source))
     }
@@ -102,8 +142,22 @@ add_raster_source <- function(map, id, url = NULL, tiles = NULL, tileSize = 256,
     }
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        }
     } else {
         map$x$sources <- c(map$x$sources, list(source))
     }
@@ -134,8 +188,22 @@ add_raster_dem_source <- function(map, id, url, tileSize = 512, maxzoom = NULL) 
     }
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        }
     } else {
         map$x$sources <- c(map$x$sources, list(source))
     }
@@ -269,8 +337,22 @@ add_image_source <- function(map, id, url = NULL, data = NULL, coordinates = NUL
     )
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        }
     } else {
         map$x$sources <- c(map$x$sources, list(source))
     }
@@ -296,8 +378,22 @@ add_video_source <- function(map, id, urls, coordinates) {
     )
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id, 
+                message = list(
+                    type = "add_source", 
+                    source = source,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_source", source = source)))
+        }
     } else {
         map$x$sources <- c(map$x$sources, list(source))
     }

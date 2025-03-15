@@ -25,15 +25,28 @@ add_fullscreen_control <- function(map, position = "top-right") {
     )
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(
-                type = "add_fullscreen_control",
-                position = position
-            )
-        ))
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_fullscreen_control",
+                    position = position,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_fullscreen_control",
+                    position = position
+                )
+            ))
+        }
     }
 
     map
@@ -75,21 +88,37 @@ add_navigation_control <- function(map,
         inherits(map, "mapboxgl_proxy"),
         inherits(map, "maplibre_proxy")
     )) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_navigation_control",
+                    options = nav_control,
+                    position = position,
+                    orientation = orientation,
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_navigation_control",
+                    options = nav_control,
+                    position = position,
+                    orientation = orientation
+                )
+            ))
         }
-
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(
-                type = "add_navigation_control",
-                options = nav_control,
-                position = position,
-                orientation = orientation
-            )
-        ))
     } else {
         if (is.null(map$x$navigation_control)) {
             map$x$navigation_control <- list()
@@ -177,23 +206,42 @@ add_layers_control <- function(map,
     # Add control to map
     if (inherits(map, "mapboxgl_proxy") ||
         inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_layers_control",
+                    control_id = control_id,
+                    position = position,
+                    layers = layers,
+                    collapsible = collapsible,
+                    use_icon = use_icon,
+                    custom_colors = custom_colors,
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_layers_control",
+                    control_id = control_id,
+                    position = position,
+                    layers = layers,
+                    collapsible = collapsible,
+                    use_icon = use_icon,
+                    custom_colors = custom_colors
+                )
+            ))
         }
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(
-                type = "add_layers_control",
-                control_id = control_id,
-                position = position,
-                layers = layers,
-                collapsible = collapsible,
-                use_icon = use_icon,
-                custom_colors = custom_colors
-            )
-        ))
     } else {
         map$x$layers_control <- list(
             control_id = control_id,
@@ -217,15 +265,28 @@ add_layers_control <- function(map,
 clear_controls <- function(map) {
     if (inherits(map, "mapboxgl_proxy") ||
         inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "clear_controls",
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "clear_controls")
+            ))
         }
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "clear_controls")
-        ))
     }
     return(map)
 }
@@ -261,15 +322,29 @@ add_scale_control <- function(map,
 
     if (inherits(map, "mapboxgl_proxy") ||
         inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_scale_control", 
+                    options = scale_control,
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "add_scale_control", options = scale_control)
+            ))
         }
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "add_scale_control", options = scale_control)
-        ))
     } else {
         if (is.null(map$x$scale_control)) {
             map$x$scale_control <- list()
@@ -328,22 +403,40 @@ add_draw_control <- function(map,
 
     if (inherits(map, "mapboxgl_proxy") ||
         inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_draw_control",
+                    position = position,
+                    options = options,
+                    freehand = freehand,
+                    simplify_freehand = simplify_freehand,
+                    orientation = orientation,
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_draw_control",
+                    position = position,
+                    options = options,
+                    freehand = freehand,
+                    simplify_freehand = simplify_freehand,
+                    orientation = orientation
+                )
+            ))
         }
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(
-                type = "add_draw_control",
-                position = position,
-                options = options,
-                freehand = freehand,
-                simplify_freehand = simplify_freehand,
-                orientation = orientation
-            )
-        ))
     }
 
     map
@@ -425,10 +518,23 @@ get_drawn_features <- function(map) {
     }
 
     # Send message to get drawn features
-    session$sendCustomMessage("mapboxgl-proxy", list(
-        id = map_id,
-        message = list(type = "get_drawn_features")
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+        # For compare proxies
+        proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+        session$sendCustomMessage(proxy_class, list(
+            id = map_id,
+            message = list(
+                type = "get_drawn_features",
+                map = map$map_side
+            )
+        ))
+    } else {
+        # For regular proxies
+        session$sendCustomMessage("mapboxgl-proxy", list(
+            id = map_id,
+            message = list(type = "get_drawn_features")
+        ))
+    }
 
     # Wait for response
     features_json <- NULL
@@ -489,15 +595,29 @@ add_geocoder_control <- function(map,
 
     if (inherits(map, "mapboxgl_proxy") ||
         inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_geocoder_control", 
+                    options = geocoder_options,
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "add_geocoder_control", options = geocoder_options)
+            ))
         }
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "add_geocoder_control", options = geocoder_options)
-        ))
     } else {
         if (is.null(map$x$geocoder_control)) {
             map$x$geocoder_control <- list()
@@ -543,15 +663,29 @@ add_reset_control <- function(map,
 
     if (inherits(map, "mapboxgl_proxy") ||
         inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_reset_control", 
+                    options = reset_control,
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "add_reset_control", options = reset_control)
+            ))
         }
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "add_reset_control", options = reset_control)
-        ))
     } else {
         map$x$reset_control <- reset_control
     }
@@ -616,15 +750,29 @@ add_geolocate_control <- function(map,
 
     if (inherits(map, "mapboxgl_proxy") ||
         inherits(map, "maplibre_proxy")) {
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
-            "mapboxgl-proxy"
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_geolocate_control", 
+                    options = geolocate_control,
+                    map = map$map_side
+                )
+            ))
         } else {
-            "maplibre-proxy"
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(type = "add_geolocate_control", options = geolocate_control)
+            ))
         }
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "add_geolocate_control", options = geolocate_control)
-        ))
     } else {
         if (is.null(map$x$geolocate_control)) {
             map$x$geolocate_control <- list()
