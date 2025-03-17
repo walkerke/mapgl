@@ -2056,6 +2056,81 @@ HTMLWidgets.widget({
                         );
                     }
 
+                    if (mapData.draw_control && mapData.draw_control.enabled) {
+                        MapboxDraw.constants.classes.CONTROL_BASE =
+                            "maplibregl-ctrl";
+                        MapboxDraw.constants.classes.CONTROL_PREFIX =
+                            "maplibregl-ctrl-";
+                        MapboxDraw.constants.classes.CONTROL_GROUP =
+                            "maplibregl-ctrl-group";
+
+                        let drawOptions = mapData.draw_control.options || {};
+
+                        if (mapData.draw_control.freehand) {
+                            drawOptions = Object.assign({}, drawOptions, {
+                                modes: Object.assign({}, MapboxDraw.modes, {
+                                    draw_polygon: Object.assign(
+                                        {},
+                                        MapboxDraw.modes.draw_freehand,
+                                        {
+                                            // Store the simplify_freehand option on the map object
+                                            onSetup: function (opts) {
+                                                const state =
+                                                    MapboxDraw.modes.draw_freehand.onSetup.call(
+                                                        this,
+                                                        opts,
+                                                    );
+                                                this.map.simplify_freehand =
+                                                    mapData.draw_control.simplify_freehand;
+                                                return state;
+                                            },
+                                        },
+                                    ),
+                                }),
+                                // defaultMode: 'draw_polygon' # Don't set the default yet
+                            });
+                        }
+
+                        draw = new MapboxDraw(drawOptions);
+                        map.addControl(draw, mapData.draw_control.position);
+                        map.controls.push(draw);
+
+                        // Add event listeners
+                        map.on("draw.create", updateDrawnFeatures);
+                        map.on("draw.delete", updateDrawnFeatures);
+                        map.on("draw.update", updateDrawnFeatures);
+
+                        // Apply orientation styling
+                        if (mapData.draw_control.orientation === "horizontal") {
+                            const drawBar = map
+                                .getContainer()
+                                .querySelector(".maplibregl-ctrl-group");
+                            if (drawBar) {
+                                drawBar.style.display = "flex";
+                                drawBar.style.flexDirection = "row";
+                            }
+                        }
+                    }
+
+                    function updateDrawnFeatures() {
+                        if (draw) {
+                            var drawnFeatures = draw.getAll();
+                            if (HTMLWidgets.shinyMode) {
+                                Shiny.setInputValue(
+                                    el.id + "_drawn_features",
+                                    JSON.stringify(drawnFeatures),
+                                );
+                            }
+                            // Store drawn features in the widget's data
+                            if (el.querySelector) {
+                                var widget = HTMLWidgets.find("#" + el.id);
+                                if (widget) {
+                                    widget.drawFeatures = drawnFeatures;
+                                }
+                            }
+                        }
+                    }
+
                     // Add the layers control if provided
                     if (mapData.layers_control) {
                         const layersControl = document.createElement("div");
