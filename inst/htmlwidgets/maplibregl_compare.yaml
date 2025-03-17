@@ -1,11 +1,11 @@
 dependencies:
     - name: maplibre-gl
-      version: 2
-      src:
-          href: "https://unpkg.com/"
+      version: "5.0.0"
+      src: "htmlwidgets/lib/maplibre-gl"
       script:
-          - "maplibre-gl/dist/maplibre-gl.js"
-          - "maplibre-gl-compare@0.4.0/dist/maplibre-gl-compare.js"
+          - "maplibre-gl.js"
+      stylesheet:
+          - "maplibre-gl.css"
     - name: maplibre-gl-compare
       version: 1
       src: "htmlwidgets/lib/maplibre-gl-compare/"
