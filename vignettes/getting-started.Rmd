@@ -66,7 +66,7 @@ maplibre(
 
 ### Comparing map views
 
-**mapgl** includes a function `compare()` that allows users to create synced swipe maps that can compare two styles. This function works for either Mapbox or MapLibre maps, though the MapLibre implementation is not quite as full-featured.
+**mapgl** includes a function `compare()` that allows users to create synced swipe maps that can compare two styles. This function works for either Mapbox or MapLibre maps.
 
 ```{r, eval = FALSE}
 m1 <- mapboxgl()
