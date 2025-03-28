@@ -4,14 +4,16 @@
 \alias{set_tooltip}
 \title{Set tooltip on a map layer}
 \usage{
-set_tooltip(map, layer, tooltip)
+set_tooltip(map, layer_id, tooltip, ...)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or a proxy object.}
 
-\item{layer}{The ID of the layer to update.}
+\item{layer_id}{The ID of the layer to update.}
 
 \item{tooltip}{The name of the tooltip to set.}
+
+\item{...}{Additional arguments for compatibility with versions <= v0.2.1.}
 }
 \value{
 The updated map object.

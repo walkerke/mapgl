@@ -4,16 +4,18 @@
 \alias{set_layout_property}
 \title{Set a layout property on a map layer}
 \usage{
-set_layout_property(map, layer, name, value)
+set_layout_property(map, layer_id, name, value, ...)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or a proxy object.}
 
-\item{layer}{The ID of the layer to update.}
+\item{layer_id}{The ID of the layer to update.}
 
 \item{name}{The name of the layout property to set.}
 
 \item{value}{The value to set the property to.}
+
+\item{...}{Additional arguments for compatibility with versions <= v0.2.1.}
 }
 \value{
 The updated map object.
