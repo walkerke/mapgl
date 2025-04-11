@@ -782,3 +782,63 @@ add_geolocate_control <- function(map,
 
     return(map)
 }
+
+#' Add a globe control to a map
+#'
+#' This function adds a globe control to a MapLibre GL map that allows toggling
+#' between "mercator" and "globe" projections with a single click.
+#'
+#' @param map A map object created by the `maplibre` function.
+#' @param position The position of the control. Can be one of "top-left", "top-right",
+#'   "bottom-left", or "bottom-right". Default is "top-right".
+#'
+#' @return The modified map object with the globe control added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' maplibre() |>
+#'     add_globe_control(position = "top-right")
+#' }
+add_globe_control <- function(map, position = "top-right") {
+    globe_control <- list(
+        position = position
+    )
+
+    if (inherits(map, "mapboxgl") || inherits(map, "mapboxgl_proxy")) {
+        warning("The globe control is only available for MapLibre maps, not Mapbox GL maps.")
+        return(map)
+    }
+
+    if (inherits(map, "maplibre_proxy")) {
+        if (inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            map$session$sendCustomMessage("maplibre-compare-proxy", list(
+                id = map$id,
+                message = list(
+                    type = "add_globe_control",
+                    position = position,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            map$session$sendCustomMessage("maplibre-proxy", list(
+                id = map$id,
+                message = list(
+                    type = "add_globe_control",
+                    position = position
+                )
+            ))
+        }
+    } else {
+        if (is.null(map$x$globe_control)) {
+            map$x$globe_control <- list()
+        }
+        map$x$globe_control <- globe_control
+    }
+
+    return(map)
+}

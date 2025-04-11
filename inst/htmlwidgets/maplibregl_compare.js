@@ -1230,6 +1230,11 @@ HTMLWidgets.widget({
                                         "MapboxGlobeMinimap is not defined",
                                     );
                                 }
+                            } else if (message.type === "add_globe_control") {
+                                // Add the globe control
+                                const globeControl = new maplibregl.GlobeControl();
+                                map.addControl(globeControl, message.position);
+                                map.controls.push(globeControl);
                             } else if (message.type === "set_projection") {
                                 // Only if maplibre supports projection
                                 if (typeof map.setProjection === "function") {
@@ -1867,48 +1872,54 @@ HTMLWidgets.widget({
                         );
 
                         map.controls.push(geolocate);
+                    }
+                    
+                    // Add globe control if enabled
+                    if (mapData.globe_control) {
+                        const globeControl = new maplibregl.GlobeControl();
+                        map.addControl(globeControl, mapData.globe_control.position);
+                        map.controls.push(globeControl);
+                    }
 
-                        if (HTMLWidgets.shinyMode) {
-                            geolocate.on("geolocate", function (event) {
-                                Shiny.setInputValue(el.id + "_geolocate", {
-                                    coords: event.coords,
+                    if (mapData.geolocate_control && HTMLWidgets.shinyMode) {
+                        geolocate.on("geolocate", function (event) {
+                            Shiny.setInputValue(el.id + "_geolocate", {
+                                coords: event.coords,
+                                time: new Date(),
+                            });
+                        });
+
+                        geolocate.on("trackuserlocationstart", function () {
+                            Shiny.setInputValue(
+                                el.id + "_geolocate_tracking",
+                                {
+                                    status: "start",
                                     time: new Date(),
-                                });
-                            });
+                                },
+                            );
+                        });
 
-                            geolocate.on("trackuserlocationstart", function () {
+                        geolocate.on("trackuserlocationend", function () {
+                            Shiny.setInputValue(
+                                el.id + "_geolocate_tracking",
+                                {
+                                    status: "end",
+                                    time: new Date(),
+                                },
+                            );
+                        });
+
+                        geolocate.on("error", function (error) {
+                            if (error.error.code === 1) {
                                 Shiny.setInputValue(
-                                    el.id + "_geolocate_tracking",
+                                    el.id + "_geolocate_error",
                                     {
-                                        status: "start",
+                                        message: "Location permission denied",
                                         time: new Date(),
                                     },
                                 );
-                            });
-
-                            geolocate.on("trackuserlocationend", function () {
-                                Shiny.setInputValue(
-                                    el.id + "_geolocate_tracking",
-                                    {
-                                        status: "end",
-                                        time: new Date(),
-                                    },
-                                );
-                            });
-
-                            geolocate.on("error", function (error) {
-                                if (error.error.code === 1) {
-                                    Shiny.setInputValue(
-                                        el.id + "_geolocate_error",
-                                        {
-                                            message:
-                                                "Location permission denied",
-                                            time: new Date(),
-                                        },
-                                    );
-                                }
-                            });
-                        }
+                            }
+                        });
                     }
 
                     // Add geocoder control if enabled

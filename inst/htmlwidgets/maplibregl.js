@@ -497,6 +497,13 @@ HTMLWidgets.widget({
                         map.addControl(scaleControl, x.scale_control.position);
                         map.controls.push(scaleControl);
                     }
+                    
+                    // Add globe control if enabled
+                    if (x.globe_control) {
+                        const globeControl = new maplibregl.GlobeControl();
+                        map.addControl(globeControl, x.globe_control.position);
+                        map.controls.push(globeControl);
+                    }
 
                     // Add globe minimap if enabled
                     if (x.globe_minimap && x.globe_minimap.enabled) {
@@ -2130,6 +2137,10 @@ if (HTMLWidgets.shinyMode) {
             const globeMinimap = new GlobeMinimap(globeMinimapOptions);
             map.addControl(globeMinimap, message.position || "bottom-left");
             map.controls.push(globeMinimap);
+        } else if (message.type === "add_globe_control") {
+            const globeControl = new maplibregl.GlobeControl();
+            map.addControl(globeControl, message.position);
+            map.controls.push(globeControl);
         }
     });
 }
