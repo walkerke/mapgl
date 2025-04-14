@@ -14,6 +14,7 @@ add_legend(
   position = "top-left",
   sizes = NULL,
   add = FALSE,
+  unique_id = NULL,
   width = NULL,
   layer_id = NULL,
   margin_top = NULL,
@@ -40,6 +41,8 @@ add_legend(
 \item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).}
 
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
+
+\item{unique_id}{Optional. A unique identifier for the legend. If not provided, a random ID will be generated.}
 
 \item{width}{The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.}
 

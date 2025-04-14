@@ -9,6 +9,7 @@
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
+#' @param unique_id Optional. A unique identifier for the legend. If not provided, a random ID will be generated.
 #' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
 #' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
 #' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
@@ -18,24 +19,62 @@
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_legend <- function(map, legend_title, values, colors,
-                       type = c("continuous", "categorical"),
-                       circular_patches = FALSE, position = "top-left",
-                       sizes = NULL, add = FALSE, width = NULL, layer_id = NULL,
-                       margin_top = NULL, margin_right = NULL,
-                       margin_bottom = NULL, margin_left = NULL) {
+add_legend <- function(
+    map,
+    legend_title,
+    values,
+    colors,
+    type = c("continuous", "categorical"),
+    circular_patches = FALSE,
+    position = "top-left",
+    sizes = NULL,
+    add = FALSE,
+    unique_id = NULL,
+    width = NULL,
+    layer_id = NULL,
+    margin_top = NULL,
+    margin_right = NULL,
+    margin_bottom = NULL,
+    margin_left = NULL
+) {
     type <- match.arg(type)
-    unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
+    if (is.null(unique_id)) {
+        unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
+    }
 
     if (type == "continuous") {
         add_continuous_legend(
-            map, legend_title, values, colors, position, unique_id, add, width, layer_id,
-            margin_top, margin_right, margin_bottom, margin_left
+            map,
+            legend_title,
+            values,
+            colors,
+            position,
+            unique_id,
+            add,
+            width,
+            layer_id,
+            margin_top,
+            margin_right,
+            margin_bottom,
+            margin_left
         )
     } else {
         add_categorical_legend(
-            map, legend_title, values, colors, circular_patches, position, unique_id, sizes, add, width, layer_id,
-            margin_top, margin_right, margin_bottom, margin_left
+            map,
+            legend_title,
+            values,
+            colors,
+            circular_patches,
+            position,
+            unique_id,
+            sizes,
+            add,
+            width,
+            layer_id,
+            margin_top,
+            margin_right,
+            margin_bottom,
+            margin_left
         )
     }
 }
@@ -80,15 +119,30 @@ add_legend <- function(map, legend_title, values, colors,
 #'     width = "300px"
 #' )
 #' }
-add_categorical_legend <- function(map, legend_title, values, colors, circular_patches = FALSE,
-                                   position = "top-left", unique_id = NULL, sizes = NULL, add = FALSE,
-                                   width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL,
-                                   margin_bottom = NULL, margin_left = NULL) {
+add_categorical_legend <- function(
+    map,
+    legend_title,
+    values,
+    colors,
+    circular_patches = FALSE,
+    position = "top-left",
+    unique_id = NULL,
+    sizes = NULL,
+    add = FALSE,
+    width = NULL,
+    layer_id = NULL,
+    margin_top = NULL,
+    margin_right = NULL,
+    margin_bottom = NULL,
+    margin_left = NULL
+) {
     # Validate and prepare inputs
     if (length(colors) == 1) {
         colors <- rep(colors, length(values))
     } else if (length(colors) != length(values)) {
-        stop("'colors' must be a single value or have the same length as 'values'.")
+        stop(
+            "'colors' must be a single value or have the same length as 'values'."
+        )
     }
 
     # Give a default size of 20 if no size supplied
@@ -108,19 +162,33 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     if (length(sizes) == 1) {
         sizes <- rep(sizes, length(values))
     } else if (length(sizes) != length(values)) {
-        stop("'sizes' must be a single value or have the same length as 'values'.")
+        stop(
+            "'sizes' must be a single value or have the same length as 'values'."
+        )
     }
 
     max_size <- max(sizes)
 
     legend_items <- lapply(seq_along(values), function(i) {
         shape_style <- if (circular_patches) "border-radius: 50%;" else ""
-        size_style <- if (!is.null(sizes)) sprintf("width: %dpx; height: %dpx;", sizes[i], sizes[i]) else ""
+        size_style <- if (!is.null(sizes))
+            sprintf("width: %dpx; height: %dpx;", sizes[i], sizes[i]) else ""
         paste0(
             '<div class="legend-item">',
-            '<div class="legend-patch-container" style="width:', max_size, "px; height:", max_size, 'px;">',
-            '<span class="legend-color" style="background-color:', colors[i], ";", shape_style, size_style, '"></span></div>',
-            '<span class="legend-text">', values[i], "</span>",
+            '<div class="legend-patch-container" style="width:',
+            max_size,
+            "px; height:",
+            max_size,
+            'px;">',
+            '<span class="legend-color" style="background-color:',
+            colors[i],
+            ";",
+            shape_style,
+            size_style,
+            '"></span></div>',
+            '<span class="legend-text">',
+            values[i],
+            "</span>",
             "</div>"
         )
     })
@@ -137,17 +205,29 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
     }
 
     legend_html <- paste0(
-        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, ">",
-        "<h2>", legend_title, "</h2>",
+        '<div id="',
+        unique_id,
+        '" class="mapboxgl-legend ',
+        position,
+        '"',
+        layer_attr,
+        ">",
+        "<h2>",
+        legend_title,
+        "</h2>",
         paste0(legend_items, collapse = ""),
         "</div>"
     )
 
-    width_style <- if (!is.null(width)) paste0("width: ", width, ";") else "max-width: 250px;"
+    width_style <- if (!is.null(width)) paste0("width: ", width, ";") else
+        "max-width: 250px;"
 
-    legend_css <- paste0("
+    legend_css <- paste0(
+        "
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
-    #", unique_id, " h2 {
+    #",
+        unique_id,
+        " h2 {
       font-size: 14px;
       font-family: 'Open Sans';
       line-height: 20px;
@@ -158,32 +238,62 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    #", unique_id, " {
+    #",
+        unique_id,
+        " {
       position: absolute;
       border-radius: 10px;
       margin: 10px;
-      ", width_style, "
+      ",
+        width_style,
+        "
       background-color: #ffffff80;
       padding: 10px 20px;
       z-index: 1002;
     }
-    #", unique_id, ".top-left {
-      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
-      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
+    #",
+        unique_id,
+        ".top-left {
+      top: ",
+        ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")),
+        ";
+      left: ",
+        ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")),
+        ";
     }
-    #", unique_id, ".bottom-left {
-      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
-      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
+    #",
+        unique_id,
+        ".bottom-left {
+      bottom: ",
+        ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")),
+        ";
+      left: ",
+        ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")),
+        ";
     }
-    #", unique_id, ".top-right {
-      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
-      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
+    #",
+        unique_id,
+        ".top-right {
+      top: ",
+        ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")),
+        ";
+      right: ",
+        ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")),
+        ";
     }
-    #", unique_id, ".bottom-right {
-      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
-      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
+    #",
+        unique_id,
+        ".bottom-right {
+      bottom: ",
+        ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")),
+        ";
+      right: ",
+        ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")),
+        ";
     }
-    #", unique_id, " .legend-item {
+    #",
+        unique_id,
+        " .legend-item {
       display: flex;
       align-items: center;
       margin-bottom: 5px;
@@ -192,26 +302,48 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
       max-width: 100%;
       overflow: hidden;
     }
-    #", unique_id, " .legend-patch-container {
+    #",
+        unique_id,
+        " .legend-patch-container {
       display: flex;
       justify-content: center;
       align-items: center;
       margin-right: 5px;
     }
-    #", unique_id, " .legend-color {
+    #",
+        unique_id,
+        " .legend-color {
       display: inline-block;
       flex-shrink: 0;
     }
-    #", unique_id, " .legend-text {
+    #",
+        unique_id,
+        " .legend-text {
       flex-grow: 1;
       text-overflow: ellipsis;
       overflow: hidden;
     }
-  ")
+  "
+    )
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css, add = add)))
+        proxy_class <- ifelse(
+            inherits(map, "mapboxgl_proxy"),
+            "mapboxgl-proxy",
+            "maplibre-proxy"
+        )
+        map$session$sendCustomMessage(
+            proxy_class,
+            list(
+                id = map$id,
+                message = list(
+                    type = "add_legend",
+                    html = legend_html,
+                    legend_css = legend_css,
+                    add = add
+                )
+            )
+        )
         map
     } else {
         if (!add) {
@@ -243,22 +375,41 @@ add_categorical_legend <- function(map, legend_title, values, colors, circular_p
 #'
 #' @return The updated map object with the legend added.
 #' @export
-add_continuous_legend <- function(map, legend_title, values, colors, position = "top-left", unique_id = NULL,
-                                  add = FALSE, width = NULL, layer_id = NULL, margin_top = NULL, margin_right = NULL,
-                                  margin_bottom = NULL, margin_left = NULL) {
+add_continuous_legend <- function(
+    map,
+    legend_title,
+    values,
+    colors,
+    position = "top-left",
+    unique_id = NULL,
+    add = FALSE,
+    width = NULL,
+    layer_id = NULL,
+    margin_top = NULL,
+    margin_right = NULL,
+    margin_bottom = NULL,
+    margin_left = NULL
+) {
     if (is.null(unique_id)) {
         unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
     }
 
-    color_gradient <- paste0("linear-gradient(to right, ", paste(colors, collapse = ", "), ")")
+    color_gradient <- paste0(
+        "linear-gradient(to right, ",
+        paste(colors, collapse = ", "),
+        ")"
+    )
 
     num_values <- length(values)
 
     value_labels <- paste0(
         '<div class="legend-labels">',
         paste0(
-            '<span style="position: absolute; left: ', seq(0, 100, length.out = num_values),
-            '%;">', values, "</span>",
+            '<span style="position: absolute; left: ',
+            seq(0, 100, length.out = num_values),
+            '%;">',
+            values,
+            "</span>",
             collapse = ""
         ),
         "</div>"
@@ -272,21 +423,35 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
     }
 
     legend_html <- paste0(
-        '<div id="', unique_id, '" class="mapboxgl-legend ', position, '"', layer_attr, ">",
-        "<h2>", legend_title, "</h2>",
-        '<div class="legend-gradient" style="background:', color_gradient, '"></div>',
+        '<div id="',
+        unique_id,
+        '" class="mapboxgl-legend ',
+        position,
+        '"',
+        layer_attr,
+        ">",
+        "<h2>",
+        legend_title,
+        "</h2>",
+        '<div class="legend-gradient" style="background:',
+        color_gradient,
+        '"></div>',
         '<div class="legend-labels" style="position: relative; height: 20px;">',
         value_labels,
         "</div>",
         "</div>"
     )
 
-    width_style <- if (!is.null(width)) paste0("width: ", width, ";") else "width: 200px;"
+    width_style <- if (!is.null(width)) paste0("width: ", width, ";") else
+        "width: 200px;"
 
-    legend_css <- paste0("
+    legend_css <- paste0(
+        "
     @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
-    #", unique_id, " h2 {
+    #",
+        unique_id,
+        " h2 {
       font-size: 14px;
       font-family: 'Open Sans';
       line-height: 20px;
@@ -294,60 +459,110 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
       margin-top: 0px;
     }
 
-    #", unique_id, " {
+    #",
+        unique_id,
+        " {
       position: absolute;
       border-radius: 10px;
       margin: 10px;
-      ", width_style, "
+      ",
+        width_style,
+        "
       background-color: #ffffff80;
       padding: 10px 20px;
       z-index: 1002;
     }
 
-    #", unique_id, ".top-left {
-      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
-      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
+    #",
+        unique_id,
+        ".top-left {
+      top: ",
+        ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")),
+        ";
+      left: ",
+        ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")),
+        ";
     }
 
-    #", unique_id, ".bottom-left {
-      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
-      left: ", ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")), ";
+    #",
+        unique_id,
+        ".bottom-left {
+      bottom: ",
+        ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")),
+        ";
+      left: ",
+        ifelse(is.null(margin_left), "10px", paste0(margin_left, "px")),
+        ";
     }
 
-    #", unique_id, ".top-right {
-      top: ", ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")), ";
-      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
+    #",
+        unique_id,
+        ".top-right {
+      top: ",
+        ifelse(is.null(margin_top), "10px", paste0(margin_top, "px")),
+        ";
+      right: ",
+        ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")),
+        ";
     }
 
-    #", unique_id, ".bottom-right {
-      bottom: ", ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")), ";
-      right: ", ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")), ";
+    #",
+        unique_id,
+        ".bottom-right {
+      bottom: ",
+        ifelse(is.null(margin_bottom), "10px", paste0(margin_bottom, "px")),
+        ";
+      right: ",
+        ifelse(is.null(margin_right), "10px", paste0(margin_right, "px")),
+        ";
     }
 
-    #", unique_id, " .legend-gradient {
+    #",
+        unique_id,
+        " .legend-gradient {
       height: 20px;
       margin: 5px 10px 5px 10px;
     }
 
-    #", unique_id, " .legend-labels {
+    #",
+        unique_id,
+        " .legend-labels {
       position: relative;
       height: 20px;
       margin: 0 10px;
     }
 
-    #", unique_id, " .legend-labels span {
+    #",
+        unique_id,
+        " .legend-labels span {
       font-size: 12px;
       position: absolute;
       transform: translateX(-50%);  /* Center all labels by default */
       white-space: nowrap;
     }
 
-")
+"
+    )
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
+        proxy_class <- ifelse(
+            inherits(map, "mapboxgl_proxy"),
+            "mapboxgl-proxy",
+            "maplibre-proxy"
+        )
 
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "add_legend", html = legend_html, legend_css = legend_css, add = add)))
+        map$session$sendCustomMessage(
+            proxy_class,
+            list(
+                id = map$id,
+                message = list(
+                    type = "add_legend",
+                    html = legend_html,
+                    legend_css = legend_css,
+                    add = add
+                )
+            )
+        )
 
         map
     } else {
@@ -363,18 +578,33 @@ add_continuous_legend <- function(map, legend_title, values, colors, position = 
 }
 
 
-#' Clear legend from a map in a proxy session
+#' Clear legend(s) from a map in a proxy session
 #'
 #' @param map A map object created by the `mapboxgl_proxy` or `maplibre_proxy` function.
+#' @param legend_ids Optional. A character vector of legend IDs to clear. If not provided, all legends will be cleared.
 #'
-#' @return The updated map object with the legend cleared.
+#' @return The updated map object with the specified legend(s) cleared.
 #' @export
-clear_legend <- function(map) {
+clear_legend <- function(map, legend_ids = NULL) {
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-        proxy_class <- ifelse(inherits(map, "mapboxgl_proxy"), "mapboxgl-proxy", "maplibre-proxy")
-        map$session$sendCustomMessage(proxy_class, list(id = map$id, message = list(type = "clear_legend")))
+        proxy_class <- ifelse(
+            inherits(map, "mapboxgl_proxy"),
+            "mapboxgl-proxy",
+            "maplibre-proxy"
+        )
+        message <- if (is.null(legend_ids)) {
+            list(type = "clear_legend")
+        } else {
+            list(type = "clear_legend", ids = legend_ids)
+        }
+        map$session$sendCustomMessage(
+            proxy_class,
+            list(id = map$id, message = message)
+        )
     } else {
-        stop("clear_legend can only be used with mapboxgl_proxy or maplibre_proxy objects.")
+        stop(
+            "clear_legend can only be used with mapboxgl_proxy or maplibre_proxy objects."
+        )
     }
     return(map)
 }
