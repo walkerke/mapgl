@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,6 +57,7 @@
 <span>  position <span class="op">=</span> <span class="st">"top-left"</span>,</span>
 <span>  sizes <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  add <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  unique_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  layer_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_top <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -104,6 +105,10 @@
 
 <dt id="arg-add">add<a class="anchor" aria-label="anchor" href="#arg-add"></a></dt>
 <dd><p>Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.</p></dd>
+
+
+<dt id="arg-unique-id">unique_id<a class="anchor" aria-label="anchor" href="#arg-unique-id"></a></dt>
+<dd><p>Optional. A unique identifier for the legend. If not provided, a random ID will be generated.</p></dd>
 
 
 <dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>

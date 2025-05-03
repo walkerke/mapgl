@@ -20,74 +20,77 @@
 #' \dontrun{
 #' mapboxgl(projection = "globe")
 #' }
-mapboxgl <- function(style = NULL,
-                     center = c(0, 0),
-                     zoom = 0,
-                     bearing = 0,
-                     pitch = 0,
-                     projection = "globe",
-                     parallels = NULL,
-                     access_token = NULL,
-                     bounds = NULL,
-                     width = "100%",
-                     height = NULL,
-                     ...) {
-
-  if (is.null(access_token)) {
-    if (Sys.getenv("MAPBOX_PUBLIC_TOKEN") == "") {
-      rlang::abort(c("A Mapbox access token is required. Get one from your account at https://www.mapbox.com, and do one of the following:",
-                     i = "Run `usethis::edit_r_environ()` and add the line MAPBOX_PUBLIC_TOKEN='your_token_goes_here';",
-                     i = "Install the mapboxapi R package and run `mb_access_token('your_token_goes_here', install = TRUE)`",
-                     i = "Alternatively, supply your token to the `access_token` parameter in this function or run `Sys.setenv(MAPBOX_PUBLIC_TOKEN='your_token_goes_here') for this session."))
-    } else {
-      access_token <- Sys.getenv("MAPBOX_PUBLIC_TOKEN")
+mapboxgl <- function(
+    style = NULL,
+    center = c(0, 0),
+    zoom = 0,
+    bearing = 0,
+    pitch = 0,
+    projection = "globe",
+    parallels = NULL,
+    access_token = NULL,
+    bounds = NULL,
+    width = "100%",
+    height = NULL,
+    ...
+) {
+    if (is.null(access_token)) {
+        if (Sys.getenv("MAPBOX_PUBLIC_TOKEN") == "") {
+            rlang::abort(c(
+                "A Mapbox access token is required. Get one from your account at https://www.mapbox.com, and do one of the following:",
+                i = "Run `usethis::edit_r_environ()` and add the line MAPBOX_PUBLIC_TOKEN='your_token_goes_here';",
+                i = "Install the mapboxapi R package and run `mb_access_token('your_token_goes_here', install = TRUE)`",
+                i = "Alternatively, supply your token to the `access_token` parameter in this function or run `Sys.setenv(MAPBOX_PUBLIC_TOKEN='your_token_goes_here') for this session."
+            ))
+        } else {
+            access_token <- Sys.getenv("MAPBOX_PUBLIC_TOKEN")
+        }
     }
-  }
 
-  additional_params <- list(...)
+    additional_params <- list(...)
 
-  if (!is.null(bounds)) {
-    if (inherits(bounds, "sf")) {
-      bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
+    if (!is.null(bounds)) {
+        if (inherits(bounds, "sf")) {
+            bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
+        }
+        additional_params$bounds <- bounds
     }
-    additional_params$bounds <- bounds
-  }
 
-  control_css <- htmltools::htmlDependency(
-    name = "layers-control",
-    version = "1.0.0",
-    src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
-    stylesheet = "layers-control.css"
-  )
-
-  htmlwidgets::createWidget(
-    name = "mapboxgl",
-    x = list(
-      style = style,
-      center = center,
-      zoom = zoom,
-      bearing = bearing,
-      pitch = pitch,
-      projection = projection,
-      parallels = parallels,
-      access_token = access_token,
-      additional_params = additional_params
-    ),
-    width = width,
-    height = height,
-    package = "mapgl",
-    dependencies = list(control_css),
-    sizingPolicy = htmlwidgets::sizingPolicy(
-      viewer.suppress = FALSE,
-      browser.fill = TRUE,
-      viewer.fill = TRUE,
-      knitr.figure = TRUE,
-      padding = 0,
-      knitr.defaultHeight = "500px",
-      viewer.defaultHeight = "100vh",
-      browser.defaultHeight = "100vh"
+    control_css <- htmltools::htmlDependency(
+        name = "layers-control",
+        version = "1.0.0",
+        src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
+        stylesheet = "layers-control.css"
     )
-  )
+
+    htmlwidgets::createWidget(
+        name = "mapboxgl",
+        x = list(
+            style = style,
+            center = center,
+            zoom = zoom,
+            bearing = bearing,
+            pitch = pitch,
+            projection = projection,
+            parallels = parallels,
+            access_token = access_token,
+            additional_params = additional_params
+        ),
+        width = width,
+        height = height,
+        package = "mapgl",
+        dependencies = list(control_css),
+        sizingPolicy = htmlwidgets::sizingPolicy(
+            viewer.suppress = FALSE,
+            browser.fill = TRUE,
+            viewer.fill = TRUE,
+            knitr.figure = TRUE,
+            padding = 0,
+            knitr.defaultHeight = "500px",
+            viewer.defaultHeight = "100vh",
+            browser.defaultHeight = "100vh"
+        )
+    )
 }
 
 #' Create a Mapbox GL output element for Shiny
@@ -99,7 +102,13 @@ mapboxgl <- function(style = NULL,
 #' @return A Mapbox GL output element for use in a Shiny UI
 #' @export
 mapboxglOutput <- function(outputId, width = "100%", height = "400px") {
-  htmlwidgets::shinyWidgetOutput(outputId, "mapboxgl", width, height, package = "mapgl")
+    htmlwidgets::shinyWidgetOutput(
+        outputId,
+        "mapboxgl",
+        width,
+        height,
+        package = "mapgl"
+    )
 }
 
 #' Render a Mapbox GL output element in Shiny
@@ -111,6 +120,8 @@ mapboxglOutput <- function(outputId, width = "100%", height = "400px") {
 #' @return A rendered Mapbox GL map for use in a Shiny server
 #' @export
 renderMapboxgl <- function(expr, env = parent.frame(), quoted = FALSE) {
-  if (!quoted) { expr <- substitute(expr) } # force quoted
-  htmlwidgets::shinyRenderWidget(expr, mapboxglOutput, env, quoted = TRUE)
+    if (!quoted) {
+        expr <- substitute(expr)
+    } # force quoted
+    htmlwidgets::shinyRenderWidget(expr, mapboxglOutput, env, quoted = TRUE)
 }
