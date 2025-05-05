@@ -87,6 +87,17 @@ HTMLWidgets.widget({
                             orientation: x.orientation,
                         },
                     );
+                    
+                    // Apply custom swiper color if provided
+                    if (x.swiper_color) {
+                        const swiperSelector = x.orientation === "vertical" ? 
+                            ".mapboxgl-compare .compare-swiper-vertical" : 
+                            ".mapboxgl-compare .compare-swiper-horizontal";
+                        
+                        const styleEl = document.createElement('style');
+                        styleEl.innerHTML = `${swiperSelector} { background-color: ${x.swiper_color}; }`;
+                        document.head.appendChild(styleEl);
+                    }
                 } else {
                     // For sync mode, we directly leverage the sync-move module's approach
 

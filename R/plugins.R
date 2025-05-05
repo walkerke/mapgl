@@ -10,6 +10,7 @@
 #' @param mousemove A logical value indicating whether to enable swiping during cursor movement (rather than only when clicked). Only applicable when `mode="swipe"`.
 #' @param orientation A string specifying the orientation of the swiper or the side-by-side layout, either "horizontal" or "vertical".
 #' @param mode A string specifying the comparison mode: "swipe" (default) for a swipeable comparison with a slider, or "sync" for synchronized maps displayed next to each other.
+#' @param swiper_color An optional CSS color value (e.g., "#000000", "rgb(0,0,0)", "black") to customize the color of the swiper handle. Only applicable when `mode="swipe"`.
 #'
 #' @return A comparison widget.
 #' @export
@@ -66,6 +67,9 @@
 #' # Synchronized side-by-side mode
 #' compare(m1, m2, mode = "sync")
 #'
+#' # Custom swiper color
+#' compare(m1, m2, swiper_color = "#FF0000")  # Red swiper
+#'
 #' # Shiny example
 #' library(shiny)
 #'
@@ -82,10 +86,19 @@
 #'     )
 #'   })
 #'
-#'   # Update the right map
+#' # Update the right map
 #'   observe({
 #'     right_proxy <- maplibre_compare_proxy("comparison", map_side = "after")
 #'     set_style(right_proxy, carto_style("voyager"))
+#'   })
+#'   
+#'   # Example with custom swiper color
+#'   output$comparison2 <- renderMaplibreCompare({
+#'     compare(
+#'       maplibre(style = carto_style("positron")),
+#'       maplibre(style = carto_style("dark-matter")),
+#'       swiper_color = "#3498db"  # Blue swiper
+#'     )
 #'   })
 #' }
 #' }
@@ -97,7 +110,8 @@ compare <- function(
     elementId = NULL,
     mousemove = FALSE,
     orientation = "vertical",
-    mode = "swipe"
+    mode = "swipe",
+    swiper_color = NULL
 ) {
     if (!mode %in% c("swipe", "sync")) {
         stop("Mode must be either 'swipe' or 'sync'.")
@@ -112,7 +126,8 @@ compare <- function(
             elementId,
             mousemove,
             orientation,
-            mode
+            mode,
+            swiper_color
         )
     } else if (inherits(map1, "maplibregl") && inherits(map2, "maplibregl")) {
         compare.maplibre(
@@ -123,7 +138,8 @@ compare <- function(
             elementId,
             mousemove,
             orientation,
-            mode
+            mode,
+            swiper_color
         )
     } else {
         stop("Both maps must be either mapboxgl or maplibregl objects.")
@@ -139,7 +155,8 @@ compare.mapboxgl <- function(
     elementId,
     mousemove,
     orientation,
-    mode
+    mode,
+    swiper_color = NULL
 ) {
     if (is.null(elementId)) {
         elementId <- paste0(
@@ -154,7 +171,8 @@ compare.mapboxgl <- function(
         elementId = elementId,
         mousemove = mousemove,
         orientation = orientation,
-        mode = mode
+        mode = mode,
+        swiper_color = swiper_color
     )
 
     control_css <- htmltools::htmlDependency(
@@ -195,7 +213,8 @@ compare.maplibre <- function(
     elementId,
     mousemove,
     orientation,
-    mode
+    mode,
+    swiper_color = NULL
 ) {
     if (is.null(elementId)) {
         elementId <- paste0(
@@ -229,7 +248,8 @@ compare.maplibre <- function(
         elementId = elementId,
         mousemove = mousemove,
         orientation = orientation,
-        mode = mode
+        mode = mode,
+        swiper_color = swiper_color
     )
 
     control_css <- htmltools::htmlDependency(

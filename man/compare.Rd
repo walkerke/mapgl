@@ -12,7 +12,8 @@ compare(
   elementId = NULL,
   mousemove = FALSE,
   orientation = "vertical",
-  mode = "swipe"
+  mode = "swipe",
+  swiper_color = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ compare(
 \item{orientation}{A string specifying the orientation of the swiper or the side-by-side layout, either "horizontal" or "vertical".}
 
 \item{mode}{A string specifying the comparison mode: "swipe" (default) for a swipeable comparison with a slider, or "sync" for synchronized maps displayed next to each other.}
+
+\item{swiper_color}{An optional CSS color value (e.g., "#000000", "rgb(0,0,0)", "black") to customize the color of the swiper handle. Only applicable when \code{mode="swipe"}.}
 }
 \value{
 A comparison widget.
@@ -94,6 +97,9 @@ compare(m1, m2)
 # Synchronized side-by-side mode
 compare(m1, m2, mode = "sync")
 
+# Custom swiper color
+compare(m1, m2, swiper_color = "#FF0000")  # Red swiper
+
 # Shiny example
 library(shiny)
 
@@ -110,10 +116,19 @@ server <- function(input, output, session) {
     )
   })
 
-  # Update the right map
+# Update the right map
   observe({
     right_proxy <- maplibre_compare_proxy("comparison", map_side = "after")
     set_style(right_proxy, carto_style("voyager"))
+  })
+  
+  # Example with custom swiper color
+  output$comparison2 <- renderMaplibreCompare({
+    compare(
+      maplibre(style = carto_style("positron")),
+      maplibre(style = carto_style("dark-matter")),
+      swiper_color = "#3498db"  # Blue swiper
+    )
   })
 }
 }
