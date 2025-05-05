@@ -1232,7 +1232,8 @@ HTMLWidgets.widget({
                                 }
                             } else if (message.type === "add_globe_control") {
                                 // Add the globe control
-                                const globeControl = new maplibregl.GlobeControl();
+                                const globeControl =
+                                    new maplibregl.GlobeControl();
                                 map.addControl(globeControl, message.position);
                                 map.controls.push(globeControl);
                             } else if (message.type === "set_projection") {
@@ -1441,17 +1442,7 @@ HTMLWidgets.widget({
                             const markerId = marker.id;
                             if (markerId) {
                                 const lngLat = mapMarker.getLngLat();
-                                Shiny.setInputValue(
-                                    el.id + "_marker_" + markerId,
-                                    {
-                                        id: markerId,
-                                        lng: lngLat.lng,
-                                        lat: lngLat.lat,
-                                    },
-                                );
-
-                                mapMarker.on("dragend", function () {
-                                    const lngLat = mapMarker.getLngLat();
+                                if (HTMLWidgets.shinyMode) {
                                     Shiny.setInputValue(
                                         el.id + "_marker_" + markerId,
                                         {
@@ -1460,6 +1451,20 @@ HTMLWidgets.widget({
                                             lat: lngLat.lat,
                                         },
                                     );
+                                }
+
+                                mapMarker.on("dragend", function () {
+                                    const lngLat = mapMarker.getLngLat();
+                                    if (HTMLWidgets.shinyMode) {
+                                        Shiny.setInputValue(
+                                            el.id + "_marker_" + markerId,
+                                            {
+                                                id: markerId,
+                                                lng: lngLat.lng,
+                                                lat: lngLat.lat,
+                                            },
+                                        );
+                                    }
                                 });
                             }
 
@@ -1873,11 +1878,14 @@ HTMLWidgets.widget({
 
                         map.controls.push(geolocate);
                     }
-                    
+
                     // Add globe control if enabled
                     if (mapData.globe_control) {
                         const globeControl = new maplibregl.GlobeControl();
-                        map.addControl(globeControl, mapData.globe_control.position);
+                        map.addControl(
+                            globeControl,
+                            mapData.globe_control.position,
+                        );
                         map.controls.push(globeControl);
                     }
 
@@ -1890,23 +1898,17 @@ HTMLWidgets.widget({
                         });
 
                         geolocate.on("trackuserlocationstart", function () {
-                            Shiny.setInputValue(
-                                el.id + "_geolocate_tracking",
-                                {
-                                    status: "start",
-                                    time: new Date(),
-                                },
-                            );
+                            Shiny.setInputValue(el.id + "_geolocate_tracking", {
+                                status: "start",
+                                time: new Date(),
+                            });
                         });
 
                         geolocate.on("trackuserlocationend", function () {
-                            Shiny.setInputValue(
-                                el.id + "_geolocate_tracking",
-                                {
-                                    status: "end",
-                                    time: new Date(),
-                                },
-                            );
+                            Shiny.setInputValue(el.id + "_geolocate_tracking", {
+                                status: "end",
+                                time: new Date(),
+                            });
                         });
 
                         geolocate.on("error", function (error) {

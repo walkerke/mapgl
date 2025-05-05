@@ -1348,17 +1348,7 @@ HTMLWidgets.widget({
                             const markerId = marker.id;
                             if (markerId) {
                                 const lngLat = mapMarker.getLngLat();
-                                Shiny.setInputValue(
-                                    el.id + "_marker_" + markerId,
-                                    {
-                                        id: markerId,
-                                        lng: lngLat.lng,
-                                        lat: lngLat.lat,
-                                    },
-                                );
-
-                                mapMarker.on("dragend", function () {
-                                    const lngLat = mapMarker.getLngLat();
+                                if (HTMLWidgets.shinyMode) {
                                     Shiny.setInputValue(
                                         el.id + "_marker_" + markerId,
                                         {
@@ -1367,6 +1357,20 @@ HTMLWidgets.widget({
                                             lat: lngLat.lat,
                                         },
                                     );
+                                }
+
+                                mapMarker.on("dragend", function () {
+                                    const lngLat = mapMarker.getLngLat();
+                                    if (HTMLWidgets.shinyMode) {
+                                        Shiny.setInputValue(
+                                            el.id + "_marker_" + markerId,
+                                            {
+                                                id: markerId,
+                                                lng: lngLat.lng,
+                                                lat: lngLat.lat,
+                                            },
+                                        );
+                                    }
                                 });
                             }
 
