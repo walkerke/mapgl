@@ -108,7 +108,7 @@ add_navigation_control <- function(map,
             } else {
                 "maplibre-proxy"
             }
-            
+
             map$session$sendCustomMessage(proxy_class, list(
                 id = map$id,
                 message = list(
@@ -328,7 +328,7 @@ add_scale_control <- function(map,
             map$session$sendCustomMessage(proxy_class, list(
                 id = map$id,
                 message = list(
-                    type = "add_scale_control", 
+                    type = "add_scale_control",
                     options = scale_control,
                     map = map$map_side
                 )
@@ -536,13 +536,15 @@ get_drawn_features <- function(map) {
         ))
     }
 
+    # Trim any module namespacing off to index the session proxy inputs
+    map_drawn_id <- sub(pattern = session$ns(""), replacement = "", x = paste0(map_id, "_drawn_features"))
     # Wait for response
     features_json <- NULL
     wait_time <- 0
     while (is.null(features_json) &&
         wait_time < 3) {
         # Wait up to 3 seconds
-        features_json <- session$input[[paste0(map_id, "_drawn_features")]]
+        features_json <- session$input[[map_drawn_id]]
         Sys.sleep(0.1)
         wait_time <- wait_time + 0.1
     }
@@ -601,7 +603,7 @@ add_geocoder_control <- function(map,
             map$session$sendCustomMessage(proxy_class, list(
                 id = map$id,
                 message = list(
-                    type = "add_geocoder_control", 
+                    type = "add_geocoder_control",
                     options = geocoder_options,
                     map = map$map_side
                 )
@@ -669,7 +671,7 @@ add_reset_control <- function(map,
             map$session$sendCustomMessage(proxy_class, list(
                 id = map$id,
                 message = list(
-                    type = "add_reset_control", 
+                    type = "add_reset_control",
                     options = reset_control,
                     map = map$map_side
                 )
@@ -756,7 +758,7 @@ add_geolocate_control <- function(map,
             map$session$sendCustomMessage(proxy_class, list(
                 id = map$id,
                 message = list(
-                    type = "add_geolocate_control", 
+                    type = "add_geolocate_control",
                     options = geolocate_control,
                     map = map$map_side
                 )
