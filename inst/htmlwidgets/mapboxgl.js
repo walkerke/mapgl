@@ -108,6 +108,25 @@ HTMLWidgets.widget({
                         });
                     }
 
+                    // If building selection is chosen, automatically
+                    // apply the interaction
+                    if (
+                        map.getConfigProperty("basemap", "colorBuildingSelect")
+                    ) {
+                        map.addInteraction("building-click", {
+                            type: "click",
+                            target: {
+                                featuresetId: "buildings",
+                                importId: "basemap",
+                            },
+                            handler: (e) => {
+                                map.setFeatureState(e.feature, {
+                                    select: true,
+                                });
+                            },
+                        });
+                    }
+
                     if (x.markers) {
                         if (!window.mapboxglMarkers) {
                             window.mapboxglMarkers = [];
