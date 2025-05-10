@@ -113,7 +113,7 @@ HTMLWidgets.widget({
                     if (
                         map.getConfigProperty("basemap", "colorBuildingSelect")
                     ) {
-                        let currentHighlightedFeature;
+                        let currentSelectedFeature;
 
                         map.addInteraction("building-click", {
                             type: "click",
@@ -122,9 +122,9 @@ HTMLWidgets.widget({
                                 importId: "basemap",
                             },
                             handler: (e) => {
-                                if (currentHighlightedFeature) {
+                                if (currentSelectedFeature) {
                                     map.setFeatureState(
-                                        currentHighlightedFeature,
+                                        currentSelectedFeature,
                                         { highlight: false, select: false },
                                     );
                                 }
@@ -133,7 +133,51 @@ HTMLWidgets.widget({
                                     select: true,
                                 });
 
+                                currentSelectedFeature = e.feature;
+                            },
+                        });
+                    }
+
+                    // If building highlight is chosen, automatically
+                    // apply the interaction
+                    if (
+                        map.getConfigProperty(
+                            "basemap",
+                            "colorBuildingHighlight",
+                        )
+                    ) {
+                        let currentHighlightedFeature;
+
+                        map.addInteraction("building-mouseenter", {
+                            type: "mouseenter",
+                            target: {
+                                featuresetId: "buildings",
+                                importId: "basemap",
+                            },
+                            handler: (e) => {
+                                map.setFeatureState(e.feature, {
+                                    highlight: true,
+                                });
                                 currentHighlightedFeature = e.feature;
+                            },
+                        });
+
+                        map.addInteraction("building-mouseleave", {
+                            type: "mouseleave",
+                            target: {
+                                featuresetId: "buildings",
+                                importId: "basemap",
+                            },
+                            handler: (e) => {
+                                if (currentHighlightedFeature) {
+                                    map.setFeatureState(
+                                        currentHighlightedFeature,
+                                        {
+                                            highlight: false,
+                                        },
+                                    );
+                                    currentHighlightedFeature = null;
+                                }
                             },
                         });
                     }
