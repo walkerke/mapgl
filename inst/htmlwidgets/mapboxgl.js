@@ -113,6 +113,8 @@ HTMLWidgets.widget({
                     if (
                         map.getConfigProperty("basemap", "colorBuildingSelect")
                     ) {
+                        let currentHighlightedFeature;
+
                         map.addInteraction("building-click", {
                             type: "click",
                             target: {
@@ -120,9 +122,18 @@ HTMLWidgets.widget({
                                 importId: "basemap",
                             },
                             handler: (e) => {
+                                if (currentHighlightedFeature) {
+                                    map.setFeatureState(
+                                        currentHighlightedFeature,
+                                        { highlight: false, select: false },
+                                    );
+                                }
+
                                 map.setFeatureState(e.feature, {
                                     select: true,
                                 });
+
+                                currentHighlightedFeature = e.feature;
                             },
                         });
                     }
