@@ -182,6 +182,83 @@ HTMLWidgets.widget({
                         });
                     }
 
+                    // If place label selection is chosen, automatically
+                    // apply the interaction
+                    if (
+                        map.getConfigProperty(
+                            "basemap",
+                            "colorPlaceLabelSelect",
+                        )
+                    ) {
+                        let currentSelectedPlaceFeature;
+
+                        map.addInteraction("place-label-click", {
+                            type: "click",
+                            target: {
+                                featuresetId: "place-labels",
+                                importId: "basemap",
+                            },
+                            handler: (e) => {
+                                if (currentSelectedPlaceFeature) {
+                                    map.setFeatureState(
+                                        currentSelectedPlaceFeature,
+                                        { highlight: false, select: false },
+                                    );
+                                }
+
+                                map.setFeatureState(e.feature, {
+                                    select: true,
+                                });
+
+                                currentSelectedPlaceFeature = e.feature;
+                            },
+                        });
+                    }
+
+                    // If place label highlight is chosen, automatically
+                    // apply the interaction
+                    if (
+                        map.getConfigProperty(
+                            "basemap",
+                            "colorPlaceLabelHighlight",
+                        )
+                    ) {
+                        let currentHighlightedPlaceFeature;
+
+                        map.addInteraction("place-label-mouseenter", {
+                            type: "mouseenter",
+                            target: {
+                                featuresetId: "place-labels",
+                                importId: "basemap",
+                            },
+                            handler: (e) => {
+                                map.setFeatureState(e.feature, {
+                                    highlight: true,
+                                });
+                                currentHighlightedPlaceFeature = e.feature;
+                            },
+                        });
+
+                        map.addInteraction("place-label-mouseleave", {
+                            type: "mouseleave",
+                            target: {
+                                featuresetId: "place-labels",
+                                importId: "basemap",
+                            },
+                            handler: (e) => {
+                                if (currentHighlightedPlaceFeature) {
+                                    map.setFeatureState(
+                                        currentHighlightedPlaceFeature,
+                                        {
+                                            highlight: false,
+                                        },
+                                    );
+                                    currentHighlightedPlaceFeature = null;
+                                }
+                            },
+                        });
+                    }
+
                     if (x.markers) {
                         if (!window.mapboxglMarkers) {
                             window.mapboxglMarkers = [];
