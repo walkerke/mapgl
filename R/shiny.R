@@ -320,6 +320,7 @@ clear_markers <- function(map) {
 #' @param style The new style URL to be applied to the map.
 #' @param config A named list of options to be passed to the style config.
 #' @param diff A boolean that attempts a diff-based update rather than re-drawing the full style. Not available for all styles.
+#' @param preserve_layers A boolean that indicates whether to preserve user-added sources and layers when changing styles. Defaults to TRUE.
 #'
 #' @return The modified map object.
 #' @export
@@ -339,7 +340,7 @@ clear_markers <- function(map) {
 #'         set_style(mapbox_style("dark"), config = list(showLabels = FALSE), diff = TRUE)
 #' })
 #' }
-set_style <- function(map, style, config = NULL, diff = TRUE) {
+set_style <- function(map, style, config = NULL, diff = TRUE, preserve_layers = TRUE) {
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
         if (
             inherits(map, "mapboxgl_compare_proxy") ||
@@ -357,6 +358,7 @@ set_style <- function(map, style, config = NULL, diff = TRUE) {
                         style = style,
                         config = config,
                         diff = diff,
+                        preserve_layers = preserve_layers,
                         map = map$map_side
                     )
                 )
@@ -373,7 +375,8 @@ set_style <- function(map, style, config = NULL, diff = TRUE) {
                         type = "set_style",
                         style = style,
                         config = config,
-                        diff = diff
+                        diff = diff,
+                        preserve_layers = preserve_layers
                     )
                 )
             )

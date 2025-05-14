@@ -1460,6 +1460,98 @@ if (HTMLWidgets.shinyMode) {
                     message.value,
                 );
             } else if (message.type === "set_style") {
+                // Default preserve_layers to true if not specified
+                const preserveLayers = message.preserve_layers !== false;
+                
+                // If we should preserve layers and sources
+                if (preserveLayers) {
+                    // Store the current style before changing it
+                    const currentStyle = map.getStyle();
+                    const userSourceIds = [];
+                    const userLayers = [];
+                    
+                    // Identify user-added sources (those not in the original style)
+                    // We'll assume any source that's not "composite", "mapbox", or starts with "mapbox-" is user-added
+                    for (const sourceId in currentStyle.sources) {
+                        if (
+                            sourceId !== "composite" && 
+                            sourceId !== "mapbox" && 
+                            !sourceId.startsWith("mapbox-")
+                        ) {
+                            userSourceIds.push(sourceId);
+                            const source = currentStyle.sources[sourceId];
+                            // Store layer-specific handler references
+                            if (window._mapboxHandlers) {
+                                const handlers = window._mapboxHandlers;
+                                for (const layerId in handlers) {
+                                    // Find layers associated with this source
+                                    const layer = currentStyle.layers.find(l => l.id === layerId);
+                                    if (layer && layer.source === sourceId) {
+                                        layer._handlers = handlers[layerId];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Identify layers using user-added sources
+                    currentStyle.layers.forEach(function(layer) {
+                        if (userSourceIds.includes(layer.source)) {
+                            userLayers.push(layer);
+                        }
+                    });
+                    
+                    // Set up event listener to re-add sources and layers after style loads
+                    const onStyleLoad = function() {
+                        // Re-add user sources
+                        userSourceIds.forEach(function(sourceId) {
+                            if (!map.getSource(sourceId)) {
+                                const source = currentStyle.sources[sourceId];
+                                map.addSource(sourceId, source);
+                            }
+                        });
+                        
+                        // Re-add user layers
+                        userLayers.forEach(function(layer) {
+                            if (!map.getLayer(layer.id)) {
+                                map.addLayer(layer);
+                                
+                                // Re-add event handlers for tooltips and hover effects
+                                if (layer._handlers) {
+                                    const handlers = layer._handlers;
+                                    
+                                    if (handlers.mousemove) {
+                                        map.on("mousemove", layer.id, handlers.mousemove);
+                                    }
+                                    
+                                    if (handlers.mouseleave) {
+                                        map.on("mouseleave", layer.id, handlers.mouseleave);
+                                    }
+                                }
+                                
+                                // Recreate hover states if needed
+                                if (layer.paint) {
+                                    for (const key in layer.paint) {
+                                        const value = layer.paint[key];
+                                        if (Array.isArray(value) && value[0] === "case" && 
+                                            Array.isArray(value[1]) && value[1][0] === "boolean" && 
+                                            value[1][1][0] === "feature-state" && value[1][1][1] === "hover") {
+                                            // This is a hover-enabled paint property
+                                            map.setPaintProperty(layer.id, key, value);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Remove this listener to avoid adding the same layers multiple times
+                        map.off('style.load', onStyleLoad);
+                    };
+                    
+                    map.on('style.load', onStyleLoad);
+                }
+                
+                // Change the style
                 map.setStyle(message.style, { diff: message.diff });
 
                 if (message.config) {
