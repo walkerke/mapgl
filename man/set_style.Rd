@@ -4,7 +4,7 @@
 \alias{set_style}
 \title{Update the style of a map}
 \usage{
-set_style(map, style, config = NULL, diff = TRUE)
+set_style(map, style, config = NULL, diff = TRUE, preserve_layers = TRUE)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or a proxy object.}
@@ -14,6 +14,8 @@ set_style(map, style, config = NULL, diff = TRUE)
 \item{config}{A named list of options to be passed to the style config.}
 
 \item{diff}{A boolean that attempts a diff-based update rather than re-drawing the full style. Not available for all styles.}
+
+\item{preserve_layers}{A boolean that indicates whether to preserve user-added sources and layers when changing styles. Defaults to TRUE.}
 }
 \value{
 The modified map object.
