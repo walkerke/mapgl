@@ -1248,6 +1248,18 @@ HTMLWidgets.widget({
                                 });
 
                                 map.addControl(minimap, message.position);
+                            } else if (message.type === "set_rain") {
+                                if (message.rain) {
+                                    map.setRain(message.rain);
+                                } else {
+                                    map.setRain(null);
+                                }
+                            } else if (message.type === "set_snow") {
+                                if (message.snow) {
+                                    map.setSnow(message.snow);
+                                } else {
+                                    map.setSnow(null);
+                                }
                             } else if (message.type === "set_projection") {
                                 map.setProjection(message.projection);
                             } else if (message.type === "set_source") {
@@ -1743,6 +1755,16 @@ HTMLWidgets.widget({
                     // Set fog
                     if (mapData.fog) {
                         map.setFog(mapData.fog);
+                    }
+                    
+                    // Set rain effect if provided
+                    if (mapData.rain) {
+                        map.setRain(mapData.rain);
+                    }
+                    
+                    // Set snow effect if provided
+                    if (mapData.snow) {
+                        map.setSnow(mapData.snow);
                     }
 
                     if (mapData.fitBounds) {

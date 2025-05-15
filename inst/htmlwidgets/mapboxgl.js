@@ -482,6 +482,16 @@ HTMLWidgets.widget({
                     if (x.fog) {
                         map.setFog(x.fog);
                     }
+                    
+                    // Set rain effect if provided
+                    if (x.rain) {
+                        map.setRain(x.rain);
+                    }
+                    
+                    // Set snow effect if provided
+                    if (x.snow) {
+                        map.setSnow(x.snow);
+                    }
 
                     if (x.fitBounds) {
                         map.fitBounds(x.fitBounds.bounds, x.fitBounds.options);
@@ -2174,6 +2184,18 @@ if (HTMLWidgets.shinyMode) {
 
                 // Update the geojson data
                 sourceObject.setData(newData);
+            }
+        } else if (message.type === "set_rain") {
+            if (message.rain) {
+                map.setRain(message.rain);
+            } else {
+                map.setRain(null);
+            }
+        } else if (message.type === "set_snow") {
+            if (message.snow) {
+                map.setSnow(message.snow);
+            } else {
+                map.setSnow(null);
             }
         } else if (message.type === "set_projection") {
             const projection = message.projection;
