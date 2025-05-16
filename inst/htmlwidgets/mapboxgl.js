@@ -568,6 +568,36 @@ HTMLWidgets.widget({
                         map.addControl(globeMinimap, x.globe_minimap.position);
                         map.controls.push(globeMinimap);
                     }
+                    
+                    // Add custom controls if any are defined
+                    if (x.custom_controls) {
+                        Object.keys(x.custom_controls).forEach(function(key) {
+                            const controlOptions = x.custom_controls[key];
+                            const customControlContainer = document.createElement("div");
+                            
+                            if (controlOptions.className) {
+                                customControlContainer.className = controlOptions.className;
+                            } else {
+                                customControlContainer.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+                            }
+                            
+                            customControlContainer.innerHTML = controlOptions.html;
+                            
+                            const customControl = {
+                                onAdd: function() {
+                                    return customControlContainer;
+                                },
+                                onRemove: function() {
+                                    if (customControlContainer.parentNode) {
+                                        customControlContainer.parentNode.removeChild(customControlContainer);
+                                    }
+                                }
+                            };
+                            
+                            map.addControl(customControl, controlOptions.position || "top-right");
+                            map.controls.push(customControl);
+                        });
+                    }
 
                     // Add geocoder control if enabled
                     if (x.geocoder_control) {
@@ -2148,6 +2178,31 @@ if (HTMLWidgets.shinyMode) {
                         style.remove();
                     });
                 }
+            } else if (message.type === "add_custom_control") {
+                const controlOptions = message.options;
+                const customControlContainer = document.createElement("div");
+                
+                if (controlOptions.className) {
+                    customControlContainer.className = controlOptions.className;
+                } else {
+                    customControlContainer.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+                }
+                
+                customControlContainer.innerHTML = controlOptions.html;
+                
+                const customControl = {
+                    onAdd: function() {
+                        return customControlContainer;
+                    },
+                    onRemove: function() {
+                        if (customControlContainer.parentNode) {
+                            customControlContainer.parentNode.removeChild(customControlContainer);
+                        }
+                    }
+                };
+                
+                map.addControl(customControl, controlOptions.position || "top-right");
+                map.controls.push(customControl);
             } else if (message.type === "clear_controls") {
                 map.controls.forEach((control) => {
                     map.removeControl(control);

@@ -844,3 +844,93 @@ add_globe_control <- function(map, position = "top-right") {
 
     return(map)
 }
+
+#' Add a custom control to a map
+#'
+#' This function adds a custom control to a Mapbox GL or MapLibre GL map.
+#' It allows you to create custom HTML element controls and add them to the map.
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
+#' @param html Character string containing the HTML content for the control.
+#' @param position The position of the control. Can be one of "top-left", "top-right",
+#'   "bottom-left", or "bottom-right". Default is "top-right".
+#' @param className Optional CSS class name for the control container.
+#' @param ... Additional arguments passed to the JavaScript side.
+#'
+#' @return The modified map object with the custom control added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' maplibre() |>
+#'   add_control(
+#'     html = "<div style='background-color: white; padding: 5px;'>
+#'              <p>Custom HTML</p>
+#'              <img src='path/to/image.png' alt='image'/>
+#'             </div>",
+#'     position = "top-left"
+#'   )
+#' }
+add_control <- function(map, 
+                        html, 
+                        position = "top-right", 
+                        className = NULL,
+                        ...) {
+    control_id <- paste0("custom-control-", as.hexmode(sample(1:1000000, 1)))
+    
+    # Create options list
+    control_options <- list(
+        html = html,
+        position = position
+    )
+    
+    # Add className if provided
+    if (!is.null(className)) {
+        control_options$className <- className
+    }
+    
+    # Add any additional parameters
+    control_options <- c(control_options, list(...))
+    
+    if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+        if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_custom_control",
+                    control_id = control_id,
+                    options = control_options,
+                    map = map$map_side
+                )
+            ))
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+                "mapboxgl-proxy"
+            } else {
+                "maplibre-proxy"
+            }
+            map$session$sendCustomMessage(proxy_class, list(
+                id = map$id,
+                message = list(
+                    type = "add_custom_control",
+                    control_id = control_id,
+                    options = control_options
+                )
+            ))
+        }
+    } else {
+        # For initial map creation
+        if (is.null(map$x$custom_controls)) {
+            map$x$custom_controls <- list()
+        }
+        
+        map$x$custom_controls[[control_id]] <- control_options
+    }
+    
+    return(map)
+}

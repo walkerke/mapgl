@@ -535,6 +535,36 @@ HTMLWidgets.widget({
                         map.addControl(globeControl, x.globe_control.position);
                         map.controls.push(globeControl);
                     }
+                    
+                    // Add custom controls if any are defined
+                    if (x.custom_controls) {
+                        Object.keys(x.custom_controls).forEach(function(key) {
+                            const controlOptions = x.custom_controls[key];
+                            const customControlContainer = document.createElement("div");
+                            
+                            if (controlOptions.className) {
+                                customControlContainer.className = controlOptions.className;
+                            } else {
+                                customControlContainer.className = "maplibregl-ctrl maplibregl-ctrl-group";
+                            }
+                            
+                            customControlContainer.innerHTML = controlOptions.html;
+                            
+                            const customControl = {
+                                onAdd: function() {
+                                    return customControlContainer;
+                                },
+                                onRemove: function() {
+                                    if (customControlContainer.parentNode) {
+                                        customControlContainer.parentNode.removeChild(customControlContainer);
+                                    }
+                                }
+                            };
+                            
+                            map.addControl(customControl, controlOptions.position || "top-right");
+                            map.controls.push(customControl);
+                        });
+                    }
 
                     // Add globe minimap if enabled
                     if (x.globe_minimap && x.globe_minimap.enabled) {
@@ -2698,6 +2728,31 @@ if (HTMLWidgets.shinyMode) {
             const globeControl = new maplibregl.GlobeControl();
             map.addControl(globeControl, message.position);
             map.controls.push(globeControl);
+        } else if (message.type === "add_custom_control") {
+            const controlOptions = message.options;
+            const customControlContainer = document.createElement("div");
+            
+            if (controlOptions.className) {
+                customControlContainer.className = controlOptions.className;
+            } else {
+                customControlContainer.className = "maplibregl-ctrl maplibregl-ctrl-group";
+            }
+            
+            customControlContainer.innerHTML = controlOptions.html;
+            
+            const customControl = {
+                onAdd: function() {
+                    return customControlContainer;
+                },
+                onRemove: function() {
+                    if (customControlContainer.parentNode) {
+                        customControlContainer.parentNode.removeChild(customControlContainer);
+                    }
+                }
+            };
+            
+            map.addControl(customControl, controlOptions.position || "top-right");
+            map.controls.push(customControl);
         }
     });
 }
