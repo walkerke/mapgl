@@ -251,19 +251,51 @@ HTMLWidgets.widget({
 
                                     // Add popups or tooltips if provided
                                     if (message.layer.popup) {
+                                        // Initialize popup tracking if it doesn't exist
+                                        if (!window._mapboxPopups) {
+                                            window._mapboxPopups = {};
+                                        }
+                                        
+                                        // Create click handler for this layer
+                                        const clickHandler = function (e) {
+                                            const description =
+                                                e.features[0].properties[
+                                                    message.layer.popup
+                                                ];
+                                            
+                                            // Remove any existing popup for this layer
+                                            if (window._mapboxPopups[message.layer.id]) {
+                                                window._mapboxPopups[message.layer.id].remove();
+                                            }
+                                            
+                                            // Create and show the popup
+                                            const popup = new mapboxgl.Popup()
+                                                .setLngLat(e.lngLat)
+                                                .setHTML(description)
+                                                .addTo(map);
+                                                
+                                            // Store reference to this popup
+                                            window._mapboxPopups[message.layer.id] = popup;
+                                            
+                                            // Remove reference when popup is closed
+                                            popup.on('close', function() {
+                                                if (window._mapboxPopups[message.layer.id] === popup) {
+                                                    delete window._mapboxPopups[message.layer.id];
+                                                }
+                                            });
+                                        };
+                                        
+                                        // Store these handler references so we can remove them later if needed
+                                        if (!window._mapboxClickHandlers) {
+                                            window._mapboxClickHandlers = {};
+                                        }
+                                        window._mapboxClickHandlers[message.layer.id] = clickHandler;
+                                        
+                                        // Add the click handler
                                         map.on(
                                             "click",
                                             message.layer.id,
-                                            function (e) {
-                                                const description =
-                                                    e.features[0].properties[
-                                                        message.layer.popup
-                                                    ];
-                                                new mapboxgl.Popup()
-                                                    .setLngLat(e.lngLat)
-                                                    .setHTML(description)
-                                                    .addTo(map);
-                                            },
+                                            clickHandler
                                         );
 
                                         // Change cursor to pointer when hovering over the layer
@@ -491,9 +523,15 @@ HTMLWidgets.widget({
                                     window._activeTooltip.remove();
                                     delete window._activeTooltip;
                                 }
+                                
+                                // If there's an active popup for this layer, remove it
+                                if (window._mapboxPopups && window._mapboxPopups[message.layer_id]) {
+                                    window._mapboxPopups[message.layer_id].remove();
+                                    delete window._mapboxPopups[message.layer_id];
+                                }
 
                                 if (map.getLayer(message.layer_id)) {
-                                    // Check if we have stored handlers for this layer
+                                    // Remove tooltip handlers
                                     if (
                                         window._mapboxHandlers &&
                                         window._mapboxHandlers[message.layer_id]
@@ -521,6 +559,21 @@ HTMLWidgets.widget({
                                             message.layer_id
                                         ];
                                     }
+                                    
+                                    // Remove click handlers for popups
+                                    if (
+                                        window._mapboxClickHandlers &&
+                                        window._mapboxClickHandlers[message.layer_id]
+                                    ) {
+                                        map.off(
+                                            "click",
+                                            message.layer_id,
+                                            window._mapboxClickHandlers[message.layer_id]
+                                        );
+                                        delete window._mapboxClickHandlers[message.layer_id];
+                                    }
+                                    
+                                    // Remove the layer
                                     map.removeLayer(message.layer_id);
                                 }
                                 if (map.getSource(message.layer_id)) {
@@ -597,11 +650,16 @@ HTMLWidgets.widget({
                                     existingLegends.forEach((legend) =>
                                         legend.remove(),
                                     );
+                                    
+                                    // Clean up any existing legend styles that might have been added
+                                    const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${data.id}"]`);
+                                    legendStyles.forEach((style) => style.remove());
                                 }
 
                                 const legendCss =
                                     document.createElement("style");
                                 legendCss.innerHTML = message.legend_css;
+                                legendCss.setAttribute('data-mapgl-legend-css', data.id); // Mark this style for later cleanup
                                 document.head.appendChild(legendCss);
 
                                 const legend = document.createElement("div");
@@ -1814,20 +1872,23 @@ HTMLWidgets.widget({
                         );
                     }
 
-                    const existingLegend =
-                        document.getElementById("mapboxgl-legend");
-                    if (existingLegend) {
-                        existingLegend.remove();
-                    }
+                    // Remove existing legends
+                    const existingLegends = document.querySelectorAll(".mapboxgl-legend");
+                    existingLegends.forEach(legend => legend.remove());
+                    
+                    // Clean up any legend styles that might have been added
+                    const legendStyles = document.querySelectorAll('style[data-mapgl-legend-css]');
+                    legendStyles.forEach(style => style.remove());
 
                     if (mapData.legend_html && mapData.legend_css) {
                         const legendCss = document.createElement("style");
                         legendCss.innerHTML = mapData.legend_css;
+                        legendCss.setAttribute('data-mapgl-legend-css', el.id); // Mark this style for later cleanup
                         document.head.appendChild(legendCss);
 
                         const legend = document.createElement("div");
                         legend.innerHTML = mapData.legend_html;
-                        // legend.classList.add("mapboxgl-legend");
+                        legend.classList.add("mapboxgl-legend");
                         el.appendChild(legend);
                     }
 
