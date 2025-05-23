@@ -6,7 +6,7 @@
 #' @param bearing The initial bearing (rotation) of the map, in degrees.
 #' @param pitch The initial pitch (tilt) of the map, in degrees.
 #' @param projection The map projection to use (e.g., "mercator", "globe").
-#' @param parallels A vector of two numbers representing the standard parellels of the projection.  Only available when the projection is "albers" or "lambertConformalConic".
+#' @param parallels A vector of two numbers representing the standard parallels of the projection.  Only available when the projection is "albers" or "lambertConformalConic".
 #' @param access_token Your Mapbox access token.
 #' @param bounds An sf object or bounding box to fit the map to.
 #' @param width The width of the output htmlwidget.
