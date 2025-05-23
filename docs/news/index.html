@@ -40,6 +40,15 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.2" id="mapgl-022">mapgl 0.2.2<a class="anchor" aria-label="anchor" href="#mapgl-022"></a></h2>
+<ul><li>Added <code><a href="../reference/mapboxgl_view.html">mapboxgl_view()</a></code> and <code><a href="../reference/maplibre_view.html">maplibre_view()</a></code> functions for quick visualization of sf objects with automatic geometry detection and column-based styling (<a href="https://github.com/walkerke/mapgl/issues/102" class="external-link">#102</a>).</li>
+<li>Added support for rain and snow effects on Mapbox GL maps with <code><a href="../reference/set_rain.html">set_rain()</a></code> and <code><a href="../reference/set_snow.html">set_snow()</a></code> functions.</li>
+<li>Added <code><a href="../reference/add_globe_control.html">add_globe_control()</a></code> for MapLibre maps, allowing users to toggle between “mercator” and “globe” projections.</li>
+<li>Fixed issue with <code><a href="../reference/set_style.html">set_style()</a></code> in Shiny applications for both Mapbox and MapLibre maps (<a href="https://github.com/walkerke/mapgl/issues/99" class="external-link">#99</a>).</li>
+<li>Fixed namespacing issue in <code><a href="../reference/get_drawn_features.html">get_drawn_features()</a></code> for Shiny modules (<a href="https://github.com/walkerke/mapgl/issues/95" class="external-link">#95</a>).</li>
+<li>Improved compare functionality with better control support and swiper color customization.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="mapgl-021">mapgl 0.2.1<a class="anchor" aria-label="anchor" href="#mapgl-021"></a></h2><p class="text-muted">CRAN release: 2025-03-18</p>
 <ul><li>Improved styling and positioning behavior of the layers control. Users can now customize the appearance of the layers control, and the layers control is collapsed by default with cleaner appearance. Added ability to link legends to specific layers with the new <code>layer_id</code> parameter in <code><a href="../reference/add_legend.html">add_legend()</a></code>. When a layer is toggled in the layers control, its associated legend will automatically show or hide.</li>
 <li>Added support for custom legend positioning with new margin parameters (<code>margin_top</code>, <code>margin_right</code>, <code>margin_bottom</code>, <code>margin_left</code>) that allow fine-grained control over legend placement.</li>

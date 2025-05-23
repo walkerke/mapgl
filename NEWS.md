@@ -1,3 +1,12 @@
+# mapgl 0.2.2
+
+* Added `mapboxgl_view()` and `maplibre_view()` functions for quick visualization of sf objects with automatic geometry detection and column-based styling (#102).
+* Added support for rain and snow effects on Mapbox GL maps with `set_rain()` and `set_snow()` functions.
+* Added `add_globe_control()` for MapLibre maps, allowing users to toggle between "mercator" and "globe" projections.
+* Fixed issue with `set_style()` in Shiny applications for both Mapbox and MapLibre maps (#99).
+* Fixed namespacing issue in `get_drawn_features()` for Shiny modules (#95).
+* Improved compare functionality with better control support and swiper color customization.
+
 # mapgl 0.2.1
 
 * Improved styling and positioning behavior of the layers control. Users can now customize the appearance of the layers control, and the layers control is collapsed by default with cleaner appearance.
@@ -5,7 +14,7 @@ Added ability to link legends to specific layers with the new `layer_id` paramet
 * Added support for custom legend positioning with new margin parameters (`margin_top`, `margin_right`, `margin_bottom`, `margin_left`) that allow fine-grained control over legend placement.
 * Fixed layers control toggle button state to correctly reflect the initial visibility of layers, resolving the issue with layers set to `visibility = "none"` showing as active in the control.
 * Support for the `compare()` plugin in Shiny applications, with new rendering and proxy functions for comparison apps in Mapbox and MapLibre.
-* New `mode` parameter in `compare()` allowing users to choose between `"swipe"` mode with a comparison slider, and `"sync"` mode which displays synchronized maps side-by-side. 
+* New `mode` parameter in `compare()` allowing users to choose between `"swipe"` mode with a comparison slider, and `"sync"` mode which displays synchronized maps side-by-side.
 * Updates throughout the codebase to allow features to be used in comparison maps via Shiny proxy sessions.
 
 # mapgl 0.2.0
