@@ -117,7 +117,8 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                                 } else NULL
                             ),
                             colors = colors,
-                            type = "categorical"
+                            type = "categorical",
+                            circular_patches = TRUE
                         )
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
@@ -169,7 +170,8 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                         legend_title = column,
                         values = as.character(unique_vals),
                         colors = colors,
-                        type = "categorical"
+                        type = "categorical",
+                        circular_patches = TRUE
                     )
             }
         }
@@ -533,7 +535,8 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                                 } else NULL
                             ),
                             colors = colors,
-                            type = "categorical"
+                            type = "categorical",
+                            circular_patches = TRUE
                         )
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
@@ -585,7 +588,8 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                         legend_title = column,
                         values = as.character(unique_vals),
                         colors = colors,
-                        type = "categorical"
+                        type = "categorical",
+                        circular_patches = TRUE
                     )
             }
         }
