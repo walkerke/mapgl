@@ -20,10 +20,9 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Getting started with mapgl</a></li>
-    <li><a class="dropdown-item" href="../articles/layers-overview.html">Layers overview</a></li>
+    <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
-    <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
-    <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
+    <li><a class="dropdown-item" href="../articles/margins-of-error.html">Using mapgl with Shiny</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -55,7 +54,8 @@
 <span>  elementId <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mousemove <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  orientation <span class="op">=</span> <span class="st">"vertical"</span>,</span>
-<span>  mode <span class="op">=</span> <span class="st">"swipe"</span></span>
+<span>  mode <span class="op">=</span> <span class="st">"swipe"</span>,</span>
+<span>  swiper_color <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -93,6 +93,10 @@
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
 <dd><p>A string specifying the comparison mode: "swipe" (default) for a swipeable comparison with a slider, or "sync" for synchronized maps displayed next to each other.</p></dd>
+
+
+<dt id="arg-swiper-color">swiper_color<a class="anchor" aria-label="anchor" href="#arg-swiper-color"></a></dt>
+<dd><p>An optional CSS color value (e.g., "#000000", "rgb(0,0,0)", "black") to customize the color of the swiper handle. Only applicable when <code>mode="swipe"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -149,6 +153,9 @@
 <span class="r-in"><span><span class="co"># Synchronized side-by-side mode</span></span></span>
 <span class="r-in"><span><span class="fu">compare</span><span class="op">(</span><span class="va">m1</span>, <span class="va">m2</span>, mode <span class="op">=</span> <span class="st">"sync"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Custom swiper color</span></span></span>
+<span class="r-in"><span><span class="fu">compare</span><span class="op">(</span><span class="va">m1</span>, <span class="va">m2</span>, swiper_color <span class="op">=</span> <span class="st">"#FF0000"</span><span class="op">)</span>  <span class="co"># Red swiper</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Shiny example</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://shiny.posit.co/" class="external-link">shiny</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -165,10 +172,19 @@
 <span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># Update the right map</span></span></span>
+<span class="r-in"><span><span class="co"># Update the right map</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/observe.html" class="external-link">observe</a></span><span class="op">(</span><span class="op">{</span></span></span>
 <span class="r-in"><span>    <span class="va">right_proxy</span> <span class="op">&lt;-</span> <span class="fu"><a href="maplibre_compare_proxy.html">maplibre_compare_proxy</a></span><span class="op">(</span><span class="st">"comparison"</span>, map_side <span class="op">=</span> <span class="st">"after"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="set_style.html">set_style</a></span><span class="op">(</span><span class="va">right_proxy</span>, <span class="fu"><a href="carto_style.html">carto_style</a></span><span class="op">(</span><span class="st">"voyager"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  </span></span>
+<span class="r-in"><span>  <span class="co"># Example with custom swiper color</span></span></span>
+<span class="r-in"><span>  <span class="va">output</span><span class="op">$</span><span class="va">comparison2</span> <span class="op">&lt;-</span> <span class="fu"><a href="renderMaplibreCompare.html">renderMaplibreCompare</a></span><span class="op">(</span><span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu">compare</span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="fu"><a href="maplibre.html">maplibre</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="carto_style.html">carto_style</a></span><span class="op">(</span><span class="st">"positron"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      <span class="fu"><a href="maplibre.html">maplibre</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="carto_style.html">carto_style</a></span><span class="op">(</span><span class="st">"dark-matter"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      swiper_color <span class="op">=</span> <span class="st">"#3498db"</span>  <span class="co"># Blue swiper</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
@@ -183,7 +199,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer></div>

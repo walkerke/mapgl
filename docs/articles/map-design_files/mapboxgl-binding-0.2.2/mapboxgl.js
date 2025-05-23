@@ -285,17 +285,48 @@ HTMLWidgets.widget({
 
                                 // Add popups or tooltips if provided
                                 if (layer.popup) {
-                                    map.on("click", layer.id, function (e) {
+                                    // Initialize popup tracking if it doesn't exist
+                                    if (!window._mapboxPopups) {
+                                        window._mapboxPopups = {};
+                                    }
+                                    
+                                    // Create click handler for this layer
+                                    const clickHandler = function (e) {
                                         const description =
                                             e.features[0].properties[
                                                 layer.popup
                                             ];
-
-                                        new mapboxgl.Popup()
+                                        
+                                        // Remove any existing popup for this layer
+                                        if (window._mapboxPopups[layer.id]) {
+                                            window._mapboxPopups[layer.id].remove();
+                                        }
+                                        
+                                        // Create and show the popup
+                                        const popup = new mapboxgl.Popup()
                                             .setLngLat(e.lngLat)
                                             .setHTML(description)
                                             .addTo(map);
-                                    });
+                                            
+                                        // Store reference to this popup
+                                        window._mapboxPopups[layer.id] = popup;
+                                        
+                                        // Remove reference when popup is closed
+                                        popup.on('close', function() {
+                                            if (window._mapboxPopups[layer.id] === popup) {
+                                                delete window._mapboxPopups[layer.id];
+                                            }
+                                        });
+                                    };
+                                    
+                                    // Store these handler references so we can remove them later if needed
+                                    if (!window._mapboxClickHandlers) {
+                                        window._mapboxClickHandlers = {};
+                                    }
+                                    window._mapboxClickHandlers[layer.id] = clickHandler;
+                                    
+                                    // Add the click handler
+                                    map.on("click", layer.id, clickHandler);
 
                                     // Change cursor to pointer when hovering over the layer
                                     map.on("mouseenter", layer.id, function () {
@@ -482,6 +513,16 @@ HTMLWidgets.widget({
                     if (x.fog) {
                         map.setFog(x.fog);
                     }
+                    
+                    // Set rain effect if provided
+                    if (x.rain) {
+                        map.setRain(x.rain);
+                    }
+                    
+                    // Set snow effect if provided
+                    if (x.snow) {
+                        map.setSnow(x.snow);
+                    }
 
                     if (x.fitBounds) {
                         map.fitBounds(x.fitBounds.bounds, x.fitBounds.options);
@@ -526,6 +567,36 @@ HTMLWidgets.widget({
                         );
                         map.addControl(globeMinimap, x.globe_minimap.position);
                         map.controls.push(globeMinimap);
+                    }
+                    
+                    // Add custom controls if any are defined
+                    if (x.custom_controls) {
+                        Object.keys(x.custom_controls).forEach(function(key) {
+                            const controlOptions = x.custom_controls[key];
+                            const customControlContainer = document.createElement("div");
+                            
+                            if (controlOptions.className) {
+                                customControlContainer.className = controlOptions.className;
+                            } else {
+                                customControlContainer.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+                            }
+                            
+                            customControlContainer.innerHTML = controlOptions.html;
+                            
+                            const customControl = {
+                                onAdd: function() {
+                                    return customControlContainer;
+                                },
+                                onRemove: function() {
+                                    if (customControlContainer.parentNode) {
+                                        customControlContainer.parentNode.removeChild(customControlContainer);
+                                    }
+                                }
+                            };
+                            
+                            map.addControl(customControl, controlOptions.position || "top-right");
+                            map.controls.push(customControl);
+                        });
                     }
 
                     // Add geocoder control if enabled
@@ -1201,14 +1272,46 @@ if (HTMLWidgets.shinyMode) {
 
                     // Add popups or tooltips if provided
                     if (message.layer.popup) {
-                        map.on("click", message.layer.id, function (e) {
+                        // Initialize popup tracking if it doesn't exist
+                        if (!window._mapboxPopups) {
+                            window._mapboxPopups = {};
+                        }
+                        
+                        // Create click handler for this layer
+                        const clickHandler = function (e) {
                             const description =
                                 e.features[0].properties[message.layer.popup];
-                            new mapboxgl.Popup()
+                            
+                            // Remove any existing popup for this layer
+                            if (window._mapboxPopups[message.layer.id]) {
+                                window._mapboxPopups[message.layer.id].remove();
+                            }
+                            
+                            // Create and show the popup
+                            const popup = new mapboxgl.Popup()
                                 .setLngLat(e.lngLat)
                                 .setHTML(description)
                                 .addTo(map);
-                        });
+                                
+                            // Store reference to this popup
+                            window._mapboxPopups[message.layer.id] = popup;
+                            
+                            // Remove reference when popup is closed
+                            popup.on('close', function() {
+                                if (window._mapboxPopups[message.layer.id] === popup) {
+                                    delete window._mapboxPopups[message.layer.id];
+                                }
+                            });
+                        };
+                        
+                        // Store these handler references so we can remove them later if needed
+                        if (!window._mapboxClickHandlers) {
+                            window._mapboxClickHandlers = {};
+                        }
+                        window._mapboxClickHandlers[message.layer.id] = clickHandler;
+                        
+                        // Add the click handler
+                        map.on("click", message.layer.id, clickHandler);
 
                         // Change cursor to pointer when hovering over the layer
                         map.on("mouseenter", message.layer.id, function () {
@@ -1353,9 +1456,15 @@ if (HTMLWidgets.shinyMode) {
                     window._activeTooltip.remove();
                     delete window._activeTooltip;
                 }
+                
+                // If there's an active popup for this layer, remove it
+                if (window._mapboxPopups && window._mapboxPopups[message.layer]) {
+                    window._mapboxPopups[message.layer].remove();
+                    delete window._mapboxPopups[message.layer];
+                }
 
                 if (map.getLayer(message.layer)) {
-                    // Check if we have stored handlers for this layer
+                    // Remove tooltip handlers
                     if (
                         window._mapboxHandlers &&
                         window._mapboxHandlers[message.layer]
@@ -1378,6 +1487,21 @@ if (HTMLWidgets.shinyMode) {
                         // Clean up the reference
                         delete window._mapboxHandlers[message.layer];
                     }
+                    
+                    // Remove click handlers for popups
+                    if (
+                        window._mapboxClickHandlers &&
+                        window._mapboxClickHandlers[message.layer]
+                    ) {
+                        map.off(
+                            "click",
+                            message.layer,
+                            window._mapboxClickHandlers[message.layer]
+                        );
+                        delete window._mapboxClickHandlers[message.layer];
+                    }
+                    
+                    // Remove the layer
                     map.removeLayer(message.layer);
                 }
                 if (map.getSource(message.layer)) {
@@ -1443,10 +1567,15 @@ if (HTMLWidgets.shinyMode) {
                         `#${data.id} .mapboxgl-legend`,
                     );
                     existingLegends.forEach((legend) => legend.remove());
+                    
+                    // Clean up any existing legend styles that might have been added
+                    const legendStyles = document.querySelectorAll('style[data-mapgl-legend-css]');
+                    legendStyles.forEach((style) => style.remove());
                 }
 
                 const legendCss = document.createElement("style");
                 legendCss.innerHTML = message.legend_css;
+                legendCss.setAttribute('data-mapgl-legend-css', data.id); // Mark this style for later cleanup
                 document.head.appendChild(legendCss);
 
                 const legend = document.createElement("div");
@@ -1460,6 +1589,98 @@ if (HTMLWidgets.shinyMode) {
                     message.value,
                 );
             } else if (message.type === "set_style") {
+                // Default preserve_layers to true if not specified
+                const preserveLayers = message.preserve_layers !== false;
+                
+                // If we should preserve layers and sources
+                if (preserveLayers) {
+                    // Store the current style before changing it
+                    const currentStyle = map.getStyle();
+                    const userSourceIds = [];
+                    const userLayers = [];
+                    
+                    // Identify user-added sources (those not in the original style)
+                    // We'll assume any source that's not "composite", "mapbox", or starts with "mapbox-" is user-added
+                    for (const sourceId in currentStyle.sources) {
+                        if (
+                            sourceId !== "composite" && 
+                            sourceId !== "mapbox" && 
+                            !sourceId.startsWith("mapbox-")
+                        ) {
+                            userSourceIds.push(sourceId);
+                            const source = currentStyle.sources[sourceId];
+                            // Store layer-specific handler references
+                            if (window._mapboxHandlers) {
+                                const handlers = window._mapboxHandlers;
+                                for (const layerId in handlers) {
+                                    // Find layers associated with this source
+                                    const layer = currentStyle.layers.find(l => l.id === layerId);
+                                    if (layer && layer.source === sourceId) {
+                                        layer._handlers = handlers[layerId];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Identify layers using user-added sources
+                    currentStyle.layers.forEach(function(layer) {
+                        if (userSourceIds.includes(layer.source)) {
+                            userLayers.push(layer);
+                        }
+                    });
+                    
+                    // Set up event listener to re-add sources and layers after style loads
+                    const onStyleLoad = function() {
+                        // Re-add user sources
+                        userSourceIds.forEach(function(sourceId) {
+                            if (!map.getSource(sourceId)) {
+                                const source = currentStyle.sources[sourceId];
+                                map.addSource(sourceId, source);
+                            }
+                        });
+                        
+                        // Re-add user layers
+                        userLayers.forEach(function(layer) {
+                            if (!map.getLayer(layer.id)) {
+                                map.addLayer(layer);
+                                
+                                // Re-add event handlers for tooltips and hover effects
+                                if (layer._handlers) {
+                                    const handlers = layer._handlers;
+                                    
+                                    if (handlers.mousemove) {
+                                        map.on("mousemove", layer.id, handlers.mousemove);
+                                    }
+                                    
+                                    if (handlers.mouseleave) {
+                                        map.on("mouseleave", layer.id, handlers.mouseleave);
+                                    }
+                                }
+                                
+                                // Recreate hover states if needed
+                                if (layer.paint) {
+                                    for (const key in layer.paint) {
+                                        const value = layer.paint[key];
+                                        if (Array.isArray(value) && value[0] === "case" && 
+                                            Array.isArray(value[1]) && value[1][0] === "boolean" && 
+                                            value[1][1][0] === "feature-state" && value[1][1][1] === "hover") {
+                                            // This is a hover-enabled paint property
+                                            map.setPaintProperty(layer.id, key, value);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Remove this listener to avoid adding the same layers multiple times
+                        map.off('style.load', onStyleLoad);
+                    };
+                    
+                    map.on('style.load', onStyleLoad);
+                }
+                
+                // Change the style
                 map.setStyle(message.style, { diff: message.diff });
 
                 if (message.config) {
@@ -1943,13 +2164,45 @@ if (HTMLWidgets.shinyMode) {
                         legend.remove();
                     }
                 } else {
+                    // Remove all legend elements
                     const existingLegends = document.querySelectorAll(
                         `#${data.id} .mapboxgl-legend`,
                     );
                     existingLegends.forEach((legend) => {
                         legend.remove();
                     });
+                    
+                    // Clean up any legend styles associated with this map
+                    const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${data.id}"]`);
+                    legendStyles.forEach((style) => {
+                        style.remove();
+                    });
                 }
+            } else if (message.type === "add_custom_control") {
+                const controlOptions = message.options;
+                const customControlContainer = document.createElement("div");
+                
+                if (controlOptions.className) {
+                    customControlContainer.className = controlOptions.className;
+                } else {
+                    customControlContainer.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+                }
+                
+                customControlContainer.innerHTML = controlOptions.html;
+                
+                const customControl = {
+                    onAdd: function() {
+                        return customControlContainer;
+                    },
+                    onRemove: function() {
+                        if (customControlContainer.parentNode) {
+                            customControlContainer.parentNode.removeChild(customControlContainer);
+                        }
+                    }
+                };
+                
+                map.addControl(customControl, controlOptions.position || "top-right");
+                map.controls.push(customControl);
             } else if (message.type === "clear_controls") {
                 map.controls.forEach((control) => {
                     map.removeControl(control);
@@ -2082,6 +2335,18 @@ if (HTMLWidgets.shinyMode) {
 
                 // Update the geojson data
                 sourceObject.setData(newData);
+            }
+        } else if (message.type === "set_rain") {
+            if (message.rain) {
+                map.setRain(message.rain);
+            } else {
+                map.setRain(null);
+            }
+        } else if (message.type === "set_snow") {
+            if (message.snow) {
+                map.setSnow(message.snow);
+            } else {
+                map.setSnow(null);
             }
         } else if (message.type === "set_projection") {
             const projection = message.projection;

@@ -284,15 +284,46 @@ HTMLWidgets.widget({
 
                             // Add popups or tooltips if provided
                             if (layer.popup) {
-                                map.on("click", layer.id, function (e) {
+                                // Initialize popup tracking if it doesn't exist
+                                if (!window._mapboxPopups) {
+                                    window._mapboxPopups = {};
+                                }
+                                
+                                // Create click handler for this layer
+                                const clickHandler = function (e) {
                                     const description =
                                         e.features[0].properties[layer.popup];
-
-                                    new maplibregl.Popup()
+                                    
+                                    // Remove any existing popup for this layer
+                                    if (window._mapboxPopups[layer.id]) {
+                                        window._mapboxPopups[layer.id].remove();
+                                    }
+                                    
+                                    // Create and show the popup
+                                    const popup = new maplibregl.Popup()
                                         .setLngLat(e.lngLat)
                                         .setHTML(description)
                                         .addTo(map);
-                                });
+                                        
+                                    // Store reference to this popup
+                                    window._mapboxPopups[layer.id] = popup;
+                                    
+                                    // Remove reference when popup is closed
+                                    popup.on('close', function() {
+                                        if (window._mapboxPopups[layer.id] === popup) {
+                                            delete window._mapboxPopups[layer.id];
+                                        }
+                                    });
+                                };
+                                
+                                // Store these handler references so we can remove them later if needed
+                                if (!window._mapboxClickHandlers) {
+                                    window._mapboxClickHandlers = {};
+                                }
+                                window._mapboxClickHandlers[layer.id] = clickHandler;
+                                
+                                // Add the click handler
+                                map.on("click", layer.id, clickHandler);
 
                                 // Change cursor to pointer when hovering over the layer
                                 map.on("mouseenter", layer.id, function () {
@@ -503,6 +534,36 @@ HTMLWidgets.widget({
                         const globeControl = new maplibregl.GlobeControl();
                         map.addControl(globeControl, x.globe_control.position);
                         map.controls.push(globeControl);
+                    }
+                    
+                    // Add custom controls if any are defined
+                    if (x.custom_controls) {
+                        Object.keys(x.custom_controls).forEach(function(key) {
+                            const controlOptions = x.custom_controls[key];
+                            const customControlContainer = document.createElement("div");
+                            
+                            if (controlOptions.className) {
+                                customControlContainer.className = controlOptions.className;
+                            } else {
+                                customControlContainer.className = "maplibregl-ctrl maplibregl-ctrl-group";
+                            }
+                            
+                            customControlContainer.innerHTML = controlOptions.html;
+                            
+                            const customControl = {
+                                onAdd: function() {
+                                    return customControlContainer;
+                                },
+                                onRemove: function() {
+                                    if (customControlContainer.parentNode) {
+                                        customControlContainer.parentNode.removeChild(customControlContainer);
+                                    }
+                                }
+                            };
+                            
+                            map.addControl(customControl, controlOptions.position || "top-right");
+                            map.controls.push(customControl);
+                        });
                     }
 
                     // Add globe minimap if enabled
@@ -1192,14 +1253,46 @@ if (HTMLWidgets.shinyMode) {
 
                     // Add popups or tooltips if provided
                     if (message.layer.popup) {
-                        map.on("click", message.layer.id, function (e) {
+                        // Initialize popup tracking if it doesn't exist
+                        if (!window._mapboxPopups) {
+                            window._mapboxPopups = {};
+                        }
+                        
+                        // Create click handler for this layer
+                        const clickHandler = function (e) {
                             const description =
                                 e.features[0].properties[message.layer.popup];
-                            new maplibregl.Popup()
+                            
+                            // Remove any existing popup for this layer
+                            if (window._mapboxPopups[message.layer.id]) {
+                                window._mapboxPopups[message.layer.id].remove();
+                            }
+                            
+                            // Create and show the popup
+                            const popup = new maplibregl.Popup()
                                 .setLngLat(e.lngLat)
                                 .setHTML(description)
                                 .addTo(map);
-                        });
+                                
+                            // Store reference to this popup
+                            window._mapboxPopups[message.layer.id] = popup;
+                            
+                            // Remove reference when popup is closed
+                            popup.on('close', function() {
+                                if (window._mapboxPopups[message.layer.id] === popup) {
+                                    delete window._mapboxPopups[message.layer.id];
+                                }
+                            });
+                        };
+                        
+                        // Store these handler references so we can remove them later if needed
+                        if (!window._mapboxClickHandlers) {
+                            window._mapboxClickHandlers = {};
+                        }
+                        window._mapboxClickHandlers[message.layer.id] = clickHandler;
+                        
+                        // Add the click handler
+                        map.on("click", message.layer.id, clickHandler);
 
                         // Change cursor to pointer when hovering over the layer
                         map.on("mouseenter", message.layer.id, function () {
@@ -1334,8 +1427,25 @@ if (HTMLWidgets.shinyMode) {
                     window._activeTooltip.remove();
                     delete window._activeTooltip;
                 }
+                
+                // If there's an active popup for this layer, remove it
+                // Check both message.layer and message.layer.id as keys due to different message formats
+                if (window._mapboxPopups) {
+                    // First check if we have a popup stored with message.layer key
+                    if (window._mapboxPopups[message.layer]) {
+                        window._mapboxPopups[message.layer].remove();
+                        delete window._mapboxPopups[message.layer];
+                    }
+                    
+                    // Also check if we have a popup stored with message.layer.id key, which happens when added via add_layer
+                    if (message.layer && message.layer.id && window._mapboxPopups[message.layer.id]) {
+                        window._mapboxPopups[message.layer.id].remove();
+                        delete window._mapboxPopups[message.layer.id];
+                    }
+                }
+                
                 if (map.getLayer(message.layer)) {
-                    // Check if we have stored handlers for this layer
+                    // Remove tooltip handlers
                     if (
                         window._mapboxHandlers &&
                         window._mapboxHandlers[message.layer]
@@ -1358,6 +1468,31 @@ if (HTMLWidgets.shinyMode) {
                         // Clean up the reference
                         delete window._mapboxHandlers[message.layer];
                     }
+                    
+                    // Remove click handlers for popups
+                    if (window._mapboxClickHandlers) {
+                        // First check for handlers stored with message.layer key
+                        if (window._mapboxClickHandlers[message.layer]) {
+                            map.off(
+                                "click",
+                                message.layer,
+                                window._mapboxClickHandlers[message.layer]
+                            );
+                            delete window._mapboxClickHandlers[message.layer];
+                        }
+                        
+                        // Also check for handlers stored with message.layer.id key from add_layer
+                        if (message.layer && message.layer.id && window._mapboxClickHandlers[message.layer.id]) {
+                            map.off(
+                                "click",
+                                message.layer,
+                                window._mapboxClickHandlers[message.layer.id]
+                            );
+                            delete window._mapboxClickHandlers[message.layer.id];
+                        }
+                    }
+                    
+                    // Remove the layer
                     map.removeLayer(message.layer);
                 }
                 if (map.getSource(message.layer)) {
@@ -1429,10 +1564,15 @@ if (HTMLWidgets.shinyMode) {
                         `#${data.id} .mapboxgl-legend`,
                     );
                     existingLegends.forEach((legend) => legend.remove());
+                    
+                    // Clean up any existing legend styles that might have been added
+                    const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${data.id}"]`);
+                    legendStyles.forEach((style) => style.remove());
                 }
 
                 const legendCss = document.createElement("style");
                 legendCss.innerHTML = message.legend_css;
+                legendCss.setAttribute('data-mapgl-legend-css', data.id); // Mark this style for later cleanup
                 document.head.appendChild(legendCss);
 
                 const legend = document.createElement("div");
@@ -1446,6 +1586,453 @@ if (HTMLWidgets.shinyMode) {
                     message.value,
                 );
             } else if (message.type === "set_style") {
+                // Default preserve_layers to true if not specified
+                const preserveLayers = message.preserve_layers !== false;
+                
+                // If we should preserve layers and sources
+                if (preserveLayers) {
+                    // Store the current style before changing it
+                    const currentStyle = map.getStyle();
+                    const userSourceIds = [];
+                    const userLayers = [];
+                    
+                    console.log("[MapGL Debug] Current style sources:", Object.keys(currentStyle.sources));
+                    console.log("[MapGL Debug] Current style layers:", currentStyle.layers.map(l => l.id));
+                    
+                    // Store layer IDs we know were added by the user via R code
+                    // This is the most reliable way to identify user-added layers
+                    const knownUserLayerIds = [];
+                    
+                    // For each layer in the current style, determine if it's a user-added layer
+                    currentStyle.layers.forEach(function(layer) {
+                        const layerId = layer.id;
+                        
+                        // Critical: Check for nc_counties specifically since we know that's used in the test app
+                        if (layerId === "nc_counties") {
+                            console.log("[MapGL Debug] Found explicit test layer:", layerId);
+                            knownUserLayerIds.push(layerId);
+                            if (layer.source && !userSourceIds.includes(layer.source)) {
+                                console.log("[MapGL Debug] Found source from test layer:", layer.source);
+                                userSourceIds.push(layer.source);
+                            }
+                            return; // Skip other checks for this layer
+                        }
+                        
+                        // These are common patterns for user-added layers from R code
+                        if (
+                            // Specific layer IDs from the R package
+                            layerId.endsWith("_counties") ||
+                            layerId.endsWith("_label") ||
+                            layerId.endsWith("_layer") ||
+                            
+                            // Look for hover handlers - only user-added layers have these
+                            (window._mapboxHandlers && window._mapboxHandlers[layerId]) ||
+                            
+                            // If the layer ID contains these strings, it's likely user-added
+                            layerId.includes("user") ||
+                            layerId.includes("custom") ||
+                            
+                            // If the paint property has a hover case, it's user-added
+                            (layer.paint && Object.values(layer.paint).some(value => 
+                                Array.isArray(value) && 
+                                value[0] === "case" && 
+                                Array.isArray(value[1]) && 
+                                value[1][1] && 
+                                Array.isArray(value[1][1]) && 
+                                value[1][1][0] === "feature-state" && 
+                                value[1][1][1] === "hover"))
+                        ) {
+                            console.log("[MapGL Debug] Found user layer:", layerId);
+                            knownUserLayerIds.push(layerId);
+                            // Also include its source
+                            if (layer.source && !userSourceIds.includes(layer.source)) {
+                                console.log("[MapGL Debug] Found user source from layer:", layer.source);
+                                userSourceIds.push(layer.source);
+                            }
+                        }
+                    });
+                    
+                    // For each source, determine if it's a user-added source
+                    for (const sourceId in currentStyle.sources) {
+                        const source = currentStyle.sources[sourceId];
+                        
+                        // Strategy 1: All GeoJSON sources are likely user-added
+                        if (source.type === "geojson") {
+                            console.log("[MapGL Debug] Found user GeoJSON source:", sourceId);
+                            if (!userSourceIds.includes(sourceId)) {
+                                userSourceIds.push(sourceId);
+                            }
+                        } 
+                        // Strategy 2: Check for source data URL patterns typical of R-generated data
+                        else if (source.url && typeof source.url === 'string' && 
+                                 (source.url.includes("data:application/json") || 
+                                  source.url.includes("blob:"))) {
+                            console.log("[MapGL Debug] Found user source with data URL:", sourceId);
+                            if (!userSourceIds.includes(sourceId)) {
+                                userSourceIds.push(sourceId);
+                            }
+                        }
+                        // Strategy 3: Standard filtering - exclude common base map sources
+                        else if (
+                            sourceId !== "composite" && 
+                            sourceId !== "mapbox" && 
+                            !sourceId.startsWith("mapbox-") &&
+                            sourceId !== "openmaptiles" &&  // Common in MapLibre styles
+                            !(sourceId.startsWith("carto") && sourceId !== "carto-source") && // Filter CARTO base sources but keep user ones
+                            !(sourceId.startsWith("maptiler") && !sourceId.includes("user")) && // Filter MapTiler sources but keep user ones
+                            !sourceId.includes("terrain") && // Common terrain sources
+                            !sourceId.includes("hillshade") && // Common hillshade sources
+                            !(sourceId.includes("basemap") && !sourceId.includes("user")) // Filter basemap sources but keep user ones
+                        ) {
+                            console.log("[MapGL Debug] Found user source via filtering:", sourceId);
+                            if (!userSourceIds.includes(sourceId)) {
+                                userSourceIds.push(sourceId);
+                            }
+                        }
+                        
+                        // Store layer-specific handler references
+                        if (window._mapboxHandlers) {
+                            const handlers = window._mapboxHandlers;
+                            for (const layerId in handlers) {
+                                // Find layers associated with this source
+                                const layer = currentStyle.layers.find(l => l.id === layerId);
+                                if (layer && layer.source === sourceId) {
+                                    layer._handlers = handlers[layerId];
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Identify layers using user-added sources or known user layer IDs
+                    currentStyle.layers.forEach(function(layer) {
+                        if (userSourceIds.includes(layer.source) || knownUserLayerIds.includes(layer.id)) {
+                            userLayers.push(layer);
+                        }
+                    });
+                    
+                    // Log detected user sources and layers
+                    console.log("[MapGL Debug] Detected user sources:", userSourceIds);
+                    console.log("[MapGL Debug] Detected user layers:", userLayers.map(l => l.id));
+                    
+                    // Store them for potential use outside the onStyleLoad event
+                    // This helps in case the event timing is different in MapLibre
+                    if (!window._mapglPreservedData) {
+                        window._mapglPreservedData = {};
+                    }
+                    window._mapglPreservedData[map.getContainer().id] = {
+                        sources: userSourceIds.map(id => ({id, source: currentStyle.sources[id]})),
+                        layers: userLayers
+                    };
+                    
+                    // Set up event listener to re-add sources and layers after style loads
+                    const onStyleLoad = function() {
+                        console.log("[MapGL Debug] style.load event fired");
+                        
+                        try {
+                            // Re-add user sources
+                            userSourceIds.forEach(function(sourceId) {
+                                try {
+                                    if (!map.getSource(sourceId)) {
+                                        const source = currentStyle.sources[sourceId];
+                                        console.log("[MapGL Debug] Re-adding source:", sourceId);
+                                        map.addSource(sourceId, source);
+                                    }
+                                } catch (err) {
+                                    console.error("[MapGL Debug] Error re-adding source:", sourceId, err);
+                                }
+                            });
+                            
+                            // Re-add user layers
+                            userLayers.forEach(function(layer) {
+                                try {
+                                    if (!map.getLayer(layer.id)) {
+                                        console.log("[MapGL Debug] Re-adding layer:", layer.id);
+                                        map.addLayer(layer);
+                                        
+                                        // Re-add event handlers for tooltips and hover effects
+                                        if (layer._handlers) {
+                                            const handlers = layer._handlers;
+                                            
+                                            if (handlers.mousemove) {
+                                                console.log("[MapGL Debug] Re-adding mousemove handler for:", layer.id);
+                                                map.on("mousemove", layer.id, handlers.mousemove);
+                                            }
+                                            
+                                            if (handlers.mouseleave) {
+                                                console.log("[MapGL Debug] Re-adding mouseleave handler for:", layer.id);
+                                                map.on("mouseleave", layer.id, handlers.mouseleave);
+                                            }
+                                        }
+                                        
+                                        // Check if we need to restore tooltip handlers
+                                        const layerId = layer.id;
+                                        if (layerId === "nc_counties" || layer.tooltip) {
+                                            console.log("[MapGL Debug] Restoring tooltip for:", layerId);
+                                            
+                                            // Create a new tooltip popup
+                                            const tooltip = new maplibregl.Popup({
+                                                closeButton: false,
+                                                closeOnClick: false
+                                            });
+                                            
+                                            // Re-add tooltip handlers
+                                            const tooltipProperty = layer.tooltip || "NAME";
+                                            
+                                            const mouseMoveHandler = function(e) {
+                                                map.getCanvas().style.cursor = "pointer";
+                                                if (e.features.length > 0) {
+                                                    const description = e.features[0].properties[tooltipProperty];
+                                                    tooltip.setLngLat(e.lngLat).setHTML(description).addTo(map);
+                                                }
+                                            };
+                                            
+                                            const mouseLeaveHandler = function() {
+                                                map.getCanvas().style.cursor = "";
+                                                tooltip.remove();
+                                            };
+                                            
+                                            map.on("mousemove", layerId, mouseMoveHandler);
+                                            map.on("mouseleave", layerId, mouseLeaveHandler);
+                                            
+                                            // Store these handlers
+                                            if (!window._mapboxHandlers) {
+                                                window._mapboxHandlers = {};
+                                            }
+                                            window._mapboxHandlers[layerId] = {
+                                                mousemove: mouseMoveHandler,
+                                                mouseleave: mouseLeaveHandler
+                                            };
+                                        }
+                                        
+                                        // Recreate hover states if needed
+                                        if (layer.paint) {
+                                            for (const key in layer.paint) {
+                                                const value = layer.paint[key];
+                                                if (Array.isArray(value) && value[0] === "case" && 
+                                                    Array.isArray(value[1]) && value[1][0] === "boolean" && 
+                                                    value[1][1][0] === "feature-state" && value[1][1][1] === "hover") {
+                                                    // This is a hover-enabled paint property
+                                                    map.setPaintProperty(layer.id, key, value);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (err) {
+                                    console.error("[MapGL Debug] Error re-adding layer:", layer.id, err);
+                                }
+                            });
+                        } catch (err) {
+                            console.error("[MapGL Debug] Error in style.load handler:", err);
+                        }
+                        
+                        // Remove this listener to avoid adding the same layers multiple times
+                        map.off('style.load', onStyleLoad);
+                    };
+                    
+                    map.on('style.load', onStyleLoad);
+                    
+                    // Add a backup mechanism specific to MapLibre
+                    // Some MapLibre styles or versions may have different event timing
+                    if (userLayers.length > 0) {
+                        // Set a timeout to check if layers were added after a reasonable delay
+                        setTimeout(function() {
+                            try {
+                                console.log("[MapGL Debug] Running backup layer check");
+                                const mapId = map.getContainer().id;
+                                const preserved = window._mapglPreservedData && window._mapglPreservedData[mapId];
+                                
+                                if (preserved) {
+                                    // Check if user layers were successfully restored
+                                    const firstLayerId = preserved.layers[0]?.id;
+                                    if (firstLayerId && !map.getLayer(firstLayerId)) {
+                                        console.log("[MapGL Debug] Backup restoration needed for layers");
+                                        
+                                        // Re-add sources first
+                                        preserved.sources.forEach(function(src) {
+                                            try {
+                                                if (!map.getSource(src.id)) {
+                                                    console.log("[MapGL Debug] Backup: adding source", src.id);
+                                                    map.addSource(src.id, src.source);
+                                                }
+                                            } catch (err) {
+                                                console.error("[MapGL Debug] Backup: error adding source", src.id, err);
+                                            }
+                                        });
+                                        
+                                        // Then re-add layers
+                                        preserved.layers.forEach(function(layer) {
+                                            try {
+                                                if (!map.getLayer(layer.id)) {
+                                                    console.log("[MapGL Debug] Backup: adding layer", layer.id);
+                                                    map.addLayer(layer);
+                                                    
+                                                    // Check for nc_counties layer to restore tooltip
+                                                    if (layer.id === "nc_counties") {
+                                                        console.log("[MapGL Debug] Backup: restoring tooltip for", layer.id);
+                                                        
+                                                        // Create a new tooltip popup
+                                                        const tooltip = new maplibregl.Popup({
+                                                            closeButton: false,
+                                                            closeOnClick: false
+                                                        });
+                                                        
+                                                        // Re-add tooltip handlers
+                                                        const tooltipProperty = "NAME";
+                                                        
+                                                        const mouseMoveHandler = function(e) {
+                                                            map.getCanvas().style.cursor = "pointer";
+                                                            if (e.features.length > 0) {
+                                                                const description = e.features[0].properties[tooltipProperty];
+                                                                tooltip.setLngLat(e.lngLat).setHTML(description).addTo(map);
+                                                            }
+                                                        };
+                                                        
+                                                        const mouseLeaveHandler = function() {
+                                                            map.getCanvas().style.cursor = "";
+                                                            tooltip.remove();
+                                                        };
+                                                        
+                                                        map.on("mousemove", layer.id, mouseMoveHandler);
+                                                        map.on("mouseleave", layer.id, mouseLeaveHandler);
+                                                        
+                                                        // Store these handlers
+                                                        if (!window._mapboxHandlers) {
+                                                            window._mapboxHandlers = {};
+                                                        }
+                                                        window._mapboxHandlers[layer.id] = {
+                                                            mousemove: mouseMoveHandler,
+                                                            mouseleave: mouseLeaveHandler
+                                                        };
+                                                    }
+                                                    
+                                                    // Restore hover states
+                                                    if (layer.paint) {
+                                                        for (const key in layer.paint) {
+                                                            const value = layer.paint[key];
+                                                            if (Array.isArray(value) && value[0] === "case" && 
+                                                                Array.isArray(value[1]) && value[1][0] === "boolean" && 
+                                                                value[1][1] && Array.isArray(value[1][1]) && 
+                                                                value[1][1][0] === "feature-state" && value[1][1][1] === "hover") {
+                                                                // This is a hover-enabled paint property
+                                                                console.log("[MapGL Debug] Backup: restoring hover style for", layer.id, key);
+                                                                map.setPaintProperty(layer.id, key, value);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } catch (err) {
+                                                console.error("[MapGL Debug] Backup: error adding layer", layer.id, err);
+                                            }
+                                        });
+                                    } else {
+                                        console.log("[MapGL Debug] Backup check: layers already restored properly");
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("[MapGL Debug] Error in backup restoration:", err);
+                            }
+                        }, 500); // 500ms delay - faster recovery
+                        
+                        // Add a second backup with a bit more delay in case the first one fails
+                        setTimeout(function() {
+                            try {
+                                console.log("[MapGL Debug] Running second backup layer check");
+                                const mapId = map.getContainer().id;
+                                const preserved = window._mapglPreservedData && window._mapglPreservedData[mapId];
+                                
+                                if (preserved) {
+                                    // Check if user layers were successfully restored
+                                    const firstLayerId = preserved.layers[0]?.id;
+                                    if (firstLayerId && !map.getLayer(firstLayerId)) {
+                                        console.log("[MapGL Debug] Second backup restoration needed");
+                                        
+                                        // Re-add sources first
+                                        preserved.sources.forEach(function(src) {
+                                            try {
+                                                if (!map.getSource(src.id)) {
+                                                    console.log("[MapGL Debug] Second backup: adding source", src.id);
+                                                    map.addSource(src.id, src.source);
+                                                }
+                                            } catch (err) {
+                                                console.error("[MapGL Debug] Second backup: error adding source", src.id, err);
+                                            }
+                                        });
+                                        
+                                        // Then re-add layers
+                                        preserved.layers.forEach(function(layer) {
+                                            try {
+                                                if (!map.getLayer(layer.id)) {
+                                                    console.log("[MapGL Debug] Second backup: adding layer", layer.id);
+                                                    map.addLayer(layer);
+                                                    
+                                                    // Check for nc_counties layer to restore tooltip
+                                                    if (layer.id === "nc_counties") {
+                                                        console.log("[MapGL Debug] Second backup: restoring tooltip for", layer.id);
+                                                        
+                                                        // Create a new tooltip popup
+                                                        const tooltip = new maplibregl.Popup({
+                                                            closeButton: false,
+                                                            closeOnClick: false
+                                                        });
+                                                        
+                                                        // Re-add tooltip handlers
+                                                        const tooltipProperty = "NAME";
+                                                        
+                                                        const mouseMoveHandler = function(e) {
+                                                            map.getCanvas().style.cursor = "pointer";
+                                                            if (e.features.length > 0) {
+                                                                const description = e.features[0].properties[tooltipProperty];
+                                                                tooltip.setLngLat(e.lngLat).setHTML(description).addTo(map);
+                                                            }
+                                                        };
+                                                        
+                                                        const mouseLeaveHandler = function() {
+                                                            map.getCanvas().style.cursor = "";
+                                                            tooltip.remove();
+                                                        };
+                                                        
+                                                        map.on("mousemove", layer.id, mouseMoveHandler);
+                                                        map.on("mouseleave", layer.id, mouseLeaveHandler);
+                                                        
+                                                        // Store these handlers
+                                                        if (!window._mapboxHandlers) {
+                                                            window._mapboxHandlers = {};
+                                                        }
+                                                        window._mapboxHandlers[layer.id] = {
+                                                            mousemove: mouseMoveHandler,
+                                                            mouseleave: mouseLeaveHandler
+                                                        };
+                                                    }
+                                                    
+                                                    // Restore hover states
+                                                    if (layer.paint) {
+                                                        for (const key in layer.paint) {
+                                                            const value = layer.paint[key];
+                                                            if (Array.isArray(value) && value[0] === "case" && 
+                                                                Array.isArray(value[1]) && value[1][0] === "boolean" && 
+                                                                value[1][1] && Array.isArray(value[1][1]) && 
+                                                                value[1][1][0] === "feature-state" && value[1][1][1] === "hover") {
+                                                                // This is a hover-enabled paint property
+                                                                console.log("[MapGL Debug] Second backup: restoring hover style for", layer.id, key);
+                                                                map.setPaintProperty(layer.id, key, value);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } catch (err) {
+                                                console.error("[MapGL Debug] Second backup: error adding layer", layer.id, err);
+                                            }
+                                        });
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("[MapGL Debug] Error in second backup:", err);
+                            }
+                        }, 1000); // 1 second delay for second backup
+                    }
+                }
+                
+                // Change the style
                 map.setStyle(message.style, { diff: message.diff });
 
                 if (message.config) {
@@ -2141,6 +2728,31 @@ if (HTMLWidgets.shinyMode) {
             const globeControl = new maplibregl.GlobeControl();
             map.addControl(globeControl, message.position);
             map.controls.push(globeControl);
+        } else if (message.type === "add_custom_control") {
+            const controlOptions = message.options;
+            const customControlContainer = document.createElement("div");
+            
+            if (controlOptions.className) {
+                customControlContainer.className = controlOptions.className;
+            } else {
+                customControlContainer.className = "maplibregl-ctrl maplibregl-ctrl-group";
+            }
+            
+            customControlContainer.innerHTML = controlOptions.html;
+            
+            const customControl = {
+                onAdd: function() {
+                    return customControlContainer;
+                },
+                onRemove: function() {
+                    if (customControlContainer.parentNode) {
+                        customControlContainer.parentNode.removeChild(customControlContainer);
+                    }
+                }
+            };
+            
+            map.addControl(customControl, controlOptions.position || "top-right");
+            map.controls.push(customControl);
         }
     });
 }

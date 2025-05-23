@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://walker-data.com/mapgl/404.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/CLAUDE.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/LICENSE-text.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/LICENSE.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/articles/getting-started.html</loc></url>
@@ -14,6 +15,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_categorical_legend.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_circle_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_continuous_legend.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/add_control.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_draw_control.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_fill_extrusion_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_fill_layer.html</loc></url>
@@ -62,12 +64,14 @@
 <url><loc>https://walker-data.com/mapgl/reference/mapboxglOutput.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/mapboxgl_compare_proxy.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/mapboxgl_proxy.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/mapboxgl_view.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/mapgl-package.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/maplibre.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/maplibreCompareOutput.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/maplibreOutput.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/maplibre_compare_proxy.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/maplibre_proxy.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/maplibre_view.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/maptiler_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/match_expr.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/move_layer.html</loc></url>
@@ -82,6 +86,8 @@
 <url><loc>https://walker-data.com/mapgl/reference/set_layout_property.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_paint_property.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_projection.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/set_rain.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/set_snow.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_terrain.html</loc></url>

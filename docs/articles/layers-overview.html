@@ -41,10 +41,9 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started with mapgl</a></li>
-    <li><a class="dropdown-item" href="../articles/layers-overview.html">Layers overview</a></li>
+    <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
-    <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
-    <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
+    <li><a class="dropdown-item" href="../articles/margins-of-error.html">Using mapgl with Shiny</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -63,8 +62,8 @@
 
 
 
-<script src="layers-overview_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js"></script><link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet">
+<script src="layers-overview_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><link href="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.js"></script><link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script><script src="layers-overview_files/freehand-mode-1.0.0/freehand-mode.js"></script><link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script><script src="layers-overview_files/mapbox-gl-globe-minimap-1.2.1/bundle.js"></script><script src="layers-overview_files/mapboxgl-binding-0.2.2/mapboxgl.js"></script><link href="layers-overview_files/layers-control-1.0.0/layers-control.css" rel="stylesheet">
 <link href="layers-overview_files/maplibre-gl-5.3.0/maplibre-gl.css" rel="stylesheet">
@@ -111,7 +110,7 @@ layer’s bounding box.</p>
 <span></span>
 <span><span class="va">nc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_read.html" class="external-link">st_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"shape/nc.shp"</span>, package<span class="op">=</span><span class="st">"sf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Reading layer `nc' from data source </span></span>
-<span><span class="co">##   `/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/library/sf/shape/nc.shp' </span></span>
+<span><span class="co">##   `/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/sf/shape/nc.shp' </span></span>
 <span><span class="co">##   using driver `ESRI Shapefile'</span></span>
 <span><span class="co">## Simple feature collection with 100 features and 14 fields</span></span>
 <span><span class="co">## Geometry type: MULTIPOLYGON</span></span>
@@ -140,10 +139,9 @@ Layers can be used with either <code><a href="../reference/mapboxgl.html">mapbox
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>tigris_use_cache <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">loving_roads</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tigris/man/roads.html" class="external-link">roads</a></span><span class="op">(</span><span class="st">"TX"</span>, <span class="st">"Loving"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   |                                                                              |                                                                      |   0%  |                                                                              |==                                                                    |   3%  |                                                                              |=====                                                                 |   7%  |                                                                              |==============                                                        |  19%  |                                                                              |=======================                                               |  33%  |                                                                              |========================                                              |  34%  |                                                                              |=========================                                             |  36%  |                                                                              |============================                                          |  40%  |                                                                              |==============================                                        |  43%  |                                                                              |==================================                                    |  48%  |                                                                              |=====================================                                 |  52%  |                                                                              |===========================================                           |  62%  |                                                                              |===================================================                   |  72%  |                                                                              |============================================================          |  85%  |                                                                              |==============================================================        |  88%  |                                                                              |==================================================================    |  95%  |                                                                              |====================================================================  |  97%  |                                                                              |======================================================================| 100%</span></span></code></pre>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/maptiler_style.html">maptiler_style</a></span><span class="op">(</span><span class="st">"backdrop"</span><span class="op">)</span>,</span>
+<span><span class="va">loving_roads</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tigris/man/roads.html" class="external-link">roads</a></span><span class="op">(</span><span class="st">"TX"</span>, <span class="st">"Loving"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/maptiler_style.html">maptiler_style</a></span><span class="op">(</span><span class="st">"backdrop"</span><span class="op">)</span>,</span>
 <span>         bounds <span class="op">=</span> <span class="va">loving_roads</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/add_line_layer.html">add_line_layer</a></span><span class="op">(</span></span>
 <span>    id <span class="op">=</span> <span class="st">"roads"</span>,</span>
@@ -161,7 +159,7 @@ Layers can be used with either <code><a href="../reference/mapboxgl.html">mapbox
 your map. Circle clustering is implemented with the
 <code>cluster_options</code> argument, to which a list generated by the
 <code><a href="../reference/cluster_options.html">cluster_options()</a></code> function can be passed.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
@@ -232,7 +230,7 @@ and label appearance; however not all arguments will work with all
 icons. The <code>icon_image</code> argument will look for a string that
 represents an icon found in the map style’s sprite. <a href="https://docs.mapbox.com/style-spec/reference/sprite/" class="external-link">Read more
 about sprites here</a>.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"light"</span><span class="op">)</span>,</span>
 <span>         bounds <span class="op">=</span> <span class="va">random_points</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/add_symbol_layer.html">add_symbol_layer</a></span><span class="op">(</span></span>
@@ -253,7 +251,7 @@ the density of those points in a visually attractive way.
 <code><a href="../reference/add_heatmap_layer.html">add_heatmap_layer()</a></code> takes <strong>sf</strong> POINT
 objects; the example below shows how to read in a remote GeoJSON file as
 a source as well.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"dark"</span><span class="op">)</span>,</span>
@@ -290,7 +288,7 @@ a source as well.</p>
 <div class="section level3">
 <h3 id="fill-extrusion-layers">Fill-extrusion layers<a class="anchor" aria-label="anchor" href="#fill-extrusion-layers"></a>
 </h3>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://walker-data.com/mapgl/">mapgl</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/maplibre.html">maplibre</a></span><span class="op">(</span></span>
@@ -337,7 +335,7 @@ visualized with <code><a href="../reference/add_raster_layer.html">add_raster_la
 (as shown below) can also be added through
 <code><a href="../reference/add_image_source.html">add_image_source()</a></code> for remotely-hosted image files, or
 <code><a href="../reference/add_raster_source.html">add_raster_source()</a></code> for remotely-hosted raster tiles.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span>style <span class="op">=</span> <span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"dark"</span><span class="op">)</span>,</span>
 <span>         zoom <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>         center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">75.789</span>, <span class="fl">41.874</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -368,7 +366,7 @@ MapLibre GL JS, as they highlight locations but do not count as map
 the <code><a href="../reference/add_markers.html">add_markers()</a></code> function. A single marker can be added as
 a length-2 vector of longitude and latitude; a list of length-2 vectors
 or an <strong>sf</strong> POINT object will add multiple markers.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mapboxgl.html">mapboxgl</a></span><span class="op">(</span></span>
 <span>  style <span class="op">=</span> <span class="fu"><a href="../reference/mapbox_style.html">mapbox_style</a></span><span class="op">(</span><span class="st">"streets"</span><span class="op">)</span>,</span>
 <span>  center <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">74.006</span>, <span class="fl">40.7128</span><span class="op">)</span>,</span>
@@ -394,7 +392,7 @@ or an <strong>sf</strong> POINT object will add multiple markers.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
