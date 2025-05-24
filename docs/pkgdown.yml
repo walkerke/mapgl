@@ -1,13 +1,13 @@
 pandoc: '3.4'
-pkgdown: 2.1.1
-pkgdown_sha: ~
+pkgdown: 2.1.3.9000
+pkgdown_sha: f950aed41af49c732ba7884d0806c3641a7b94b3
 articles:
   getting-started: getting-started.html
   layers-overview: layers-overview.html
   map-design: map-design.html
   shiny: shiny.html
   story-maps: story-maps.html
-last_built: 2025-05-23T19:10Z
+last_built: 2025-05-24T15:47Z
 urls:
   reference: https://walker-data.com/mapgl/reference
   article: https://walker-data.com/mapgl/articles

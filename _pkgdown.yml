@@ -35,4 +35,6 @@ navbar:
       - text: Fundamentals of map design with mapgl
         href: articles/map-design.html
       - text: Using mapgl with Shiny
-        href: articles/margins-of-error.html
+        href: articles/shiny.html
+      - text: Building story maps with mapgl
+        href: articles/story-maps.html

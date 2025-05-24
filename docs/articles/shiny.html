@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Using mapgl with Shiny • mapgl</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -37,13 +36,14 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html"><span class="fa fa-home fa-lg"></span></a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started with mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
-    <li><a class="dropdown-item" href="../articles/margins-of-error.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -114,7 +114,7 @@ nothing more than display North Carolina’s counties over a basemap.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fclipboard-2017990981.png"></p>
+<p><img src="images/clipboard-2017990981.png"></p>
 <p>Note that we use <code><a href="../reference/maplibreOutput.html">maplibreOutput()</a></code> to display the map in
 the UI and <code><a href="../reference/renderMaplibre.html">renderMaplibre()</a></code> to render it in the server
 code; the equivalent functions for Mapbox maps are
@@ -172,7 +172,7 @@ coordinates and time of the click.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fclipboard-3084377675.png"></p>
+<p><img src="images/clipboard-3084377675.png"></p>
 </div>
 <div class="section level3">
 <h3 id="shiny-specific-functions">Shiny-specific functions<a class="anchor" aria-label="anchor" href="#shiny-specific-functions"></a>
@@ -244,7 +244,7 @@ an expression.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fclipboard-4076622643.png"></p>
+<p><img src="images/clipboard-4076622643.png"></p>
 </div>
 <div class="section level3">
 <h3 id="comparison-maps-in-shiny">Comparison maps in Shiny<a class="anchor" aria-label="anchor" href="#comparison-maps-in-shiny"></a>
@@ -273,7 +273,7 @@ target the side of the map you want to modify with the argument
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
 </div>
 
     </footer>

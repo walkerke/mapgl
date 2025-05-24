@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Building story maps with mapgl • mapgl</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -37,13 +36,14 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html"><span class="fa fa-home fa-lg"></span></a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started with mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
-    <li><a class="dropdown-item" href="../articles/margins-of-error.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -146,7 +146,7 @@ map scrolling behavior doesn’t interfere with story scrolling.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fstory-1a.gif"></p>
+<p><img src="images/story-1a.gif"></p>
 <p>You’ll note that scrolling will transition between story sections,
 and that you can still interact with the map by clicking and panning.
 However, because we haven’t set up any actions in <code>server</code>,
@@ -194,7 +194,7 @@ to be executed when a given section appears.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fstory-1b.gif"></p>
+<p><img src="images/story-1b.gif"></p>
 <p>The map zooms into the Colosseum in Rome on user scroll. If you
 scroll back up to the top, however, you’ll notice that the view does not
 return to the original globe. This can be remedied by tying an
@@ -243,7 +243,7 @@ return to the original globe. This can be remedied by tying an
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fstory-1c.gif"></p>
+<p><img src="images/story-1c.gif"></p>
 <p>For map transitions, in addition to <code><a href="../reference/fly_to.html">fly_to()</a></code>, you might
 consider using <code><a href="../reference/ease_to.html">ease_to()</a></code> and <code><a href="../reference/jump_to.html">jump_to()</a></code>
 depending on your use case. Map transition functions support <a href="https://docs.mapbox.com/mapbox-gl-js/api/properties/#cameraoptions" class="external-link">camera
@@ -340,7 +340,7 @@ a real estate firm might use a story map to market a property.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fstory-2.gif"></p>
+<p><img src="images/story-2.gif"></p>
 <p>Let’s break down some key elements of this story map.</p>
 <ul>
 <li><p>We’re loading a Google font, “Poppins”, into our Shiny app with
@@ -487,7 +487,7 @@ county.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
-<p><img src="images%2Fstory-3.gif"></p>
+<p><img src="images/story-3.gif"></p>
 <p>Let’s walk through how this works.</p>
 <ul>
 <li><p>The UI code will be familiar, though we are now using the
@@ -535,7 +535,7 @@ please do reach out if you are interested.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
 </div>
 
     </footer>
