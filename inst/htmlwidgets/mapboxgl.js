@@ -668,6 +668,21 @@ HTMLWidgets.widget({
                         map.on("draw.create", updateDrawnFeatures);
                         map.on("draw.delete", updateDrawnFeatures);
                         map.on("draw.update", updateDrawnFeatures);
+                        
+                        // Add initial features if provided
+                        if (x.draw_control.source) {
+                            addSourceFeaturesToDraw(draw, x.draw_control.source, map);
+                        }
+                        
+                        // Process any queued features
+                        if (x.draw_features_queue) {
+                            x.draw_features_queue.forEach(function(data) {
+                                if (data.clear_existing) {
+                                    draw.deleteAll();
+                                }
+                                addSourceFeaturesToDraw(draw, data.source, map);
+                            });
+                        }
 
                         // Apply orientation styling
                         if (x.draw_control.orientation === "horizontal") {
@@ -678,6 +693,16 @@ HTMLWidgets.widget({
                                 drawBar.style.display = "flex";
                                 drawBar.style.flexDirection = "row";
                             }
+                        }
+                    }
+
+                    // Helper function to add features from a source to draw
+                    function addSourceFeaturesToDraw(draw, sourceId, map) {
+                        const source = map.getSource(sourceId);
+                        if (source && source._data) {
+                            draw.add(source._data);
+                        } else {
+                            console.warn('Source not found or has no data:', sourceId);
                         }
                     }
 
@@ -1799,6 +1824,11 @@ if (HTMLWidgets.shinyMode) {
                 map.on("draw.create", updateDrawnFeatures);
                 map.on("draw.delete", updateDrawnFeatures);
                 map.on("draw.update", updateDrawnFeatures);
+                
+                // Add initial features if provided
+                if (message.source) {
+                    addSourceFeaturesToDraw(draw, message.source, map);
+                }
 
                 if (message.orientation === "horizontal") {
                     const drawBar = map
@@ -1835,6 +1865,17 @@ if (HTMLWidgets.shinyMode) {
                     draw.deleteAll();
                     // Update the drawn features
                     updateDrawnFeatures();
+                }
+            } else if (message.type === "add_features_to_draw") {
+                if (draw) {
+                    if (message.data.clear_existing) {
+                        draw.deleteAll();
+                    }
+                    addSourceFeaturesToDraw(draw, message.data.source, map);
+                    // Update the drawn features
+                    updateDrawnFeatures();
+                } else {
+                    console.warn('Draw control not initialized');
                 }
             } else if (message.type === "add_markers") {
                 if (!window.mapboxglMarkers) {

@@ -10,6 +10,7 @@ add_draw_control(
   freehand = FALSE,
   simplify_freehand = FALSE,
   orientation = "vertical",
+  features = NULL,
   ...
 )
 }
@@ -25,6 +26,9 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 
 \item{orientation}{A string specifying the orientation of the draw control.
 Either "vertical" (default) or "horizontal".}
+
+\item{features}{An sf object, GeoJSON list, or layer/source ID string to add to the draw control.
+Default is NULL.}
 
 \item{...}{Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.}
 }
@@ -44,5 +48,10 @@ mapboxgl(
     zoom = 9
 ) |>
     add_draw_control()
+    
+# With initial features
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"))
+mapboxgl() |>
+    add_draw_control(features = nc[1:3, ])
 }
 }
