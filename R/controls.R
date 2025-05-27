@@ -366,6 +366,13 @@ add_scale_control <- function(map,
 #'        Either "vertical" (default) or "horizontal".
 #' @param source A character string specifying a source ID to add to the draw control. 
 #'        Default is NULL.
+#' @param point_color Color for point features. Default is "#3bb2d0" (light blue).
+#' @param line_color Color for line features. Default is "#3bb2d0" (light blue).
+#' @param fill_color Fill color for polygon features. Default is "#3bb2d0" (light blue).
+#' @param fill_opacity Fill opacity for polygon features. Default is 0.1.
+#' @param active_color Color for active (selected) features. Default is "#fbb03b" (orange).
+#' @param vertex_radius Radius of vertex points in pixels. Default is 5.
+#' @param line_width Width of lines in pixels. Default is 2.
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -388,6 +395,18 @@ add_scale_control <- function(map,
 #' mapboxgl(bounds = tx) |>
 #'     add_source(id = "tx", data = tx) |>
 #'     add_draw_control(source = "tx")
+#'     
+#' # With custom styling
+#' mapboxgl() |>
+#'     add_draw_control(
+#'         point_color = "#ff0000",
+#'         line_color = "#00ff00", 
+#'         fill_color = "#0000ff",
+#'         fill_opacity = 0.3,
+#'         active_color = "#ff00ff",
+#'         vertex_radius = 7,
+#'         line_width = 3
+#'     )
 #' }
 add_draw_control <- function(map,
                              position = "top-left",
@@ -395,6 +414,13 @@ add_draw_control <- function(map,
                              simplify_freehand = FALSE,
                              orientation = "vertical",
                              source = NULL,
+                             point_color = "#3bb2d0",
+                             line_color = "#3bb2d0",
+                             fill_color = "#3bb2d0",
+                             fill_opacity = 0.1,
+                             active_color = "#fbb03b",
+                             vertex_radius = 5,
+                             line_width = 2,
                              ...) {
     # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
     #   rlang::abort("The draw control is not yet supported for MapLibre maps.")
@@ -420,7 +446,16 @@ add_draw_control <- function(map,
         simplify_freehand = simplify_freehand,
         orientation = orientation,
         options = options,
-        source = draw_source
+        source = draw_source,
+        styling = list(
+            point_color = point_color,
+            line_color = line_color,
+            fill_color = fill_color,
+            fill_opacity = fill_opacity,
+            active_color = active_color,
+            vertex_radius = vertex_radius,
+            line_width = line_width
+        )
     )
 
     if (inherits(map, "mapboxgl_proxy") ||
@@ -438,6 +473,15 @@ add_draw_control <- function(map,
                     simplify_freehand = simplify_freehand,
                     orientation = orientation,
                     source = draw_source,
+                    styling = list(
+                        point_color = point_color,
+                        line_color = line_color,
+                        fill_color = fill_color,
+                        fill_opacity = fill_opacity,
+                        active_color = active_color,
+                        vertex_radius = vertex_radius,
+                        line_width = line_width
+                    ),
                     map = map$map_side
                 )
             ))
@@ -457,7 +501,16 @@ add_draw_control <- function(map,
                     freehand = freehand,
                     simplify_freehand = simplify_freehand,
                     orientation = orientation,
-                    source = draw_source
+                    source = draw_source,
+                    styling = list(
+                        point_color = point_color,
+                        line_color = line_color,
+                        fill_color = fill_color,
+                        fill_opacity = fill_opacity,
+                        active_color = active_color,
+                        vertex_radius = vertex_radius,
+                        line_width = line_width
+                    )
                 )
             ))
         }

@@ -4,22 +4,12 @@
 \alias{add_features_to_draw}
 \title{Add features to an existing draw control}
 \usage{
-add_features_to_draw(
-  map,
-  features = NULL,
-  source = NULL,
-  layer = NULL,
-  clear_existing = FALSE
-)
+add_features_to_draw(map, source, clear_existing = FALSE)
 }
 \arguments{
 \item{map}{A map object with a draw control already added}
 
-\item{features}{An sf object, GeoJSON list, or GeoJSON string to add to the draw control}
-
 \item{source}{Character string specifying a source ID to get features from}
-
-\item{layer}{Character string specifying a layer ID to get features from}
 
 \item{clear_existing}{Logical, whether to clear existing drawn features before adding new ones. Default is FALSE.}
 }
@@ -27,31 +17,25 @@ add_features_to_draw(
 The modified map object
 }
 \description{
-This function adds features to an existing draw control on a map. Features can be provided
-as sf objects, GeoJSON, or by referencing existing map layers or sources.
+This function adds features from an existing source to a draw control on a map.
 }
 \examples{
 \dontrun{
 library(mapgl)
-library(sf)
+library(tigris)
 
-# Add features from an sf object
-nc <- st_read(system.file("shape/nc.shp", package = "sf"))
-mapboxgl() |>
+# Add features from an existing source
+tx <- counties(state = "TX", cb = TRUE)
+mapboxgl(bounds = tx) |>
+  add_source(id = "tx", data = tx) |>
   add_draw_control() |>
-  add_features_to_draw(features = nc[1:3, ])
-  
-# Add features from an existing layer
-mapboxgl() |>
-  add_fill_layer(id = "counties", source = nc) |>
-  add_draw_control() |>
-  add_features_to_draw(layer = "counties")
+  add_features_to_draw(source = "tx")
   
 # In a Shiny app
 observeEvent(input$load_data, {
   mapboxgl_proxy("map") |>
     add_features_to_draw(
-      features = new_data,
+      source = "dynamic_data",
       clear_existing = TRUE
     )
 })

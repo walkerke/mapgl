@@ -676,6 +676,126 @@ HTMLWidgets.widget({
                         }
                     }
 
+                    // Helper function to generate draw styles based on parameters
+                    function generateDrawStyles(styling) {
+                        if (!styling) return null;
+                        
+                        return [
+                            // Point styles
+                            {
+                                'id': 'gl-draw-point-active',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'feature'],
+                                    ['==', 'active', 'true']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius + 2,
+                                    'circle-color': styling.active_color
+                                }
+                            },
+                            {
+                                'id': 'gl-draw-point',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'feature'],
+                                    ['==', 'active', 'false']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius,
+                                    'circle-color': styling.point_color
+                                }
+                            },
+                            // Line styles
+                            {
+                                'id': 'gl-draw-line',
+                                'type': 'line',
+                                'filter': ['all', ['==', '$type', 'LineString']],
+                                'layout': {
+                                    'line-cap': 'round',
+                                    'line-join': 'round'
+                                },
+                                'paint': {
+                                    'line-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.line_color
+                                    ],
+                                    'line-width': styling.line_width
+                                }
+                            },
+                            // Polygon fill
+                            {
+                                'id': 'gl-draw-polygon-fill',
+                                'type': 'fill',
+                                'filter': ['all', ['==', '$type', 'Polygon']],
+                                'paint': {
+                                    'fill-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.fill_color
+                                    ],
+                                    'fill-outline-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.fill_color
+                                    ],
+                                    'fill-opacity': styling.fill_opacity
+                                }
+                            },
+                            // Polygon outline
+                            {
+                                'id': 'gl-draw-polygon-stroke',
+                                'type': 'line',
+                                'filter': ['all', ['==', '$type', 'Polygon']],
+                                'layout': {
+                                    'line-cap': 'round',
+                                    'line-join': 'round'
+                                },
+                                'paint': {
+                                    'line-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.line_color
+                                    ],
+                                    'line-width': styling.line_width
+                                }
+                            },
+                            // Midpoints
+                            {
+                                'id': 'gl-draw-polygon-midpoint',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'midpoint']],
+                                'paint': {
+                                    'circle-radius': 3,
+                                    'circle-color': styling.active_color
+                                }
+                            },
+                            // Vertex point halos
+                            {
+                                'id': 'gl-draw-vertex-halo-active',
+                                'type': 'circle',
+                                'filter': ['all', 
+                                    ['==', 'meta', 'vertex'],
+                                    ['==', '$type', 'Point']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius + 2,
+                                    'circle-color': '#FFF'
+                                }
+                            },
+                            // Vertex points
+                            {
+                                'id': 'gl-draw-vertex-active',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', 'meta', 'vertex'],
+                                    ['==', '$type', 'Point']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius,
+                                    'circle-color': styling.active_color
+                                }
+                            }
+                        ];
+                    }
+
                     if (x.draw_control && x.draw_control.enabled) {
                         MapboxDraw.constants.classes.CONTROL_BASE =
                             "maplibregl-ctrl";
@@ -685,6 +805,14 @@ HTMLWidgets.widget({
                             "maplibregl-ctrl-group";
 
                         let drawOptions = x.draw_control.options || {};
+                        
+                        // Generate styles if styling parameters provided
+                        if (x.draw_control.styling) {
+                            const generatedStyles = generateDrawStyles(x.draw_control.styling);
+                            if (generatedStyles) {
+                                drawOptions.styles = generatedStyles;
+                            }
+                        }
 
                         if (x.draw_control.freehand) {
                             drawOptions = Object.assign({}, drawOptions, {
@@ -2097,6 +2225,15 @@ if (HTMLWidgets.shinyMode) {
                     "maplibregl-ctrl-group";
 
                 let drawOptions = message.options || {};
+                
+                // Generate styles if styling parameters provided
+                if (message.styling) {
+                    const generatedStyles = generateDrawStyles(message.styling);
+                    if (generatedStyles) {
+                        drawOptions.styles = generatedStyles;
+                    }
+                }
+                
                 if (message.freehand) {
                     drawOptions = Object.assign({}, drawOptions, {
                         modes: Object.assign({}, MapboxDraw.modes, {
