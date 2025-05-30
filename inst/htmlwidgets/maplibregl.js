@@ -844,6 +844,19 @@ HTMLWidgets.widget({
                                 // defaultMode: 'draw_polygon' # Don't set the default yet
                             });
                         }
+                        
+                        // Fix MapLibre compatibility - ensure we always have custom styles
+                        if (!drawOptions.styles) {
+                            drawOptions.styles = generateDrawStyles({
+                                vertex_radius: 5,
+                                active_color: '#fbb03b',
+                                point_color: '#3bb2d0',
+                                line_color: '#3bb2d0',
+                                fill_color: '#3bb2d0',
+                                fill_opacity: 0.1,
+                                line_width: 2
+                            });
+                        }
 
                         draw = new MapboxDraw(drawOptions);
                         map.addControl(draw, x.draw_control.position);
