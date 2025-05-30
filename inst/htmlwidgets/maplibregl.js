@@ -777,7 +777,10 @@ HTMLWidgets.widget({
                                     ['==', 'meta', 'vertex'],
                                     ['==', '$type', 'Point']],
                                 'paint': {
-                                    'circle-radius': styling.vertex_radius + 2,
+                                    'circle-radius': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.vertex_radius + 4,
+                                        styling.vertex_radius + 2
+                                    ],
                                     'circle-color': '#FFF'
                                 }
                             },
@@ -789,7 +792,10 @@ HTMLWidgets.widget({
                                     ['==', 'meta', 'vertex'],
                                     ['==', '$type', 'Point']],
                                 'paint': {
-                                    'circle-radius': styling.vertex_radius,
+                                    'circle-radius': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.vertex_radius + 2,
+                                        styling.vertex_radius
+                                    ],
                                     'circle-color': styling.active_color
                                 }
                             }
