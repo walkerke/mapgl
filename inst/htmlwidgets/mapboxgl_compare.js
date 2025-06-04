@@ -900,6 +900,15 @@ HTMLWidgets.widget({
                                 );
                             } else if (message.type === "add_draw_control") {
                                 let drawOptions = message.options || {};
+                                
+                                // Generate styles if styling parameters provided
+                                if (message.styling) {
+                                    const generatedStyles = generateDrawStyles(message.styling);
+                                    if (generatedStyles) {
+                                        drawOptions.styles = generatedStyles;
+                                    }
+                                }
+                                
                                 if (message.freehand) {
                                     drawOptions = Object.assign(
                                         {},
@@ -922,6 +931,11 @@ HTMLWidgets.widget({
                                 draw = new MapboxDraw(drawOptions);
                                 map.addControl(draw, message.position);
                                 map.controls.push(draw);
+                                
+                                // Add initial features if provided
+                                if (message.source) {
+                                    addSourceFeaturesToDraw(draw, message.source, map);
+                                }
 
                                 // Add event listeners
                                 map.on("draw.create", updateDrawnFeatures);
@@ -959,6 +973,17 @@ HTMLWidgets.widget({
                                     draw.deleteAll();
                                     // Update the drawn features
                                     updateDrawnFeatures();
+                                }
+                            } else if (message.type === "add_features_to_draw") {
+                                if (draw) {
+                                    if (message.data.clear_existing) {
+                                        draw.deleteAll();
+                                    }
+                                    addSourceFeaturesToDraw(draw, message.data.source, map);
+                                    // Update the drawn features
+                                    updateDrawnFeatures();
+                                } else {
+                                    console.warn('Draw control not initialized');
                                 }
                             } else if (message.type === "add_markers") {
                                 if (!window.mapboxglMarkers) {
@@ -1438,6 +1463,10 @@ HTMLWidgets.widget({
                 }
 
                 function applyMapModifications(map, mapData) {
+                    // Initialize controls array if it doesn't exist
+                    if (!map.controls) {
+                        map.controls = [];
+                    }
                     // Define the tooltip handler functions to match the ones in mapboxgl.js
                     function onMouseMoveTooltip(
                         e,
@@ -1997,6 +2026,142 @@ HTMLWidgets.widget({
                         }
                     }
 
+                    // Helper function to generate draw styles based on parameters
+                    function generateDrawStyles(styling) {
+                        if (!styling) return null;
+                        
+                        return [
+                            // Point styles
+                            {
+                                'id': 'gl-draw-point-active',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'feature'],
+                                    ['==', 'active', 'true']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius + 2,
+                                    'circle-color': styling.active_color
+                                }
+                            },
+                            {
+                                'id': 'gl-draw-point',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'feature'],
+                                    ['==', 'active', 'false']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius,
+                                    'circle-color': styling.point_color
+                                }
+                            },
+                            // Line styles
+                            {
+                                'id': 'gl-draw-line',
+                                'type': 'line',
+                                'filter': ['all', ['==', '$type', 'LineString']],
+                                'layout': {
+                                    'line-cap': 'round',
+                                    'line-join': 'round'
+                                },
+                                'paint': {
+                                    'line-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.line_color
+                                    ],
+                                    'line-width': styling.line_width
+                                }
+                            },
+                            // Polygon fill
+                            {
+                                'id': 'gl-draw-polygon-fill',
+                                'type': 'fill',
+                                'filter': ['all', ['==', '$type', 'Polygon']],
+                                'paint': {
+                                    'fill-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.fill_color
+                                    ],
+                                    'fill-outline-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.fill_color
+                                    ],
+                                    'fill-opacity': styling.fill_opacity
+                                }
+                            },
+                            // Polygon outline
+                            {
+                                'id': 'gl-draw-polygon-stroke',
+                                'type': 'line',
+                                'filter': ['all', ['==', '$type', 'Polygon']],
+                                'layout': {
+                                    'line-cap': 'round',
+                                    'line-join': 'round'
+                                },
+                                'paint': {
+                                    'line-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.line_color
+                                    ],
+                                    'line-width': styling.line_width
+                                }
+                            },
+                            // Midpoints
+                            {
+                                'id': 'gl-draw-polygon-midpoint',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'midpoint']],
+                                'paint': {
+                                    'circle-radius': 3,
+                                    'circle-color': styling.active_color
+                                }
+                            },
+                            // Vertex point halos
+                            {
+                                'id': 'gl-draw-vertex-halo-active',
+                                'type': 'circle',
+                                'filter': ['all', 
+                                    ['==', 'meta', 'vertex'],
+                                    ['==', '$type', 'Point']],
+                                'paint': {
+                                    'circle-radius': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.vertex_radius + 4,
+                                        styling.vertex_radius + 2
+                                    ],
+                                    'circle-color': '#FFF'
+                                }
+                            },
+                            // Vertex points
+                            {
+                                'id': 'gl-draw-vertex-active',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', 'meta', 'vertex'],
+                                    ['==', '$type', 'Point']],
+                                'paint': {
+                                    'circle-radius': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.vertex_radius + 2,
+                                        styling.vertex_radius
+                                    ],
+                                    'circle-color': styling.active_color
+                                }
+                            }
+                        ];
+                    }
+
+                    // Helper function to add features from a source to draw
+                    function addSourceFeaturesToDraw(draw, sourceId, map) {
+                        const source = map.getSource(sourceId);
+                        if (source && source._data) {
+                            draw.add(source._data);
+                        } else {
+                            console.warn('Source not found or has no data:', sourceId);
+                        }
+                    }
+
                     // Add geocoder control if enabled
                     if (mapData.geocoder_control) {
                         const geocoderOptions = {
@@ -2036,6 +2201,14 @@ HTMLWidgets.widget({
                         ) {
                             let drawOptions =
                                 mapData.draw_control.options || {};
+                            
+                            // Generate styles if styling parameters provided
+                            if (mapData.draw_control.styling) {
+                                const generatedStyles = generateDrawStyles(mapData.draw_control.styling);
+                                if (generatedStyles) {
+                                    drawOptions.styles = generatedStyles;
+                                }
+                            }
 
                             if (mapData.draw_control.freehand) {
                                 drawOptions = Object.assign({}, drawOptions, {
@@ -2065,6 +2238,21 @@ HTMLWidgets.widget({
                             draw = new MapboxDraw(drawOptions);
                             map.addControl(draw, mapData.draw_control.position);
                             map.controls.push(draw);
+                            
+                            // Add initial features if provided
+                            if (mapData.draw_control.source) {
+                                addSourceFeaturesToDraw(draw, mapData.draw_control.source, map);
+                            }
+                            
+                            // Process any queued features
+                            if (mapData.draw_features_queue) {
+                                mapData.draw_features_queue.forEach(function(data) {
+                                    if (data.clear_existing) {
+                                        draw.deleteAll();
+                                    }
+                                    addSourceFeaturesToDraw(draw, data.source, map);
+                                });
+                            }
 
                             // Apply orientation styling
                             if (

@@ -632,8 +632,142 @@ HTMLWidgets.widget({
                         }
                     }
 
+                    // Helper function to generate draw styles based on parameters
+                    function generateDrawStyles(styling) {
+                        if (!styling) return null;
+                        
+                        return [
+                            // Point styles
+                            {
+                                'id': 'gl-draw-point-active',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'feature'],
+                                    ['==', 'active', 'true']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius + 2,
+                                    'circle-color': styling.active_color
+                                }
+                            },
+                            {
+                                'id': 'gl-draw-point',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'feature'],
+                                    ['==', 'active', 'false']],
+                                'paint': {
+                                    'circle-radius': styling.vertex_radius,
+                                    'circle-color': styling.point_color
+                                }
+                            },
+                            // Line styles
+                            {
+                                'id': 'gl-draw-line',
+                                'type': 'line',
+                                'filter': ['all', ['==', '$type', 'LineString']],
+                                'layout': {
+                                    'line-cap': 'round',
+                                    'line-join': 'round'
+                                },
+                                'paint': {
+                                    'line-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.line_color
+                                    ],
+                                    'line-width': styling.line_width
+                                }
+                            },
+                            // Polygon fill
+                            {
+                                'id': 'gl-draw-polygon-fill',
+                                'type': 'fill',
+                                'filter': ['all', ['==', '$type', 'Polygon']],
+                                'paint': {
+                                    'fill-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.fill_color
+                                    ],
+                                    'fill-outline-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.fill_color
+                                    ],
+                                    'fill-opacity': styling.fill_opacity
+                                }
+                            },
+                            // Polygon outline
+                            {
+                                'id': 'gl-draw-polygon-stroke',
+                                'type': 'line',
+                                'filter': ['all', ['==', '$type', 'Polygon']],
+                                'layout': {
+                                    'line-cap': 'round',
+                                    'line-join': 'round'
+                                },
+                                'paint': {
+                                    'line-color': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.active_color,
+                                        styling.line_color
+                                    ],
+                                    'line-width': styling.line_width
+                                }
+                            },
+                            // Midpoints
+                            {
+                                'id': 'gl-draw-polygon-midpoint',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', '$type', 'Point'],
+                                    ['==', 'meta', 'midpoint']],
+                                'paint': {
+                                    'circle-radius': 3,
+                                    'circle-color': styling.active_color
+                                }
+                            },
+                            // Vertex point halos
+                            {
+                                'id': 'gl-draw-vertex-halo-active',
+                                'type': 'circle',
+                                'filter': ['all', 
+                                    ['==', 'meta', 'vertex'],
+                                    ['==', '$type', 'Point']],
+                                'paint': {
+                                    'circle-radius': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.vertex_radius + 4,
+                                        styling.vertex_radius + 2
+                                    ],
+                                    'circle-color': '#FFF'
+                                }
+                            },
+                            // Vertex points
+                            {
+                                'id': 'gl-draw-vertex-active',
+                                'type': 'circle',
+                                'filter': ['all',
+                                    ['==', 'meta', 'vertex'],
+                                    ['==', '$type', 'Point']],
+                                'paint': {
+                                    'circle-radius': ['case',
+                                        ['==', ['get', 'active'], 'true'], styling.vertex_radius + 2,
+                                        styling.vertex_radius
+                                    ],
+                                    'circle-color': styling.active_color
+                                }
+                            }
+                        ];
+                    }
+
                     if (x.draw_control && x.draw_control.enabled) {
                         let drawOptions = x.draw_control.options || {};
+                        
+                        // Generate styles if styling parameters provided
+                        if (x.draw_control.styling) {
+                            const generatedStyles = generateDrawStyles(x.draw_control.styling);
+                            if (generatedStyles) {
+                                drawOptions.styles = generatedStyles;
+                            }
+                        }
 
                         if (x.draw_control.freehand) {
                             drawOptions = Object.assign({}, drawOptions, {
@@ -668,6 +802,21 @@ HTMLWidgets.widget({
                         map.on("draw.create", updateDrawnFeatures);
                         map.on("draw.delete", updateDrawnFeatures);
                         map.on("draw.update", updateDrawnFeatures);
+                        
+                        // Add initial features if provided
+                        if (x.draw_control.source) {
+                            addSourceFeaturesToDraw(draw, x.draw_control.source, map);
+                        }
+                        
+                        // Process any queued features
+                        if (x.draw_features_queue) {
+                            x.draw_features_queue.forEach(function(data) {
+                                if (data.clear_existing) {
+                                    draw.deleteAll();
+                                }
+                                addSourceFeaturesToDraw(draw, data.source, map);
+                            });
+                        }
 
                         // Apply orientation styling
                         if (x.draw_control.orientation === "horizontal") {
@@ -678,6 +827,16 @@ HTMLWidgets.widget({
                                 drawBar.style.display = "flex";
                                 drawBar.style.flexDirection = "row";
                             }
+                        }
+                    }
+
+                    // Helper function to add features from a source to draw
+                    function addSourceFeaturesToDraw(draw, sourceId, map) {
+                        const source = map.getSource(sourceId);
+                        if (source && source._data) {
+                            draw.add(source._data);
+                        } else {
+                            console.warn('Source not found or has no data:', sourceId);
                         }
                     }
 
@@ -1782,6 +1941,15 @@ if (HTMLWidgets.shinyMode) {
                 });
             } else if (message.type === "add_draw_control") {
                 let drawOptions = message.options || {};
+                
+                // Generate styles if styling parameters provided
+                if (message.styling) {
+                    const generatedStyles = generateDrawStyles(message.styling);
+                    if (generatedStyles) {
+                        drawOptions.styles = generatedStyles;
+                    }
+                }
+                
                 if (message.freehand) {
                     drawOptions = Object.assign({}, drawOptions, {
                         modes: Object.assign({}, MapboxDraw.modes, {
@@ -1799,6 +1967,11 @@ if (HTMLWidgets.shinyMode) {
                 map.on("draw.create", updateDrawnFeatures);
                 map.on("draw.delete", updateDrawnFeatures);
                 map.on("draw.update", updateDrawnFeatures);
+                
+                // Add initial features if provided
+                if (message.source) {
+                    addSourceFeaturesToDraw(draw, message.source, map);
+                }
 
                 if (message.orientation === "horizontal") {
                     const drawBar = map
@@ -1835,6 +2008,17 @@ if (HTMLWidgets.shinyMode) {
                     draw.deleteAll();
                     // Update the drawn features
                     updateDrawnFeatures();
+                }
+            } else if (message.type === "add_features_to_draw") {
+                if (draw) {
+                    if (message.data.clear_existing) {
+                        draw.deleteAll();
+                    }
+                    addSourceFeaturesToDraw(draw, message.data.source, map);
+                    // Update the drawn features
+                    updateDrawnFeatures();
+                } else {
+                    console.warn('Draw control not initialized');
                 }
             } else if (message.type === "add_markers") {
                 if (!window.mapboxglMarkers) {

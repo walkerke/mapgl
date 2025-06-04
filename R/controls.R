@@ -364,6 +364,15 @@ add_scale_control <- function(map,
 #' @param simplify_freehand Logical, whether to apply simplification to freehand drawings. Default is FALSE.
 #' @param orientation A string specifying the orientation of the draw control.
 #'        Either "vertical" (default) or "horizontal".
+#' @param source A character string specifying a source ID to add to the draw control. 
+#'        Default is NULL.
+#' @param point_color Color for point features. Default is "#3bb2d0" (light blue).
+#' @param line_color Color for line features. Default is "#3bb2d0" (light blue).
+#' @param fill_color Fill color for polygon features. Default is "#3bb2d0" (light blue).
+#' @param fill_opacity Fill opacity for polygon features. Default is 0.1.
+#' @param active_color Color for active (selected) features. Default is "#fbb03b" (orange).
+#' @param vertex_radius Radius of vertex points in pixels. Default is 5.
+#' @param line_width Width of lines in pixels. Default is 2.
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -379,18 +388,56 @@ add_scale_control <- function(map,
 #'     zoom = 9
 #' ) |>
 #'     add_draw_control()
+#'     
+#' # With initial features from a source
+#' library(tigris)
+#' tx <- counties(state = "TX", cb = TRUE)
+#' mapboxgl(bounds = tx) |>
+#'     add_source(id = "tx", data = tx) |>
+#'     add_draw_control(source = "tx")
+#'     
+#' # With custom styling
+#' mapboxgl() |>
+#'     add_draw_control(
+#'         point_color = "#ff0000",
+#'         line_color = "#00ff00", 
+#'         fill_color = "#0000ff",
+#'         fill_opacity = 0.3,
+#'         active_color = "#ff00ff",
+#'         vertex_radius = 7,
+#'         line_width = 3
+#'     )
 #' }
 add_draw_control <- function(map,
                              position = "top-left",
                              freehand = FALSE,
                              simplify_freehand = FALSE,
                              orientation = "vertical",
+                             source = NULL,
+                             point_color = "#3bb2d0",
+                             line_color = "#3bb2d0",
+                             fill_color = "#3bb2d0",
+                             fill_opacity = 0.1,
+                             active_color = "#fbb03b",
+                             vertex_radius = 5,
+                             line_width = 2,
                              ...) {
     # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
     #   rlang::abort("The draw control is not yet supported for MapLibre maps.")
     # }
 
     options <- list(...)
+    
+    # Handle source if provided
+    draw_source <- NULL
+    if (!is.null(source)) {
+        if (is.character(source) && length(source) == 1) {
+            # It's a source ID to reference
+            draw_source <- source
+        } else {
+            rlang::abort("source must be a character string referencing a source ID")
+        }
+    }
 
     map$x$draw_control <- list(
         enabled = TRUE,
@@ -398,7 +445,17 @@ add_draw_control <- function(map,
         freehand = freehand,
         simplify_freehand = simplify_freehand,
         orientation = orientation,
-        options = options
+        options = options,
+        source = draw_source,
+        styling = list(
+            point_color = point_color,
+            line_color = line_color,
+            fill_color = fill_color,
+            fill_opacity = fill_opacity,
+            active_color = active_color,
+            vertex_radius = vertex_radius,
+            line_width = line_width
+        )
     )
 
     if (inherits(map, "mapboxgl_proxy") ||
@@ -415,6 +472,16 @@ add_draw_control <- function(map,
                     freehand = freehand,
                     simplify_freehand = simplify_freehand,
                     orientation = orientation,
+                    source = draw_source,
+                    styling = list(
+                        point_color = point_color,
+                        line_color = line_color,
+                        fill_color = fill_color,
+                        fill_opacity = fill_opacity,
+                        active_color = active_color,
+                        vertex_radius = vertex_radius,
+                        line_width = line_width
+                    ),
                     map = map$map_side
                 )
             ))
@@ -433,7 +500,17 @@ add_draw_control <- function(map,
                     options = options,
                     freehand = freehand,
                     simplify_freehand = simplify_freehand,
-                    orientation = orientation
+                    orientation = orientation,
+                    source = draw_source,
+                    styling = list(
+                        point_color = point_color,
+                        line_color = line_color,
+                        fill_color = fill_color,
+                        fill_opacity = fill_opacity,
+                        active_color = active_color,
+                        vertex_radius = vertex_radius,
+                        line_width = line_width
+                    )
                 )
             ))
         }
@@ -555,6 +632,88 @@ get_drawn_features <- function(map) {
     } else {
         sf::st_sf(geometry = sf::st_sfc()) # Return an empty sf object if no features
     }
+}
+
+#' Add features to an existing draw control
+#'
+#' This function adds features from an existing source to a draw control on a map.
+#'
+#' @param map A map object with a draw control already added
+#' @param source Character string specifying a source ID to get features from
+#' @param clear_existing Logical, whether to clear existing drawn features before adding new ones. Default is FALSE.
+#'
+#' @return The modified map object
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#' library(tigris)
+#' 
+#' # Add features from an existing source
+#' tx <- counties(state = "TX", cb = TRUE)
+#' mapboxgl(bounds = tx) |>
+#'   add_source(id = "tx", data = tx) |>
+#'   add_draw_control() |>
+#'   add_features_to_draw(source = "tx")
+#'   
+#' # In a Shiny app
+#' observeEvent(input$load_data, {
+#'   mapboxgl_proxy("map") |>
+#'     add_features_to_draw(
+#'       source = "dynamic_data",
+#'       clear_existing = TRUE
+#'     )
+#' })
+#' }
+add_features_to_draw <- function(map, 
+                               source,
+                               clear_existing = FALSE) {
+  
+  # Validate source
+  if (!is.character(source) || length(source) != 1) {
+    rlang::abort("source must be a character string referencing a source ID")
+  }
+  
+  # Prepare the data
+  draw_data <- list(
+    source = source,
+    clear_existing = clear_existing
+  )
+  
+  # Handle proxy vs initial map
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "add_features_to_draw",
+          data = draw_data,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "add_features_to_draw",
+          data = draw_data
+        )
+      ))
+    }
+  } else {
+    # For initial map, store in a queue
+    if (is.null(map$x$draw_features_queue)) {
+      map$x$draw_features_queue <- list()
+    }
+    map$x$draw_features_queue <- append(map$x$draw_features_queue, list(draw_data))
+  }
+  
+  return(map)
 }
 
 #' Add a geocoder control to a map
