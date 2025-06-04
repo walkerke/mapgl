@@ -296,6 +296,22 @@ get_column <- function(column) {
     list("get", column)
 }
 
+#' Create a concatenation expression
+#'
+#' This function creates a concatenation expression that combines multiple values or expressions into a single string.
+#' Useful for creating dynamic tooltips or labels.
+#'
+#' @param ... Values or expressions to concatenate. Can be strings, numbers, or other expressions like `get_column()`.
+#'
+#' @return A list representing the concatenation expression.
+#' @export
+#' @examples
+#' # Create a dynamic tooltip
+#' concat("<strong>Name:</strong> ", get_column("name"), "<br>Value: ", get_column("value"))
+concat <- function(...) {
+    c(list("concat"), list(...))
+}
+
 # Trim hex colors (so packages like viridisLite can be used)
 trim_hex_colors <- function(colors) {
     ifelse(substr(colors, 1, 1) == "#" & nchar(colors) == 9,

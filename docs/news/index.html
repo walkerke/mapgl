@@ -43,11 +43,24 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="mapgl-development-version">mapgl (development version)<a class="anchor" aria-label="anchor" href="#mapgl-development-version"></a></h2>
 <ul><li>Enhanced draw control functionality with improved feature editing capabilities:
-<ul><li>Fixed vertex styling to properly highlight selected vertices during editing</li>
-<li>Extended draw control support to compare views, enabling feature editing in side-by-side map comparisons</li>
-<li>Added ability to load existing features from map sources into the draw control for editing via <code><a href="../reference/add_features_to_draw.html">add_features_to_draw()</a></code>
+<ul><li>Added ability to load existing features from map sources into the draw control for editing either when initializing the draw control or via <code><a href="../reference/add_features_to_draw.html">add_features_to_draw()</a></code>
 </li>
+<li>Fixed vertex styling to properly highlight selected vertices during editing</li>
+<li>Extended draw control support to compare views, enabling feature editing in side-by-side map comparisons</li>
 <li>Improved compatibility with both Mapbox GL JS and MapLibre GL JS</li>
+</ul></li>
+<li>Fixed <code>hover_options</code> for vector tile sources in MapLibre (<a href="https://github.com/walkerke/mapgl/issues/67" class="external-link">#67</a>):
+<ul><li>Added proper source layer handling for vector tiles when using hover effects</li>
+<li>Now works correctly with PMTiles and other vector tile sources that include feature IDs</li>
+<li>Note: Vector tiles must include feature IDs for hover effects to work. GeoJSON sources automatically generate IDs.</li>
+</ul></li>
+<li>Enhanced tooltip functionality with expression support:
+<ul><li>Tooltips can now use expressions for dynamic content generation</li>
+<li>Use <code><a href="../reference/get_column.html">get_column()</a></code> to reference feature properties in tooltips</li>
+<li>Added <code><a href="../reference/concat.html">concat()</a></code> helper function for combining strings and expressions</li>
+<li>Example: <code>tooltip = concat("&lt;strong&gt;Name:&lt;/strong&gt; ", get_column("name"), "&lt;br&gt;Value: ", get_column("value"))</code>
+</li>
+<li>Works with both regular tooltips and <code><a href="../reference/set_tooltip.html">set_tooltip()</a></code> in Shiny applications</li>
 </ul></li>
 </ul></div>
     <div class="section level2">

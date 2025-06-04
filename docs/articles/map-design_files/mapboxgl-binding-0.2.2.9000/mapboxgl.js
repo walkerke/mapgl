@@ -1,7 +1,39 @@
+function evaluateExpression(expression, properties) {
+    if (!Array.isArray(expression)) {
+        return expression;
+    }
+    
+    const operator = expression[0];
+    
+    switch (operator) {
+        case 'get':
+            return properties[expression[1]];
+        case 'concat':
+            return expression.slice(1).map(item => evaluateExpression(item, properties)).join('');
+        case 'to-string':
+            return String(evaluateExpression(expression[1], properties));
+        case 'to-number':
+            return Number(evaluateExpression(expression[1], properties));
+        default:
+            // For literals and other simple values
+            return expression;
+    }
+}
+
 function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
     map.getCanvas().style.cursor = "pointer";
     if (e.features.length > 0) {
-        const description = e.features[0].properties[tooltipProperty];
+        let description;
+        
+        // Check if tooltipProperty is an expression (array) or a simple property name (string)
+        if (Array.isArray(tooltipProperty)) {
+            // It's an expression, evaluate it
+            description = evaluateExpression(tooltipProperty, e.features[0].properties);
+        } else {
+            // It's a property name, get the value
+            description = e.features[0].properties[tooltipProperty];
+        }
+        
         tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
 
         // Store reference to currently active tooltip
@@ -21,6 +53,43 @@ function onMouseLeaveTooltip(map, tooltipPopup) {
     if (window._activeTooltip === tooltipPopup) {
         delete window._activeTooltip;
     }
+}
+
+function onClickPopup(e, map, popupProperty, layerId) {
+    let description;
+    
+    // Check if popupProperty is an expression (array) or a simple property name (string)
+    if (Array.isArray(popupProperty)) {
+        // It's an expression, evaluate it
+        description = evaluateExpression(popupProperty, e.features[0].properties);
+    } else {
+        // It's a property name, get the value
+        description = e.features[0].properties[popupProperty];
+    }
+    
+    // Remove any existing popup for this layer
+    if (window._mapboxPopups && window._mapboxPopups[layerId]) {
+        window._mapboxPopups[layerId].remove();
+    }
+    
+    // Create and show the popup
+    const popup = new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(description)
+        .addTo(map);
+        
+    // Store reference to this popup
+    if (!window._mapboxPopups) {
+        window._mapboxPopups = {};
+    }
+    window._mapboxPopups[layerId] = popup;
+    
+    // Remove reference when popup is closed
+    popup.on('close', function() {
+        if (window._mapboxPopups[layerId] === popup) {
+            delete window._mapboxPopups[layerId];
+        }
+    });
 }
 
 HTMLWidgets.widget({
@@ -292,31 +361,7 @@ HTMLWidgets.widget({
                                     
                                     // Create click handler for this layer
                                     const clickHandler = function (e) {
-                                        const description =
-                                            e.features[0].properties[
-                                                layer.popup
-                                            ];
-                                        
-                                        // Remove any existing popup for this layer
-                                        if (window._mapboxPopups[layer.id]) {
-                                            window._mapboxPopups[layer.id].remove();
-                                        }
-                                        
-                                        // Create and show the popup
-                                        const popup = new mapboxgl.Popup()
-                                            .setLngLat(e.lngLat)
-                                            .setHTML(description)
-                                            .addTo(map);
-                                            
-                                        // Store reference to this popup
-                                        window._mapboxPopups[layer.id] = popup;
-                                        
-                                        // Remove reference when popup is closed
-                                        popup.on('close', function() {
-                                            if (window._mapboxPopups[layer.id] === popup) {
-                                                delete window._mapboxPopups[layer.id];
-                                            }
-                                        });
+                                        onClickPopup(e, map, layer.popup, layer.id);
                                     };
                                     
                                     // Store these handler references so we can remove them later if needed
@@ -1438,29 +1483,7 @@ if (HTMLWidgets.shinyMode) {
                         
                         // Create click handler for this layer
                         const clickHandler = function (e) {
-                            const description =
-                                e.features[0].properties[message.layer.popup];
-                            
-                            // Remove any existing popup for this layer
-                            if (window._mapboxPopups[message.layer.id]) {
-                                window._mapboxPopups[message.layer.id].remove();
-                            }
-                            
-                            // Create and show the popup
-                            const popup = new mapboxgl.Popup()
-                                .setLngLat(e.lngLat)
-                                .setHTML(description)
-                                .addTo(map);
-                                
-                            // Store reference to this popup
-                            window._mapboxPopups[message.layer.id] = popup;
-                            
-                            // Remove reference when popup is closed
-                            popup.on('close', function() {
-                                if (window._mapboxPopups[message.layer.id] === popup) {
-                                    delete window._mapboxPopups[message.layer.id];
-                                }
-                            });
+                            onClickPopup(e, map, message.layer.popup, message.layer.id);
                         };
                         
                         // Store these handler references so we can remove them later if needed
@@ -2499,6 +2522,49 @@ if (HTMLWidgets.shinyMode) {
                     mousemove: mouseMoveHandler,
                     mouseleave: mouseLeaveHandler,
                 };
+            } else if (message.type === "set_popup") {
+                const layerId = message.layer;
+                const newPopupProperty = message.popup;
+
+                // Remove any existing popup for this layer
+                if (window._mapboxPopups && window._mapboxPopups[layerId]) {
+                    window._mapboxPopups[layerId].remove();
+                    delete window._mapboxPopups[layerId];
+                }
+
+                // Remove old click handler if any
+                if (window._mapboxClickHandlers && window._mapboxClickHandlers[layerId]) {
+                    map.off("click", layerId, window._mapboxClickHandlers[layerId]);
+                    delete window._mapboxClickHandlers[layerId];
+                }
+
+                // Remove old hover handlers for cursor change
+                map.off("mouseenter", layerId);
+                map.off("mouseleave", layerId);
+
+                // Create new click handler
+                const clickHandler = function (e) {
+                    onClickPopup(e, map, newPopupProperty, layerId);
+                };
+
+                // Add the new event handler
+                map.on("click", layerId, clickHandler);
+
+                // Change cursor to pointer when hovering over the layer
+                map.on("mouseenter", layerId, function () {
+                    map.getCanvas().style.cursor = "pointer";
+                });
+
+                // Change cursor back to default when leaving the layer
+                map.on("mouseleave", layerId, function () {
+                    map.getCanvas().style.cursor = "";
+                });
+
+                // Store handler reference
+                if (!window._mapboxClickHandlers) {
+                    window._mapboxClickHandlers = {};
+                }
+                window._mapboxClickHandlers[layerId] = clickHandler;
             } else if (message.type === "set_source") {
                 const layerId = message.layer;
                 const newData = message.source;

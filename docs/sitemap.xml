@@ -51,6 +51,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/clear_markers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/cluster_options.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/compare.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/concat.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/ease_to.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/fit_bounds.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/fly_to.html</loc></url>
@@ -86,6 +87,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/set_fog.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_layout_property.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_paint_property.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/set_popup.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_projection.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_rain.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_snow.html</loc></url>
