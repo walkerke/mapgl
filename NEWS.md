@@ -1,10 +1,22 @@
 # mapgl (development version)
 
 * Enhanced draw control functionality with improved feature editing capabilities:
+  - Added ability to load existing features from map sources into the draw control for editing either when initializing the draw control or via `add_features_to_draw()`
   - Fixed vertex styling to properly highlight selected vertices during editing
   - Extended draw control support to compare views, enabling feature editing in side-by-side map comparisons
-  - Added ability to load existing features from map sources into the draw control for editing via `add_features_to_draw()`
   - Improved compatibility with both Mapbox GL JS and MapLibre GL JS
+
+* Fixed `hover_options` for vector tile sources in MapLibre (#67):
+  - Added proper source layer handling for vector tiles when using hover effects
+  - Now works correctly with PMTiles and other vector tile sources that include feature IDs
+  - Note: Vector tiles must include feature IDs for hover effects to work. GeoJSON sources automatically generate IDs.
+
+* Enhanced tooltip functionality with expression support:
+  - Tooltips can now use expressions for dynamic content generation
+  - Use `get_column()` to reference feature properties in tooltips
+  - Added `concat()` helper function for combining strings and expressions
+  - Example: `tooltip = concat("<strong>Name:</strong> ", get_column("name"), "<br>Value: ", get_column("value"))`
+  - Works with both regular tooltips and `set_tooltip()` in Shiny applications
 
 # mapgl 0.2.2
 

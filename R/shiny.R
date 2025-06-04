@@ -493,6 +493,59 @@ set_tooltip <- function(map, layer, tooltip) {
     return(map)
 }
 
+#' Set popup on a map layer
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
+#' @param layer The ID of the layer to update.
+#' @param popup The name of the popup property or an expression to set.
+#'
+#' @return The updated map object.
+#' @export
+set_popup <- function(map, layer, popup) {
+    if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+        if (
+            inherits(map, "mapboxgl_compare_proxy") ||
+                inherits(map, "maplibre_compare_proxy")
+        ) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+                "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(
+                proxy_class,
+                list(
+                    id = map$id,
+                    message = list(
+                        type = "set_popup",
+                        layer = layer,
+                        popup = popup,
+                        map = map$map_side
+                    )
+                )
+            )
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy"))
+                "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(
+                proxy_class,
+                list(
+                    id = map$id,
+                    message = list(
+                        type = "set_popup",
+                        layer = layer,
+                        popup = popup
+                    )
+                )
+            )
+        }
+    } else {
+        stop(
+            "set_popup can only be used with mapboxgl_proxy, maplibre_proxy, mapboxgl_compare_proxy, or maplibre_compare_proxy."
+        )
+    }
+    return(map)
+}
+
 #' Set source of a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
