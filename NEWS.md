@@ -1,3 +1,11 @@
+# mapgl (development version)
+
+* Enhanced draw control functionality with improved feature editing capabilities:
+  - Fixed vertex styling to properly highlight selected vertices during editing
+  - Extended draw control support to compare views, enabling feature editing in side-by-side map comparisons
+  - Added ability to load existing features from map sources into the draw control for editing via `add_features_to_draw()`
+  - Improved compatibility with both Mapbox GL JS and MapLibre GL JS
+
 # mapgl 0.2.2
 
 * Added `mapboxgl_view()` and `maplibre_view()` functions for quick visualization of sf objects with automatic geometry detection and column-based styling (#102).

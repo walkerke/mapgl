@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,17 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.2" id="mapgl-022">mapgl 0.2.2<a class="anchor" aria-label="anchor" href="#mapgl-022"></a></h2>
+<h2 class="pkg-version" data-toc-text="development version" id="mapgl-development-version">mapgl (development version)<a class="anchor" aria-label="anchor" href="#mapgl-development-version"></a></h2>
+<ul><li>Enhanced draw control functionality with improved feature editing capabilities:
+<ul><li>Fixed vertex styling to properly highlight selected vertices during editing</li>
+<li>Extended draw control support to compare views, enabling feature editing in side-by-side map comparisons</li>
+<li>Added ability to load existing features from map sources into the draw control for editing via <code><a href="../reference/add_features_to_draw.html">add_features_to_draw()</a></code>
+</li>
+<li>Improved compatibility with both Mapbox GL JS and MapLibre GL JS</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.2" id="mapgl-022">mapgl 0.2.2<a class="anchor" aria-label="anchor" href="#mapgl-022"></a></h2><p class="text-muted">CRAN release: 2025-05-23</p>
 <ul><li>Added <code><a href="../reference/mapboxgl_view.html">mapboxgl_view()</a></code> and <code><a href="../reference/maplibre_view.html">maplibre_view()</a></code> functions for quick visualization of sf objects with automatic geometry detection and column-based styling (<a href="https://github.com/walkerke/mapgl/issues/102" class="external-link">#102</a>).</li>
 <li>Added support for rain and snow effects on Mapbox GL maps with <code><a href="../reference/set_rain.html">set_rain()</a></code> and <code><a href="../reference/set_snow.html">set_snow()</a></code> functions.</li>
 <li>Added <code><a href="../reference/add_globe_control.html">add_globe_control()</a></code> for MapLibre maps, allowing users to toggle between “mercator” and “globe” projections.</li>
