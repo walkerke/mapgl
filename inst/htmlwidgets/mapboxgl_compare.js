@@ -2394,10 +2394,10 @@ HTMLWidgets.widget({
                         resetContainer.appendChild(resetControl);
 
                         const initialView = {
-                            center: mapData.center,
-                            zoom: mapData.zoom,
-                            pitch: mapData.pitch,
-                            bearing: mapData.bearing,
+                            center: map.getCenter(),
+                            zoom: map.getZoom(),
+                            pitch: map.getPitch(),
+                            bearing: map.getBearing(),
                             animate: mapData.reset_control.animate,
                         };
 

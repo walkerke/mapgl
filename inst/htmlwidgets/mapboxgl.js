@@ -1052,20 +1052,29 @@ HTMLWidgets.widget({
                             "mapboxgl-ctrl mapboxgl-ctrl-group";
                         resetContainer.appendChild(resetControl);
 
-                        const initialView = {
-                            center: x.center,
-                            zoom: x.zoom,
-                            pitch: x.pitch,
-                            bearing: x.bearing,
-                            animate: x.reset_control.animate,
-                        };
+                        // Initialize with empty object, will be populated after map loads
+                        let initialView = {};
 
-                        if (x.reset_control.duration) {
-                            initialView.duration = x.reset_control.duration;
-                        }
+                        // Capture the initial view after the map has loaded and all view operations are complete
+                        map.once('load', function() {
+                            initialView = {
+                                center: map.getCenter(),
+                                zoom: map.getZoom(),
+                                pitch: map.getPitch(),
+                                bearing: map.getBearing(),
+                                animate: x.reset_control.animate,
+                            };
+
+                            if (x.reset_control.duration) {
+                                initialView.duration = x.reset_control.duration;
+                            }
+                        });
 
                         resetControl.onclick = function () {
-                            map.easeTo(initialView);
+                            // Only reset if we have captured the initial view
+                            if (initialView.center) {
+                                map.easeTo(initialView);
+                            }
                         };
 
                         map.addControl(
