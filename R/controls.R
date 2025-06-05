@@ -607,7 +607,8 @@ get_drawn_features <- function(map) {
         ))
     } else {
         # For regular proxies
-        session$sendCustomMessage("mapboxgl-proxy", list(
+        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+        session$sendCustomMessage(proxy_class, list(
             id = map_id,
             message = list(type = "get_drawn_features")
         ))
