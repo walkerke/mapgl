@@ -61,15 +61,26 @@ add_source <- function(map, id, data, ...) {
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param url A URL pointing to the vector tile source.
+#' @param promoteId An optional property name to use as the feature ID. This is required for hover effects on vector tiles.
+#' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
 #' @export
-add_vector_source <- function(map, id, url) {
+add_vector_source <- function(map, id, url, promoteId = NULL, ...) {
     source <- list(
         id = id,
         type = "vector",
         url = url
     )
+
+    if (!is.null(promoteId)) {
+        source$promoteId <- promoteId
+    }
+
+    # Add any additional arguments
+    extra_args <- list(...)
+    source <- c(source, extra_args)
+
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
         if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
