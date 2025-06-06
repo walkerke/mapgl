@@ -312,6 +312,97 @@ concat <- function(...) {
     c(list("concat"), list(...))
 }
 
+#' Create a number formatting expression
+#'
+#' This function creates a number formatting expression that formats numeric values
+#' according to locale-specific conventions. It can be used in tooltips, popups,
+#' and text fields for symbol layers.
+#'
+#' @param column The name of the column containing the numeric value to format.
+#'   Can also be an expression that evaluates to a number.
+#' @param locale A string specifying the locale to use for formatting (e.g., "en-US", 
+#'   "de-DE", "fr-FR"). Defaults to "en-US".
+#' @param style The formatting style to use. Options include:
+#'   - "decimal" (default): Plain number formatting
+#'   - "currency": Currency formatting (requires `currency` parameter)
+#'   - "percent": Percentage formatting (multiplies by 100 and adds %)
+#'   - "unit": Unit formatting (requires `unit` parameter)
+#' @param currency For style = "currency", the ISO 4217 currency code (e.g., "USD", "EUR", "GBP").
+#' @param unit For style = "unit", the unit to use (e.g., "kilometer", "mile", "liter").
+#' @param minimum_fraction_digits The minimum number of fraction digits to display.
+#' @param maximum_fraction_digits The maximum number of fraction digits to display.
+#' @param minimum_integer_digits The minimum number of integer digits to display.
+#' @param use_grouping Whether to use grouping separators (e.g., thousands separators).
+#'   Defaults to TRUE.
+#' @param notation The formatting notation. Options include:
+#'   - "standard" (default): Regular notation
+#'   - "scientific": Scientific notation
+#'   - "engineering": Engineering notation
+#'   - "compact": Compact notation (e.g., "1.2K", "3.4M")
+#' @param compact_display For notation = "compact", whether to use "short" (default)
+#'   or "long" form.
+#'
+#' @return A list representing the number-format expression.
+#' @export
+#' @examples
+#' # Basic number formatting with thousands separators
+#' number_format("population")
+#' 
+#' # Currency formatting
+#' number_format("income", style = "currency", currency = "USD")
+#' 
+#' # Percentage with 1 decimal place
+#' number_format("rate", style = "percent", maximum_fraction_digits = 1)
+#' 
+#' # Compact notation for large numbers
+#' number_format("population", notation = "compact")
+#' 
+#' # Using within a tooltip
+#' concat("Population: ", number_format("population", notation = "compact"))
+#' 
+#' # Using with get_column()
+#' number_format(get_column("value"), style = "currency", currency = "EUR")
+number_format <- function(column,
+                          locale = "en-US",
+                          style = "decimal",
+                          currency = NULL,
+                          unit = NULL,
+                          minimum_fraction_digits = NULL,
+                          maximum_fraction_digits = NULL,
+                          minimum_integer_digits = NULL,
+                          use_grouping = NULL,
+                          notation = NULL,
+                          compact_display = NULL) {
+    
+    # Handle column input - can be a string or an expression
+    if (is.character(column) && length(column) == 1) {
+        column_expr <- get_column(column)
+    } else {
+        column_expr <- column
+    }
+    
+    # Build options list
+    options <- list(locale = locale)
+    
+    # Add style options
+    if (!is.null(style)) options$style <- style
+    if (!is.null(currency)) options$currency <- currency
+    if (!is.null(unit)) options$unit <- unit
+    
+    # Add digit options (using hyphenated names for JS compatibility)
+    if (!is.null(minimum_fraction_digits)) options$`min-fraction-digits` <- minimum_fraction_digits
+    if (!is.null(maximum_fraction_digits)) options$`max-fraction-digits` <- maximum_fraction_digits
+    if (!is.null(minimum_integer_digits)) options$`min-integer-digits` <- minimum_integer_digits
+    
+    # Add other options
+    if (!is.null(use_grouping)) options$useGrouping <- use_grouping
+    if (!is.null(notation)) options$notation <- notation
+    if (!is.null(compact_display)) options$compactDisplay <- compact_display
+    
+    # Return the expression
+    list("number-format", column_expr, options)
+}
+
 # Trim hex colors (so packages like viridisLite can be used)
 trim_hex_colors <- function(colors) {
     ifelse(substr(colors, 1, 1) == "#" & nchar(colors) == 9,

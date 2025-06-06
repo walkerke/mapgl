@@ -14,6 +14,42 @@ function evaluateExpression(expression, properties) {
             return String(evaluateExpression(expression[1], properties));
         case 'to-number':
             return Number(evaluateExpression(expression[1], properties));
+        case 'number-format':
+            const value = evaluateExpression(expression[1], properties);
+            const options = expression[2] || {};
+            
+            // Handle locale option
+            const locale = options.locale || 'en-US';
+            
+            // Build Intl.NumberFormat options
+            const formatOptions = {};
+            
+            // Style options
+            if (options.style) formatOptions.style = options.style; // 'decimal', 'currency', 'percent', 'unit'
+            if (options.currency) formatOptions.currency = options.currency;
+            if (options.unit) formatOptions.unit = options.unit;
+            
+            // Digit options
+            if (options.hasOwnProperty('min-fraction-digits')) {
+                formatOptions.minimumFractionDigits = options['min-fraction-digits'];
+            }
+            if (options.hasOwnProperty('max-fraction-digits')) {
+                formatOptions.maximumFractionDigits = options['max-fraction-digits'];
+            }
+            if (options.hasOwnProperty('min-integer-digits')) {
+                formatOptions.minimumIntegerDigits = options['min-integer-digits'];
+            }
+            
+            // Notation options
+            if (options.notation) formatOptions.notation = options.notation; // 'standard', 'scientific', 'engineering', 'compact'
+            if (options.compactDisplay) formatOptions.compactDisplay = options.compactDisplay; // 'short', 'long'
+            
+            // Grouping
+            if (options.hasOwnProperty('useGrouping')) {
+                formatOptions.useGrouping = options.useGrouping;
+            }
+            
+            return new Intl.NumberFormat(locale, formatOptions).format(value);
         default:
             // For literals and other simple values
             return expression;
