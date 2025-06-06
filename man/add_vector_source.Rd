@@ -4,7 +4,7 @@
 \alias{add_vector_source}
 \title{Add a vector tile source to a Mapbox GL or Maplibre GL map}
 \usage{
-add_vector_source(map, id, url)
+add_vector_source(map, id, url, promoteId = NULL, ...)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
@@ -12,6 +12,10 @@ add_vector_source(map, id, url)
 \item{id}{A unique ID for the source.}
 
 \item{url}{A URL pointing to the vector tile source.}
+
+\item{promoteId}{An optional property name to use as the feature ID. This is required for hover effects on vector tiles.}
+
+\item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }
 \value{
 The modified map object with the new source added.
