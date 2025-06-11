@@ -4,7 +4,7 @@
 \alias{add_raster_dem_source}
 \title{Add a raster DEM source to a Mapbox GL or Maplibre GL map}
 \usage{
-add_raster_dem_source(map, id, url, tileSize = 512, maxzoom = NULL)
+add_raster_dem_source(map, id, url, tileSize = 512, maxzoom = NULL, ...)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
@@ -16,6 +16,8 @@ add_raster_dem_source(map, id, url, tileSize = 512, maxzoom = NULL)
 \item{tileSize}{The size of the raster tiles.}
 
 \item{maxzoom}{The maximum zoom level for the raster tiles.}
+
+\item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }
 \value{
 The modified map object with the new source added.

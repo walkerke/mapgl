@@ -10,7 +10,8 @@ add_raster_source(
   url = NULL,
   tiles = NULL,
   tileSize = 256,
-  maxzoom = 22
+  maxzoom = 22,
+  ...
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ add_raster_source(
 \item{tileSize}{The size of the raster tiles.}
 
 \item{maxzoom}{The maximum zoom level for the raster tiles.}
+
+\item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }
 \value{
 The modified map object with the new source added.

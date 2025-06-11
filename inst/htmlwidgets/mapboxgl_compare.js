@@ -320,53 +320,98 @@ HTMLWidgets.widget({
                                 map.setFilter(message.layer, message.filter);
                             } else if (message.type === "add_source") {
                                 if (message.source.type === "vector") {
-                                    map.addSource(message.source.id, {
+                                    const sourceConfig = {
                                         type: "vector",
                                         url: message.source.url,
+                                    };
+                                    // Add promoteId if provided
+                                    if (message.source.promoteId) {
+                                        sourceConfig.promoteId = message.source.promoteId;
+                                    }
+                                    // Add any other properties from the source object
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id" && key !== "type" && key !== "url" && key !== "promoteId") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
                                     });
+                                    map.addSource(message.source.id, sourceConfig);
                                 } else if (message.source.type === "geojson") {
-                                    map.addSource(message.source.id, {
+                                    const sourceConfig = {
                                         type: "geojson",
                                         data: message.source.data,
                                         generateId: message.source.generateId,
+                                    };
+                                    // Add any other properties from the source object
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id" && key !== "type" && key !== "data" && key !== "generateId") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
                                     });
+                                    map.addSource(message.source.id, sourceConfig);
                                 } else if (message.source.type === "raster") {
+                                    const sourceConfig = {
+                                        type: "raster",
+                                        tileSize: message.source.tileSize,
+                                    };
                                     if (message.source.url) {
-                                        map.addSource(message.source.id, {
-                                            type: "raster",
-                                            url: message.source.url,
-                                            tileSize: message.source.tileSize,
-                                            maxzoom: message.source.maxzoom,
-                                        });
+                                        sourceConfig.url = message.source.url;
                                     } else if (message.source.tiles) {
-                                        map.addSource(message.source.id, {
-                                            type: "raster",
-                                            tiles: message.source.tiles,
-                                            tileSize: message.source.tileSize,
-                                            maxzoom: message.source.maxzoom,
-                                        });
+                                        sourceConfig.tiles = message.source.tiles;
                                     }
+                                    if (message.source.maxzoom) {
+                                        sourceConfig.maxzoom = message.source.maxzoom;
+                                    }
+                                    // Add any other properties from the source object
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id" && key !== "type" && key !== "url" && key !== "tiles" && key !== "tileSize" && key !== "maxzoom") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
+                                    });
+                                    map.addSource(message.source.id, sourceConfig);
                                 } else if (
                                     message.source.type === "raster-dem"
                                 ) {
-                                    map.addSource(message.source.id, {
+                                    const sourceConfig = {
                                         type: "raster-dem",
                                         url: message.source.url,
                                         tileSize: message.source.tileSize,
-                                        maxzoom: message.source.maxzoom,
+                                    };
+                                    if (message.source.maxzoom) {
+                                        sourceConfig.maxzoom = message.source.maxzoom;
+                                    }
+                                    // Add any other properties from the source object
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id" && key !== "type" && key !== "url" && key !== "tileSize" && key !== "maxzoom") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
                                     });
+                                    map.addSource(message.source.id, sourceConfig);
                                 } else if (message.source.type === "image") {
-                                    map.addSource(message.source.id, {
+                                    const sourceConfig = {
                                         type: "image",
                                         url: message.source.url,
                                         coordinates: message.source.coordinates,
+                                    };
+                                    // Add any other properties from the source object
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id" && key !== "type" && key !== "url" && key !== "coordinates") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
                                     });
+                                    map.addSource(message.source.id, sourceConfig);
                                 } else if (message.source.type === "video") {
-                                    map.addSource(message.source.id, {
+                                    const sourceConfig = {
                                         type: "video",
                                         urls: message.source.urls,
                                         coordinates: message.source.coordinates,
+                                    };
+                                    // Add any other properties from the source object
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id" && key !== "type" && key !== "urls" && key !== "coordinates") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
                                     });
+                                    map.addSource(message.source.id, sourceConfig);
                                 }
                             } else if (message.type === "add_layer") {
                                 try {
@@ -1693,10 +1738,14 @@ HTMLWidgets.widget({
                     if (mapData.sources) {
                         mapData.sources.forEach(function (source) {
                             if (source.type === "vector") {
-                                map.addSource(source.id, {
+                                const sourceConfig = {
                                     type: "vector",
                                     url: source.url,
-                                });
+                                };
+                                if (source.promoteId) {
+                                    sourceConfig.promoteId = source.promoteId;
+                                }
+                                map.addSource(source.id, sourceConfig);
                             } else if (source.type === "geojson") {
                                 const geojsonData = source.data;
                                 map.addSource(source.id, {

@@ -141,6 +141,7 @@ add_vector_source <- function(map, id, url, promote_id = NULL, ...) {
 #' @param tiles A vector of tile URLs for the raster source. (optional)
 #' @param tileSize The size of the raster tiles.
 #' @param maxzoom The maximum zoom level for the raster tiles.
+#' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
 #' @export
@@ -150,7 +151,8 @@ add_raster_source <- function(
   url = NULL,
   tiles = NULL,
   tileSize = 256,
-  maxzoom = 22
+  maxzoom = 22,
+  ...
 ) {
   if (is.null(url) && is.null(tiles)) {
     stop("Either 'url' or 'tiles' must be provided.")
@@ -181,6 +183,10 @@ add_raster_source <- function(
   if (!is.null(maxzoom)) {
     source$maxzoom <- maxzoom
   }
+
+  # Add any additional arguments
+  extra_args <- list(...)
+  source <- c(source, extra_args)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     if (
@@ -224,6 +230,7 @@ add_raster_source <- function(
 #' @param url A URL pointing to the raster DEM source.
 #' @param tileSize The size of the raster tiles.
 #' @param maxzoom The maximum zoom level for the raster tiles.
+#' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
 #' @export
@@ -232,7 +239,8 @@ add_raster_dem_source <- function(
   id,
   url,
   tileSize = 512,
-  maxzoom = NULL
+  maxzoom = NULL,
+  ...
 ) {
   source <- list(
     id = id,
@@ -244,6 +252,10 @@ add_raster_dem_source <- function(
   if (!is.null(maxzoom)) {
     source$maxzoom <- maxzoom
   }
+
+  # Add any additional arguments
+  extra_args <- list(...)
+  source <- c(source, extra_args)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     if (
