@@ -69,19 +69,19 @@ mapboxgl(
     zoom = 9
 ) |>
     add_draw_control()
-    
+
 # With initial features from a source
 library(tigris)
 tx <- counties(state = "TX", cb = TRUE)
 mapboxgl(bounds = tx) |>
     add_source(id = "tx", data = tx) |>
     add_draw_control(source = "tx")
-    
+
 # With custom styling
 mapboxgl() |>
     add_draw_control(
         point_color = "#ff0000",
-        line_color = "#00ff00", 
+        line_color = "#00ff00",
         fill_color = "#0000ff",
         fill_opacity = 0.3,
         active_color = "#ff00ff",

@@ -30,7 +30,7 @@ mapboxgl(bounds = tx) |>
   add_source(id = "tx", data = tx) |>
   add_draw_control() |>
   add_features_to_draw(source = "tx")
-  
+
 # In a Shiny app
 observeEvent(input$load_data, {
   mapboxgl_proxy("map") |>

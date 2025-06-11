@@ -59,6 +59,11 @@ function evaluateExpression(expression, properties) {
 function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
     map.getCanvas().style.cursor = "pointer";
     if (e.features.length > 0) {
+        // Clear any existing active tooltip first to prevent stacking
+        if (window._activeTooltip && window._activeTooltip !== tooltipPopup) {
+            window._activeTooltip.remove();
+        }
+        
         let description;
         
         // Check if tooltipProperty is an expression (array) or a simple property name (string)
@@ -1542,6 +1547,23 @@ if (HTMLWidgets.shinyMode) {
         if (map) {
             var message = data.message;
             
+            // Initialize layer state tracking if not already present
+            if (!window._mapglLayerState) {
+                window._mapglLayerState = {};
+            }
+            const mapId = map.getContainer().id;
+            if (!window._mapglLayerState[mapId]) {
+                window._mapglLayerState[mapId] = {
+                    filters: {},        // layerId -> filter expression
+                    paintProperties: {}, // layerId -> {propertyName -> value}
+                    layoutProperties: {}, // layerId -> {propertyName -> value}
+                    tooltips: {},       // layerId -> tooltip property
+                    popups: {},         // layerId -> popup property
+                    legends: {}         // legendId -> {html: string, css: string}
+                };
+            }
+            const layerState = window._mapglLayerState[mapId];
+            
             // Helper function to update drawn features
             function updateDrawnFeatures() {
                 var drawControl = widget.drawControl || widget.getDraw();
@@ -1561,6 +1583,8 @@ if (HTMLWidgets.shinyMode) {
             }
             if (message.type === "set_filter") {
                 map.setFilter(message.layer, message.filter);
+                // Track filter state for layer restoration
+                layerState.filters[message.layer] = message.filter;
             } else if (message.type === "add_source") {
                 map.addSource(message.source);
             } else if (message.type === "add_layer") {
@@ -1817,6 +1841,18 @@ if (HTMLWidgets.shinyMode) {
                 if (map.getSource(message.layer)) {
                     map.removeSource(message.layer);
                 }
+                
+                // Clean up tracked layer state
+                const mapId = map.getContainer().id;
+                if (window._mapglLayerState && window._mapglLayerState[mapId]) {
+                    const layerState = window._mapglLayerState[mapId];
+                    delete layerState.filters[message.layer];
+                    delete layerState.paintProperties[message.layer];
+                    delete layerState.layoutProperties[message.layer];
+                    delete layerState.tooltips[message.layer];
+                    delete layerState.popups[message.layer];
+                    // Note: legends are not tied to specific layers, so we don't clear them here
+                }
             } else if (message.type === "fit_bounds") {
                 map.fitBounds(message.bounds, message.options);
             } else if (message.type === "fly_to") {
@@ -1835,6 +1871,11 @@ if (HTMLWidgets.shinyMode) {
                     message.name,
                     message.value,
                 );
+                // Track layout property state for layer restoration
+                if (!layerState.layoutProperties[message.layer]) {
+                    layerState.layoutProperties[message.layer] = {};
+                }
+                layerState.layoutProperties[message.layer][message.name] = message.value;
             } else if (message.type === "set_paint_property") {
                 const layerId = message.layer;
                 const propertyName = message.name;
@@ -1871,6 +1912,11 @@ if (HTMLWidgets.shinyMode) {
                     // No hover options, just set the new value directly
                     map.setPaintProperty(layerId, propertyName, newValue);
                 }
+                // Track paint property state for layer restoration
+                if (!layerState.paintProperties[layerId]) {
+                    layerState.paintProperties[layerId] = {};
+                }
+                layerState.paintProperties[layerId][propertyName] = newValue;
             } else if (message.type === "query_rendered_features") {
                 const features = map.queryRenderedFeatures(message.geometry, {
                     layers: message.layers,
@@ -1878,6 +1924,10 @@ if (HTMLWidgets.shinyMode) {
                 });
                 Shiny.setInputValue(el.id + "_feature_query", features);
             } else if (message.type === "add_legend") {
+                // Extract legend ID from HTML to track it
+                const legendIdMatch = message.html.match(/id="([^"]+)"/);
+                const legendId = legendIdMatch ? legendIdMatch[1] : null;
+                
                 if (!message.add) {
                     const existingLegends = document.querySelectorAll(
                         `#${data.id} .mapboxgl-legend`,
@@ -1887,6 +1937,17 @@ if (HTMLWidgets.shinyMode) {
                     // Clean up any existing legend styles that might have been added
                     const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${data.id}"]`);
                     legendStyles.forEach((style) => style.remove());
+                    
+                    // Clear legend state when replacing all legends
+                    layerState.legends = {};
+                }
+
+                // Track legend state
+                if (legendId) {
+                    layerState.legends[legendId] = {
+                        html: message.html,
+                        css: message.legend_css
+                    };
                 }
 
                 const legendCss = document.createElement("style");
@@ -1907,6 +1968,9 @@ if (HTMLWidgets.shinyMode) {
             } else if (message.type === "set_style") {
                 // Default preserve_layers to true if not specified
                 const preserveLayers = message.preserve_layers !== false;
+                
+                console.log("[MapGL Debug] set_style called with preserve_layers:", preserveLayers);
+                console.log("[MapGL Debug] message.preserve_layers:", message.preserve_layers);
                 
                 // If we should preserve layers and sources
                 if (preserveLayers) {
@@ -1963,10 +2027,24 @@ if (HTMLWidgets.shinyMode) {
                         ) {
                             console.log("[MapGL Debug] Found user layer:", layerId);
                             knownUserLayerIds.push(layerId);
-                            // Also include its source
+                            // Only include its source if it's not a base map source
                             if (layer.source && !userSourceIds.includes(layer.source)) {
-                                console.log("[MapGL Debug] Found user source from layer:", layer.source);
-                                userSourceIds.push(layer.source);
+                                const layerSource = currentStyle.sources[layer.source];
+                                const isBaseMapSource = layerSource && layerSource.type === "vector" && (
+                                    layer.source === "composite" || 
+                                    layer.source === "mapbox" || 
+                                    layer.source.startsWith("mapbox-") ||
+                                    layer.source === "openmaptiles" ||
+                                    layer.source.startsWith("carto") ||
+                                    layer.source.startsWith("maptiler")
+                                );
+                                
+                                if (!isBaseMapSource) {
+                                    console.log("[MapGL Debug] Found user source from layer:", layer.source);
+                                    userSourceIds.push(layer.source);
+                                } else {
+                                    console.log("[MapGL Debug] Not adding base map source from layer:", layer.source);
+                                }
                             }
                         }
                     });
@@ -1974,6 +2052,8 @@ if (HTMLWidgets.shinyMode) {
                     // For each source, determine if it's a user-added source
                     for (const sourceId in currentStyle.sources) {
                         const source = currentStyle.sources[sourceId];
+                        
+                        console.log("[MapGL Debug] Examining source:", sourceId, "type:", source.type);
                         
                         // Strategy 1: All GeoJSON sources are likely user-added
                         if (source.type === "geojson") {
@@ -2007,6 +2087,8 @@ if (HTMLWidgets.shinyMode) {
                             if (!userSourceIds.includes(sourceId)) {
                                 userSourceIds.push(sourceId);
                             }
+                        } else {
+                            console.log("[MapGL Debug] Filtered out base map source:", sourceId);
                         }
                         
                         // Store layer-specific handler references
@@ -2023,15 +2105,35 @@ if (HTMLWidgets.shinyMode) {
                     }
                     
                     // Identify layers using user-added sources or known user layer IDs
+                    // ONLY include layers that use genuinely user-added sources (not base map sources)
                     currentStyle.layers.forEach(function(layer) {
-                        if (userSourceIds.includes(layer.source) || knownUserLayerIds.includes(layer.id)) {
+                        // Check if this layer uses a genuine user source (not filtered out base map sources)
+                        const usesUserSource = userSourceIds.includes(layer.source);
+                        const isKnownUserLayer = knownUserLayerIds.includes(layer.id);
+                        
+                        // Additional check: exclude layers that use base map sources even if they were temporarily added to userSourceIds
+                        const layerSource = currentStyle.sources[layer.source];
+                        const isBaseMapSource = layerSource && layerSource.type === "vector" && (
+                            layer.source === "composite" || 
+                            layer.source === "mapbox" || 
+                            layer.source.startsWith("mapbox-") ||
+                            layer.source === "openmaptiles" ||
+                            layer.source.startsWith("carto") ||
+                            layer.source.startsWith("maptiler")
+                        );
+                        
+                        if ((usesUserSource || isKnownUserLayer) && !isBaseMapSource) {
                             userLayers.push(layer);
+                            console.log("[MapGL Debug] Including user layer:", layer.id, "source:", layer.source);
+                        } else if (isBaseMapSource) {
+                            console.log("[MapGL Debug] Excluding base map layer:", layer.id, "source:", layer.source);
                         }
                     });
                     
                     // Log detected user sources and layers
                     console.log("[MapGL Debug] Detected user sources:", userSourceIds);
                     console.log("[MapGL Debug] Detected user layers:", userLayers.map(l => l.id));
+                    console.log("[MapGL Debug] Will preserve", userLayers.length, "user layers");
                     
                     // Store them for potential use outside the onStyleLoad event
                     // This helps in case the event timing is different in MapLibre
@@ -2144,6 +2246,176 @@ if (HTMLWidgets.shinyMode) {
                             console.error("[MapGL Debug] Error in style.load handler:", err);
                         }
                         
+                        // Clear any active tooltips before restoration to prevent stacking
+                        if (window._activeTooltip) {
+                            window._activeTooltip.remove();
+                            delete window._activeTooltip;
+                        }
+                        
+                        // Restore tracked layer modifications
+                        const mapId = map.getContainer().id;
+                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                        if (savedLayerState) {
+                            console.log("[MapGL Debug] Restoring tracked layer modifications");
+                            
+                            // Restore filters
+                            for (const layerId in savedLayerState.filters) {
+                                if (map.getLayer(layerId)) {
+                                    console.log("[MapGL Debug] Restoring filter for layer:", layerId);
+                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                }
+                            }
+                            
+                            // Restore paint properties
+                            for (const layerId in savedLayerState.paintProperties) {
+                                if (map.getLayer(layerId)) {
+                                    const properties = savedLayerState.paintProperties[layerId];
+                                    for (const propertyName in properties) {
+                                        const savedValue = properties[propertyName];
+                                        
+                                        console.log("[MapGL Debug] Restoring paint property:", layerId, propertyName, savedValue);
+                                        
+                                        // Check if layer has hover effects that need to be preserved
+                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                            // Preserve hover effects while updating base value
+                                            const hoverValue = currentValue[2];
+                                            const newPaintProperty = [
+                                                "case",
+                                                ["boolean", ["feature-state", "hover"], false],
+                                                hoverValue,
+                                                savedValue,
+                                            ];
+                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                        } else {
+                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Restore layout properties
+                            for (const layerId in savedLayerState.layoutProperties) {
+                                if (map.getLayer(layerId)) {
+                                    const properties = savedLayerState.layoutProperties[layerId];
+                                    for (const propertyName in properties) {
+                                        console.log("[MapGL Debug] Restoring layout property:", layerId, propertyName, properties[propertyName]);
+                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                    }
+                                }
+                            }
+                            
+                            // Restore tooltips
+                            for (const layerId in savedLayerState.tooltips) {
+                                if (map.getLayer(layerId)) {
+                                    const tooltipProperty = savedLayerState.tooltips[layerId];
+                                    console.log("[MapGL Debug] Restoring tooltip:", layerId, tooltipProperty);
+                                    
+                                    // Remove existing tooltip handlers first
+                                    if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
+                                        if (window._mapboxHandlers[layerId].mousemove) {
+                                            map.off("mousemove", layerId, window._mapboxHandlers[layerId].mousemove);
+                                        }
+                                        if (window._mapboxHandlers[layerId].mouseleave) {
+                                            map.off("mouseleave", layerId, window._mapboxHandlers[layerId].mouseleave);
+                                        }
+                                    }
+                                    
+                                    // Create new tooltip
+                                    const tooltip = new maplibregl.Popup({
+                                        closeButton: false,
+                                        closeOnClick: false,
+                                    });
+
+                                    const mouseMoveHandler = function (e) {
+                                        onMouseMoveTooltip(e, map, tooltip, tooltipProperty);
+                                    };
+
+                                    const mouseLeaveHandler = function () {
+                                        onMouseLeaveTooltip(map, tooltip);
+                                    };
+
+                                    map.on("mousemove", layerId, mouseMoveHandler);
+                                    map.on("mouseleave", layerId, mouseLeaveHandler);
+
+                                    // Store handler references
+                                    if (!window._mapboxHandlers) {
+                                        window._mapboxHandlers = {};
+                                    }
+                                    window._mapboxHandlers[layerId] = {
+                                        mousemove: mouseMoveHandler,
+                                        mouseleave: mouseLeaveHandler,
+                                    };
+                                }
+                            }
+                            
+                            // Restore popups
+                            for (const layerId in savedLayerState.popups) {
+                                if (map.getLayer(layerId)) {
+                                    const popupProperty = savedLayerState.popups[layerId];
+                                    console.log("[MapGL Debug] Restoring popup:", layerId, popupProperty);
+                                    
+                                    // Remove existing popup handlers first
+                                    if (window._mapboxClickHandlers && window._mapboxClickHandlers[layerId]) {
+                                        map.off("click", layerId, window._mapboxClickHandlers[layerId]);
+                                    }
+                                    
+                                    // Create new popup handler
+                                    const clickHandler = function(e) {
+                                        onClickPopup(e, map, popupProperty, layerId);
+                                    };
+                                    
+                                    map.on("click", layerId, clickHandler);
+                                    
+                                    // Add hover effects for cursor
+                                    map.on("mouseenter", layerId, function () {
+                                        map.getCanvas().style.cursor = "pointer";
+                                    });
+                                    map.on("mouseleave", layerId, function () {
+                                        map.getCanvas().style.cursor = "";
+                                    });
+                                    
+                                    // Store handler reference
+                                    if (!window._mapboxClickHandlers) {
+                                        window._mapboxClickHandlers = {};
+                                    }
+                                    window._mapboxClickHandlers[layerId] = clickHandler;
+                                }
+                            }
+                            
+                            // Restore legends
+                            if (Object.keys(savedLayerState.legends).length > 0) {
+                                // Clear any existing legends first to prevent stacking
+                                const existingLegends = document.querySelectorAll(`#${mapId} .mapboxgl-legend`);
+                                existingLegends.forEach((legend) => legend.remove());
+                                
+                                // Clear existing legend styles
+                                const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${mapId}"]`);
+                                legendStyles.forEach((style) => style.remove());
+                                
+                                // Restore each legend
+                                for (const legendId in savedLayerState.legends) {
+                                    const legendData = savedLayerState.legends[legendId];
+                                    console.log("[MapGL Debug] Restoring legend:", legendId);
+                                    
+                                    // Add legend CSS
+                                    const legendCss = document.createElement("style");
+                                    legendCss.innerHTML = legendData.css;
+                                    legendCss.setAttribute('data-mapgl-legend-css', mapId);
+                                    document.head.appendChild(legendCss);
+                                    
+                                    // Add legend HTML
+                                    const legend = document.createElement("div");
+                                    legend.innerHTML = legendData.html;
+                                    legend.classList.add("mapboxgl-legend");
+                                    const mapContainer = document.getElementById(mapId);
+                                    if (mapContainer) {
+                                        mapContainer.appendChild(legend);
+                                    }
+                                }
+                            }
+                        }
+                        
                         // Remove this listener to avoid adding the same layers multiple times
                         map.off('style.load', onStyleLoad);
                     };
@@ -2243,6 +2515,161 @@ if (HTMLWidgets.shinyMode) {
                                                 console.error("[MapGL Debug] Backup: error adding layer", layer.id, err);
                                             }
                                         });
+                                        
+                                        // Restore tracked layer modifications in backup
+                                        const mapId = map.getContainer().id;
+                                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                                        if (savedLayerState) {
+                                            console.log("[MapGL Debug] Backup: restoring tracked layer modifications");
+                                            
+                                            // Restore filters
+                                            for (const layerId in savedLayerState.filters) {
+                                                if (map.getLayer(layerId)) {
+                                                    console.log("[MapGL Debug] Backup: restoring filter for layer:", layerId);
+                                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                                }
+                                            }
+                                            
+                                            // Restore paint properties
+                                            for (const layerId in savedLayerState.paintProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.paintProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        const savedValue = properties[propertyName];
+                                                        console.log("[MapGL Debug] Backup: restoring paint property:", layerId, propertyName, savedValue);
+                                                        
+                                                        // Check if layer has hover effects that need to be preserved
+                                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                                            // Preserve hover effects while updating base value
+                                                            const hoverValue = currentValue[2];
+                                                            const newPaintProperty = [
+                                                                "case",
+                                                                ["boolean", ["feature-state", "hover"], false],
+                                                                hoverValue,
+                                                                savedValue,
+                                                            ];
+                                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                                        } else {
+                                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Restore layout properties
+                                            for (const layerId in savedLayerState.layoutProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.layoutProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        console.log("[MapGL Debug] Backup: restoring layout property:", layerId, propertyName, properties[propertyName]);
+                                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Restore tooltips
+                                            for (const layerId in savedLayerState.tooltips) {
+                                                if (map.getLayer(layerId)) {
+                                                    const tooltipProperty = savedLayerState.tooltips[layerId];
+                                                    console.log("[MapGL Debug] Backup: restoring tooltip:", layerId, tooltipProperty);
+                                                    
+                                                    if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
+                                                        if (window._mapboxHandlers[layerId].mousemove) {
+                                                            map.off("mousemove", layerId, window._mapboxHandlers[layerId].mousemove);
+                                                        }
+                                                        if (window._mapboxHandlers[layerId].mouseleave) {
+                                                            map.off("mouseleave", layerId, window._mapboxHandlers[layerId].mouseleave);
+                                                        }
+                                                    }
+                                                    
+                                                    const tooltip = new maplibregl.Popup({
+                                                        closeButton: false,
+                                                        closeOnClick: false,
+                                                    });
+
+                                                    const mouseMoveHandler = function (e) {
+                                                        onMouseMoveTooltip(e, map, tooltip, tooltipProperty);
+                                                    };
+
+                                                    const mouseLeaveHandler = function () {
+                                                        onMouseLeaveTooltip(map, tooltip);
+                                                    };
+
+                                                    map.on("mousemove", layerId, mouseMoveHandler);
+                                                    map.on("mouseleave", layerId, mouseLeaveHandler);
+
+                                                    if (!window._mapboxHandlers) {
+                                                        window._mapboxHandlers = {};
+                                                    }
+                                                    window._mapboxHandlers[layerId] = {
+                                                        mousemove: mouseMoveHandler,
+                                                        mouseleave: mouseLeaveHandler,
+                                                    };
+                                                }
+                                            }
+                                            
+                                            // Restore popups
+                                            for (const layerId in savedLayerState.popups) {
+                                                if (map.getLayer(layerId)) {
+                                                    const popupProperty = savedLayerState.popups[layerId];
+                                                    console.log("[MapGL Debug] Backup: restoring popup:", layerId, popupProperty);
+                                                    
+                                                    if (window._mapboxClickHandlers && window._mapboxClickHandlers[layerId]) {
+                                                        map.off("click", layerId, window._mapboxClickHandlers[layerId]);
+                                                    }
+                                                    
+                                                    const clickHandler = function(e) {
+                                                        onClickPopup(e, map, popupProperty, layerId);
+                                                    };
+                                                    
+                                                    map.on("click", layerId, clickHandler);
+                                                    map.on("mouseenter", layerId, function () {
+                                                        map.getCanvas().style.cursor = "pointer";
+                                                    });
+                                                    map.on("mouseleave", layerId, function () {
+                                                        map.getCanvas().style.cursor = "";
+                                                    });
+                                                    
+                                                    if (!window._mapboxClickHandlers) {
+                                                        window._mapboxClickHandlers = {};
+                                                    }
+                                                    window._mapboxClickHandlers[layerId] = clickHandler;
+                                                }
+                                            }
+                                            
+                                            // Restore legends
+                                            if (Object.keys(savedLayerState.legends).length > 0) {
+                                                // Clear any existing legends first to prevent stacking
+                                                const existingLegends = document.querySelectorAll(`#${mapId} .mapboxgl-legend`);
+                                                existingLegends.forEach((legend) => legend.remove());
+                                                
+                                                // Clear existing legend styles
+                                                const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${mapId}"]`);
+                                                legendStyles.forEach((style) => style.remove());
+                                                
+                                                // Restore each legend
+                                                for (const legendId in savedLayerState.legends) {
+                                                    const legendData = savedLayerState.legends[legendId];
+                                                    console.log("[MapGL Debug] Backup: restoring legend:", legendId);
+                                                    
+                                                    // Add legend CSS
+                                                    const legendCss = document.createElement("style");
+                                                    legendCss.innerHTML = legendData.css;
+                                                    legendCss.setAttribute('data-mapgl-legend-css', mapId);
+                                                    document.head.appendChild(legendCss);
+                                                    
+                                                    // Add legend HTML
+                                                    const legend = document.createElement("div");
+                                                    legend.innerHTML = legendData.html;
+                                                    legend.classList.add("mapboxgl-legend");
+                                                    const mapContainer = document.getElementById(mapId);
+                                                    if (mapContainer) {
+                                                        mapContainer.appendChild(legend);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     } else {
                                         console.log("[MapGL Debug] Backup check: layers already restored properly");
                                     }
@@ -2342,6 +2769,161 @@ if (HTMLWidgets.shinyMode) {
                                                 console.error("[MapGL Debug] Second backup: error adding layer", layer.id, err);
                                             }
                                         });
+                                        
+                                        // Restore tracked layer modifications in second backup
+                                        const mapId = map.getContainer().id;
+                                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                                        if (savedLayerState) {
+                                            console.log("[MapGL Debug] Second backup: restoring tracked layer modifications");
+                                            
+                                            // Restore filters
+                                            for (const layerId in savedLayerState.filters) {
+                                                if (map.getLayer(layerId)) {
+                                                    console.log("[MapGL Debug] Second backup: restoring filter for layer:", layerId);
+                                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                                }
+                                            }
+                                            
+                                            // Restore paint properties
+                                            for (const layerId in savedLayerState.paintProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.paintProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        const savedValue = properties[propertyName];
+                                                        console.log("[MapGL Debug] Second backup: restoring paint property:", layerId, propertyName, savedValue);
+                                                        
+                                                        // Check if layer has hover effects that need to be preserved
+                                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                                            // Preserve hover effects while updating base value
+                                                            const hoverValue = currentValue[2];
+                                                            const newPaintProperty = [
+                                                                "case",
+                                                                ["boolean", ["feature-state", "hover"], false],
+                                                                hoverValue,
+                                                                savedValue,
+                                                            ];
+                                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                                        } else {
+                                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Restore layout properties
+                                            for (const layerId in savedLayerState.layoutProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.layoutProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        console.log("[MapGL Debug] Second backup: restoring layout property:", layerId, propertyName, properties[propertyName]);
+                                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Restore tooltips
+                                            for (const layerId in savedLayerState.tooltips) {
+                                                if (map.getLayer(layerId)) {
+                                                    const tooltipProperty = savedLayerState.tooltips[layerId];
+                                                    console.log("[MapGL Debug] Second backup: restoring tooltip:", layerId, tooltipProperty);
+                                                    
+                                                    if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
+                                                        if (window._mapboxHandlers[layerId].mousemove) {
+                                                            map.off("mousemove", layerId, window._mapboxHandlers[layerId].mousemove);
+                                                        }
+                                                        if (window._mapboxHandlers[layerId].mouseleave) {
+                                                            map.off("mouseleave", layerId, window._mapboxHandlers[layerId].mouseleave);
+                                                        }
+                                                    }
+                                                    
+                                                    const tooltip = new maplibregl.Popup({
+                                                        closeButton: false,
+                                                        closeOnClick: false,
+                                                    });
+
+                                                    const mouseMoveHandler = function (e) {
+                                                        onMouseMoveTooltip(e, map, tooltip, tooltipProperty);
+                                                    };
+
+                                                    const mouseLeaveHandler = function () {
+                                                        onMouseLeaveTooltip(map, tooltip);
+                                                    };
+
+                                                    map.on("mousemove", layerId, mouseMoveHandler);
+                                                    map.on("mouseleave", layerId, mouseLeaveHandler);
+
+                                                    if (!window._mapboxHandlers) {
+                                                        window._mapboxHandlers = {};
+                                                    }
+                                                    window._mapboxHandlers[layerId] = {
+                                                        mousemove: mouseMoveHandler,
+                                                        mouseleave: mouseLeaveHandler,
+                                                    };
+                                                }
+                                            }
+                                            
+                                            // Restore popups
+                                            for (const layerId in savedLayerState.popups) {
+                                                if (map.getLayer(layerId)) {
+                                                    const popupProperty = savedLayerState.popups[layerId];
+                                                    console.log("[MapGL Debug] Second backup: restoring popup:", layerId, popupProperty);
+                                                    
+                                                    if (window._mapboxClickHandlers && window._mapboxClickHandlers[layerId]) {
+                                                        map.off("click", layerId, window._mapboxClickHandlers[layerId]);
+                                                    }
+                                                    
+                                                    const clickHandler = function(e) {
+                                                        onClickPopup(e, map, popupProperty, layerId);
+                                                    };
+                                                    
+                                                    map.on("click", layerId, clickHandler);
+                                                    map.on("mouseenter", layerId, function () {
+                                                        map.getCanvas().style.cursor = "pointer";
+                                                    });
+                                                    map.on("mouseleave", layerId, function () {
+                                                        map.getCanvas().style.cursor = "";
+                                                    });
+                                                    
+                                                    if (!window._mapboxClickHandlers) {
+                                                        window._mapboxClickHandlers = {};
+                                                    }
+                                                    window._mapboxClickHandlers[layerId] = clickHandler;
+                                                }
+                                            }
+                                            
+                                            // Restore legends
+                                            if (Object.keys(savedLayerState.legends).length > 0) {
+                                                // Clear any existing legends first to prevent stacking
+                                                const existingLegends = document.querySelectorAll(`#${mapId} .mapboxgl-legend`);
+                                                existingLegends.forEach((legend) => legend.remove());
+                                                
+                                                // Clear existing legend styles
+                                                const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${mapId}"]`);
+                                                legendStyles.forEach((style) => style.remove());
+                                                
+                                                // Restore each legend
+                                                for (const legendId in savedLayerState.legends) {
+                                                    const legendData = savedLayerState.legends[legendId];
+                                                    console.log("[MapGL Debug] Second backup: restoring legend:", legendId);
+                                                    
+                                                    // Add legend CSS
+                                                    const legendCss = document.createElement("style");
+                                                    legendCss.innerHTML = legendData.css;
+                                                    legendCss.setAttribute('data-mapgl-legend-css', mapId);
+                                                    document.head.appendChild(legendCss);
+                                                    
+                                                    // Add legend HTML
+                                                    const legend = document.createElement("div");
+                                                    legend.innerHTML = legendData.html;
+                                                    legend.classList.add("mapboxgl-legend");
+                                                    const mapContainer = document.getElementById(mapId);
+                                                    if (mapContainer) {
+                                                        mapContainer.appendChild(legend);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             } catch (err) {
@@ -2352,6 +2934,8 @@ if (HTMLWidgets.shinyMode) {
                 }
                 
                 // Change the style
+                console.log("[MapGL Debug] About to call setStyle with:", message.style);
+                console.log("[MapGL Debug] setStyle diff option:", message.diff);
                 map.setStyle(message.style, { diff: message.diff });
 
                 if (message.config) {
@@ -2892,6 +3476,8 @@ if (HTMLWidgets.shinyMode) {
                         if (legend) {
                             legend.remove();
                         }
+                        // Remove from legend state
+                        delete layerState.legends[id];
                     });
                 } else if (message.ids) {
                     const legend = document.querySelector(
@@ -2900,6 +3486,8 @@ if (HTMLWidgets.shinyMode) {
                     if (legend) {
                         legend.remove();
                     }
+                    // Remove from legend state
+                    delete layerState.legends[message.ids];
                 } else {
                     const existingLegends = document.querySelectorAll(
                         `#${data.id} .mapboxgl-legend`,
@@ -2907,6 +3495,9 @@ if (HTMLWidgets.shinyMode) {
                     existingLegends.forEach((legend) => {
                         legend.remove();
                     });
+                    
+                    // Clear all legend state
+                    layerState.legends = {};
                 }
             } else if (message.type === "clear_controls") {
                 map.controls.forEach((control) => {
@@ -2976,6 +3567,9 @@ if (HTMLWidgets.shinyMode) {
                 const layerId = message.layer;
                 const newTooltipProperty = message.tooltip;
 
+                // Track tooltip state
+                layerState.tooltips[layerId] = newTooltipProperty;
+
                 // If there's an active tooltip open, remove it first
                 if (window._activeTooltip) {
                     window._activeTooltip.remove();
@@ -3023,6 +3617,9 @@ if (HTMLWidgets.shinyMode) {
             } else if (message.type === "set_popup") {
                 const layerId = message.layer;
                 const newPopupProperty = message.popup;
+
+                // Track popup state
+                layerState.popups[layerId] = newPopupProperty;
 
                 // Remove any existing popup for this layer
                 if (window._mapboxPopups && window._mapboxPopups[layerId]) {
