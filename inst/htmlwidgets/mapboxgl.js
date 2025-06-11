@@ -397,10 +397,21 @@ HTMLWidgets.widget({
                     if (x.sources) {
                         x.sources.forEach(function (source) {
                             if (source.type === "vector") {
-                                map.addSource(source.id, {
+                                const sourceOptions = {
                                     type: "vector",
                                     url: source.url,
-                                });
+                                };
+                                // Add promoteId if provided
+                                if (source.promoteId) {
+                                    sourceOptions.promoteId = source.promoteId;
+                                }
+                                // Add any other additional options
+                                for (const [key, value] of Object.entries(source)) {
+                                    if (!["id", "type", "url"].includes(key)) {
+                                        sourceOptions[key] = value;
+                                    }
+                                }
+                                map.addSource(source.id, sourceOptions);
                             } else if (source.type === "geojson") {
                                 const geojsonData = source.data;
                                 const sourceOptions = {
