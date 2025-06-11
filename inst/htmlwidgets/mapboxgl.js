@@ -1476,7 +1476,9 @@ if (HTMLWidgets.shinyMode) {
                 window._mapglLayerState[mapId] = {
                     filters: {},        // layerId -> filter expression
                     paintProperties: {}, // layerId -> {propertyName -> value}
-                    layoutProperties: {} // layerId -> {propertyName -> value}
+                    layoutProperties: {}, // layerId -> {propertyName -> value}
+                    tooltips: {},       // layerId -> tooltip property
+                    popups: {}          // layerId -> popup property
                 };
             }
             const layerState = window._mapglLayerState[mapId];
@@ -1781,6 +1783,8 @@ if (HTMLWidgets.shinyMode) {
                     delete layerState.filters[message.layer];
                     delete layerState.paintProperties[message.layer];
                     delete layerState.layoutProperties[message.layer];
+                    delete layerState.tooltips[message.layer];
+                    delete layerState.popups[message.layer];
                 }
             } else if (message.type === "fit_bounds") {
                 map.fitBounds(message.bounds, message.options);
@@ -2002,6 +2006,77 @@ if (HTMLWidgets.shinyMode) {
                                     for (const propertyName in properties) {
                                         map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
                                     }
+                                }
+                            }
+                            
+                            // Restore tooltips
+                            for (const layerId in savedLayerState.tooltips) {
+                                if (map.getLayer(layerId)) {
+                                    const tooltipProperty = savedLayerState.tooltips[layerId];
+                                    
+                                    // Remove existing tooltip handlers first
+                                    if (window._mapboxHandlers && window._mapboxHandlers[layerId]) {
+                                        if (window._mapboxHandlers[layerId].mousemove) {
+                                            map.off("mousemove", layerId, window._mapboxHandlers[layerId].mousemove);
+                                        }
+                                        if (window._mapboxHandlers[layerId].mouseleave) {
+                                            map.off("mouseleave", layerId, window._mapboxHandlers[layerId].mouseleave);
+                                        }
+                                    }
+                                    
+                                    // Create new tooltip
+                                    const tooltip = new mapboxgl.Popup({
+                                        closeButton: false,
+                                        closeOnClick: false,
+                                    });
+
+                                    const mouseMoveHandler = function (e) {
+                                        onMouseMoveTooltip(e, map, tooltip, tooltipProperty);
+                                    };
+
+                                    const mouseLeaveHandler = function () {
+                                        onMouseLeaveTooltip(map, tooltip);
+                                    };
+
+                                    map.on("mousemove", layerId, mouseMoveHandler);
+                                    map.on("mouseleave", layerId, mouseLeaveHandler);
+
+                                    // Store handler references
+                                    if (!window._mapboxHandlers) {
+                                        window._mapboxHandlers = {};
+                                    }
+                                    window._mapboxHandlers[layerId] = {
+                                        mousemove: mouseMoveHandler,
+                                        mouseleave: mouseLeaveHandler,
+                                    };
+                                }
+                            }
+                            
+                            // Restore popups
+                            for (const layerId in savedLayerState.popups) {
+                                if (map.getLayer(layerId)) {
+                                    const popupProperty = savedLayerState.popups[layerId];
+                                    
+                                    // Remove existing popup handlers first
+                                    if (window._mapboxHandlers && window._mapboxHandlers[layerId] && window._mapboxHandlers[layerId].click) {
+                                        map.off("click", layerId, window._mapboxHandlers[layerId].click);
+                                    }
+                                    
+                                    // Create new popup handler
+                                    const clickHandler = function(e) {
+                                        onClickPopup(e, map, popupProperty, layerId);
+                                    };
+                                    
+                                    map.on("click", layerId, clickHandler);
+                                    
+                                    // Store handler reference
+                                    if (!window._mapboxHandlers) {
+                                        window._mapboxHandlers = {};
+                                    }
+                                    if (!window._mapboxHandlers[layerId]) {
+                                        window._mapboxHandlers[layerId] = {};
+                                    }
+                                    window._mapboxHandlers[layerId].click = clickHandler;
                                 }
                             }
                         }
@@ -2628,6 +2703,9 @@ if (HTMLWidgets.shinyMode) {
                 const layerId = message.layer;
                 const newTooltipProperty = message.tooltip;
 
+                // Track tooltip state
+                layerState.tooltips[layerId] = newTooltipProperty;
+
                 // If there's an active tooltip open, remove it first
                 if (window._activeTooltip) {
                     window._activeTooltip.remove();
@@ -2675,6 +2753,9 @@ if (HTMLWidgets.shinyMode) {
             } else if (message.type === "set_popup") {
                 const layerId = message.layer;
                 const newPopupProperty = message.popup;
+
+                // Track popup state
+                layerState.popups[layerId] = newPopupProperty;
 
                 // Remove any existing popup for this layer
                 if (window._mapboxPopups && window._mapboxPopups[layerId]) {

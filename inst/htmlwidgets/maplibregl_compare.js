@@ -342,7 +342,9 @@ HTMLWidgets.widget({
                                 window._mapglLayerState[mapId] = {
                                     filters: {},        // layerId -> filter expression
                                     paintProperties: {}, // layerId -> {propertyName -> value}
-                                    layoutProperties: {} // layerId -> {propertyName -> value}
+                                    layoutProperties: {}, // layerId -> {propertyName -> value}
+                                    tooltips: {},       // layerId -> tooltip property
+                                    popups: {}          // layerId -> popup property
                                 };
                             }
                             const layerState = window._mapglLayerState[mapId];
@@ -742,6 +744,8 @@ HTMLWidgets.widget({
                                     delete layerState.filters[message.layer_id];
                                     delete layerState.paintProperties[message.layer_id];
                                     delete layerState.layoutProperties[message.layer_id];
+                                    delete layerState.tooltips[message.layer_id];
+                                    delete layerState.popups[message.layer_id];
                                 }
                             } else if (message.type === "fit_bounds") {
                                 map.fitBounds(message.bounds, message.options);
@@ -1147,6 +1151,56 @@ HTMLWidgets.widget({
                                                         console.log("[MapGL Debug] Restoring layout property:", layerId, propertyName, properties[propertyName]);
                                                         map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
                                                     }
+                                                }
+                                            }
+                                            
+                                            // Restore tooltips
+                                            for (const layerId in savedLayerState.tooltips) {
+                                                if (map.getLayer(layerId)) {
+                                                    const tooltipProperty = savedLayerState.tooltips[layerId];
+                                                    console.log("[MapGL Debug] Restoring tooltip:", layerId, tooltipProperty);
+                                                    
+                                                    // Remove existing tooltip handlers first
+                                                    map.off("mousemove", layerId);
+                                                    map.off("mouseleave", layerId);
+                                                    
+                                                    const tooltip = new maplibregl.Popup({
+                                                        closeButton: false,
+                                                        closeOnClick: false,
+                                                    });
+
+                                                    map.on("mousemove", layerId, function (e) {
+                                                        onMouseMoveTooltip(e, map, tooltip, tooltipProperty);
+                                                    });
+
+                                                    map.on("mouseleave", layerId, function () {
+                                                        onMouseLeaveTooltip(map, tooltip);
+                                                    });
+                                                }
+                                            }
+                                            
+                                            // Restore popups
+                                            for (const layerId in savedLayerState.popups) {
+                                                if (map.getLayer(layerId)) {
+                                                    const popupProperty = savedLayerState.popups[layerId];
+                                                    console.log("[MapGL Debug] Restoring popup:", layerId, popupProperty);
+                                                    
+                                                    // Remove existing popup handlers first
+                                                    if (window._maplibreClickHandlers && window._maplibreClickHandlers[layerId]) {
+                                                        map.off("click", layerId, window._maplibreClickHandlers[layerId]);
+                                                        delete window._maplibreClickHandlers[layerId];
+                                                    }
+                                                    
+                                                    const clickHandler = function(e) {
+                                                        onClickPopup(e, map, popupProperty, layerId);
+                                                    };
+                                                    
+                                                    map.on("click", layerId, clickHandler);
+                                                    
+                                                    if (!window._maplibreClickHandlers) {
+                                                        window._maplibreClickHandlers = {};
+                                                    }
+                                                    window._maplibreClickHandlers[layerId] = clickHandler;
                                                 }
                                             }
                                         }
@@ -1996,6 +2050,9 @@ HTMLWidgets.widget({
                                     );
                                 }
                             } else if (message.type === "set_tooltip") {
+                                // Track tooltip state
+                                layerState.tooltips[message.layer] = message.tooltip;
+                                
                                 if (map.getLayer(message.layer)) {
                                     // Remove any existing tooltip handlers
                                     map.off("mousemove", message.layer);
@@ -2035,6 +2092,9 @@ HTMLWidgets.widget({
                                     );
                                 }
                             } else if (message.type === "set_popup") {
+                                // Track popup state
+                                layerState.popups[message.layer] = message.popup;
+                                
                                 if (map.getLayer(message.layer)) {
                                     // Remove any existing popup click handlers for this layer
                                     if (window._maplibreClickHandlers && window._maplibreClickHandlers[message.layer]) {
