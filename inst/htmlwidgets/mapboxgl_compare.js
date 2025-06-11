@@ -315,9 +315,25 @@ HTMLWidgets.widget({
 
                             if (!map) return;
 
+                            // Initialize layer state tracking if not already present
+                            if (!window._mapglLayerState) {
+                                window._mapglLayerState = {};
+                            }
+                            const mapId = map.getContainer().id;
+                            if (!window._mapglLayerState[mapId]) {
+                                window._mapglLayerState[mapId] = {
+                                    filters: {},        // layerId -> filter expression
+                                    paintProperties: {}, // layerId -> {propertyName -> value}
+                                    layoutProperties: {} // layerId -> {propertyName -> value}
+                                };
+                            }
+                            const layerState = window._mapglLayerState[mapId];
+
                             // Process the message based on type
                             if (message.type === "set_filter") {
                                 map.setFilter(message.layer, message.filter);
+                                // Track filter state for layer restoration
+                                layerState.filters[message.layer] = message.filter;
                             } else if (message.type === "add_source") {
                                 if (message.source.type === "vector") {
                                     map.addSource(message.source.id, {
@@ -685,6 +701,15 @@ HTMLWidgets.widget({
                                 if (map.getSource(message.layer_id)) {
                                     map.removeSource(message.layer_id);
                                 }
+                                
+                                // Clean up tracked layer state
+                                const mapId = map.getContainer().id;
+                                if (window._mapglLayerState && window._mapglLayerState[mapId]) {
+                                    const layerState = window._mapglLayerState[mapId];
+                                    delete layerState.filters[message.layer_id];
+                                    delete layerState.paintProperties[message.layer_id];
+                                    delete layerState.layoutProperties[message.layer_id];
+                                }
                             } else if (message.type === "fit_bounds") {
                                 map.fitBounds(message.bounds, message.options);
                             } else if (message.type === "fly_to") {
@@ -703,6 +728,11 @@ HTMLWidgets.widget({
                                     message.name,
                                     message.value,
                                 );
+                                // Track layout property state for layer restoration
+                                if (!layerState.layoutProperties[message.layer]) {
+                                    layerState.layoutProperties[message.layer] = {};
+                                }
+                                layerState.layoutProperties[message.layer][message.name] = message.value;
                             } else if (message.type === "set_paint_property") {
                                 const layerId = message.layer;
                                 const propertyName = message.name;
@@ -747,6 +777,11 @@ HTMLWidgets.widget({
                                         newValue,
                                     );
                                 }
+                                // Track paint property state for layer restoration
+                                if (!layerState.paintProperties[layerId]) {
+                                    layerState.paintProperties[layerId] = {};
+                                }
+                                layerState.paintProperties[layerId][propertyName] = newValue;
                             } else if (message.type === "add_legend") {
                                 if (!message.add) {
                                     const existingLegends =
@@ -871,6 +906,54 @@ HTMLWidgets.widget({
                                                 }
                                             }
                                         });
+                                        
+                                        // Restore tracked layer modifications
+                                        const mapId = map.getContainer().id;
+                                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                                        if (savedLayerState) {
+                                            // Restore filters
+                                            for (const layerId in savedLayerState.filters) {
+                                                if (map.getLayer(layerId)) {
+                                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                                }
+                                            }
+                                            
+                                            // Restore paint properties
+                                            for (const layerId in savedLayerState.paintProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.paintProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        const savedValue = properties[propertyName];
+                                                        
+                                                        // Check if layer has hover effects that need to be preserved
+                                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                                            // Preserve hover effects while updating base value
+                                                            const hoverValue = currentValue[2];
+                                                            const newPaintProperty = [
+                                                                "case",
+                                                                ["boolean", ["feature-state", "hover"], false],
+                                                                hoverValue,
+                                                                savedValue,
+                                                            ];
+                                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                                        } else {
+                                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Restore layout properties
+                                            for (const layerId in savedLayerState.layoutProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.layoutProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                                    }
+                                                }
+                                            }
+                                        }
                                         
                                         // Remove this listener to avoid adding the same layers multiple times
                                         map.off('style.load', onStyleLoad);

@@ -1467,6 +1467,20 @@ if (HTMLWidgets.shinyMode) {
         if (map) {
             var message = data.message;
             
+            // Initialize layer state tracking if not already present
+            if (!window._mapglLayerState) {
+                window._mapglLayerState = {};
+            }
+            const mapId = map.getContainer().id;
+            if (!window._mapglLayerState[mapId]) {
+                window._mapglLayerState[mapId] = {
+                    filters: {},        // layerId -> filter expression
+                    paintProperties: {}, // layerId -> {propertyName -> value}
+                    layoutProperties: {} // layerId -> {propertyName -> value}
+                };
+            }
+            const layerState = window._mapglLayerState[mapId];
+            
             // Helper function to update drawn features
             function updateDrawnFeatures() {
                 var drawControl = widget.drawControl || widget.getDraw();
@@ -1486,6 +1500,8 @@ if (HTMLWidgets.shinyMode) {
             }
             if (message.type === "set_filter") {
                 map.setFilter(message.layer, message.filter);
+                // Track filter state for layer restoration
+                layerState.filters[message.layer] = message.filter;
             } else if (message.type === "add_source") {
                 if (message.source.type === "vector") {
                     map.addSource(message.source.id, {
@@ -1757,6 +1773,15 @@ if (HTMLWidgets.shinyMode) {
                 if (map.getSource(message.layer)) {
                     map.removeSource(message.layer);
                 }
+                
+                // Clean up tracked layer state
+                const mapId = map.getContainer().id;
+                if (window._mapglLayerState && window._mapglLayerState[mapId]) {
+                    const layerState = window._mapglLayerState[mapId];
+                    delete layerState.filters[message.layer];
+                    delete layerState.paintProperties[message.layer];
+                    delete layerState.layoutProperties[message.layer];
+                }
             } else if (message.type === "fit_bounds") {
                 map.fitBounds(message.bounds, message.options);
             } else if (message.type === "fly_to") {
@@ -1775,6 +1800,11 @@ if (HTMLWidgets.shinyMode) {
                     message.name,
                     message.value,
                 );
+                // Track layout property state for layer restoration
+                if (!layerState.layoutProperties[message.layer]) {
+                    layerState.layoutProperties[message.layer] = {};
+                }
+                layerState.layoutProperties[message.layer][message.name] = message.value;
             } else if (message.type === "set_paint_property") {
                 const layerId = message.layer;
                 const propertyName = message.name;
@@ -1811,6 +1841,11 @@ if (HTMLWidgets.shinyMode) {
                     // No hover options, just set the new value directly
                     map.setPaintProperty(layerId, propertyName, newValue);
                 }
+                // Track paint property state for layer restoration
+                if (!layerState.paintProperties[layerId]) {
+                    layerState.paintProperties[layerId] = {};
+                }
+                layerState.paintProperties[layerId][propertyName] = newValue;
             } else if (message.type === "add_legend") {
                 if (!message.add) {
                     const existingLegends = document.querySelectorAll(
@@ -1922,6 +1957,54 @@ if (HTMLWidgets.shinyMode) {
                                 }
                             }
                         });
+                        
+                        // Restore tracked layer modifications
+                        const mapId = map.getContainer().id;
+                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                        if (savedLayerState) {
+                            // Restore filters
+                            for (const layerId in savedLayerState.filters) {
+                                if (map.getLayer(layerId)) {
+                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                }
+                            }
+                            
+                            // Restore paint properties
+                            for (const layerId in savedLayerState.paintProperties) {
+                                if (map.getLayer(layerId)) {
+                                    const properties = savedLayerState.paintProperties[layerId];
+                                    for (const propertyName in properties) {
+                                        const savedValue = properties[propertyName];
+                                        
+                                        // Check if layer has hover effects that need to be preserved
+                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                            // Preserve hover effects while updating base value
+                                            const hoverValue = currentValue[2];
+                                            const newPaintProperty = [
+                                                "case",
+                                                ["boolean", ["feature-state", "hover"], false],
+                                                hoverValue,
+                                                savedValue,
+                                            ];
+                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                        } else {
+                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Restore layout properties
+                            for (const layerId in savedLayerState.layoutProperties) {
+                                if (map.getLayer(layerId)) {
+                                    const properties = savedLayerState.layoutProperties[layerId];
+                                    for (const propertyName in properties) {
+                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                    }
+                                }
+                            }
+                        }
                         
                         // Remove this listener to avoid adding the same layers multiple times
                         map.off('style.load', onStyleLoad);

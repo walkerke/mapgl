@@ -1531,6 +1531,20 @@ if (HTMLWidgets.shinyMode) {
         if (map) {
             var message = data.message;
             
+            // Initialize layer state tracking if not already present
+            if (!window._mapglLayerState) {
+                window._mapglLayerState = {};
+            }
+            const mapId = map.getContainer().id;
+            if (!window._mapglLayerState[mapId]) {
+                window._mapglLayerState[mapId] = {
+                    filters: {},        // layerId -> filter expression
+                    paintProperties: {}, // layerId -> {propertyName -> value}
+                    layoutProperties: {} // layerId -> {propertyName -> value}
+                };
+            }
+            const layerState = window._mapglLayerState[mapId];
+            
             // Helper function to update drawn features
             function updateDrawnFeatures() {
                 var drawControl = widget.drawControl || widget.getDraw();
@@ -1550,6 +1564,8 @@ if (HTMLWidgets.shinyMode) {
             }
             if (message.type === "set_filter") {
                 map.setFilter(message.layer, message.filter);
+                // Track filter state for layer restoration
+                layerState.filters[message.layer] = message.filter;
             } else if (message.type === "add_source") {
                 map.addSource(message.source);
             } else if (message.type === "add_layer") {
@@ -1806,6 +1822,15 @@ if (HTMLWidgets.shinyMode) {
                 if (map.getSource(message.layer)) {
                     map.removeSource(message.layer);
                 }
+                
+                // Clean up tracked layer state
+                const mapId = map.getContainer().id;
+                if (window._mapglLayerState && window._mapglLayerState[mapId]) {
+                    const layerState = window._mapglLayerState[mapId];
+                    delete layerState.filters[message.layer];
+                    delete layerState.paintProperties[message.layer];
+                    delete layerState.layoutProperties[message.layer];
+                }
             } else if (message.type === "fit_bounds") {
                 map.fitBounds(message.bounds, message.options);
             } else if (message.type === "fly_to") {
@@ -1824,6 +1849,11 @@ if (HTMLWidgets.shinyMode) {
                     message.name,
                     message.value,
                 );
+                // Track layout property state for layer restoration
+                if (!layerState.layoutProperties[message.layer]) {
+                    layerState.layoutProperties[message.layer] = {};
+                }
+                layerState.layoutProperties[message.layer][message.name] = message.value;
             } else if (message.type === "set_paint_property") {
                 const layerId = message.layer;
                 const propertyName = message.name;
@@ -1860,6 +1890,11 @@ if (HTMLWidgets.shinyMode) {
                     // No hover options, just set the new value directly
                     map.setPaintProperty(layerId, propertyName, newValue);
                 }
+                // Track paint property state for layer restoration
+                if (!layerState.paintProperties[layerId]) {
+                    layerState.paintProperties[layerId] = {};
+                }
+                layerState.paintProperties[layerId][propertyName] = newValue;
             } else if (message.type === "query_rendered_features") {
                 const features = map.queryRenderedFeatures(message.geometry, {
                     layers: message.layers,
@@ -1896,6 +1931,9 @@ if (HTMLWidgets.shinyMode) {
             } else if (message.type === "set_style") {
                 // Default preserve_layers to true if not specified
                 const preserveLayers = message.preserve_layers !== false;
+                
+                console.log("[MapGL Debug] set_style called with preserve_layers:", preserveLayers);
+                console.log("[MapGL Debug] message.preserve_layers:", message.preserve_layers);
                 
                 // If we should preserve layers and sources
                 if (preserveLayers) {
@@ -1952,10 +1990,24 @@ if (HTMLWidgets.shinyMode) {
                         ) {
                             console.log("[MapGL Debug] Found user layer:", layerId);
                             knownUserLayerIds.push(layerId);
-                            // Also include its source
+                            // Only include its source if it's not a base map source
                             if (layer.source && !userSourceIds.includes(layer.source)) {
-                                console.log("[MapGL Debug] Found user source from layer:", layer.source);
-                                userSourceIds.push(layer.source);
+                                const layerSource = currentStyle.sources[layer.source];
+                                const isBaseMapSource = layerSource && layerSource.type === "vector" && (
+                                    layer.source === "composite" || 
+                                    layer.source === "mapbox" || 
+                                    layer.source.startsWith("mapbox-") ||
+                                    layer.source === "openmaptiles" ||
+                                    layer.source.startsWith("carto") ||
+                                    layer.source.startsWith("maptiler")
+                                );
+                                
+                                if (!isBaseMapSource) {
+                                    console.log("[MapGL Debug] Found user source from layer:", layer.source);
+                                    userSourceIds.push(layer.source);
+                                } else {
+                                    console.log("[MapGL Debug] Not adding base map source from layer:", layer.source);
+                                }
                             }
                         }
                     });
@@ -1963,6 +2015,8 @@ if (HTMLWidgets.shinyMode) {
                     // For each source, determine if it's a user-added source
                     for (const sourceId in currentStyle.sources) {
                         const source = currentStyle.sources[sourceId];
+                        
+                        console.log("[MapGL Debug] Examining source:", sourceId, "type:", source.type);
                         
                         // Strategy 1: All GeoJSON sources are likely user-added
                         if (source.type === "geojson") {
@@ -1996,6 +2050,8 @@ if (HTMLWidgets.shinyMode) {
                             if (!userSourceIds.includes(sourceId)) {
                                 userSourceIds.push(sourceId);
                             }
+                        } else {
+                            console.log("[MapGL Debug] Filtered out base map source:", sourceId);
                         }
                         
                         // Store layer-specific handler references
@@ -2012,15 +2068,35 @@ if (HTMLWidgets.shinyMode) {
                     }
                     
                     // Identify layers using user-added sources or known user layer IDs
+                    // ONLY include layers that use genuinely user-added sources (not base map sources)
                     currentStyle.layers.forEach(function(layer) {
-                        if (userSourceIds.includes(layer.source) || knownUserLayerIds.includes(layer.id)) {
+                        // Check if this layer uses a genuine user source (not filtered out base map sources)
+                        const usesUserSource = userSourceIds.includes(layer.source);
+                        const isKnownUserLayer = knownUserLayerIds.includes(layer.id);
+                        
+                        // Additional check: exclude layers that use base map sources even if they were temporarily added to userSourceIds
+                        const layerSource = currentStyle.sources[layer.source];
+                        const isBaseMapSource = layerSource && layerSource.type === "vector" && (
+                            layer.source === "composite" || 
+                            layer.source === "mapbox" || 
+                            layer.source.startsWith("mapbox-") ||
+                            layer.source === "openmaptiles" ||
+                            layer.source.startsWith("carto") ||
+                            layer.source.startsWith("maptiler")
+                        );
+                        
+                        if ((usesUserSource || isKnownUserLayer) && !isBaseMapSource) {
                             userLayers.push(layer);
+                            console.log("[MapGL Debug] Including user layer:", layer.id, "source:", layer.source);
+                        } else if (isBaseMapSource) {
+                            console.log("[MapGL Debug] Excluding base map layer:", layer.id, "source:", layer.source);
                         }
                     });
                     
                     // Log detected user sources and layers
                     console.log("[MapGL Debug] Detected user sources:", userSourceIds);
                     console.log("[MapGL Debug] Detected user layers:", userLayers.map(l => l.id));
+                    console.log("[MapGL Debug] Will preserve", userLayers.length, "user layers");
                     
                     // Store them for potential use outside the onStyleLoad event
                     // This helps in case the event timing is different in MapLibre
@@ -2133,6 +2209,60 @@ if (HTMLWidgets.shinyMode) {
                             console.error("[MapGL Debug] Error in style.load handler:", err);
                         }
                         
+                        // Restore tracked layer modifications
+                        const mapId = map.getContainer().id;
+                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                        if (savedLayerState) {
+                            console.log("[MapGL Debug] Restoring tracked layer modifications");
+                            
+                            // Restore filters
+                            for (const layerId in savedLayerState.filters) {
+                                if (map.getLayer(layerId)) {
+                                    console.log("[MapGL Debug] Restoring filter for layer:", layerId);
+                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                }
+                            }
+                            
+                            // Restore paint properties
+                            for (const layerId in savedLayerState.paintProperties) {
+                                if (map.getLayer(layerId)) {
+                                    const properties = savedLayerState.paintProperties[layerId];
+                                    for (const propertyName in properties) {
+                                        const savedValue = properties[propertyName];
+                                        
+                                        console.log("[MapGL Debug] Restoring paint property:", layerId, propertyName, savedValue);
+                                        
+                                        // Check if layer has hover effects that need to be preserved
+                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                            // Preserve hover effects while updating base value
+                                            const hoverValue = currentValue[2];
+                                            const newPaintProperty = [
+                                                "case",
+                                                ["boolean", ["feature-state", "hover"], false],
+                                                hoverValue,
+                                                savedValue,
+                                            ];
+                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                        } else {
+                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Restore layout properties
+                            for (const layerId in savedLayerState.layoutProperties) {
+                                if (map.getLayer(layerId)) {
+                                    const properties = savedLayerState.layoutProperties[layerId];
+                                    for (const propertyName in properties) {
+                                        console.log("[MapGL Debug] Restoring layout property:", layerId, propertyName, properties[propertyName]);
+                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                    }
+                                }
+                            }
+                        }
+                        
                         // Remove this listener to avoid adding the same layers multiple times
                         map.off('style.load', onStyleLoad);
                     };
@@ -2232,6 +2362,59 @@ if (HTMLWidgets.shinyMode) {
                                                 console.error("[MapGL Debug] Backup: error adding layer", layer.id, err);
                                             }
                                         });
+                                        
+                                        // Restore tracked layer modifications in backup
+                                        const mapId = map.getContainer().id;
+                                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                                        if (savedLayerState) {
+                                            console.log("[MapGL Debug] Backup: restoring tracked layer modifications");
+                                            
+                                            // Restore filters
+                                            for (const layerId in savedLayerState.filters) {
+                                                if (map.getLayer(layerId)) {
+                                                    console.log("[MapGL Debug] Backup: restoring filter for layer:", layerId);
+                                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                                }
+                                            }
+                                            
+                                            // Restore paint properties
+                                            for (const layerId in savedLayerState.paintProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.paintProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        const savedValue = properties[propertyName];
+                                                        console.log("[MapGL Debug] Backup: restoring paint property:", layerId, propertyName, savedValue);
+                                                        
+                                                        // Check if layer has hover effects that need to be preserved
+                                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                                            // Preserve hover effects while updating base value
+                                                            const hoverValue = currentValue[2];
+                                                            const newPaintProperty = [
+                                                                "case",
+                                                                ["boolean", ["feature-state", "hover"], false],
+                                                                hoverValue,
+                                                                savedValue,
+                                                            ];
+                                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                                        } else {
+                                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Restore layout properties
+                                            for (const layerId in savedLayerState.layoutProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.layoutProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        console.log("[MapGL Debug] Backup: restoring layout property:", layerId, propertyName, properties[propertyName]);
+                                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     } else {
                                         console.log("[MapGL Debug] Backup check: layers already restored properly");
                                     }
@@ -2331,6 +2514,59 @@ if (HTMLWidgets.shinyMode) {
                                                 console.error("[MapGL Debug] Second backup: error adding layer", layer.id, err);
                                             }
                                         });
+                                        
+                                        // Restore tracked layer modifications in second backup
+                                        const mapId = map.getContainer().id;
+                                        const savedLayerState = window._mapglLayerState && window._mapglLayerState[mapId];
+                                        if (savedLayerState) {
+                                            console.log("[MapGL Debug] Second backup: restoring tracked layer modifications");
+                                            
+                                            // Restore filters
+                                            for (const layerId in savedLayerState.filters) {
+                                                if (map.getLayer(layerId)) {
+                                                    console.log("[MapGL Debug] Second backup: restoring filter for layer:", layerId);
+                                                    map.setFilter(layerId, savedLayerState.filters[layerId]);
+                                                }
+                                            }
+                                            
+                                            // Restore paint properties
+                                            for (const layerId in savedLayerState.paintProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.paintProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        const savedValue = properties[propertyName];
+                                                        console.log("[MapGL Debug] Second backup: restoring paint property:", layerId, propertyName, savedValue);
+                                                        
+                                                        // Check if layer has hover effects that need to be preserved
+                                                        const currentValue = map.getPaintProperty(layerId, propertyName);
+                                                        if (currentValue && Array.isArray(currentValue) && currentValue[0] === "case") {
+                                                            // Preserve hover effects while updating base value
+                                                            const hoverValue = currentValue[2];
+                                                            const newPaintProperty = [
+                                                                "case",
+                                                                ["boolean", ["feature-state", "hover"], false],
+                                                                hoverValue,
+                                                                savedValue,
+                                                            ];
+                                                            map.setPaintProperty(layerId, propertyName, newPaintProperty);
+                                                        } else {
+                                                            map.setPaintProperty(layerId, propertyName, savedValue);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Restore layout properties
+                                            for (const layerId in savedLayerState.layoutProperties) {
+                                                if (map.getLayer(layerId)) {
+                                                    const properties = savedLayerState.layoutProperties[layerId];
+                                                    for (const propertyName in properties) {
+                                                        console.log("[MapGL Debug] Second backup: restoring layout property:", layerId, propertyName, properties[propertyName]);
+                                                        map.setLayoutProperty(layerId, propertyName, properties[propertyName]);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             } catch (err) {
@@ -2341,6 +2577,8 @@ if (HTMLWidgets.shinyMode) {
                 }
                 
                 // Change the style
+                console.log("[MapGL Debug] About to call setStyle with:", message.style);
+                console.log("[MapGL Debug] setStyle diff option:", message.diff);
                 map.setStyle(message.style, { diff: message.diff });
 
                 if (message.config) {
