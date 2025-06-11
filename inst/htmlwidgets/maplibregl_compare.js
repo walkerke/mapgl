@@ -349,7 +349,8 @@ HTMLWidgets.widget({
                                     paintProperties: {}, // layerId -> {propertyName -> value}
                                     layoutProperties: {}, // layerId -> {propertyName -> value}
                                     tooltips: {},       // layerId -> tooltip property
-                                    popups: {}          // layerId -> popup property
+                                    popups: {},         // layerId -> popup property
+                                    legends: {}         // legendId -> {html: string, css: string}
                                 };
                             }
                             const layerState = window._mapglLayerState[mapId];
@@ -751,6 +752,7 @@ HTMLWidgets.widget({
                                     delete layerState.layoutProperties[message.layer_id];
                                     delete layerState.tooltips[message.layer_id];
                                     delete layerState.popups[message.layer_id];
+                                    // Note: legends are not tied to specific layers, so we don't clear them here
                                 }
                             } else if (message.type === "fit_bounds") {
                                 map.fitBounds(message.bounds, message.options);

@@ -1547,7 +1547,8 @@ if (HTMLWidgets.shinyMode) {
                     paintProperties: {}, // layerId -> {propertyName -> value}
                     layoutProperties: {}, // layerId -> {propertyName -> value}
                     tooltips: {},       // layerId -> tooltip property
-                    popups: {}          // layerId -> popup property
+                    popups: {},         // layerId -> popup property
+                    legends: {}         // legendId -> {html: string, css: string}
                 };
             }
             const layerState = window._mapglLayerState[mapId];
@@ -1839,6 +1840,7 @@ if (HTMLWidgets.shinyMode) {
                     delete layerState.layoutProperties[message.layer];
                     delete layerState.tooltips[message.layer];
                     delete layerState.popups[message.layer];
+                    // Note: legends are not tied to specific layers, so we don't clear them here
                 }
             } else if (message.type === "fit_bounds") {
                 map.fitBounds(message.bounds, message.options);
@@ -1911,6 +1913,10 @@ if (HTMLWidgets.shinyMode) {
                 });
                 Shiny.setInputValue(el.id + "_feature_query", features);
             } else if (message.type === "add_legend") {
+                // Extract legend ID from HTML to track it
+                const legendIdMatch = message.html.match(/id="([^"]+)"/);
+                const legendId = legendIdMatch ? legendIdMatch[1] : null;
+                
                 if (!message.add) {
                     const existingLegends = document.querySelectorAll(
                         `#${data.id} .mapboxgl-legend`,
@@ -1920,6 +1926,17 @@ if (HTMLWidgets.shinyMode) {
                     // Clean up any existing legend styles that might have been added
                     const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${data.id}"]`);
                     legendStyles.forEach((style) => style.remove());
+                    
+                    // Clear legend state when replacing all legends
+                    layerState.legends = {};
+                }
+
+                // Track legend state
+                if (legendId) {
+                    layerState.legends[legendId] = {
+                        html: message.html,
+                        css: message.legend_css
+                    };
                 }
 
                 const legendCss = document.createElement("style");
@@ -2354,6 +2371,38 @@ if (HTMLWidgets.shinyMode) {
                                     window._mapboxClickHandlers[layerId] = clickHandler;
                                 }
                             }
+                            
+                            // Restore legends
+                            if (Object.keys(savedLayerState.legends).length > 0) {
+                                // Clear any existing legends first to prevent stacking
+                                const existingLegends = document.querySelectorAll(`#${mapId} .mapboxgl-legend`);
+                                existingLegends.forEach((legend) => legend.remove());
+                                
+                                // Clear existing legend styles
+                                const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${mapId}"]`);
+                                legendStyles.forEach((style) => style.remove());
+                                
+                                // Restore each legend
+                                for (const legendId in savedLayerState.legends) {
+                                    const legendData = savedLayerState.legends[legendId];
+                                    console.log("[MapGL Debug] Restoring legend:", legendId);
+                                    
+                                    // Add legend CSS
+                                    const legendCss = document.createElement("style");
+                                    legendCss.innerHTML = legendData.css;
+                                    legendCss.setAttribute('data-mapgl-legend-css', mapId);
+                                    document.head.appendChild(legendCss);
+                                    
+                                    // Add legend HTML
+                                    const legend = document.createElement("div");
+                                    legend.innerHTML = legendData.html;
+                                    legend.classList.add("mapboxgl-legend");
+                                    const mapContainer = document.getElementById(mapId);
+                                    if (mapContainer) {
+                                        mapContainer.appendChild(legend);
+                                    }
+                                }
+                            }
                         }
                         
                         // Remove this listener to avoid adding the same layers multiple times
@@ -2577,6 +2626,38 @@ if (HTMLWidgets.shinyMode) {
                                                     window._mapboxClickHandlers[layerId] = clickHandler;
                                                 }
                                             }
+                                            
+                                            // Restore legends
+                                            if (Object.keys(savedLayerState.legends).length > 0) {
+                                                // Clear any existing legends first to prevent stacking
+                                                const existingLegends = document.querySelectorAll(`#${mapId} .mapboxgl-legend`);
+                                                existingLegends.forEach((legend) => legend.remove());
+                                                
+                                                // Clear existing legend styles
+                                                const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${mapId}"]`);
+                                                legendStyles.forEach((style) => style.remove());
+                                                
+                                                // Restore each legend
+                                                for (const legendId in savedLayerState.legends) {
+                                                    const legendData = savedLayerState.legends[legendId];
+                                                    console.log("[MapGL Debug] Backup: restoring legend:", legendId);
+                                                    
+                                                    // Add legend CSS
+                                                    const legendCss = document.createElement("style");
+                                                    legendCss.innerHTML = legendData.css;
+                                                    legendCss.setAttribute('data-mapgl-legend-css', mapId);
+                                                    document.head.appendChild(legendCss);
+                                                    
+                                                    // Add legend HTML
+                                                    const legend = document.createElement("div");
+                                                    legend.innerHTML = legendData.html;
+                                                    legend.classList.add("mapboxgl-legend");
+                                                    const mapContainer = document.getElementById(mapId);
+                                                    if (mapContainer) {
+                                                        mapContainer.appendChild(legend);
+                                                    }
+                                                }
+                                            }
                                         }
                                     } else {
                                         console.log("[MapGL Debug] Backup check: layers already restored properly");
@@ -2797,6 +2878,38 @@ if (HTMLWidgets.shinyMode) {
                                                         window._mapboxClickHandlers = {};
                                                     }
                                                     window._mapboxClickHandlers[layerId] = clickHandler;
+                                                }
+                                            }
+                                            
+                                            // Restore legends
+                                            if (Object.keys(savedLayerState.legends).length > 0) {
+                                                // Clear any existing legends first to prevent stacking
+                                                const existingLegends = document.querySelectorAll(`#${mapId} .mapboxgl-legend`);
+                                                existingLegends.forEach((legend) => legend.remove());
+                                                
+                                                // Clear existing legend styles
+                                                const legendStyles = document.querySelectorAll(`style[data-mapgl-legend-css="${mapId}"]`);
+                                                legendStyles.forEach((style) => style.remove());
+                                                
+                                                // Restore each legend
+                                                for (const legendId in savedLayerState.legends) {
+                                                    const legendData = savedLayerState.legends[legendId];
+                                                    console.log("[MapGL Debug] Second backup: restoring legend:", legendId);
+                                                    
+                                                    // Add legend CSS
+                                                    const legendCss = document.createElement("style");
+                                                    legendCss.innerHTML = legendData.css;
+                                                    legendCss.setAttribute('data-mapgl-legend-css', mapId);
+                                                    document.head.appendChild(legendCss);
+                                                    
+                                                    // Add legend HTML
+                                                    const legend = document.createElement("div");
+                                                    legend.innerHTML = legendData.html;
+                                                    legend.classList.add("mapboxgl-legend");
+                                                    const mapContainer = document.getElementById(mapId);
+                                                    if (mapContainer) {
+                                                        mapContainer.appendChild(legend);
+                                                    }
                                                 }
                                             }
                                         }
@@ -3352,6 +3465,8 @@ if (HTMLWidgets.shinyMode) {
                         if (legend) {
                             legend.remove();
                         }
+                        // Remove from legend state
+                        delete layerState.legends[id];
                     });
                 } else if (message.ids) {
                     const legend = document.querySelector(
@@ -3360,6 +3475,8 @@ if (HTMLWidgets.shinyMode) {
                     if (legend) {
                         legend.remove();
                     }
+                    // Remove from legend state
+                    delete layerState.legends[message.ids];
                 } else {
                     const existingLegends = document.querySelectorAll(
                         `#${data.id} .mapboxgl-legend`,
@@ -3367,6 +3484,9 @@ if (HTMLWidgets.shinyMode) {
                     existingLegends.forEach((legend) => {
                         legend.remove();
                     });
+                    
+                    // Clear all legend state
+                    layerState.legends = {};
                 }
             } else if (message.type === "clear_controls") {
                 map.controls.forEach((control) => {
