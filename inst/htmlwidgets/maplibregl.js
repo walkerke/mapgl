@@ -59,6 +59,11 @@ function evaluateExpression(expression, properties) {
 function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
     map.getCanvas().style.cursor = "pointer";
     if (e.features.length > 0) {
+        // Clear any existing active tooltip first to prevent stacking
+        if (window._activeTooltip && window._activeTooltip !== tooltipPopup) {
+            window._activeTooltip.remove();
+        }
+        
         let description;
         
         // Check if tooltipProperty is an expression (array) or a simple property name (string)
@@ -2211,6 +2216,12 @@ if (HTMLWidgets.shinyMode) {
                             });
                         } catch (err) {
                             console.error("[MapGL Debug] Error in style.load handler:", err);
+                        }
+                        
+                        // Clear any active tooltips before restoration to prevent stacking
+                        if (window._activeTooltip) {
+                            window._activeTooltip.remove();
+                            delete window._activeTooltip;
                         }
                         
                         // Restore tracked layer modifications
