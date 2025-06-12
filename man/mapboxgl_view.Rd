@@ -8,6 +8,7 @@ mapboxgl_view(
   data,
   column = NULL,
   n = NULL,
+  palette = viridisLite::viridis,
   style = mapbox_style("light"),
   ...
 )
@@ -18,6 +19,8 @@ mapboxgl_view(
 \item{column}{The name of the column to visualize. If NULL (default), geometries are shown with default styling.}
 
 \item{n}{Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().}
+
+\item{palette}{Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.}
 
 \item{style}{The Mapbox style to use. Defaults to mapbox_style("light").}
 
@@ -43,5 +46,10 @@ mapboxgl_view(nc, column = "AREA")
 
 # View with quantile breaks
 mapboxgl_view(nc, column = "AREA", n = 5)
+
+# Custom palette examples
+mapboxgl_view(nc, column = "AREA", palette = viridisLite::mako)
+mapboxgl_view(nc, column = "AREA", palette = function(n) RColorBrewer::brewer.pal(n, "RdYlBu"))
+mapboxgl_view(nc, column = "AREA", palette = colorRampPalette(c("red", "white", "blue")))
 }
 }

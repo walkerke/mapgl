@@ -6,6 +6,7 @@
 #' @param data An sf object to visualize
 #' @param column The name of the column to visualize. If NULL (default), geometries are shown with default styling.
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
+#' @param palette Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.
 #' @param style The Mapbox style to use. Defaults to mapbox_style("light").
 #' @param ... Additional arguments passed to mapboxgl()
 #'
@@ -25,8 +26,13 @@
 #'
 #' # View with quantile breaks
 #' mapboxgl_view(nc, column = "AREA", n = 5)
+#' 
+#' # Custom palette examples
+#' mapboxgl_view(nc, column = "AREA", palette = viridisLite::mako)
+#' mapboxgl_view(nc, column = "AREA", palette = function(n) RColorBrewer::brewer.pal(n, "RdYlBu"))
+#' mapboxgl_view(nc, column = "AREA", palette = colorRampPalette(c("red", "white", "blue")))
 #' }
-mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("light"), ...) {
+mapboxgl_view <- function(data, column = NULL, n = NULL, palette = viridisLite::viridis, style = mapbox_style("light"), ...) {
     if (!inherits(data, "sf")) {
         stop("data must be an sf object")
     }
@@ -87,7 +93,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                     n_breaks <- length(breaks) - 1
 
                     # Generate n_breaks colors for n bins
-                    colors <- viridisLite::viridis(n_breaks)
+                    colors <- palette(n_breaks)
 
                     # For step expressions, base is first color, stops are remaining colors
                     # values are the thresholds (excluding min)
@@ -123,7 +129,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
                     breaks <- seq(min_val, max_val, length.out = 5)
-                    colors <- viridisLite::viridis(5)
+                    colors <- palette(5)
 
                     map <- map |>
                         add_circle_layer(
@@ -150,7 +156,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                 # Categorical column
                 unique_vals <- unique(col_data[!is.na(col_data)])
                 n_cats <- length(unique_vals)
-                colors <- viridisLite::viridis(n_cats)
+                colors <- palette(n_cats)
 
                 map <- map |>
                     add_circle_layer(
@@ -207,7 +213,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                     n_breaks <- length(breaks) - 1
 
                     # Generate n_breaks colors for n bins
-                    colors <- viridisLite::viridis(n_breaks)
+                    colors <- palette(n_breaks)
 
                     # For step expressions, base is first color, stops are remaining colors
                     # values are the thresholds (excluding min)
@@ -242,7 +248,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
                     breaks <- seq(min_val, max_val, length.out = 5)
-                    colors <- viridisLite::viridis(5)
+                    colors <- palette(5)
 
                     map <- map |>
                         add_line_layer(
@@ -269,7 +275,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                 # Categorical column
                 unique_vals <- unique(col_data[!is.na(col_data)])
                 n_cats <- length(unique_vals)
-                colors <- viridisLite::viridis(n_cats)
+                colors <- palette(n_cats)
 
                 map <- map |>
                     add_line_layer(
@@ -325,7 +331,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                     n_breaks <- length(breaks) - 1
 
                     # Generate n+1 colors for n bins (base + n stops)
-                    colors <- viridisLite::viridis(n_breaks)
+                    colors <- palette(n_breaks)
 
                     # For step expressions, base is first color, stops are remaining colors
                     # values are the thresholds (excluding min)
@@ -360,7 +366,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
                     breaks <- seq(min_val, max_val, length.out = 5)
-                    colors <- viridisLite::viridis(5)
+                    colors <- palette(5)
 
                     map <- map |>
                         add_fill_layer(
@@ -387,7 +393,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
                 # Categorical column
                 unique_vals <- unique(col_data[!is.na(col_data)])
                 n_cats <- length(unique_vals)
-                colors <- viridisLite::viridis(n_cats)
+                colors <- palette(n_cats)
 
                 map <- map |>
                     add_fill_layer(
@@ -424,6 +430,7 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
 #' @param data An sf object to visualize
 #' @param column The name of the column to visualize. If NULL (default), geometries are shown with default styling.
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
+#' @param palette Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.
 #' @param style The MapLibre style to use. Defaults to carto_style("positron").
 #' @param ... Additional arguments passed to maplibre()
 #'
@@ -443,8 +450,13 @@ mapboxgl_view <- function(data, column = NULL, n = NULL, style = mapbox_style("l
 #'
 #' # View with quantile breaks
 #' maplibre_view(nc, column = "AREA", n = 5)
+#' 
+#' # Custom palette examples
+#' maplibre_view(nc, column = "AREA", palette = viridisLite::mako)
+#' maplibre_view(nc, column = "AREA", palette = function(n) RColorBrewer::brewer.pal(n, "RdYlBu"))
+#' maplibre_view(nc, column = "AREA", palette = colorRampPalette(c("red", "white", "blue")))
 #' }
-maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("positron"), ...) {
+maplibre_view <- function(data, column = NULL, n = NULL, palette = viridisLite::viridis, style = carto_style("positron"), ...) {
     if (!inherits(data, "sf")) {
         stop("data must be an sf object")
     }
@@ -505,7 +517,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                     n_breaks <- length(breaks) - 1
 
                     # Generate n_breaks colors for n bins
-                    colors <- viridisLite::viridis(n_breaks)
+                    colors <- palette(n_breaks)
 
                     # For step expressions, base is first color, stops are remaining colors
                     # values are the thresholds (excluding min)
@@ -541,7 +553,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
                     breaks <- seq(min_val, max_val, length.out = 5)
-                    colors <- viridisLite::viridis(5)
+                    colors <- palette(5)
 
                     map <- map |>
                         add_circle_layer(
@@ -568,7 +580,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                 # Categorical column
                 unique_vals <- unique(col_data[!is.na(col_data)])
                 n_cats <- length(unique_vals)
-                colors <- viridisLite::viridis(n_cats)
+                colors <- palette(n_cats)
 
                 map <- map |>
                     add_circle_layer(
@@ -625,7 +637,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                     n_breaks <- length(breaks) - 1
 
                     # Generate n_breaks colors for n bins
-                    colors <- viridisLite::viridis(n_breaks)
+                    colors <- palette(n_breaks)
 
                     # For step expressions, base is first color, stops are remaining colors
                     # values are the thresholds (excluding min)
@@ -660,7 +672,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
                     breaks <- seq(min_val, max_val, length.out = 5)
-                    colors <- viridisLite::viridis(5)
+                    colors <- palette(5)
 
                     map <- map |>
                         add_line_layer(
@@ -687,7 +699,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                 # Categorical column
                 unique_vals <- unique(col_data[!is.na(col_data)])
                 n_cats <- length(unique_vals)
-                colors <- viridisLite::viridis(n_cats)
+                colors <- palette(n_cats)
 
                 map <- map |>
                     add_line_layer(
@@ -743,7 +755,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                     n_breaks <- length(breaks) - 1
 
                     # Generate n_breaks colors for n bins
-                    colors <- viridisLite::viridis(n_breaks)
+                    colors <- palette(n_breaks)
 
                     # For step expressions, base is first color, stops are remaining colors
                     # values are the thresholds (excluding min)
@@ -778,7 +790,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                 } else {
                     # Use continuous interpolation with 5 equal-interval breaks
                     breaks <- seq(min_val, max_val, length.out = 5)
-                    colors <- viridisLite::viridis(5)
+                    colors <- palette(5)
 
                     map <- map |>
                         add_fill_layer(
@@ -805,7 +817,7 @@ maplibre_view <- function(data, column = NULL, n = NULL, style = carto_style("po
                 # Categorical column
                 unique_vals <- unique(col_data[!is.na(col_data)])
                 n_cats <- length(unique_vals)
-                colors <- viridisLite::viridis(n_cats)
+                colors <- palette(n_cats)
 
                 map <- map |>
                     add_fill_layer(
