@@ -10,6 +10,14 @@ add_draw_control(
   freehand = FALSE,
   simplify_freehand = FALSE,
   orientation = "vertical",
+  source = NULL,
+  point_color = "#3bb2d0",
+  line_color = "#3bb2d0",
+  fill_color = "#3bb2d0",
+  fill_opacity = 0.1,
+  active_color = "#fbb03b",
+  vertex_radius = 5,
+  line_width = 2,
   ...
 )
 }
@@ -25,6 +33,23 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 
 \item{orientation}{A string specifying the orientation of the draw control.
 Either "vertical" (default) or "horizontal".}
+
+\item{source}{A character string specifying a source ID to add to the draw control.
+Default is NULL.}
+
+\item{point_color}{Color for point features. Default is "#3bb2d0" (light blue).}
+
+\item{line_color}{Color for line features. Default is "#3bb2d0" (light blue).}
+
+\item{fill_color}{Fill color for polygon features. Default is "#3bb2d0" (light blue).}
+
+\item{fill_opacity}{Fill opacity for polygon features. Default is 0.1.}
+
+\item{active_color}{Color for active (selected) features. Default is "#fbb03b" (orange).}
+
+\item{vertex_radius}{Radius of vertex points in pixels. Default is 5.}
+
+\item{line_width}{Width of lines in pixels. Default is 2.}
 
 \item{...}{Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.}
 }
@@ -44,5 +69,24 @@ mapboxgl(
     zoom = 9
 ) |>
     add_draw_control()
+
+# With initial features from a source
+library(tigris)
+tx <- counties(state = "TX", cb = TRUE)
+mapboxgl(bounds = tx) |>
+    add_source(id = "tx", data = tx) |>
+    add_draw_control(source = "tx")
+
+# With custom styling
+mapboxgl() |>
+    add_draw_control(
+        point_color = "#ff0000",
+        line_color = "#00ff00",
+        fill_color = "#0000ff",
+        fill_opacity = 0.3,
+        active_color = "#ff00ff",
+        vertex_radius = 7,
+        line_width = 3
+    )
 }
 }

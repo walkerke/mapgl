@@ -1,7 +1,7 @@
 Package: mapgl
 Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS'
-Version: 0.1.4.9000
-Date: 2025-01-02
+Version: 0.2.2.9000
+Date: 2025-06-11
 Authors@R:
     person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre"))
 Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.com/mapbox-gl-js/guides>)
@@ -10,10 +10,13 @@ Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.c
     filled maps, circle maps, 'heatmaps', and three-dimensional graphics; and customize map styles and views.  The package
     also includes utilities to use 'Mapbox' and 'MapLibre' maps in 'Shiny' web applications.
 URL: https://walker-data.com/mapgl/
+BugReports: https://github.com/walkerke/mapgl/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Depends:
+  R (>= 4.1.0)
 Imports:
   htmlwidgets,
   geojsonsf,
@@ -23,8 +26,10 @@ Imports:
   grDevices,
   base64enc,
   terra,
-  classInt
-Suggests:
+  classInt,
   shiny,
+  viridisLite
+Suggests:
   mapboxapi,
-  usethis
+  usethis,
+  leaflet

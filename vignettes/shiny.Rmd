@@ -151,3 +151,7 @@ shinyApp(ui, server)
 ```
 
 ![](images/clipboard-4076622643.png)
+
+### Comparison maps in Shiny
+
+Because of the way that side-by-side maps generated with the `compare()` function work in **mapgl**, comparison maps require their own rendering functions. For Mapbox maps, you can use `mapboxglCompareOutput()`, `renderMapboxglCompare()`; and `mapboxgl_compare_proxy()`; for MapLibre, use `maplibreCompareOutput()`; `renderMaplibreCompare()`; and `maplibre_compare_proxy()`. For compare proxies, you can target the side of the map you want to modify with the argument `map_side = "before"` (left or top) or `map_side = "after"` (right or bottom).

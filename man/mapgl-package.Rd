@@ -14,6 +14,7 @@ Provides an interface to the 'Mapbox GL JS' (\url{https://docs.mapbox.com/mapbox
 Useful links:
 \itemize{
   \item \url{https://walker-data.com/mapgl/}
+  \item Report bugs at \url{https://github.com/walkerke/mapgl/issues}
 }
 
 }

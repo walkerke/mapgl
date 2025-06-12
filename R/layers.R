@@ -53,21 +53,23 @@
 #'         )
 #'     )
 #' }
-add_layer <- function(map,
-                      id,
-                      type = "fill",
-                      source,
-                      source_layer = NULL,
-                      paint = list(),
-                      layout = list(),
-                      slot = NULL,
-                      min_zoom = NULL,
-                      max_zoom = NULL,
-                      popup = NULL,
-                      tooltip = NULL,
-                      hover_options = NULL,
-                      before_id = NULL,
-                      filter = NULL) {
+add_layer <- function(
+    map,
+    id,
+    type = "fill",
+    source,
+    source_layer = NULL,
+    paint = list(),
+    layout = list(),
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    popup = NULL,
+    tooltip = NULL,
+    hover_options = NULL,
+    before_id = NULL,
+    filter = NULL
+) {
     if (length(paint) == 0) {
         paint <- NULL
     }
@@ -86,22 +88,25 @@ add_layer <- function(map,
         )
     }
 
-    map$x$layers <- c(map$x$layers, list(list(
-        id = id,
-        type = type,
-        source = source,
-        source_layer = source_layer,
-        paint = paint,
-        layout = layout,
-        slot = slot,
-        minzoom = min_zoom,
-        maxzoom = max_zoom,
-        popup = popup,
-        tooltip = tooltip,
-        hover_options = hover_options,
-        before_id = before_id,
-        filter = filter
-    )))
+    map$x$layers <- c(
+        map$x$layers,
+        list(list(
+            id = id,
+            type = type,
+            source = source,
+            source_layer = source_layer,
+            paint = paint,
+            layout = layout,
+            slot = slot,
+            minzoom = min_zoom,
+            maxzoom = max_zoom,
+            popup = popup,
+            tooltip = tooltip,
+            hover_options = hover_options,
+            before_id = before_id,
+            filter = filter
+        ))
+    )
 
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
         layer <- list(
@@ -136,13 +141,36 @@ add_layer <- function(map,
             layer$maxzoom <- max_zoom
         }
 
-        proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-
-
-        map$session$sendCustomMessage(proxy_class, list(
-            id = map$id,
-            message = list(type = "add_layer", layer = layer)
-        ))
+        if (
+            inherits(map, "mapboxgl_compare_proxy") ||
+                inherits(map, "maplibre_compare_proxy")
+        ) {
+            # For compare proxies
+            proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+                "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            map$session$sendCustomMessage(
+                proxy_class,
+                list(
+                    id = map$id,
+                    message = list(
+                        type = "add_layer",
+                        layer = layer,
+                        map = map$map_side
+                    )
+                )
+            )
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(map, "mapboxgl_proxy"))
+                "mapboxgl-proxy" else "maplibre-proxy"
+            map$session$sendCustomMessage(
+                proxy_class,
+                list(
+                    id = map$id,
+                    message = list(type = "add_layer", layer = layer)
+                )
+            )
+        }
 
         map
     } else {
@@ -205,42 +233,45 @@ add_layer <- function(map,
 #'         fill_opacity = 0.5
 #'     )
 #' }
-add_fill_layer <- function(map,
-                           id,
-                           source,
-                           source_layer = NULL,
-                           fill_antialias = TRUE,
-                           fill_color = NULL,
-                           fill_emissive_strength = NULL,
-                           fill_opacity = NULL,
-                           fill_outline_color = NULL,
-                           fill_pattern = NULL,
-                           fill_sort_key = NULL,
-                           fill_translate = NULL,
-                           fill_translate_anchor = "map",
-                           fill_z_offset = NULL,
-                           visibility = "visible",
-                           slot = NULL,
-                           min_zoom = NULL,
-                           max_zoom = NULL,
-                           popup = NULL,
-                           tooltip = NULL,
-                           hover_options = NULL,
-                           before_id = NULL,
-                           filter = NULL) {
+add_fill_layer <- function(
+    map,
+    id,
+    source,
+    source_layer = NULL,
+    fill_antialias = TRUE,
+    fill_color = NULL,
+    fill_emissive_strength = NULL,
+    fill_opacity = NULL,
+    fill_outline_color = NULL,
+    fill_pattern = NULL,
+    fill_sort_key = NULL,
+    fill_translate = NULL,
+    fill_translate_anchor = "map",
+    fill_z_offset = NULL,
+    visibility = "visible",
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    popup = NULL,
+    tooltip = NULL,
+    hover_options = NULL,
+    before_id = NULL,
+    filter = NULL
+) {
     paint <- list()
     layout <- list()
 
-
-
     if (!is.null(fill_antialias)) paint[["fill-antialias"]] <- fill_antialias
     if (!is.null(fill_color)) paint[["fill-color"]] <- fill_color
-    if (!is.null(fill_emissive_strength)) paint[["fill-emissive-strength"]] <- fill_emissive_strength
+    if (!is.null(fill_emissive_strength))
+        paint[["fill-emissive-strength"]] <- fill_emissive_strength
     if (!is.null(fill_opacity)) paint[["fill-opacity"]] <- fill_opacity
-    if (!is.null(fill_outline_color)) paint[["fill-outline-color"]] <- fill_outline_color
+    if (!is.null(fill_outline_color))
+        paint[["fill-outline-color"]] <- fill_outline_color
     if (!is.null(fill_pattern)) paint[["fill-pattern"]] <- fill_pattern
     if (!is.null(fill_translate)) paint[["fill-translate"]] <- fill_translate
-    if (!is.null(fill_translate_anchor)) paint[["fill-translate-anchor"]] <- fill_translate_anchor
+    if (!is.null(fill_translate_anchor))
+        paint[["fill-translate-anchor"]] <- fill_translate_anchor
     if (!is.null(fill_z_offset)) paint[["fill-z-offset"]] <- fill_z_offset
 
     if (!is.null(fill_sort_key)) layout[["fill-sort-key"]] <- fill_sort_key
@@ -339,65 +370,74 @@ add_fill_layer <- function(map,
 #'         line_opacity = 0.7
 #'     )
 #' }
-add_line_layer <- function(map,
-                           id,
-                           source,
-                           source_layer = NULL,
-                           line_blur = NULL,
-                           line_cap = NULL,
-                           line_color = NULL,
-                           line_dasharray = NULL,
-                           line_emissive_strength = NULL,
-                           line_gap_width = NULL,
-                           line_gradient = NULL,
-                           line_join = NULL,
-                           line_miter_limit = NULL,
-                           line_occlusion_opacity = NULL,
-                           line_offset = NULL,
-                           line_opacity = NULL,
-                           line_pattern = NULL,
-                           line_round_limit = NULL,
-                           line_sort_key = NULL,
-                           line_translate = NULL,
-                           line_translate_anchor = "map",
-                           line_trim_color = NULL,
-                           line_trim_fade_range = NULL,
-                           line_trim_offset = NULL,
-                           line_width = NULL,
-                           line_z_offset = NULL,
-                           visibility = "visible",
-                           slot = NULL,
-                           min_zoom = NULL,
-                           max_zoom = NULL,
-                           popup = NULL,
-                           tooltip = NULL,
-                           hover_options = NULL,
-                           before_id = NULL,
-                           filter = NULL) {
+add_line_layer <- function(
+    map,
+    id,
+    source,
+    source_layer = NULL,
+    line_blur = NULL,
+    line_cap = NULL,
+    line_color = NULL,
+    line_dasharray = NULL,
+    line_emissive_strength = NULL,
+    line_gap_width = NULL,
+    line_gradient = NULL,
+    line_join = NULL,
+    line_miter_limit = NULL,
+    line_occlusion_opacity = NULL,
+    line_offset = NULL,
+    line_opacity = NULL,
+    line_pattern = NULL,
+    line_round_limit = NULL,
+    line_sort_key = NULL,
+    line_translate = NULL,
+    line_translate_anchor = "map",
+    line_trim_color = NULL,
+    line_trim_fade_range = NULL,
+    line_trim_offset = NULL,
+    line_width = NULL,
+    line_z_offset = NULL,
+    visibility = "visible",
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    popup = NULL,
+    tooltip = NULL,
+    hover_options = NULL,
+    before_id = NULL,
+    filter = NULL
+) {
     paint <- list()
     layout <- list()
 
     if (!is.null(line_blur)) paint[["line-blur"]] <- line_blur
     if (!is.null(line_color)) paint[["line-color"]] <- line_color
     if (!is.null(line_dasharray)) paint[["line-dasharray"]] <- line_dasharray
-    if (!is.null(line_emissive_strength)) paint[["line-emissive-strength"]] <- line_emissive_strength
+    if (!is.null(line_emissive_strength))
+        paint[["line-emissive-strength"]] <- line_emissive_strength
     if (!is.null(line_gap_width)) paint[["line-gap-width"]] <- line_gap_width
     if (!is.null(line_gradient)) paint[["line-gradient"]] <- line_gradient
-    if (!is.null(line_occlusion_opacity)) paint[["line-occlusion-opacity"]] <- line_occlusion_opacity
+    if (!is.null(line_occlusion_opacity))
+        paint[["line-occlusion-opacity"]] <- line_occlusion_opacity
     if (!is.null(line_offset)) paint[["line-offset"]] <- line_offset
     if (!is.null(line_opacity)) paint[["line-opacity"]] <- line_opacity
     if (!is.null(line_pattern)) paint[["line-pattern"]] <- line_pattern
     if (!is.null(line_translate)) paint[["line-translate"]] <- line_translate
-    if (!is.null(line_translate_anchor)) paint[["line-translate-anchor"]] <- line_translate_anchor
+    if (!is.null(line_translate_anchor))
+        paint[["line-translate-anchor"]] <- line_translate_anchor
     if (!is.null(line_trim_color)) paint[["line-trim-color"]] <- line_trim_color
-    if (!is.null(line_trim_fade_range)) paint[["line-trim-fade-range"]] <- line_trim_fade_range
-    if (!is.null(line_trim_offset)) paint[["line-trim-offset"]] <- line_trim_offset
+    if (!is.null(line_trim_fade_range))
+        paint[["line-trim-fade-range"]] <- line_trim_fade_range
+    if (!is.null(line_trim_offset))
+        paint[["line-trim-offset"]] <- line_trim_offset
     if (!is.null(line_width)) paint[["line-width"]] <- line_width
 
     if (!is.null(line_cap)) layout[["line-cap"]] <- line_cap
     if (!is.null(line_join)) layout[["line-join"]] <- line_join
-    if (!is.null(line_miter_limit)) layout[["line-miter-limit"]] <- line_miter_limit
-    if (!is.null(line_round_limit)) layout[["line-round-limit"]] <- line_round_limit
+    if (!is.null(line_miter_limit))
+        layout[["line-miter-limit"]] <- line_miter_limit
+    if (!is.null(line_round_limit))
+        layout[["line-round-limit"]] <- line_round_limit
     if (!is.null(line_sort_key)) layout[["line-sort-key"]] <- line_sort_key
     if (!is.null(line_z_offset)) layout[["line-z-offset"]] <- line_z_offset
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
@@ -481,33 +521,49 @@ add_line_layer <- function(map,
 #'         heatmap_opacity = 0.7
 #'     )
 #' }
-add_heatmap_layer <- function(map,
-                              id,
-                              source,
-                              source_layer = NULL,
-                              heatmap_color = NULL,
-                              heatmap_intensity = NULL,
-                              heatmap_opacity = NULL,
-                              heatmap_radius = NULL,
-                              heatmap_weight = NULL,
-                              visibility = "visible",
-                              slot = NULL,
-                              min_zoom = NULL,
-                              max_zoom = NULL,
-                              before_id = NULL,
-                              filter = NULL) {
+add_heatmap_layer <- function(
+    map,
+    id,
+    source,
+    source_layer = NULL,
+    heatmap_color = NULL,
+    heatmap_intensity = NULL,
+    heatmap_opacity = NULL,
+    heatmap_radius = NULL,
+    heatmap_weight = NULL,
+    visibility = "visible",
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    before_id = NULL,
+    filter = NULL
+) {
     paint <- list()
     layout <- list()
 
     if (!is.null(heatmap_color)) paint[["heatmap-color"]] <- heatmap_color
-    if (!is.null(heatmap_intensity)) paint[["heatmap-intensity"]] <- heatmap_intensity
+    if (!is.null(heatmap_intensity))
+        paint[["heatmap-intensity"]] <- heatmap_intensity
     if (!is.null(heatmap_opacity)) paint[["heatmap-opacity"]] <- heatmap_opacity
     if (!is.null(heatmap_radius)) paint[["heatmap-radius"]] <- heatmap_radius
     if (!is.null(heatmap_weight)) paint[["heatmap-weight"]] <- heatmap_weight
 
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-    map <- add_layer(map, id, "heatmap", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id, filter)
+    map <- add_layer(
+        map,
+        id,
+        "heatmap",
+        source,
+        source_layer,
+        paint,
+        layout,
+        slot,
+        min_zoom,
+        max_zoom,
+        before_id,
+        filter
+    )
 
     return(map)
 }
@@ -576,40 +632,67 @@ add_heatmap_layer <- function(map,
 #'         )
 #'     )
 #' }
-add_fill_extrusion_layer <- function(map,
-                                     id,
-                                     source,
-                                     source_layer = NULL,
-                                     fill_extrusion_base = NULL,
-                                     fill_extrusion_color = NULL,
-                                     fill_extrusion_height = NULL,
-                                     fill_extrusion_opacity = NULL,
-                                     fill_extrusion_pattern = NULL,
-                                     fill_extrusion_translate = NULL,
-                                     fill_extrusion_translate_anchor = "map",
-                                     visibility = "visible",
-                                     slot = NULL,
-                                     min_zoom = NULL,
-                                     max_zoom = NULL,
-                                     popup = NULL,
-                                     tooltip = NULL,
-                                     hover_options = NULL,
-                                     before_id = NULL,
-                                     filter = NULL) {
+add_fill_extrusion_layer <- function(
+    map,
+    id,
+    source,
+    source_layer = NULL,
+    fill_extrusion_base = NULL,
+    fill_extrusion_color = NULL,
+    fill_extrusion_height = NULL,
+    fill_extrusion_opacity = NULL,
+    fill_extrusion_pattern = NULL,
+    fill_extrusion_translate = NULL,
+    fill_extrusion_translate_anchor = "map",
+    visibility = "visible",
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    popup = NULL,
+    tooltip = NULL,
+    hover_options = NULL,
+    before_id = NULL,
+    filter = NULL
+) {
     paint <- list()
     layout <- list()
 
-    if (!is.null(fill_extrusion_base)) paint[["fill-extrusion-base"]] <- fill_extrusion_base
-    if (!is.null(fill_extrusion_color)) paint[["fill-extrusion-color"]] <- fill_extrusion_color
-    if (!is.null(fill_extrusion_height)) paint[["fill-extrusion-height"]] <- fill_extrusion_height
-    if (!is.null(fill_extrusion_opacity)) paint[["fill-extrusion-opacity"]] <- fill_extrusion_opacity
-    if (!is.null(fill_extrusion_pattern)) paint[["fill-extrusion-pattern"]] <- fill_extrusion_pattern
-    if (!is.null(fill_extrusion_translate)) paint[["fill-extrusion-translate"]] <- fill_extrusion_translate
-    if (!is.null(fill_extrusion_translate_anchor)) paint[["fill-extrusion-translate-anchor"]] <- fill_extrusion_translate_anchor
+    if (!is.null(fill_extrusion_base))
+        paint[["fill-extrusion-base"]] <- fill_extrusion_base
+    if (!is.null(fill_extrusion_color))
+        paint[["fill-extrusion-color"]] <- fill_extrusion_color
+    if (!is.null(fill_extrusion_height))
+        paint[["fill-extrusion-height"]] <- fill_extrusion_height
+    if (!is.null(fill_extrusion_opacity))
+        paint[["fill-extrusion-opacity"]] <- fill_extrusion_opacity
+    if (!is.null(fill_extrusion_pattern))
+        paint[["fill-extrusion-pattern"]] <- fill_extrusion_pattern
+    if (!is.null(fill_extrusion_translate))
+        paint[["fill-extrusion-translate"]] <- fill_extrusion_translate
+    if (!is.null(fill_extrusion_translate_anchor))
+        paint[[
+            "fill-extrusion-translate-anchor"
+        ]] <- fill_extrusion_translate_anchor
 
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-    map <- add_layer(map, id, "fill-extrusion", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
+    map <- add_layer(
+        map,
+        id,
+        "fill-extrusion",
+        source,
+        source_layer,
+        paint,
+        layout,
+        slot,
+        min_zoom,
+        max_zoom,
+        popup,
+        tooltip,
+        hover_options,
+        before_id,
+        filter
+    )
 
     return(map)
 }
@@ -645,17 +728,19 @@ add_fill_extrusion_layer <- function(map,
 #'     circle_stroke_color = "#ffffff",
 #'     circle_stroke_width = 2
 #' )
-cluster_options <- function(max_zoom = 14,
-                            cluster_radius = 50,
-                            color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
-                            radius_stops = c(20, 30, 40),
-                            count_stops = c(0, 100, 750),
-                            circle_blur = NULL,
-                            circle_opacity = NULL,
-                            circle_stroke_color = NULL,
-                            circle_stroke_opacity = NULL,
-                            circle_stroke_width = NULL,
-                            text_color = "black") {
+cluster_options <- function(
+    max_zoom = 14,
+    cluster_radius = 50,
+    color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
+    radius_stops = c(20, 30, 40),
+    count_stops = c(0, 100, 750),
+    circle_blur = NULL,
+    circle_opacity = NULL,
+    circle_stroke_color = NULL,
+    circle_stroke_opacity = NULL,
+    circle_stroke_width = NULL,
+    text_color = "black"
+) {
     list(
         max_zoom = max_zoom,
         cluster_radius = cluster_radius,
@@ -771,30 +856,32 @@ cluster_options <- function(max_zoom = 14,
 #'         circular_patches = TRUE
 #'     )
 #' }
-add_circle_layer <- function(map,
-                             id,
-                             source,
-                             source_layer = NULL,
-                             circle_blur = NULL,
-                             circle_color = NULL,
-                             circle_opacity = NULL,
-                             circle_radius = NULL,
-                             circle_sort_key = NULL,
-                             circle_stroke_color = NULL,
-                             circle_stroke_opacity = NULL,
-                             circle_stroke_width = NULL,
-                             circle_translate = NULL,
-                             circle_translate_anchor = "map",
-                             visibility = "visible",
-                             slot = NULL,
-                             min_zoom = NULL,
-                             max_zoom = NULL,
-                             popup = NULL,
-                             tooltip = NULL,
-                             hover_options = NULL,
-                             before_id = NULL,
-                             filter = NULL,
-                             cluster_options = NULL) {
+add_circle_layer <- function(
+    map,
+    id,
+    source,
+    source_layer = NULL,
+    circle_blur = NULL,
+    circle_color = NULL,
+    circle_opacity = NULL,
+    circle_radius = NULL,
+    circle_sort_key = NULL,
+    circle_stroke_color = NULL,
+    circle_stroke_opacity = NULL,
+    circle_stroke_width = NULL,
+    circle_translate = NULL,
+    circle_translate_anchor = "map",
+    visibility = "visible",
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    popup = NULL,
+    tooltip = NULL,
+    hover_options = NULL,
+    before_id = NULL,
+    filter = NULL,
+    cluster_options = NULL
+) {
     paint <- list()
     layout <- list()
 
@@ -802,13 +889,19 @@ add_circle_layer <- function(map,
     if (!is.null(circle_color)) paint[["circle-color"]] <- circle_color
     if (!is.null(circle_opacity)) paint[["circle-opacity"]] <- circle_opacity
     if (!is.null(circle_radius)) paint[["circle-radius"]] <- circle_radius
-    if (!is.null(circle_stroke_color)) paint[["circle-stroke-color"]] <- circle_stroke_color
-    if (!is.null(circle_stroke_opacity)) paint[["circle-stroke-opacity"]] <- circle_stroke_opacity
-    if (!is.null(circle_stroke_width)) paint[["circle-stroke-width"]] <- circle_stroke_width
-    if (!is.null(circle_translate)) paint[["circle-translate"]] <- circle_translate
-    if (!is.null(circle_translate_anchor)) paint[["circle-translate-anchor"]] <- circle_translate_anchor
+    if (!is.null(circle_stroke_color))
+        paint[["circle-stroke-color"]] <- circle_stroke_color
+    if (!is.null(circle_stroke_opacity))
+        paint[["circle-stroke-opacity"]] <- circle_stroke_opacity
+    if (!is.null(circle_stroke_width))
+        paint[["circle-stroke-width"]] <- circle_stroke_width
+    if (!is.null(circle_translate))
+        paint[["circle-translate"]] <- circle_translate
+    if (!is.null(circle_translate_anchor))
+        paint[["circle-translate-anchor"]] <- circle_translate_anchor
 
-    if (!is.null(circle_sort_key)) layout[["circle-sort-key"]] <- circle_sort_key
+    if (!is.null(circle_sort_key))
+        layout[["circle-sort-key"]] <- circle_sort_key
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
     if (!is.null(cluster_options)) {
@@ -856,7 +949,9 @@ add_circle_layer <- function(map,
 
         for (prop in names(optional_paint)) {
             if (!is.null(optional_paint[[prop]])) {
-                map$x$layers[[length(map$x$layers)]]$paint[[prop]] <- optional_paint[[prop]]
+                map$x$layers[[length(map$x$layers)]]$paint[[
+                    prop
+                ]] <- optional_paint[[prop]]
             }
         }
 
@@ -957,38 +1052,58 @@ add_circle_layer <- function(map,
 #'         raster_fade_duration = 0
 #'     )
 #' }
-add_raster_layer <- function(map,
-                             id,
-                             source,
-                             source_layer = NULL,
-                             raster_brightness_max = NULL,
-                             raster_brightness_min = NULL,
-                             raster_contrast = NULL,
-                             raster_fade_duration = NULL,
-                             raster_hue_rotate = NULL,
-                             raster_opacity = NULL,
-                             raster_resampling = NULL,
-                             raster_saturation = NULL,
-                             visibility = "visible",
-                             slot = NULL,
-                             min_zoom = NULL,
-                             max_zoom = NULL,
-                             before_id = NULL) {
+add_raster_layer <- function(
+    map,
+    id,
+    source,
+    source_layer = NULL,
+    raster_brightness_max = NULL,
+    raster_brightness_min = NULL,
+    raster_contrast = NULL,
+    raster_fade_duration = NULL,
+    raster_hue_rotate = NULL,
+    raster_opacity = NULL,
+    raster_resampling = NULL,
+    raster_saturation = NULL,
+    visibility = "visible",
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    before_id = NULL
+) {
     paint <- list()
     layout <- list()
 
-    if (!is.null(raster_brightness_max)) paint[["raster-brightness-max"]] <- raster_brightness_max
-    if (!is.null(raster_brightness_min)) paint[["raster-brightness-min"]] <- raster_brightness_min
+    if (!is.null(raster_brightness_max))
+        paint[["raster-brightness-max"]] <- raster_brightness_max
+    if (!is.null(raster_brightness_min))
+        paint[["raster-brightness-min"]] <- raster_brightness_min
     if (!is.null(raster_contrast)) paint[["raster-contrast"]] <- raster_contrast
-    if (!is.null(raster_fade_duration)) paint[["raster-fade-duration"]] <- raster_fade_duration
-    if (!is.null(raster_hue_rotate)) paint[["raster-hue-rotate"]] <- raster_hue_rotate
+    if (!is.null(raster_fade_duration))
+        paint[["raster-fade-duration"]] <- raster_fade_duration
+    if (!is.null(raster_hue_rotate))
+        paint[["raster-hue-rotate"]] <- raster_hue_rotate
     if (!is.null(raster_opacity)) paint[["raster-opacity"]] <- raster_opacity
-    if (!is.null(raster_resampling)) paint[["raster-resampling"]] <- raster_resampling
-    if (!is.null(raster_saturation)) paint[["raster-saturation"]] <- raster_saturation
+    if (!is.null(raster_resampling))
+        paint[["raster-resampling"]] <- raster_resampling
+    if (!is.null(raster_saturation))
+        paint[["raster-saturation"]] <- raster_saturation
 
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
-    map <- add_layer(map, id, "raster", source, source_layer, paint, layout, slot, min_zoom, max_zoom, before_id)
+    map <- add_layer(
+        map,
+        id,
+        "raster",
+        source,
+        source_layer,
+        paint,
+        layout,
+        slot,
+        min_zoom,
+        max_zoom,
+        before_id
+    )
 
     return(map)
 }
@@ -1131,153 +1246,184 @@ add_raster_layer <- function(map,
 #'         tooltip = "icon"
 #'     )
 #' }
-add_symbol_layer <- function(map,
-                             id,
-                             source,
-                             source_layer = NULL,
-                             icon_allow_overlap = NULL,
-                             icon_anchor = NULL,
-                             icon_color = NULL,
-                             icon_color_brightness_max = NULL,
-                             icon_color_brightness_min = NULL,
-                             icon_color_contrast = NULL,
-                             icon_color_saturation = NULL,
-                             icon_emissive_strength = NULL,
-                             icon_halo_blur = NULL,
-                             icon_halo_color = NULL,
-                             icon_halo_width = NULL,
-                             icon_ignore_placement = NULL,
-                             icon_image = NULL,
-                             icon_image_cross_fade = NULL,
-                             icon_keep_upright = NULL,
-                             icon_offset = NULL,
-                             icon_opacity = NULL,
-                             icon_optional = NULL,
-                             icon_padding = NULL,
-                             icon_pitch_alignment = NULL,
-                             icon_rotate = NULL,
-                             icon_rotation_alignment = NULL,
-                             icon_size = NULL,
-                             icon_text_fit = NULL,
-                             icon_text_fit_padding = NULL,
-                             icon_translate = NULL,
-                             icon_translate_anchor = NULL,
-                             symbol_avoid_edges = NULL,
-                             symbol_placement = NULL,
-                             symbol_sort_key = NULL,
-                             symbol_spacing = NULL,
-                             symbol_z_elevate = NULL,
-                             symbol_z_offset = NULL,
-                             symbol_z_order = NULL,
-                             text_allow_overlap = NULL,
-                             text_anchor = NULL,
-                             text_color = "black",
-                             text_emissive_strength = NULL,
-                             text_field = NULL,
-                             text_font = NULL,
-                             text_halo_blur = NULL,
-                             text_halo_color = NULL,
-                             text_halo_width = NULL,
-                             text_ignore_placement = NULL,
-                             text_justify = NULL,
-                             text_keep_upright = NULL,
-                             text_letter_spacing = NULL,
-                             text_line_height = NULL,
-                             text_max_angle = NULL,
-                             text_max_width = NULL,
-                             text_offset = NULL,
-                             text_opacity = NULL,
-                             text_optional = NULL,
-                             text_padding = NULL,
-                             text_pitch_alignment = NULL,
-                             text_radial_offset = NULL,
-                             text_rotate = NULL,
-                             text_rotation_alignment = NULL,
-                             text_size = NULL,
-                             text_transform = NULL,
-                             text_translate = NULL,
-                             text_translate_anchor = NULL,
-                             text_variable_anchor = NULL,
-                             text_writing_mode = NULL,
-                             visibility = "visible",
-                             slot = NULL,
-                             min_zoom = NULL,
-                             max_zoom = NULL,
-                             popup = NULL,
-                             tooltip = NULL,
-                             hover_options = NULL,
-                             before_id = NULL,
-                             filter = NULL,
-                             cluster_options = NULL) {
+add_symbol_layer <- function(
+    map,
+    id,
+    source,
+    source_layer = NULL,
+    icon_allow_overlap = NULL,
+    icon_anchor = NULL,
+    icon_color = NULL,
+    icon_color_brightness_max = NULL,
+    icon_color_brightness_min = NULL,
+    icon_color_contrast = NULL,
+    icon_color_saturation = NULL,
+    icon_emissive_strength = NULL,
+    icon_halo_blur = NULL,
+    icon_halo_color = NULL,
+    icon_halo_width = NULL,
+    icon_ignore_placement = NULL,
+    icon_image = NULL,
+    icon_image_cross_fade = NULL,
+    icon_keep_upright = NULL,
+    icon_offset = NULL,
+    icon_opacity = NULL,
+    icon_optional = NULL,
+    icon_padding = NULL,
+    icon_pitch_alignment = NULL,
+    icon_rotate = NULL,
+    icon_rotation_alignment = NULL,
+    icon_size = NULL,
+    icon_text_fit = NULL,
+    icon_text_fit_padding = NULL,
+    icon_translate = NULL,
+    icon_translate_anchor = NULL,
+    symbol_avoid_edges = NULL,
+    symbol_placement = NULL,
+    symbol_sort_key = NULL,
+    symbol_spacing = NULL,
+    symbol_z_elevate = NULL,
+    symbol_z_offset = NULL,
+    symbol_z_order = NULL,
+    text_allow_overlap = NULL,
+    text_anchor = NULL,
+    text_color = "black",
+    text_emissive_strength = NULL,
+    text_field = NULL,
+    text_font = NULL,
+    text_halo_blur = NULL,
+    text_halo_color = NULL,
+    text_halo_width = NULL,
+    text_ignore_placement = NULL,
+    text_justify = NULL,
+    text_keep_upright = NULL,
+    text_letter_spacing = NULL,
+    text_line_height = NULL,
+    text_max_angle = NULL,
+    text_max_width = NULL,
+    text_offset = NULL,
+    text_opacity = NULL,
+    text_optional = NULL,
+    text_padding = NULL,
+    text_pitch_alignment = NULL,
+    text_radial_offset = NULL,
+    text_rotate = NULL,
+    text_rotation_alignment = NULL,
+    text_size = NULL,
+    text_transform = NULL,
+    text_translate = NULL,
+    text_translate_anchor = NULL,
+    text_variable_anchor = NULL,
+    text_writing_mode = NULL,
+    visibility = "visible",
+    slot = NULL,
+    min_zoom = NULL,
+    max_zoom = NULL,
+    popup = NULL,
+    tooltip = NULL,
+    hover_options = NULL,
+    before_id = NULL,
+    filter = NULL,
+    cluster_options = NULL
+) {
     paint <- list()
     layout <- list()
 
-    if (!is.null(icon_allow_overlap)) layout[["icon-allow-overlap"]] <- icon_allow_overlap
+    if (!is.null(icon_allow_overlap))
+        layout[["icon-allow-overlap"]] <- icon_allow_overlap
     if (!is.null(icon_anchor)) layout[["icon-anchor"]] <- icon_anchor
     if (!is.null(icon_color)) paint[["icon-color"]] <- icon_color
-    if (!is.null(icon_color_brightness_max)) paint[["icon-color-brightness-max"]] <- icon_color_brightness_max
-    if (!is.null(icon_color_brightness_min)) paint[["icon-color-brightness-min"]] <- icon_color_brightness_min
-    if (!is.null(icon_color_contrast)) paint[["icon-color-contrast"]] <- icon_color_contrast
-    if (!is.null(icon_color_saturation)) paint[["icon-color-saturation"]] <- icon_color_saturation
-    if (!is.null(icon_emissive_strength)) paint[["icon-emissive-strength"]] <- icon_emissive_strength
+    if (!is.null(icon_color_brightness_max))
+        paint[["icon-color-brightness-max"]] <- icon_color_brightness_max
+    if (!is.null(icon_color_brightness_min))
+        paint[["icon-color-brightness-min"]] <- icon_color_brightness_min
+    if (!is.null(icon_color_contrast))
+        paint[["icon-color-contrast"]] <- icon_color_contrast
+    if (!is.null(icon_color_saturation))
+        paint[["icon-color-saturation"]] <- icon_color_saturation
+    if (!is.null(icon_emissive_strength))
+        paint[["icon-emissive-strength"]] <- icon_emissive_strength
     if (!is.null(icon_halo_blur)) paint[["icon-halo-blur"]] <- icon_halo_blur
     if (!is.null(icon_halo_color)) paint[["icon-halo-color"]] <- icon_halo_color
     if (!is.null(icon_halo_width)) paint[["icon-halo-width"]] <- icon_halo_width
-    if (!is.null(icon_ignore_placement)) layout[["icon-ignore-placement"]] <- icon_ignore_placement
+    if (!is.null(icon_ignore_placement))
+        layout[["icon-ignore-placement"]] <- icon_ignore_placement
     if (!is.null(icon_image)) layout[["icon-image"]] <- icon_image
-    if (!is.null(icon_image_cross_fade)) layout[["icon-image-cross-fade"]] <- icon_image_cross_fade
-    if (!is.null(icon_keep_upright)) layout[["icon-keep-upright"]] <- icon_keep_upright
+    if (!is.null(icon_image_cross_fade))
+        layout[["icon-image-cross-fade"]] <- icon_image_cross_fade
+    if (!is.null(icon_keep_upright))
+        layout[["icon-keep-upright"]] <- icon_keep_upright
     if (!is.null(icon_offset)) layout[["icon-offset"]] <- icon_offset
     if (!is.null(icon_opacity)) paint[["icon-opacity"]] <- icon_opacity
     if (!is.null(icon_optional)) layout[["icon-optional"]] <- icon_optional
     if (!is.null(icon_padding)) layout[["icon-padding"]] <- icon_padding
-    if (!is.null(icon_pitch_alignment)) layout[["icon-pitch-alignment"]] <- icon_pitch_alignment
+    if (!is.null(icon_pitch_alignment))
+        layout[["icon-pitch-alignment"]] <- icon_pitch_alignment
     if (!is.null(icon_rotate)) layout[["icon-rotate"]] <- icon_rotate
-    if (!is.null(icon_rotation_alignment)) layout[["icon-rotation-alignment"]] <- icon_rotation_alignment
+    if (!is.null(icon_rotation_alignment))
+        layout[["icon-rotation-alignment"]] <- icon_rotation_alignment
     if (!is.null(icon_size)) layout[["icon-size"]] <- icon_size
     if (!is.null(icon_text_fit)) layout[["icon-text-fit"]] <- icon_text_fit
-    if (!is.null(icon_text_fit_padding)) layout[["icon-text-fit-padding"]] <- icon_text_fit_padding
+    if (!is.null(icon_text_fit_padding))
+        layout[["icon-text-fit-padding"]] <- icon_text_fit_padding
     if (!is.null(icon_translate)) paint[["icon-translate"]] <- icon_translate
-    if (!is.null(icon_translate_anchor)) paint[["icon-translate-anchor"]] <- icon_translate_anchor
+    if (!is.null(icon_translate_anchor))
+        paint[["icon-translate-anchor"]] <- icon_translate_anchor
 
-    if (!is.null(symbol_avoid_edges)) layout[["symbol-avoid-edges"]] <- symbol_avoid_edges
-    if (!is.null(symbol_placement)) layout[["symbol-placement"]] <- symbol_placement
-    if (!is.null(symbol_sort_key)) layout[["symbol-sort-key"]] <- symbol_sort_key
+    if (!is.null(symbol_avoid_edges))
+        layout[["symbol-avoid-edges"]] <- symbol_avoid_edges
+    if (!is.null(symbol_placement))
+        layout[["symbol-placement"]] <- symbol_placement
+    if (!is.null(symbol_sort_key))
+        layout[["symbol-sort-key"]] <- symbol_sort_key
     if (!is.null(symbol_spacing)) layout[["symbol-spacing"]] <- symbol_spacing
-    if (!is.null(symbol_z_elevate)) layout[["symbol-z-elevate"]] <- symbol_z_elevate
+    if (!is.null(symbol_z_elevate))
+        layout[["symbol-z-elevate"]] <- symbol_z_elevate
     if (!is.null(symbol_z_order)) layout[["symbol-z-order"]] <- symbol_z_order
     if (!is.null(symbol_z_offset)) paint[["symbol-z-offset"]] <- symbol_z_offset
 
-    if (!is.null(text_allow_overlap)) layout[["text-allow-overlap"]] <- text_allow_overlap
+    if (!is.null(text_allow_overlap))
+        layout[["text-allow-overlap"]] <- text_allow_overlap
     if (!is.null(text_anchor)) layout[["text-anchor"]] <- text_anchor
     if (!is.null(text_color)) paint[["text-color"]] <- text_color
-    if (!is.null(text_emissive_strength)) paint[["text-emissive-strength"]] <- text_emissive_strength
+    if (!is.null(text_emissive_strength))
+        paint[["text-emissive-strength"]] <- text_emissive_strength
     if (!is.null(text_field)) layout[["text-field"]] <- text_field
     if (!is.null(text_font)) layout[["text-font"]] <- text_font
     if (!is.null(text_halo_blur)) paint[["text-halo-blur"]] <- text_halo_blur
     if (!is.null(text_halo_color)) paint[["text-halo-color"]] <- text_halo_color
     if (!is.null(text_halo_width)) paint[["text-halo-width"]] <- text_halo_width
-    if (!is.null(text_ignore_placement)) layout[["text-ignore-placement"]] <- text_ignore_placement
+    if (!is.null(text_ignore_placement))
+        layout[["text-ignore-placement"]] <- text_ignore_placement
     if (!is.null(text_justify)) layout[["text-justify"]] <- text_justify
-    if (!is.null(text_keep_upright)) layout[["text-keep-upright"]] <- text_keep_upright
-    if (!is.null(text_letter_spacing)) layout[["text-letter-spacing"]] <- text_letter_spacing
-    if (!is.null(text_line_height)) layout[["text-line-height"]] <- text_line_height
+    if (!is.null(text_keep_upright))
+        layout[["text-keep-upright"]] <- text_keep_upright
+    if (!is.null(text_letter_spacing))
+        layout[["text-letter-spacing"]] <- text_letter_spacing
+    if (!is.null(text_line_height))
+        layout[["text-line-height"]] <- text_line_height
     if (!is.null(text_max_angle)) layout[["text-max-angle"]] <- text_max_angle
     if (!is.null(text_max_width)) layout[["text-max-width"]] <- text_max_width
     if (!is.null(text_offset)) layout[["text-offset"]] <- text_offset
     if (!is.null(text_opacity)) paint[["text-opacity"]] <- text_opacity
     if (!is.null(text_optional)) layout[["text-optional"]] <- text_optional
     if (!is.null(text_padding)) layout[["text-padding"]] <- text_padding
-    if (!is.null(text_pitch_alignment)) layout[["text-pitch-alignment"]] <- text_pitch_alignment
-    if (!is.null(text_radial_offset)) layout[["text-radial-offset"]] <- text_radial_offset
+    if (!is.null(text_pitch_alignment))
+        layout[["text-pitch-alignment"]] <- text_pitch_alignment
+    if (!is.null(text_radial_offset))
+        layout[["text-radial-offset"]] <- text_radial_offset
     if (!is.null(text_rotate)) layout[["text-rotate"]] <- text_rotate
-    if (!is.null(text_rotation_alignment)) layout[["text-rotation-alignment"]] <- text_rotation_alignment
+    if (!is.null(text_rotation_alignment))
+        layout[["text-rotation-alignment"]] <- text_rotation_alignment
     if (!is.null(text_size)) layout[["text-size"]] <- text_size
     if (!is.null(text_transform)) layout[["text-transform"]] <- text_transform
     if (!is.null(text_translate)) paint[["text-translate"]] <- text_translate
-    if (!is.null(text_translate_anchor)) paint[["text-translate-anchor"]] <- text_translate_anchor
-    if (!is.null(text_variable_anchor)) layout[["text-variable-anchor"]] <- text_variable_anchor
-    if (!is.null(text_writing_mode)) layout[["text-writing-mode"]] <- text_writing_mode
+    if (!is.null(text_translate_anchor))
+        paint[["text-translate-anchor"]] <- text_translate_anchor
+    if (!is.null(text_variable_anchor))
+        layout[["text-variable-anchor"]] <- text_variable_anchor
+    if (!is.null(text_writing_mode))
+        layout[["text-writing-mode"]] <- text_writing_mode
 
     if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
@@ -1326,7 +1472,9 @@ add_symbol_layer <- function(map,
 
         for (prop in names(optional_paint)) {
             if (!is.null(optional_paint[[prop]])) {
-                map$x$layers[[length(map$x$layers)]]$paint[[prop]] <- optional_paint[[prop]]
+                map$x$layers[[length(map$x$layers)]]$paint[[
+                    prop
+                ]] <- optional_paint[[prop]]
             }
         }
 
@@ -1359,7 +1507,23 @@ add_symbol_layer <- function(map,
             before_id = before_id
         )
     } else {
-        map <- add_layer(map, id, "symbol", source, source_layer, paint, layout, slot, min_zoom, max_zoom, popup, tooltip, hover_options, before_id, filter)
+        map <- add_layer(
+            map,
+            id,
+            "symbol",
+            source,
+            source_layer,
+            paint,
+            layout,
+            slot,
+            min_zoom,
+            max_zoom,
+            popup,
+            tooltip,
+            hover_options,
+            before_id,
+            filter
+        )
     }
 
     return(map)

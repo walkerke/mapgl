@@ -65,3 +65,140 @@ set_fog <- function(map, range = NULL, color = NULL, horizon_blend = NULL,
   map
 
 }
+
+#' Set rain effect on a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function or a proxy object.
+#' @param density A number between 0 and 1 controlling the rain particles density. Default is 0.5.
+#' @param intensity A number between 0 and 1 controlling the rain particles movement speed. Default is 1.
+#' @param color A string specifying the color of the rain droplets. Default is "#a8adbc".
+#' @param opacity A number between 0 and 1 controlling the rain particles opacity. Default is 0.7.
+#' @param center_thinning A number between 0 and 1 controlling the thinning factor of rain particles from center. Default is 0.57.
+#' @param direction A numeric vector of length 2 defining the azimuth and polar angles of the rain direction. Default is c(0, 80).
+#' @param droplet_size A numeric vector of length 2 controlling the rain droplet size (x - normal to direction, y - along direction). Default is c(2.6, 18.2).
+#' @param distortion_strength A number between 0 and 1 controlling the rain particles screen-space distortion strength. Default is 0.7.
+#' @param vignette A number between 0 and 1 controlling the screen-space vignette rain tinting effect intensity. Default is 1.0.
+#' @param vignette_color A string specifying the rain vignette screen-space corners tint color. Default is "#464646".
+#' @param remove A logical value indicating whether to remove the rain effect. Default is FALSE.
+#'
+#' @return The updated map object.
+#' @export
+#' 
+#' @examples
+#' \dontrun{
+#' # Add rain effect with default values
+#' mapboxgl(...) |> set_rain()
+#' 
+#' # Add rain effect with custom values
+#' mapboxgl(
+#'   style = mapbox_style("standard"),
+#'   center = c(24.951528, 60.169573),
+#'   zoom = 16.8,
+#'   pitch = 74,
+#'   bearing = 12.8
+#' ) |>
+#'   set_rain(
+#'     density = 0.5,
+#'     opacity = 0.7,
+#'     color = "#a8adbc"
+#'   )
+#'   
+#' # Remove rain effect (useful in Shiny)
+#' map_proxy |> set_rain(remove = TRUE)
+#' }
+set_rain <- function(map, density = 0.5, intensity = 1.0, color = "#a8adbc", 
+                     opacity = 0.7, center_thinning = 0.57, direction = c(0, 80), 
+                     droplet_size = c(2.6, 18.2), distortion_strength = 0.7, 
+                     vignette = 1.0, vignette_color = "#464646",
+                     remove = FALSE) {
+  
+  # If remove is TRUE, set rain to NULL to remove the effect
+  if (remove) {
+    map$x$rain <- NULL
+    return(map)
+  }
+  
+  rain <- list(
+    density = density,
+    intensity = intensity,
+    color = color,
+    opacity = opacity,
+    "center-thinning" = center_thinning,
+    direction = direction,
+    "droplet-size" = droplet_size,
+    "distortion-strength" = distortion_strength,
+    vignette = vignette,
+    "vignette-color" = vignette_color
+  )
+  
+  map$x$rain <- rain
+  
+  map
+}
+
+#' Set snow effect on a Mapbox GL map
+#'
+#' @param map A map object created by the `mapboxgl` function or a proxy object.
+#' @param density A number between 0 and 1 controlling the snow particles density. Default is 0.85.
+#' @param intensity A number between 0 and 1 controlling the snow particles movement speed. Default is 1.0.
+#' @param color A string specifying the color of the snow particles. Default is "#ffffff".
+#' @param opacity A number between 0 and 1 controlling the snow particles opacity. Default is 1.0.
+#' @param center_thinning A number between 0 and 1 controlling the thinning factor of snow particles from center. Default is 0.4.
+#' @param direction A numeric vector of length 2 defining the azimuth and polar angles of the snow direction. Default is c(0, 50).
+#' @param flake_size A number between 0 and 5 controlling the snow flake particle size. Default is 0.71.
+#' @param vignette A number between 0 and 1 controlling the snow vignette screen-space effect. Default is 0.3.
+#' @param vignette_color A string specifying the snow vignette screen-space corners tint color. Default is "#ffffff".
+#' @param remove A logical value indicating whether to remove the snow effect. Default is FALSE.
+#'
+#' @return The updated map object.
+#' @export
+#' 
+#' @examples
+#' \dontrun{
+#' # Add snow effect with default values
+#' mapboxgl(...) |> set_snow()
+#' 
+#' # Add snow effect with custom values
+#' mapboxgl(
+#'   style = mapbox_style("standard"),
+#'   center = c(24.951528, 60.169573),
+#'   zoom = 16.8,
+#'   pitch = 74,
+#'   bearing = 12.8
+#' ) |>
+#'   set_snow(
+#'     density = 0.85,
+#'     flake_size = 0.71,
+#'     color = "#ffffff"
+#'   )
+#'   
+#' # Remove snow effect (useful in Shiny)
+#' map_proxy |> set_snow(remove = TRUE)
+#' }
+set_snow <- function(map, density = 0.85, intensity = 1.0, color = "#ffffff", 
+                     opacity = 1.0, center_thinning = 0.4, direction = c(0, 50), 
+                     flake_size = 0.71, vignette = 0.3, vignette_color = "#ffffff",
+                     remove = FALSE) {
+  
+  # If remove is TRUE, set snow to NULL to remove the effect
+  if (remove) {
+    map$x$snow <- NULL
+    return(map)
+  }
+  
+  snow <- list(
+    density = density,
+    intensity = intensity,
+    color = color,
+    opacity = opacity,
+    "center-thinning" = center_thinning,
+    direction = direction,
+    "flake-size" = flake_size,
+    vignette = vignette,
+    "vignette-color" = vignette_color
+  )
+  
+  map$x$snow <- snow
+  
+  map
+}

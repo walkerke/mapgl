@@ -18,7 +18,6 @@ navbar:
     - reference
     - articles
     - news
-    right: github
   components:
     home:
       icon: fa-home fa-lg
@@ -36,8 +35,147 @@ navbar:
       - text: Fundamentals of map design with mapgl
         href: articles/map-design.html
       - text: Using mapgl with Shiny
-        href: articles/margins-of-error.html
+        href: articles/shiny.html
+      - text: Building story maps with mapgl
+        href: articles/story-maps.html
 
-    github:
-      icon: fa-github fa-lg
-      href: https://github.com/walkerke/mapgl
+reference:
+- title: "Creating Maps"
+  desc: "Functions to initialize Mapbox GL and MapLibre GL maps"
+  contents:
+  - mapboxgl
+  - maplibre
+  - mapboxgl_view
+  - maplibre_view
+
+- title: "Adding Layers"
+  desc: "Functions to add various types of visualization layers to your map"
+  contents:
+  - add_layer
+  - add_fill_layer
+  - add_line_layer
+  - add_circle_layer
+  - add_heatmap_layer
+  - add_fill_extrusion_layer
+  - add_raster_layer
+  - add_symbol_layer
+
+- title: "Data Sources"
+  desc: "Functions to add different types of data sources"
+  contents:
+  - add_source
+  - add_vector_source
+  - add_raster_source
+  - add_raster_dem_source
+  - add_image_source
+  - add_video_source
+  - add_h3j_source
+
+- title: "Map Controls"
+  desc: "Functions to add interactive controls to your map"
+  contents:
+  - add_navigation_control
+  - add_fullscreen_control
+  - add_scale_control
+  - add_layers_control
+  - add_draw_control
+  - add_geocoder_control
+  - add_reset_control
+  - add_geolocate_control
+  - add_globe_control
+  - add_control
+  - clear_controls
+
+- title: "Legends"
+  desc: "Functions for adding and managing map legends"
+  contents:
+  - add_legend
+  - add_categorical_legend
+  - add_continuous_legend
+  - clear_legend
+
+- title: "Markers"
+  desc: "Functions for adding and managing markers"
+  contents:
+  - add_markers
+  - clear_markers
+
+- title: "Styling Helpers"
+  desc: "Functions to help with map styling and expressions"
+  contents:
+  - mapbox_style
+  - maptiler_style
+  - carto_style
+  - interpolate
+  - match_expr
+  - step_expr
+  - get_column
+  - concat
+  - number_format
+  - cluster_options
+
+- title: "Camera and View"
+  desc: "Functions to control map camera and viewport"
+  contents:
+  - fit_bounds
+  - fly_to
+  - ease_to
+  - jump_to
+  - set_view
+
+- title: "Map Configuration"
+  desc: "Functions to configure map appearance and behavior"
+  contents:
+  - set_style
+  - set_projection
+  - set_terrain
+  - set_fog
+  - set_rain
+  - set_snow
+  - set_config_property
+
+- title: "Layer Management"
+  desc: "Functions to modify and manage existing layers"
+  contents:
+  - set_filter
+  - set_paint_property
+  - set_layout_property
+  - set_tooltip
+  - set_popup
+  - set_source
+  - clear_layer
+  - move_layer
+
+- title: "Shiny Integration"
+  desc: "Functions for using mapgl in Shiny applications"
+  contents:
+  - mapboxglOutput
+  - maplibreOutput
+  - renderMapboxgl
+  - renderMaplibre
+  - mapboxgl_proxy
+  - maplibre_proxy
+  - mapboxglCompareOutput
+  - maplibreCompareOutput
+  - renderMapboxglCompare
+  - renderMaplibreCompare
+  - mapboxgl_compare_proxy
+  - maplibre_compare_proxy
+
+- title: "Advanced Features"
+  desc: "Functions for advanced mapping features"
+  contents:
+  - compare
+  - add_globe_minimap
+  - add_image
+  - get_drawn_features
+  - add_features_to_draw
+
+- title: "Story Maps"
+  desc: "Functions for creating scrollytelling story maps"
+  contents:
+  - story_map
+  - story_maplibre
+  - story_leaflet
+  - story_section
+  - on_section

@@ -32,7 +32,7 @@ mapboxgl(
 
 \item{projection}{The map projection to use (e.g., "mercator", "globe").}
 
-\item{parallels}{A vector of two numbers representing the standard parellels of the projection.  Only available when the projection is "albers" or "lambertConformalConic".}
+\item{parallels}{A vector of two numbers representing the standard parallels of the projection.  Only available when the projection is "albers" or "lambertConformalConic".}
 
 \item{access_token}{Your Mapbox access token.}
 

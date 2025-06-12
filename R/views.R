@@ -17,11 +17,26 @@ fit_bounds <- function(map, bbox, animate = FALSE, ...) {
   }
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "fit_bounds", bounds = bbox, options = options)
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "fit_bounds", 
+          bounds = bbox, 
+          options = options,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "fit_bounds", bounds = bbox, options = options)
+      ))
+    }
   } else {
     map$x$fitBounds <- list(bounds = bbox, options = options)
   }
@@ -46,11 +61,25 @@ fly_to <- function(map, center, zoom = NULL, ...) {
   if (!is.null(zoom)) options$zoom <- zoom
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "fly_to", options = options)
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "fly_to", 
+          options = options,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "fly_to", options = options)
+      ))
+    }
   } else {
     map$x$flyTo <- options
   }
@@ -74,11 +103,25 @@ ease_to <- function(map, center, zoom = NULL, ...) {
   if (!is.null(zoom)) options$zoom <- zoom
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "ease_to", options = options)
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "ease_to", 
+          options = options,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "ease_to", options = options)
+      ))
+    }
   } else {
     map$x$easeTo <- options
   }
@@ -95,15 +138,37 @@ ease_to <- function(map, center, zoom = NULL, ...) {
 #' @export
 set_view <- function(map, center, zoom) {
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "set_center", center = center)
-    ))
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "set_zoom", zoom = zoom)
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "set_center", 
+          center = center,
+          map = map$map_side
+        )
+      ))
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "set_zoom", 
+          zoom = zoom,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "set_center", center = center)
+      ))
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "set_zoom", zoom = zoom)
+      ))
+    }
   } else {
     map$x$setCenter <- center
     map$x$setZoom <- zoom
@@ -128,11 +193,25 @@ jump_to <- function(map, center, zoom = NULL, ...) {
   if (!is.null(zoom)) options$zoom <- zoom
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
-    map$session$sendCustomMessage(proxy_class, list(
-      id = map$id,
-      message = list(type = "jump_to", options = options)
-    ))
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(
+          type = "jump_to", 
+          options = options,
+          map = map$map_side
+        )
+      ))
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
+      map$session$sendCustomMessage(proxy_class, list(
+        id = map$id,
+        message = list(type = "jump_to", options = options)
+      ))
+    }
   } else {
     map$x$jumpTo <- options
   }
