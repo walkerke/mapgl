@@ -6,6 +6,7 @@
 \usage{
 mapboxgl_view(
   data,
+  color = "navy",
   column = NULL,
   n = NULL,
   palette = viridisLite::viridis,
@@ -15,6 +16,8 @@ mapboxgl_view(
 }
 \arguments{
 \item{data}{An sf object to visualize}
+
+\item{color}{The color used to visualize points, lines, or polygons if \code{column} is NULL.  Defaults to \code{"navy"}.}
 
 \item{column}{The name of the column to visualize. If NULL (default), geometries are shown with default styling.}
 
