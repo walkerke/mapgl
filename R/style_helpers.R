@@ -244,7 +244,7 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
         openstreetmap = character(0),
         outdoor = c("dark"),
         satellite = character(0),
-        streets = c("dark", "pastel"),
+        streets = c("dark", "light", "pastel"),
         toner = c("light"),
         topo = c("dark", "pastel"),
         winter = c("dark")
@@ -277,7 +277,7 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
         if (!variant %in% c("dark", "light", "pastel")) {
             stop("Invalid variant. Please choose from: dark, light, or pastel.")
         }
-        
+
         supported_variants <- variant_support[[style_name]]
         if (!variant %in% supported_variants) {
             if (length(supported_variants) == 0) {
@@ -286,7 +286,7 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
                 stop(paste0("Style '", style_name, "' does not support the '", variant, "' variant. Available variants: ", paste(supported_variants, collapse = ", ")))
             }
         }
-        
+
         # Modify URL to include variant
         style_url <- gsub("/style\\.json$", paste0("-", variant, "/style.json"), style_url)
     }
@@ -357,7 +357,7 @@ concat <- function(...) {
 #'
 #' @param column The name of the column containing the numeric value to format.
 #'   Can also be an expression that evaluates to a number.
-#' @param locale A string specifying the locale to use for formatting (e.g., "en-US", 
+#' @param locale A string specifying the locale to use for formatting (e.g., "en-US",
 #'   "de-DE", "fr-FR"). Defaults to "en-US".
 #' @param style The formatting style to use. Options include:
 #'   - "decimal" (default): Plain number formatting
@@ -384,19 +384,19 @@ concat <- function(...) {
 #' @examples
 #' # Basic number formatting with thousands separators
 #' number_format("population")
-#' 
+#'
 #' # Currency formatting
 #' number_format("income", style = "currency", currency = "USD")
-#' 
+#'
 #' # Percentage with 1 decimal place
 #' number_format("rate", style = "percent", maximum_fraction_digits = 1)
-#' 
+#'
 #' # Compact notation for large numbers
 #' number_format("population", notation = "compact")
-#' 
+#'
 #' # Using within a tooltip
 #' concat("Population: ", number_format("population", notation = "compact"))
-#' 
+#'
 #' # Using with get_column()
 #' number_format(get_column("value"), style = "currency", currency = "EUR")
 number_format <- function(column,
@@ -410,32 +410,32 @@ number_format <- function(column,
                           use_grouping = NULL,
                           notation = NULL,
                           compact_display = NULL) {
-    
+
     # Handle column input - can be a string or an expression
     if (is.character(column) && length(column) == 1) {
         column_expr <- get_column(column)
     } else {
         column_expr <- column
     }
-    
+
     # Build options list
     options <- list(locale = locale)
-    
+
     # Add style options
     if (!is.null(style)) options$style <- style
     if (!is.null(currency)) options$currency <- currency
     if (!is.null(unit)) options$unit <- unit
-    
+
     # Add digit options (using hyphenated names for JS compatibility)
     if (!is.null(minimum_fraction_digits)) options$`min-fraction-digits` <- minimum_fraction_digits
     if (!is.null(maximum_fraction_digits)) options$`max-fraction-digits` <- maximum_fraction_digits
     if (!is.null(minimum_integer_digits)) options$`min-integer-digits` <- minimum_integer_digits
-    
+
     # Add other options
     if (!is.null(use_grouping)) options$useGrouping <- use_grouping
     if (!is.null(notation)) options$notation <- notation
     if (!is.null(compact_display)) options$compactDisplay <- compact_display
-    
+
     # Return the expression
     list("number-format", column_expr, options)
 }
