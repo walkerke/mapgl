@@ -4,15 +4,17 @@
 \alias{maptiler_style}
 \title{Get MapTiler Style URL}
 \usage{
-maptiler_style(style_name, api_key = NULL)
+maptiler_style(style_name, variant = NULL, api_key = NULL)
 }
 \arguments{
 \item{style_name}{The name of the style (e.g., "basic", "streets", "toner", etc.).}
 
+\item{variant}{The color variant of the style. Options are "dark", "light", or "pastel". Default is NULL (standard variant). Not all styles support all variants.}
+
 \item{api_key}{Your MapTiler API key (required)}
 }
 \value{
-The style URL corresponding to the given style name.
+The style URL corresponding to the given style name and variant.
 }
 \description{
 Get MapTiler Style URL

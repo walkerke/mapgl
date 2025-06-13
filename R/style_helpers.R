@@ -220,10 +220,11 @@ mapbox_style <- function(style_name) {
 #' Get MapTiler Style URL
 #'
 #' @param style_name The name of the style (e.g., "basic", "streets", "toner", etc.).
+#' @param variant The color variant of the style. Options are "dark", "light", or "pastel". Default is NULL (standard variant). Not all styles support all variants.
 #' @param api_key Your MapTiler API key (required)
-#' @return The style URL corresponding to the given style name.
+#' @return The style URL corresponding to the given style name and variant.
 #' @export
-maptiler_style <- function(style_name, api_key = NULL) {
+maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
     if (is.null(api_key)) {
         if (Sys.getenv("MAPTILER_API_KEY") == "") {
             rlang::abort("A MapTiler API key is required. Get one at https://www.maptiler.com, then supply it here or set it in your .Renviron file with 'MAPTILER_API_KEY'='YOUR_KEY_HERE'.")
@@ -231,6 +232,23 @@ maptiler_style <- function(style_name, api_key = NULL) {
             api_key <- Sys.getenv("MAPTILER_API_KEY")
         }
     }
+
+    # Define which variants are available for each style
+    variant_support <- list(
+        backdrop = c("dark", "light"),
+        basic = c("dark", "light"),
+        bright = c("dark", "pastel"),
+        dataviz = c("dark", "light"),
+        landscape = character(0),
+        ocean = character(0),
+        openstreetmap = character(0),
+        outdoor = c("dark"),
+        satellite = character(0),
+        streets = c("dark", "pastel"),
+        toner = c("light"),
+        topo = c("dark", "pastel"),
+        winter = c("dark")
+    )
 
     styles <- list(
         backdrop = "https://api.maptiler.com/maps/backdrop/style.json",
@@ -252,6 +270,25 @@ maptiler_style <- function(style_name, api_key = NULL) {
 
     if (is.null(style_url)) {
         stop("Invalid style name. Please choose from: backdrop, basic, bright, dataviz, landscape, ocean, openstreetmap, outdoor, satellite, streets, toner, topo, and winter.")
+    }
+
+    # Check if variant is requested and supported
+    if (!is.null(variant)) {
+        if (!variant %in% c("dark", "light", "pastel")) {
+            stop("Invalid variant. Please choose from: dark, light, or pastel.")
+        }
+        
+        supported_variants <- variant_support[[style_name]]
+        if (!variant %in% supported_variants) {
+            if (length(supported_variants) == 0) {
+                stop(paste0("Style '", style_name, "' does not support any color variants."))
+            } else {
+                stop(paste0("Style '", style_name, "' does not support the '", variant, "' variant. Available variants: ", paste(supported_variants, collapse = ", ")))
+            }
+        }
+        
+        # Modify URL to include variant
+        style_url <- gsub("/style\\.json$", paste0("-", variant, "/style.json"), style_url)
     }
 
     style_url_with_key <- paste0(style_url, "?key=", api_key)
