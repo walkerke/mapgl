@@ -554,11 +554,11 @@ trim_hex_colors <- function(colors) {
     )
 }
 
-#' Create a step expression with equal interval classification
+#' Step expressions with automatic classification
 #'
-#' This function creates a step expression using equal interval breaks, similar to
-#' choropleth mapping in GIS software. It automatically calculates break points
-#' by dividing the data range into equal intervals.
+#' These functions create step expressions using different classification methods,
+#' similar to choropleth mapping in GIS software. They automatically calculate
+#' break points and generate appropriate step expressions for styling map layers.
 #'
 #' @param column The name of the column to use for the step expression.
 #' @param data_values A numeric vector of the actual data values used to calculate breaks.
@@ -567,21 +567,51 @@ trim_hex_colors <- function(colors) {
 #' @param na_color The color to use for missing values. Defaults to "grey".
 #'
 #' @return A list of class "mapgl_classification" containing the step expression and metadata.
-#' @export
+#'
+#' @details
+#' \describe{
+#'   \item{step_equal_interval()}{Creates equal interval breaks by dividing the data range into equal parts}
+#'   \item{step_quantile()}{Creates quantile breaks ensuring approximately equal numbers of observations in each class}
+#'   \item{step_jenks()}{Creates Jenks natural breaks using Fisher-Jenks optimization to minimize within-class variance}
+#' }
 #'
 #' @examples
 #' \dontrun{
-#' # Create equal interval classification
-#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
-#' classification <- step_equal_interval("value", data_values, n = 4)
+#' # Texas county income data
+#' library(tidycensus)
+#' tx <- get_acs(geography = "county", variables = "B19013_001", 
+#'               state = "TX", geometry = TRUE)
+#'
+#' # Equal interval classification
+#' eq_class <- step_equal_interval("estimate", tx$estimate, n = 5)
 #' 
-#' # Use in a layer
-#' add_circle_layer(map, circle_color = classification$expression)
+#' # Quantile classification  
+#' qt_class <- step_quantile("estimate", tx$estimate, n = 5)
 #' 
-#' # Extract legend information
-#' labels <- classification$labels
-#' colors <- classification$colors
+#' # Jenks natural breaks
+#' jk_class <- step_jenks("estimate", tx$estimate, n = 5)
+#' 
+#' # Use in a map with formatted legend
+#' maplibre() |>
+#'   add_fill_layer(source = tx, fill_color = eq_class$expression) |>
+#'   add_legend(
+#'     legend_title = "Median Income",
+#'     values = get_legend_labels(eq_class, format = "currency"),
+#'     colors = get_legend_colors(eq_class),
+#'     type = "categorical"
+#'   )
+#'   
+#' # Compare different methods
+#' print(eq_class, format = "currency")
+#' print(qt_class, format = "compact", prefix = "$")
 #' }
+#'
+#' @seealso [interpolate_palette()] for continuous color scales
+#' @name step_classification
+NULL
+
+#' @rdname step_classification
+#' @export
 step_equal_interval <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
     if (!is.numeric(data_values)) {
         rlang::abort("data_values must be numeric")
@@ -661,34 +691,8 @@ step_equal_interval <- function(column, data_values, n = 5, colors = NULL, na_co
     result
 }
 
-#' Create a step expression with quantile classification
-#'
-#' This function creates a step expression using quantile breaks, ensuring
-#' approximately equal numbers of observations in each class. This is similar
-#' to quantile-based choropleth mapping in GIS software.
-#'
-#' @param column The name of the column to use for the step expression.
-#' @param data_values A numeric vector of the actual data values used to calculate breaks.
-#' @param n The number of classes/quantiles to create. Defaults to 5.
-#' @param colors A vector of colors to use. If NULL, uses viridisLite::viridis(n).
-#' @param na_color The color to use for missing values. Defaults to "grey".
-#'
-#' @return A list of class "mapgl_classification" containing the step expression and metadata.
+#' @rdname step_classification
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create quantile classification
-#' data_values <- c(10, 15, 20, 25, 30, 35, 40, 45, 50, 100)
-#' classification <- step_quantile("value", data_values, n = 4)
-#' 
-#' # Use in a layer
-#' add_fill_layer(map, fill_color = classification$expression)
-#' 
-#' # Extract legend information
-#' labels <- classification$labels
-#' colors <- classification$colors
-#' }
 step_quantile <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
     if (!is.numeric(data_values)) {
         rlang::abort("data_values must be numeric")
@@ -773,35 +777,8 @@ step_quantile <- function(column, data_values, n = 5, colors = NULL, na_color = 
     result
 }
 
-#' Create a step expression with Jenks natural breaks classification
-#'
-#' This function creates a step expression using Jenks natural breaks (also known as
-#' Fisher-Jenks optimal classification). This method minimizes within-class variance
-#' while maximizing between-class variance, similar to the natural breaks option
-#' in GIS software like ArcGIS.
-#'
-#' @param column The name of the column to use for the step expression.
-#' @param data_values A numeric vector of the actual data values used to calculate breaks.
-#' @param n The number of classes to create. Defaults to 5.
-#' @param colors A vector of colors to use. If NULL, uses viridisLite::viridis(n).
-#' @param na_color The color to use for missing values. Defaults to "grey".
-#'
-#' @return A list of class "mapgl_classification" containing the step expression and metadata.
+#' @rdname step_classification
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create Jenks natural breaks classification
-#' data_values <- c(2, 5, 8, 12, 20, 25, 40, 60, 80, 100)
-#' classification <- step_jenks("value", data_values, n = 4)
-#' 
-#' # Use in a layer
-#' add_circle_layer(map, circle_color = classification$expression)
-#' 
-#' # Extract legend information
-#' labels <- classification$labels
-#' colors <- classification$colors
-#' }
 step_jenks <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
     if (!is.numeric(data_values)) {
         rlang::abort("data_values must be numeric")
@@ -886,15 +863,14 @@ step_jenks <- function(column, data_values, n = 5, colors = NULL, na_color = "gr
     result
 }
 
-#' Extract legend labels from a classification or continuous scale object
+#' Extract information from classification and continuous scale objects
 #'
-#' This function extracts legend labels from a mapgl_classification object
-#' created by step_equal_interval(), step_quantile(), or step_jenks(), or from
-#' a mapgl_continuous_scale object created by interpolate_palette(). It supports
-#' optional number formatting to customize how the values are displayed.
+#' These functions extract different components from mapgl_classification objects
+#' (created by step_equal_interval(), step_quantile(), step_jenks()) and 
+#' mapgl_continuous_scale objects (created by interpolate_palette()).
 #'
 #' @param scale A mapgl_classification or mapgl_continuous_scale object.
-#' @param format A character string specifying the format type. Options include:
+#' @param format A character string specifying the format type for labels. Options include:
 #'   - "none" (default): No special formatting
 #'   - "currency": Format as currency (e.g., "$1,234")
 #'   - "percent": Format as percentage (e.g., "12.3%")
@@ -904,26 +880,39 @@ step_jenks <- function(column, data_values, n = 5, colors = NULL, na_color = "gr
 #' @param digits The number of decimal places to display. Defaults to 2.
 #' @param big_mark The character to use as thousands separator. Defaults to ",".
 #' @param suffix An optional suffix to add to all values (e.g., "km", "mph").
-#' @param prefix An optional prefix to add to all values (useful for custom formatting).
+#' @param prefix An optional prefix to add to all values (useful for compact currency like "$1.2K").
 #'
-#' @return A character vector of formatted legend labels.
-#' @export
+#' @return 
+#' \describe{
+#'   \item{get_legend_labels()}{A character vector of formatted legend labels}
+#'   \item{get_legend_colors()}{A character vector of colors}
+#'   \item{get_breaks()}{A numeric vector of break values}
+#' }
 #'
 #' @examples
 #' \dontrun{
-#' data_values <- c(10000, 25000, 30000, 45000, 60000, 75000, 90000)
+#' # Texas county income data
+#' library(tidycensus)
+#' tx <- get_acs(geography = "county", variables = "B19013_001", 
+#'               state = "TX", geometry = TRUE)
 #' 
 #' # Classification examples
-#' classification <- step_equal_interval("value", data_values, n = 4)
-#' labels <- get_legend_labels(classification, format = "currency")
+#' eq_class <- step_equal_interval("estimate", tx$estimate, n = 4)
+#' labels <- get_legend_labels(eq_class, format = "currency")
+#' colors <- get_legend_colors(eq_class)
+#' breaks <- get_breaks(eq_class)
 #' 
 #' # Continuous scale examples  
-#' scale <- interpolate_palette("value", data_values, method = "quantile", n = 5)
-#' labels <- get_legend_labels(scale, format = "compact")
-#' 
-#' # Custom formatting with suffix
-#' labels <- get_legend_labels(scale, suffix = " km")
+#' scale <- interpolate_palette("estimate", tx$estimate, method = "quantile", n = 5)
+#' labels <- get_legend_labels(scale, format = "compact", prefix = "$")
+#' colors <- get_legend_colors(scale)
 #' }
+#'
+#' @name classification_helpers
+NULL
+
+#' @rdname classification_helpers
+#' @export
 get_legend_labels <- function(scale, 
                               format = "none",
                               currency_symbol = "$",
@@ -1020,26 +1009,8 @@ format_numbers <- function(x, format, currency_symbol, digits, big_mark, suffix,
     paste0(prefix, formatted, suffix)
 }
 
-#' Extract legend colors from a classification or continuous scale object
-#'
-#' This function extracts legend colors from a mapgl_classification object
-#' created by step_equal_interval(), step_quantile(), or step_jenks(), or from
-#' a mapgl_continuous_scale object created by interpolate_palette().
-#'
-#' @param scale A mapgl_classification or mapgl_continuous_scale object.
-#'
-#' @return A character vector of colors.
+#' @rdname classification_helpers
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
-#' classification <- step_equal_interval("value", data_values, n = 4)
-#' colors <- get_legend_colors(classification)
-#' 
-#' scale <- interpolate_palette("value", data_values, method = "jenks", n = 5)
-#' colors <- get_legend_colors(scale)
-#' }
 get_legend_colors <- function(scale) {
     if (inherits(scale, "mapgl_classification") || inherits(scale, "mapgl_continuous_scale")) {
         return(scale$colors)
@@ -1048,26 +1019,8 @@ get_legend_colors <- function(scale) {
     }
 }
 
-#' Extract breaks from a classification or continuous scale object
-#'
-#' This function extracts the break values from a mapgl_classification object
-#' created by step_equal_interval(), step_quantile(), or step_jenks(), or from
-#' a mapgl_continuous_scale object created by interpolate_palette().
-#'
-#' @param scale A mapgl_classification or mapgl_continuous_scale object.
-#'
-#' @return A numeric vector of break values.
+#' @rdname classification_helpers
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
-#' classification <- step_jenks("value", data_values, n = 4)
-#' breaks <- get_breaks(classification)
-#' 
-#' scale <- interpolate_palette("value", data_values, method = "equal", n = 6)
-#' breaks <- get_breaks(scale)
-#' }
 get_breaks <- function(scale) {
     if (inherits(scale, "mapgl_classification") || inherits(scale, "mapgl_continuous_scale")) {
         return(scale$breaks)
@@ -1076,13 +1029,7 @@ get_breaks <- function(scale) {
     }
 }
 
-#' Print method for mapgl_classification objects
-#'
-#' @param x A mapgl_classification object.
-#' @param format Optional formatting for display. See get_legend_labels() for options.
-#' @param ... Additional arguments passed to get_legend_labels() for formatting.
-#'
-#' @return Invisibly returns the input object.
+#' @rdname classification_helpers
 #' @export
 print.mapgl_classification <- function(x, format = "none", ...) {
     cat("mapgl classification (", x$method, ")\n", sep = "")
@@ -1104,13 +1051,7 @@ print.mapgl_classification <- function(x, format = "none", ...) {
     invisible(x)
 }
 
-#' Print method for mapgl_continuous_scale objects
-#'
-#' @param x A mapgl_continuous_scale object.
-#' @param format Optional formatting for display. See get_legend_labels() for options.
-#' @param ... Additional arguments passed to get_legend_labels() for formatting.
-#'
-#' @return Invisibly returns the input object.
+#' @rdname classification_helpers
 #' @export
 print.mapgl_continuous_scale <- function(x, format = "none", ...) {
     cat("mapgl continuous scale (", x$method, ")\n", sep = "")
