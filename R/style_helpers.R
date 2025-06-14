@@ -298,6 +298,110 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
     return(style_url_with_key)
 }
 
+#' Create an interpolation expression with automatic palette and break calculation
+#'
+#' This function creates an interpolation expression by automatically calculating
+#' break points using different methods and applying a color palette. It handles
+#' the values/stops matching automatically and supports the same classification
+#' methods as the step functions.
+#'
+#' @param column The name of the column to use for the interpolation.
+#' @param data_values A numeric vector of the actual data values used to calculate breaks.
+#' @param method The method for calculating breaks. Options are "equal" (equal intervals),
+#'   "quantile" (quantile breaks), or "jenks" (Jenks natural breaks). Defaults to "equal".
+#' @param n The number of break points to create. Defaults to 5.
+#' @param palette A function that takes n and returns a character vector of colors.
+#'   Defaults to viridisLite::viridis.
+#' @param na_color The color to use for missing values. Defaults to "grey".
+#'
+#' @return A list of class "mapgl_continuous_scale" containing the interpolation expression and metadata.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create continuous color scale
+#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
+#' scale <- interpolate_palette("value", data_values, method = "equal", n = 5)
+#' 
+#' # Use in a layer
+#' add_fill_layer(map, fill_color = scale$expression)
+#' 
+#' # Extract legend information  
+#' labels <- get_legend_labels(scale, format = "currency")
+#' colors <- scale$colors
+#' }
+interpolate_palette <- function(column, data_values, method = "equal", n = 5, 
+                               palette = viridisLite::viridis, na_color = "grey") {
+    if (!is.numeric(data_values)) {
+        rlang::abort("data_values must be numeric")
+    }
+    
+    if (n < 2) {
+        rlang::abort("n must be at least 2")
+    }
+    
+    # Remove missing values for break calculation
+    clean_values <- data_values[!is.na(data_values)]
+    
+    if (length(clean_values) == 0) {
+        rlang::abort("No non-missing values found in data_values")
+    }
+    
+    # Calculate breaks based on method
+    if (method == "equal") {
+        min_val <- min(clean_values)
+        max_val <- max(clean_values)
+        if (min_val == max_val) {
+            rlang::warn("All values are identical, cannot create intervals")
+            breaks <- c(min_val, min_val)
+            n <- 2
+        } else {
+            breaks <- seq(min_val, max_val, length.out = n)
+        }
+    } else if (method == "quantile") {
+        breaks <- quantile(clean_values, probs = seq(0, 1, length.out = n), na.rm = TRUE)
+        breaks <- unique(breaks)  # Remove duplicates
+        n_actual <- length(breaks)
+        if (n_actual < n) {
+            rlang::warn(paste0("Only ", n_actual, " unique quantiles possible due to repeated values"))
+            n <- n_actual
+        }
+    } else if (method == "jenks") {
+        n_unique <- length(unique(clean_values))
+        if (n_unique < n) {
+            rlang::warn(paste0("Only ", n_unique, " unique values available, reducing breaks to ", n_unique))
+            n <- n_unique
+        }
+        
+        if (n == 1) {
+            breaks <- c(min(clean_values), max(clean_values))
+        } else {
+            class_intervals <- classInt::classIntervals(clean_values, n = n, style = "jenks")
+            breaks <- class_intervals$brks
+        }
+    } else {
+        rlang::abort("method must be one of 'equal', 'quantile', or 'jenks'")
+    }
+    
+    # Generate colors - this automatically matches the number of breaks
+    colors <- palette(length(breaks))
+    
+    # Create interpolate expression
+    expr <- interpolate(column = column, values = breaks, stops = colors, na_color = na_color)
+    
+    # Return continuous scale object
+    result <- list(
+        expression = expr,
+        breaks = breaks,
+        colors = colors,
+        method = paste0("interpolate_", method),
+        n_breaks = length(breaks)
+    )
+    
+    class(result) <- "mapgl_continuous_scale"
+    result
+}
+
 
 #' Get CARTO Style URL
 #'
@@ -448,6 +552,584 @@ trim_hex_colors <- function(colors) {
         substr(colors, 1, nchar(colors) - 2),
         colors
     )
+}
+
+#' Create a step expression with equal interval classification
+#'
+#' This function creates a step expression using equal interval breaks, similar to
+#' choropleth mapping in GIS software. It automatically calculates break points
+#' by dividing the data range into equal intervals.
+#'
+#' @param column The name of the column to use for the step expression.
+#' @param data_values A numeric vector of the actual data values used to calculate breaks.
+#' @param n The number of classes/intervals to create. Defaults to 5.
+#' @param colors A vector of colors to use. If NULL, uses viridisLite::viridis(n).
+#' @param na_color The color to use for missing values. Defaults to "grey".
+#'
+#' @return A list of class "mapgl_classification" containing the step expression and metadata.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create equal interval classification
+#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
+#' classification <- step_equal_interval("value", data_values, n = 4)
+#' 
+#' # Use in a layer
+#' add_circle_layer(map, circle_color = classification$expression)
+#' 
+#' # Extract legend information
+#' labels <- classification$labels
+#' colors <- classification$colors
+#' }
+step_equal_interval <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
+    if (!is.numeric(data_values)) {
+        rlang::abort("data_values must be numeric")
+    }
+    
+    if (n < 2) {
+        rlang::abort("n must be at least 2")
+    }
+    
+    # Remove missing values for break calculation
+    clean_values <- data_values[!is.na(data_values)]
+    
+    if (length(clean_values) == 0) {
+        rlang::abort("No non-missing values found in data_values")
+    }
+    
+    # Calculate equal interval breaks
+    min_val <- min(clean_values, na.rm = TRUE)
+    max_val <- max(clean_values, na.rm = TRUE)
+    
+    if (min_val == max_val) {
+        rlang::warn("All values are identical, cannot create intervals")
+        breaks <- c(min_val, min_val)
+        n <- 1
+    } else {
+        breaks <- seq(min_val, max_val, length.out = n + 1)
+    }
+    
+    # Generate colors if not provided
+    if (is.null(colors)) {
+        colors <- viridisLite::viridis(n)
+    } else if (length(colors) != n) {
+        rlang::abort(paste0("colors must have length ", n, " to match number of classes"))
+    }
+    
+    # Create step expression
+    if (n == 1) {
+        # Special case for single class
+        expr <- step_expr(column = column, base = colors[1], values = numeric(0), stops = character(0), na_color = na_color)
+        labels <- paste0(round(min_val, 2), " - ", round(max_val, 2))
+    } else {
+        # Normal case with multiple classes
+        threshold_values <- breaks[2:n]
+        stop_colors <- colors[2:n]
+        
+        expr <- step_expr(
+            column = column,
+            base = colors[1],
+            values = threshold_values,
+            stops = stop_colors,
+            na_color = na_color
+        )
+        
+        # Create legend labels
+        labels <- c(
+            paste0("< ", round(breaks[2], 2)),
+            if (n > 2) {
+                sapply(2:(n-1), function(i) {
+                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                })
+            },
+            if (n > 1) paste0(round(breaks[n], 2), "+")
+        )
+    }
+    
+    # Return classification object
+    result <- list(
+        expression = expr,
+        breaks = breaks,
+        colors = colors,
+        labels = labels,
+        method = "equal_interval",
+        n_classes = n
+    )
+    
+    class(result) <- "mapgl_classification"
+    result
+}
+
+#' Create a step expression with quantile classification
+#'
+#' This function creates a step expression using quantile breaks, ensuring
+#' approximately equal numbers of observations in each class. This is similar
+#' to quantile-based choropleth mapping in GIS software.
+#'
+#' @param column The name of the column to use for the step expression.
+#' @param data_values A numeric vector of the actual data values used to calculate breaks.
+#' @param n The number of classes/quantiles to create. Defaults to 5.
+#' @param colors A vector of colors to use. If NULL, uses viridisLite::viridis(n).
+#' @param na_color The color to use for missing values. Defaults to "grey".
+#'
+#' @return A list of class "mapgl_classification" containing the step expression and metadata.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create quantile classification
+#' data_values <- c(10, 15, 20, 25, 30, 35, 40, 45, 50, 100)
+#' classification <- step_quantile("value", data_values, n = 4)
+#' 
+#' # Use in a layer
+#' add_fill_layer(map, fill_color = classification$expression)
+#' 
+#' # Extract legend information
+#' labels <- classification$labels
+#' colors <- classification$colors
+#' }
+step_quantile <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
+    if (!is.numeric(data_values)) {
+        rlang::abort("data_values must be numeric")
+    }
+    
+    if (n < 2) {
+        rlang::abort("n must be at least 2")
+    }
+    
+    # Remove missing values for break calculation
+    clean_values <- data_values[!is.na(data_values)]
+    
+    if (length(clean_values) == 0) {
+        rlang::abort("No non-missing values found in data_values")
+    }
+    
+    # Calculate quantile breaks
+    breaks <- quantile(
+        clean_values,
+        probs = seq(0, 1, length.out = n + 1),
+        na.rm = TRUE
+    )
+    
+    # Remove duplicate breaks (can happen with repeated values)
+    breaks <- unique(breaks)
+    n_actual <- length(breaks) - 1
+    
+    if (n_actual < n) {
+        rlang::warn(paste0("Only ", n_actual, " unique quantiles possible due to repeated values"))
+        n <- n_actual
+    }
+    
+    # Generate colors if not provided
+    if (is.null(colors)) {
+        colors <- viridisLite::viridis(n)
+    } else if (length(colors) != n) {
+        colors <- colors[1:n]  # Truncate or recycle colors to match n
+        rlang::warn(paste0("Adjusting colors to match ", n, " classes"))
+    }
+    
+    # Create step expression
+    if (n == 1) {
+        # Special case for single class
+        expr <- step_expr(column = column, base = colors[1], values = numeric(0), stops = character(0), na_color = na_color)
+        labels <- paste0(round(breaks[1], 2), " - ", round(breaks[2], 2))
+    } else {
+        # Normal case with multiple classes
+        threshold_values <- breaks[2:n]
+        stop_colors <- colors[2:n]
+        
+        expr <- step_expr(
+            column = column,
+            base = colors[1],
+            values = threshold_values,
+            stops = stop_colors,
+            na_color = na_color
+        )
+        
+        # Create legend labels
+        labels <- c(
+            paste0("< ", round(breaks[2], 2)),
+            if (n > 2) {
+                sapply(2:(n-1), function(i) {
+                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                })
+            },
+            if (n > 1) paste0(round(breaks[n], 2), "+")
+        )
+    }
+    
+    # Return classification object
+    result <- list(
+        expression = expr,
+        breaks = breaks,
+        colors = colors,
+        labels = labels,
+        method = "quantile",
+        n_classes = n
+    )
+    
+    class(result) <- "mapgl_classification"
+    result
+}
+
+#' Create a step expression with Jenks natural breaks classification
+#'
+#' This function creates a step expression using Jenks natural breaks (also known as
+#' Fisher-Jenks optimal classification). This method minimizes within-class variance
+#' while maximizing between-class variance, similar to the natural breaks option
+#' in GIS software like ArcGIS.
+#'
+#' @param column The name of the column to use for the step expression.
+#' @param data_values A numeric vector of the actual data values used to calculate breaks.
+#' @param n The number of classes to create. Defaults to 5.
+#' @param colors A vector of colors to use. If NULL, uses viridisLite::viridis(n).
+#' @param na_color The color to use for missing values. Defaults to "grey".
+#'
+#' @return A list of class "mapgl_classification" containing the step expression and metadata.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create Jenks natural breaks classification
+#' data_values <- c(2, 5, 8, 12, 20, 25, 40, 60, 80, 100)
+#' classification <- step_jenks("value", data_values, n = 4)
+#' 
+#' # Use in a layer
+#' add_circle_layer(map, circle_color = classification$expression)
+#' 
+#' # Extract legend information
+#' labels <- classification$labels
+#' colors <- classification$colors
+#' }
+step_jenks <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
+    if (!is.numeric(data_values)) {
+        rlang::abort("data_values must be numeric")
+    }
+    
+    if (n < 2) {
+        rlang::abort("n must be at least 2")
+    }
+    
+    # Remove missing values for break calculation
+    clean_values <- data_values[!is.na(data_values)]
+    
+    if (length(clean_values) == 0) {
+        rlang::abort("No non-missing values found in data_values")
+    }
+    
+    # Check if we have enough unique values for the requested number of classes
+    n_unique <- length(unique(clean_values))
+    if (n_unique < n) {
+        rlang::warn(paste0("Only ", n_unique, " unique values available, reducing classes to ", n_unique))
+        n <- n_unique
+    }
+    
+    # Calculate Jenks natural breaks using classInt
+    if (n == 1) {
+        # Special case for single class
+        breaks <- c(min(clean_values), max(clean_values))
+    } else {
+        class_intervals <- classInt::classIntervals(clean_values, n = n, style = "jenks")
+        breaks <- class_intervals$brks
+    }
+    
+    # Generate colors if not provided
+    if (is.null(colors)) {
+        colors <- viridisLite::viridis(n)
+    } else if (length(colors) != n) {
+        colors <- colors[1:n]  # Truncate or recycle colors to match n
+        rlang::warn(paste0("Adjusting colors to match ", n, " classes"))
+    }
+    
+    # Create step expression
+    if (n == 1) {
+        # Special case for single class
+        expr <- step_expr(column = column, base = colors[1], values = numeric(0), stops = character(0), na_color = na_color)
+        labels <- paste0(round(breaks[1], 2), " - ", round(breaks[2], 2))
+    } else {
+        # Normal case with multiple classes
+        threshold_values <- breaks[2:n]
+        stop_colors <- colors[2:n]
+        
+        expr <- step_expr(
+            column = column,
+            base = colors[1],
+            values = threshold_values,
+            stops = stop_colors,
+            na_color = na_color
+        )
+        
+        # Create legend labels
+        labels <- c(
+            paste0("< ", round(breaks[2], 2)),
+            if (n > 2) {
+                sapply(2:(n-1), function(i) {
+                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                })
+            },
+            if (n > 1) paste0(round(breaks[n], 2), "+")
+        )
+    }
+    
+    # Return classification object
+    result <- list(
+        expression = expr,
+        breaks = breaks,
+        colors = colors,
+        labels = labels,
+        method = "jenks",
+        n_classes = n
+    )
+    
+    class(result) <- "mapgl_classification"
+    result
+}
+
+#' Extract legend labels from a classification or continuous scale object
+#'
+#' This function extracts legend labels from a mapgl_classification object
+#' created by step_equal_interval(), step_quantile(), or step_jenks(), or from
+#' a mapgl_continuous_scale object created by interpolate_palette(). It supports
+#' optional number formatting to customize how the values are displayed.
+#'
+#' @param scale A mapgl_classification or mapgl_continuous_scale object.
+#' @param format A character string specifying the format type. Options include:
+#'   - "none" (default): No special formatting
+#'   - "currency": Format as currency (e.g., "$1,234")
+#'   - "percent": Format as percentage (e.g., "12.3%")
+#'   - "scientific": Format in scientific notation (e.g., "1.2e+03")
+#'   - "compact": Format with abbreviated units (e.g., "1.2K", "3.4M")
+#' @param currency_symbol The currency symbol to use when format = "currency". Defaults to "$".
+#' @param digits The number of decimal places to display. Defaults to 2.
+#' @param big_mark The character to use as thousands separator. Defaults to ",".
+#' @param suffix An optional suffix to add to all values (e.g., "km", "mph").
+#' @param prefix An optional prefix to add to all values (useful for custom formatting).
+#'
+#' @return A character vector of formatted legend labels.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' data_values <- c(10000, 25000, 30000, 45000, 60000, 75000, 90000)
+#' 
+#' # Classification examples
+#' classification <- step_equal_interval("value", data_values, n = 4)
+#' labels <- get_legend_labels(classification, format = "currency")
+#' 
+#' # Continuous scale examples  
+#' scale <- interpolate_palette("value", data_values, method = "quantile", n = 5)
+#' labels <- get_legend_labels(scale, format = "compact")
+#' 
+#' # Custom formatting with suffix
+#' labels <- get_legend_labels(scale, suffix = " km")
+#' }
+get_legend_labels <- function(scale, 
+                              format = "none",
+                              currency_symbol = "$",
+                              digits = 2,
+                              big_mark = ",",
+                              suffix = "",
+                              prefix = "") {
+    if (inherits(scale, "mapgl_classification")) {
+        # Handle step/categorical classification
+        # If no formatting requested, return original labels
+        if (format == "none" && suffix == "" && prefix == "") {
+            return(scale$labels)
+        }
+        
+        # Get the breaks and format them
+        breaks <- scale$breaks
+        formatted_breaks <- format_numbers(breaks, format, currency_symbol, digits, big_mark, suffix, prefix)
+        
+        # Reconstruct labels with formatted numbers
+        n <- length(breaks) - 1
+        
+        if (n == 1) {
+            # Single class case
+            labels <- paste0(formatted_breaks[1], " - ", formatted_breaks[2])
+        } else {
+            # Multiple classes
+            labels <- c(
+                paste0("< ", formatted_breaks[2]),
+                if (n > 2) {
+                    sapply(2:(n-1), function(i) {
+                        paste0(formatted_breaks[i], " - ", formatted_breaks[i + 1])
+                    })
+                },
+                if (n > 1) paste0(formatted_breaks[n], "+")
+            )
+        }
+        
+        labels
+    } else if (inherits(scale, "mapgl_continuous_scale")) {
+        # Handle continuous/interpolation scale - return formatted break values
+        breaks <- scale$breaks
+        formatted_breaks <- format_numbers(breaks, format, currency_symbol, digits, big_mark, suffix, prefix)
+        
+        # For continuous scales, return the actual break values as labels
+        formatted_breaks
+    } else {
+        rlang::abort("scale must be a mapgl_classification or mapgl_continuous_scale object")
+    }
+}
+
+#' Format numbers for legend labels
+#'
+#' Internal helper function to format numeric values for display in legends.
+#'
+#' @param x Numeric vector to format.
+#' @param format Format type.
+#' @param currency_symbol Currency symbol for currency formatting.
+#' @param digits Number of decimal places.
+#' @param big_mark Thousands separator.
+#' @param suffix Suffix to append.
+#' @param prefix Prefix to prepend.
+#'
+#' @return Character vector of formatted numbers.
+#' @keywords internal
+format_numbers <- function(x, format, currency_symbol, digits, big_mark, suffix, prefix) {
+    if (format == "currency") {
+        # Currency formatting: $1,234.56
+        formatted <- paste0(currency_symbol, formatC(x, format = "f", digits = digits, big.mark = big_mark))
+    } else if (format == "percent") {
+        # Percentage formatting: 12.34%
+        formatted <- paste0(formatC(x * 100, format = "f", digits = digits, big.mark = big_mark), "%")
+    } else if (format == "scientific") {
+        # Scientific notation: 1.23e+04
+        formatted <- formatC(x, format = "e", digits = digits)
+    } else if (format == "compact") {
+        # Compact notation: 1.2K, 3.4M, etc.
+        formatted <- sapply(x, function(val) {
+            if (abs(val) >= 1e9) {
+                paste0(round(val / 1e9, digits), "B")
+            } else if (abs(val) >= 1e6) {
+                paste0(round(val / 1e6, digits), "M")
+            } else if (abs(val) >= 1e3) {
+                paste0(round(val / 1e3, digits), "K")
+            } else {
+                formatC(val, format = "f", digits = digits, big.mark = big_mark)
+            }
+        })
+    } else {
+        # Default formatting with thousands separator
+        formatted <- formatC(x, format = "f", digits = digits, big.mark = big_mark)
+    }
+    
+    # Add prefix and suffix
+    paste0(prefix, formatted, suffix)
+}
+
+#' Extract legend colors from a classification or continuous scale object
+#'
+#' This function extracts legend colors from a mapgl_classification object
+#' created by step_equal_interval(), step_quantile(), or step_jenks(), or from
+#' a mapgl_continuous_scale object created by interpolate_palette().
+#'
+#' @param scale A mapgl_classification or mapgl_continuous_scale object.
+#'
+#' @return A character vector of colors.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
+#' classification <- step_equal_interval("value", data_values, n = 4)
+#' colors <- get_legend_colors(classification)
+#' 
+#' scale <- interpolate_palette("value", data_values, method = "jenks", n = 5)
+#' colors <- get_legend_colors(scale)
+#' }
+get_legend_colors <- function(scale) {
+    if (inherits(scale, "mapgl_classification") || inherits(scale, "mapgl_continuous_scale")) {
+        return(scale$colors)
+    } else {
+        rlang::abort("scale must be a mapgl_classification or mapgl_continuous_scale object")
+    }
+}
+
+#' Extract breaks from a classification or continuous scale object
+#'
+#' This function extracts the break values from a mapgl_classification object
+#' created by step_equal_interval(), step_quantile(), or step_jenks(), or from
+#' a mapgl_continuous_scale object created by interpolate_palette().
+#'
+#' @param scale A mapgl_classification or mapgl_continuous_scale object.
+#'
+#' @return A numeric vector of break values.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
+#' classification <- step_jenks("value", data_values, n = 4)
+#' breaks <- get_breaks(classification)
+#' 
+#' scale <- interpolate_palette("value", data_values, method = "equal", n = 6)
+#' breaks <- get_breaks(scale)
+#' }
+get_breaks <- function(scale) {
+    if (inherits(scale, "mapgl_classification") || inherits(scale, "mapgl_continuous_scale")) {
+        return(scale$breaks)
+    } else {
+        rlang::abort("scale must be a mapgl_classification or mapgl_continuous_scale object")
+    }
+}
+
+#' Print method for mapgl_classification objects
+#'
+#' @param x A mapgl_classification object.
+#' @param format Optional formatting for display. See get_legend_labels() for options.
+#' @param ... Additional arguments passed to get_legend_labels() for formatting.
+#'
+#' @return Invisibly returns the input object.
+#' @export
+print.mapgl_classification <- function(x, format = "none", ...) {
+    cat("mapgl classification (", x$method, ")\n", sep = "")
+    cat("Classes:", x$n_classes, "\n")
+    cat("Breaks:", paste(round(x$breaks, 2), collapse = ", "), "\n")
+    cat("Colors:", length(x$colors), "colors\n")
+    
+    # Get formatted labels if requested
+    if (format != "none" || length(list(...)) > 0) {
+        labels <- get_legend_labels(x, format = format, ...)
+    } else {
+        labels <- x$labels
+    }
+    
+    cat("Labels:\n")
+    for (i in seq_along(labels)) {
+        cat("  ", i, ": ", labels[i], " (", x$colors[i], ")\n", sep = "")
+    }
+    invisible(x)
+}
+
+#' Print method for mapgl_continuous_scale objects
+#'
+#' @param x A mapgl_continuous_scale object.
+#' @param format Optional formatting for display. See get_legend_labels() for options.
+#' @param ... Additional arguments passed to get_legend_labels() for formatting.
+#'
+#' @return Invisibly returns the input object.
+#' @export
+print.mapgl_continuous_scale <- function(x, format = "none", ...) {
+    cat("mapgl continuous scale (", x$method, ")\n", sep = "")
+    cat("Break points:", x$n_breaks, "\n")
+    cat("Range:", round(min(x$breaks), 2), "to", round(max(x$breaks), 2), "\n")
+    cat("Colors:", length(x$colors), "colors\n")
+    
+    # Get formatted labels if requested
+    if (format != "none" || length(list(...)) > 0) {
+        labels <- get_legend_labels(x, format = format, ...)
+    } else {
+        labels <- round(x$breaks, 2)
+    }
+    
+    cat("Break values:\n")
+    for (i in seq_along(labels)) {
+        cat("  ", labels[i], " (", x$colors[i], ")\n", sep = "")
+    }
+    invisible(x)
 }
 
 #' Set Projection for a Mapbox/Maplibre Map
