@@ -1,8 +1,39 @@
-#' Create legend styling options
+#' Add legends to maps with customizable styling
 #'
-#' This function creates a styling specification for map legends, providing
-#' a user-friendly interface for customizing legend appearance without
-#' requiring CSS knowledge.
+#' These functions provide a comprehensive system for adding categorical and continuous 
+#' legends to Mapbox GL and MapLibre GL maps, with extensive styling customization options.
+#'
+#' @name map_legends
+#' @rdname map_legends
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` function.
+#' @param legend_title The title of the legend.
+#' @param values The values being represented on the map (either a vector of categories or a vector of stops).
+#' @param colors The corresponding colors for the values (either a vector of colors, a single color, or an interpolate function).
+#' @param type One of "continuous" or "categorical" (for `add_legend` only).
+#' @param circular_patches Logical, whether to use circular patches in the legend (only for categorical legends).
+#' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
+#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).
+#' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
+#' @param unique_id Optional. A unique identifier for the legend. If not provided, a random ID will be generated.
+#' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
+#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
+#' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
+#' @param margin_left Custom left margin in pixels. Default is NULL.
+#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
+#' @param margin_right Custom right margin in pixels. Default is NULL.
+#' @param style Optional styling options created by \code{legend_style()} or a list of style options.
+#' @param legend_ids Optional. A character vector of legend IDs to clear (for \code{clear_legend} only). If not provided, all legends will be cleared.
+#'
+#' @section Legend Styling:
+#' The \code{legend_style()} function creates user-friendly styling options:
+#' 
+#' \describe{
+#'   \item{Container styling}{\code{background_color}, \code{background_opacity}, \code{border_color}, \code{border_width}, \code{border_radius}, \code{padding}}
+#'   \item{Typography}{\code{font_family}, \code{title_font_family}, \code{font_weight}, \code{title_font_weight}, \code{text_color}, \code{title_color}, \code{text_size}, \code{title_size}}
+#'   \item{Element borders}{\code{element_border_color}, \code{element_border_width} (for patches/circles and color bars)}
+#'   \item{Shadows}{\code{shadow}, \code{shadow_color}, \code{shadow_size}}
+#' }
 #'
 #' @param background_color Background color for the legend container (e.g., "white", "#ffffff").
 #' @param background_opacity Opacity of the legend background (0-1, where 1 is fully opaque).
@@ -24,29 +55,99 @@
 #' @param shadow_size Size/blur radius of the drop shadow in pixels.
 #' @param padding Internal padding of the legend container in pixels.
 #'
-#' @return A list of class "mapgl_legend_style" containing the styling options.
+#' @return 
+#' \describe{
+#'   \item{add_legend, add_categorical_legend, add_continuous_legend}{The updated map object with the legend added.}
+#'   \item{legend_style}{A list of class "mapgl_legend_style" containing the styling options.}
+#'   \item{clear_legend}{The updated map object with the specified legend(s) cleared.}
+#' }
+#'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Create custom legend styling
-#' style <- legend_style(
-#'   background_color = "white",
-#'   background_opacity = 0.9,
-#'   text_color = "navy",
-#'   border_width = 2,
-#'   border_color = "gray",
+#' # Basic categorical legend
+#' add_legend(map, "Population", 
+#'           values = c("Low", "Medium", "High"),
+#'           colors = c("blue", "yellow", "red"),
+#'           type = "categorical")
+#' 
+#' # Continuous legend with custom styling using legend_style()
+#' add_legend(map, "Income", 
+#'           values = c(0, 50000, 100000),
+#'           colors = c("blue", "yellow", "red"),
+#'           type = "continuous",
+#'           style = legend_style(
+#'             background_color = "white",
+#'             background_opacity = 0.9,
+#'             border_width = 2,
+#'             border_color = "navy",
+#'             text_color = "darkblue",
+#'             font_family = "Times New Roman",
+#'             title_font_weight = "bold"
+#'           ))
+#'           
+#' # Legend with custom styling using a list
+#' add_legend(map, "Temperature", 
+#'           values = c(0, 50, 100),
+#'           colors = c("blue", "yellow", "red"),
+#'           type = "continuous",
+#'           style = list(
+#'             background_color = "#f0f0f0",
+#'             title_size = 16,
+#'             text_size = 12,
+#'             shadow = TRUE,
+#'             shadow_color = "rgba(0,0,0,0.1)",
+#'             shadow_size = 8
+#'           ))
+#' 
+#' # Dark legend with white element borders
+#' add_legend(map, "Elevation", 
+#'           values = c(0, 1000, 2000, 3000),
+#'           colors = c("#2c7bb6", "#abd9e9", "#fdae61", "#d7191c"),
+#'           type = "continuous",
+#'           style = legend_style(
+#'             background_color = "#2c3e50",
+#'             text_color = "white",
+#'             title_color = "white",
+#'             element_border_color = "white",
+#'             element_border_width = 1
+#'           ))
+#'           
+#' # Categorical legend with circular patches and styling
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "Population",
+#'     values = c("Low", "Medium", "High"),
+#'     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
+#'     circular_patches = TRUE,
+#'     sizes = c(10, 15, 20),
+#'     style = legend_style(
+#'       background_opacity = 0.95,
+#'       border_width = 1,
+#'       border_color = "gray",
+#'       title_color = "navy",
+#'       element_border_color = "black",
+#'       element_border_width = 1
+#'     )
+#' )
+#' 
+#' # Create reusable legend styling
+#' dark_style <- legend_style(
+#'   background_color = "#2c3e50",
+#'   text_color = "white",
+#'   title_color = "white",
 #'   font_family = "Arial",
 #'   title_font_weight = "bold",
-#'   element_border_color = "black",
+#'   element_border_color = "white",
 #'   element_border_width = 1,
 #'   shadow = TRUE,
 #'   shadow_color = "rgba(0,0,0,0.3)",
 #'   shadow_size = 6
 #' )
 #' 
-#' # Use with any legend function
-#' add_legend(map, ..., style = style)
+#' # Clear specific legends
+#' clear_legend(map_proxy, legend_ids = c("legend-1", "legend-2"))
 #' }
 legend_style <- function(
   background_color = NULL,
@@ -250,79 +351,8 @@ legend_style <- function(
   }
 }
 
-#' Add a legend to a Mapbox GL map
-#'
-#' @param map A map object created by the `mapboxgl` function.
-#' @param legend_title The title of the legend.
-#' @param values The values being represented on the map (either a vector of categories or a vector of stops).
-#' @param colors The corresponding colors for the values (either a vector of colors, a single color, or an interpolate function).
-#' @param type One of "continuous" or "categorical".
-#' @param circular_patches Logical, whether to use circular patches in the legend (only for categorical legends).
-#' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
-#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).
-#' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
-#' @param unique_id Optional. A unique identifier for the legend. If not provided, a random ID will be generated.
-#' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
-#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
-#' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
-#' @param margin_left Custom left margin in pixels. Default is NULL.
-#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
-#' @param margin_right Custom right margin in pixels. Default is NULL.
-#' @param style Optional styling options created by \code{legend_style()} or a list of style options.
-#'
-#' @return The updated map object with the legend added.
+#' @rdname map_legends
 #' @export
-#' 
-#' @examples
-#' \dontrun{
-#' # Basic legend
-#' add_legend(map, "Population", 
-#'           values = c("Low", "Medium", "High"),
-#'           colors = c("blue", "yellow", "red"),
-#'           type = "categorical")
-#' 
-#' # Legend with custom styling using legend_style()
-#' add_legend(map, "Income", 
-#'           values = c("Low", "Medium", "High"),
-#'           colors = c("blue", "yellow", "red"),
-#'           type = "categorical",
-#'           style = legend_style(
-#'             background_color = "white",
-#'             background_opacity = 0.9,
-#'             border_width = 2,
-#'             border_color = "navy",
-#'             text_color = "darkblue",
-#'             font_family = "Times New Roman",
-#'             title_font_weight = "bold"
-#'           ))
-#'           
-#' # Legend with custom styling using a list
-#' add_legend(map, "Temperature", 
-#'           values = c(0, 50, 100),
-#'           colors = c("blue", "yellow", "red"),
-#'           type = "continuous",
-#'           style = list(
-#'             background_color = "#f0f0f0",
-#'             title_size = 16,
-#'             text_size = 12,
-#'             shadow = TRUE,
-#'             shadow_color = "rgba(0,0,0,0.1)",
-#'             shadow_size = 8
-#'           ))
-#' 
-#' # Dark legend with white element borders
-#' add_legend(map, "Elevation", 
-#'           values = c(0, 1000, 2000, 3000),
-#'           colors = c("#2c7bb6", "#abd9e9", "#fdae61", "#d7191c"),
-#'           type = "continuous",
-#'           style = legend_style(
-#'             background_color = "#2c3e50",
-#'             text_color = "white",
-#'             title_color = "white",
-#'             element_border_color = "white",
-#'             element_border_width = 1
-#'           ))
-#' }
 add_legend <- function(
     map,
     legend_title,
@@ -386,60 +416,8 @@ add_legend <- function(
     }
 }
 
-#' Add a categorical legend to a Mapbox GL map
-#'
-#' This function adds a categorical legend to a Mapbox GL map. It supports
-#' customizable colors, sizes, and shapes for legend items.
-#'
-#' @param map A map object created by the `mapboxgl` function.
-#' @param legend_title The title of the legend.
-#' @param values A vector of categories or values to be displayed in the legend.
-#' @param colors The corresponding colors for the values. Can be a vector of colors or a single color.
-#' @param circular_patches Logical, whether to use circular patches in the legend. Default is FALSE.
-#' @param position The position of the legend on the map. One of "top-left", "bottom-left", "top-right", "bottom-right". Default is "top-left".
-#' @param unique_id A unique ID for the legend container. If NULL, a random ID will be generated.
-#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value. If provided as a vector, it should have the same length as `values`. If `circular_patches` is `FALSE` (for square patches), sizes represent the width and height of the patch in pixels.  If `circular_patches` is `TRUE`, sizes represent the radius of the circle.
-#' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
-#' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
-#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
-#' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
-#' @param margin_left Custom left margin in pixels. Default is NULL.
-#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
-#' @param margin_right Custom right margin in pixels. Default is NULL.
-#' @param style Optional styling options created by \code{legend_style()} or a list of style options.
-#'
-#' @return The updated map object with the legend added.
+#' @rdname map_legends
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' library(mapboxgl)
-#' map <- mapboxgl(
-#'     center = c(-96, 37.8),
-#'     zoom = 3
-#' )
-#' map %>% add_categorical_legend(
-#'     legend_title = "Population",
-#'     values = c("Low", "Medium", "High"),
-#'     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
-#'     circular_patches = TRUE,
-#'     sizes = c(10, 15, 20),
-#'     width = "300px"
-#' )
-#' 
-#' # With custom styling
-#' map %>% add_categorical_legend(
-#'     legend_title = "Population",
-#'     values = c("Low", "Medium", "High"),
-#'     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
-#'     style = legend_style(
-#'       background_opacity = 0.95,
-#'       border_width = 1,
-#'       border_color = "gray",
-#'       title_color = "navy"
-#'     )
-#' )
-#' }
 add_categorical_legend <- function(
     map,
     legend_title,
@@ -683,24 +661,7 @@ add_categorical_legend <- function(
     }
 }
 
-#' Add a continuous legend
-#'
-#' @param map A map object created by the `mapboxgl` function.
-#' @param legend_title The title of the legend.
-#' @param values The values being represented on the map (vector of stops).
-#' @param colors The colors used to generate the color ramp.
-#' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
-#' @param unique_id A unique ID for the legend container. Defaults to NULL.
-#' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
-#' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
-#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
-#' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
-#' @param margin_left Custom left margin in pixels. Default is NULL.
-#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
-#' @param margin_right Custom right margin in pixels. Default is NULL.
-#' @param style Optional styling options created by \code{legend_style()} or a list of style options.
-#'
-#' @return The updated map object with the legend added.
+#' @rdname map_legends
 #' @export
 add_continuous_legend <- function(
     map,
@@ -910,12 +871,7 @@ add_continuous_legend <- function(
 }
 
 
-#' Clear legend(s) from a map in a proxy session
-#'
-#' @param map A map object created by the `mapboxgl_proxy` or `maplibre_proxy` function.
-#' @param legend_ids Optional. A character vector of legend IDs to clear. If not provided, all legends will be cleared.
-#'
-#' @return The updated map object with the specified legend(s) cleared.
+#' @rdname map_legends
 #' @export
 clear_legend <- function(map, legend_ids = NULL) {
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
