@@ -87,12 +87,9 @@ reference:
   - clear_controls
 
 - title: "Legends"
-  desc: "Functions for adding and managing map legends"
+  desc: "Functions for adding and managing map legends with customizable styling"
   contents:
-  - add_legend
-  - add_categorical_legend
-  - add_continuous_legend
-  - clear_legend
+  - map_legends
 
 - title: "Markers"
   desc: "Functions for adding and managing markers"
@@ -113,6 +110,13 @@ reference:
   - concat
   - number_format
   - cluster_options
+
+- title: "Data Classification"
+  desc: "Functions for automatic data classification and choropleth styling"
+  contents:
+  - step_classification
+  - interpolate_palette
+  - classification_helpers
 
 - title: "Camera and View"
   desc: "Functions to control map camera and viewport"
