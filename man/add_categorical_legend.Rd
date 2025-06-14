@@ -19,7 +19,8 @@ add_categorical_legend(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  style = NULL
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ add_categorical_legend(
 \item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
 
 \item{margin_left}{Custom left margin in pixels. Default is NULL.}
+
+\item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
 }
 \value{
 The updated map object with the legend added.
@@ -74,6 +77,19 @@ map \%>\% add_categorical_legend(
     circular_patches = TRUE,
     sizes = c(10, 15, 20),
     width = "300px"
+)
+
+# With custom styling
+map \%>\% add_categorical_legend(
+    legend_title = "Population",
+    values = c("Low", "Medium", "High"),
+    colors = c("#FED976", "#FEB24C", "#FD8D3C"),
+    style = legend_style(
+      background_opacity = 0.95,
+      border_width = 1,
+      border_color = "gray",
+      title_color = "navy"
+    )
 )
 }
 }

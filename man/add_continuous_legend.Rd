@@ -17,7 +17,8 @@ add_continuous_legend(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  style = NULL
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ add_continuous_legend(
 \item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
 
 \item{margin_left}{Custom left margin in pixels. Default is NULL.}
+
+\item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
 }
 \value{
 The updated map object with the legend added.

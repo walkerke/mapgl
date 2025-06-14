@@ -20,7 +20,8 @@ add_legend(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  style = NULL
 )
 }
 \arguments{
@@ -55,10 +56,63 @@ add_legend(
 \item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
 
 \item{margin_left}{Custom left margin in pixels. Default is NULL.}
+
+\item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
 }
 \value{
 The updated map object with the legend added.
 }
 \description{
 Add a legend to a Mapbox GL map
+}
+\examples{
+\dontrun{
+# Basic legend
+add_legend(map, "Population", 
+          values = c("Low", "Medium", "High"),
+          colors = c("blue", "yellow", "red"),
+          type = "categorical")
+
+# Legend with custom styling using legend_style()
+add_legend(map, "Income", 
+          values = c("Low", "Medium", "High"),
+          colors = c("blue", "yellow", "red"),
+          type = "categorical",
+          style = legend_style(
+            background_color = "white",
+            background_opacity = 0.9,
+            border_width = 2,
+            border_color = "navy",
+            text_color = "darkblue",
+            font_family = "Times New Roman",
+            title_font_weight = "bold"
+          ))
+          
+# Legend with custom styling using a list
+add_legend(map, "Temperature", 
+          values = c(0, 50, 100),
+          colors = c("blue", "yellow", "red"),
+          type = "continuous",
+          style = list(
+            background_color = "#f0f0f0",
+            title_size = 16,
+            text_size = 12,
+            shadow = TRUE,
+            shadow_color = "rgba(0,0,0,0.1)",
+            shadow_size = 8
+          ))
+
+# Dark legend with white element borders
+add_legend(map, "Elevation", 
+          values = c(0, 1000, 2000, 3000),
+          colors = c("#2c7bb6", "#abd9e9", "#fdae61", "#d7191c"),
+          type = "continuous",
+          style = legend_style(
+            background_color = "#2c3e50",
+            text_color = "white",
+            title_color = "white",
+            element_border_color = "white",
+            element_border_width = 1
+          ))
+}
 }
