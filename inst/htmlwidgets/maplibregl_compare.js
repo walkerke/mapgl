@@ -2257,6 +2257,51 @@ HTMLWidgets.widget({
                             );
                         }
                     });
+
+                    // Add hover events if enabled for this map
+                    const mapConfig = (mapType === "before") ? x.map1 : x.map2;
+                    if (mapConfig.hover_events && mapConfig.hover_events.enabled) {
+                        map.on("mousemove", function (e) {
+                            if (window.Shiny) {
+                                // Feature hover events
+                                if (mapConfig.hover_events.features) {
+                                    const features = map.queryRenderedFeatures(e.point);
+
+                                    if(features.length > 0) {
+                                        const feature = features[0];
+                                        Shiny.setInputValue(
+                                            parentId + "_" + mapType + "_feature_hover",
+                                            {
+                                                id: feature.id,
+                                                properties: feature.properties,
+                                                layer: feature.layer.id,
+                                                lng: e.lngLat.lng,
+                                                lat: e.lngLat.lat,
+                                                time: new Date(),
+                                            }
+                                        );
+                                    } else {
+                                        Shiny.setInputValue(
+                                            parentId + "_" + mapType + "_feature_hover",
+                                            null
+                                        );
+                                    }
+                                }
+
+                                // Coordinate hover events
+                                if (mapConfig.hover_events.coordinates) {
+                                    Shiny.setInputValue(
+                                        parentId + "_" + mapType + "_hover",
+                                        {
+                                            lng: e.lngLat.lng,
+                                            lat: e.lngLat.lat,
+                                            time: new Date(),
+                                        }
+                                    );
+                                }
+                            }
+                        });
+                    }
                 }
 
                 function applyMapModifications(map, mapData) {

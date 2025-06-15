@@ -1507,33 +1507,41 @@ HTMLWidgets.widget({
                             });
                         });
 
-                        // also add hover listener for shinyMode!
-                        map.on("mousemove", function (e) {
-                          const features = map.queryRenderedFeatures(e.point);
+                        // add hover listener for shinyMode if enabled
+                        if (x.hover_events && x.hover_events.enabled) {
+                            map.on("mousemove", function (e) {
+                              // Feature hover events
+                              if (x.hover_events.features) {
+                                const features = map.queryRenderedFeatures(e.point);
 
-                          if(features.length > 0) {
-                            const feature = features[0];
-                            Shiny.onInputChange(el.id + "_feature_hover", {
-                              id: feature.id,
-                                    properties: feature.properties,
-                                    layer: feature.layer.id,
+                                if(features.length > 0) {
+                                  const feature = features[0];
+                                  Shiny.onInputChange(el.id + "_feature_hover", {
+                                    id: feature.id,
+                                          properties: feature.properties,
+                                          layer: feature.layer.id,
+                                          lng: e.lngLat.lng,
+                                          lat: e.lngLat.lat,
+                                          time: new Date(),
+                                      });
+                                } else {
+                                  Shiny.onInputChange(
+                                    el.id + "_feature_hover",
+                                    null,
+                                );
+                              }
+                              }
+
+                              // Coordinate hover events
+                              if (x.hover_events.coordinates) {
+                                Shiny.onInputChange(el.id + "_hover", {
                                     lng: e.lngLat.lng,
                                     lat: e.lngLat.lat,
                                     time: new Date(),
-                                });
-                          } else {
-                            Shiny.onInputChange(
-                              el.id + "_feature_hover",
-                              null,
-                          );
+                                  });
+                              }
+                            });
                         }
-
-                        Shiny.onInputChange(el.id + "_hover", {
-                            lng: e.lngLat.lng,
-                            lat: e.lngLat.let,
-                            time: new Date(),
-                          });
-                        });
                     }
 
                     el.map = map;
