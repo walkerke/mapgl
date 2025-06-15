@@ -175,6 +175,7 @@ reference:
       - add_image
       - get_drawn_features
       - add_features_to_draw
+      - clear_drawn_features
 
   - title: "Story Maps"
     desc: "Functions for creating scrollytelling story maps"
