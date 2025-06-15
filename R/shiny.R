@@ -157,13 +157,23 @@ clear_layer <- function(proxy, layer_id) {
 #' Set a layout property on a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
-#' @param layer The ID of the layer to update.
+#' @param layer_id The ID of the layer to update.
 #' @param name The name of the layout property to set.
 #' @param value The value to set the property to.
+#' @param layer Deprecated. Use `layer_id` instead.
 #'
 #' @return The updated map object.
 #' @export
-set_layout_property <- function(map, layer, name, value) {
+set_layout_property <- function(map, layer_id = NULL, name, value, layer = NULL) {
+    # Handle backwards compatibility
+    if (!is.null(layer) && is.null(layer_id)) {
+        layer_id <- layer
+        warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    }
+    
+    if (is.null(layer_id)) {
+        stop("layer_id is required")
+    }
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
         if (
             inherits(map, "mapboxgl_compare_proxy") ||
@@ -178,7 +188,7 @@ set_layout_property <- function(map, layer, name, value) {
                     id = map$id,
                     message = list(
                         type = "set_layout_property",
-                        layer = layer,
+                        layer = layer_id,
                         name = name,
                         value = value,
                         map = map$map_side
@@ -195,7 +205,7 @@ set_layout_property <- function(map, layer, name, value) {
                     id = map$id,
                     message = list(
                         type = "set_layout_property",
-                        layer = layer,
+                        layer = layer_id,
                         name = name,
                         value = value
                     )
@@ -205,7 +215,7 @@ set_layout_property <- function(map, layer, name, value) {
     } else {
         if (is.null(map$x$setLayoutProperty)) map$x$setLayoutProperty <- list()
         map$x$setLayoutProperty[[length(map$x$setLayoutProperty) + 1]] <- list(
-            layer = layer,
+            layer = layer_id,
             name = name,
             value = value
         )
@@ -216,13 +226,23 @@ set_layout_property <- function(map, layer, name, value) {
 #' Set a paint property on a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
-#' @param layer The ID of the layer to update.
+#' @param layer_id The ID of the layer to update.
 #' @param name The name of the paint property to set.
 #' @param value The value to set the property to.
+#' @param layer Deprecated. Use `layer_id` instead.
 #'
 #' @return The updated map object.
 #' @export
-set_paint_property <- function(map, layer, name, value) {
+set_paint_property <- function(map, layer_id = NULL, name, value, layer = NULL) {
+    # Handle backwards compatibility
+    if (!is.null(layer) && is.null(layer_id)) {
+        layer_id <- layer
+        warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    }
+    
+    if (is.null(layer_id)) {
+        stop("layer_id is required")
+    }
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
         if (
             inherits(map, "mapboxgl_compare_proxy") ||
@@ -237,7 +257,7 @@ set_paint_property <- function(map, layer, name, value) {
                     id = map$id,
                     message = list(
                         type = "set_paint_property",
-                        layer = layer,
+                        layer = layer_id,
                         name = name,
                         value = value,
                         map = map$map_side
@@ -254,7 +274,7 @@ set_paint_property <- function(map, layer, name, value) {
                     id = map$id,
                     message = list(
                         type = "set_paint_property",
-                        layer = layer,
+                        layer = layer_id,
                         name = name,
                         value = value
                     )
@@ -264,7 +284,7 @@ set_paint_property <- function(map, layer, name, value) {
     } else {
         if (is.null(map$x$setPaintProperty)) map$x$setPaintProperty <- list()
         map$x$setPaintProperty[[length(map$x$setPaintProperty) + 1]] <- list(
-            layer = layer,
+            layer = layer_id,
             name = name,
             value = value
         )
@@ -443,12 +463,22 @@ move_layer <- function(proxy, layer_id, before_id = NULL) {
 #' Set tooltip on a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
-#' @param layer The ID of the layer to update.
+#' @param layer_id The ID of the layer to update.
 #' @param tooltip  The name of the tooltip to set.
+#' @param layer Deprecated. Use `layer_id` instead.
 #'
 #' @return The updated map object.
 #' @export
-set_tooltip <- function(map, layer, tooltip) {
+set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
+    # Handle backwards compatibility
+    if (!is.null(layer) && is.null(layer_id)) {
+        layer_id <- layer
+        warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    }
+    
+    if (is.null(layer_id)) {
+        stop("layer_id is required")
+    }
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
         if (
             inherits(map, "mapboxgl_compare_proxy") ||
@@ -463,7 +493,7 @@ set_tooltip <- function(map, layer, tooltip) {
                     id = map$id,
                     message = list(
                         type = "set_tooltip",
-                        layer = layer,
+                        layer = layer_id,
                         tooltip = tooltip,
                         map = map$map_side
                     )
@@ -479,7 +509,7 @@ set_tooltip <- function(map, layer, tooltip) {
                     id = map$id,
                     message = list(
                         type = "set_tooltip",
-                        layer = layer,
+                        layer = layer_id,
                         tooltip = tooltip
                     )
                 )
@@ -496,12 +526,22 @@ set_tooltip <- function(map, layer, tooltip) {
 #' Set popup on a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
-#' @param layer The ID of the layer to update.
+#' @param layer_id The ID of the layer to update.
 #' @param popup The name of the popup property or an expression to set.
+#' @param layer Deprecated. Use `layer_id` instead.
 #'
 #' @return The updated map object.
 #' @export
-set_popup <- function(map, layer, popup) {
+set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
+    # Handle backwards compatibility
+    if (!is.null(layer) && is.null(layer_id)) {
+        layer_id <- layer
+        warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    }
+    
+    if (is.null(layer_id)) {
+        stop("layer_id is required")
+    }
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
         if (
             inherits(map, "mapboxgl_compare_proxy") ||
@@ -516,7 +556,7 @@ set_popup <- function(map, layer, popup) {
                     id = map$id,
                     message = list(
                         type = "set_popup",
-                        layer = layer,
+                        layer = layer_id,
                         popup = popup,
                         map = map$map_side
                     )
@@ -532,7 +572,7 @@ set_popup <- function(map, layer, popup) {
                     id = map$id,
                     message = list(
                         type = "set_popup",
-                        layer = layer,
+                        layer = layer_id,
                         popup = popup
                     )
                 )
@@ -549,12 +589,22 @@ set_popup <- function(map, layer, popup) {
 #' Set source of a map layer
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
-#' @param layer The ID of the layer to update.
+#' @param layer_id The ID of the layer to update.
 #' @param source An sf object (which will be converted to a GeoJSON source).
+#' @param layer Deprecated. Use `layer_id` instead.
 #'
 #' @return The updated map object.
 #' @export
-set_source <- function(map, layer, source) {
+set_source <- function(map, layer_id = NULL, source, layer = NULL) {
+    # Handle backwards compatibility
+    if (!is.null(layer) && is.null(layer_id)) {
+        layer_id <- layer
+        warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    }
+    
+    if (is.null(layer_id)) {
+        stop("layer_id is required")
+    }
     if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
         # Convert sf objects to GeoJSON source
         if (inherits(source, "sf")) {
@@ -577,7 +627,7 @@ set_source <- function(map, layer, source) {
                     id = map$id,
                     message = list(
                         type = "set_source",
-                        layer = layer,
+                        layer = layer_id,
                         source = source,
                         map = map$map_side
                     )
@@ -593,7 +643,7 @@ set_source <- function(map, layer, source) {
                     id = map$id,
                     message = list(
                         type = "set_source",
-                        layer = layer,
+                        layer = layer_id,
                         source = source
                     )
                 )
