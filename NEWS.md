@@ -1,5 +1,13 @@
 # mapgl (development version)
 
+* Added `enable_shiny_hover()` function for optional hover events in Shiny applications:
+  - Provides `_hover` input for mouse coordinates and `_feature_hover` input for feature information
+  - Performance-conscious design: hover functionality is disabled by default and must be explicitly enabled
+  - Works with both `maplibre()` and `mapboxgl()` widgets, including compare views
+  - Configurable options: `coordinates = TRUE/FALSE` and `features = TRUE/FALSE`
+  - Example: `maplibre() |> add_circle_layer(...) |> enable_shiny_hover()`
+  - Compare views support: hover events include map side (`"before"` or `"after"`) in input names
+
 * Comprehensive legend styling system: Major enhancement to legend functionality with extensive customization options:
   - New `legend_style()` function provides user-friendly interface for legend styling without requiring CSS knowledge
   - Container styling: background colors/opacity, borders, border radius, padding, and customizable drop shadows
