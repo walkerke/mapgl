@@ -881,6 +881,8 @@ step_jenks <- function(column, data_values, n = 5, colors = NULL, na_color = "gr
 #' @param big_mark The character to use as thousands separator. Defaults to ",".
 #' @param suffix An optional suffix to add to all values (e.g., "km", "mph").
 #' @param prefix An optional prefix to add to all values (useful for compact currency like "$1.2K").
+#' @param x A mapgl_classification or mapgl_continuous_scale object to print.  
+#' @param ... Additional arguments passed to formatting functions.
 #'
 #' @return 
 #' \describe{

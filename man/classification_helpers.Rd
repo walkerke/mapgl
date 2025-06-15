@@ -48,6 +48,10 @@ get_breaks(scale)
 \item{suffix}{An optional suffix to add to all values (e.g., "km", "mph").}
 
 \item{prefix}{An optional prefix to add to all values (useful for compact currency like "$1.2K").}
+
+\item{x}{A mapgl_classification or mapgl_continuous_scale object to print.}
+
+\item{...}{Additional arguments passed to formatting functions.}
 }
 \value{
 \describe{
