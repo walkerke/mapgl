@@ -109,12 +109,12 @@ set_filter <- function(map, layer_id, filter) {
     return(map)
 }
 
-#' Clear a layer from a map using a proxy
+#' Clear layers from a map using a proxy
 #'
-#' This function allows a layer to be removed from an existing Mapbox GL map using a proxy object.
+#' This function allows one or more layers to be removed from an existing Mapbox GL map using a proxy object.
 #'
 #' @param proxy A proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
-#' @param layer_id The ID of the layer to be removed.
+#' @param layer_id A character vector of layer IDs to be removed. Can be a single layer ID or multiple layer IDs.
 #'
 #' @return The updated proxy object.
 #' @export
@@ -128,29 +128,32 @@ clear_layer <- function(proxy, layer_id) {
         stop("Invalid proxy object")
     }
 
-    if (
-        inherits(proxy, "mapboxgl_compare_proxy") ||
-            inherits(proxy, "maplibre_compare_proxy")
-    ) {
-        # For compare proxies
-        proxy_class <- if (inherits(proxy, "mapboxgl_compare_proxy"))
-            "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
-        message <- list(
-            type = "remove_layer",
-            layer = layer_id,
-            map = proxy$map_side
-        )
-    } else {
-        # For regular proxies
-        proxy_class <- if (inherits(proxy, "mapboxgl_proxy"))
-            "mapboxgl-proxy" else "maplibre-proxy"
-        message <- list(type = "remove_layer", layer = layer_id)
-    }
+    # Handle vector of layer_ids by iterating through them
+    for (layer in layer_id) {
+        if (
+            inherits(proxy, "mapboxgl_compare_proxy") ||
+                inherits(proxy, "maplibre_compare_proxy")
+        ) {
+            # For compare proxies
+            proxy_class <- if (inherits(proxy, "mapboxgl_compare_proxy"))
+                "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+            message <- list(
+                type = "remove_layer",
+                layer = layer,
+                map = proxy$map_side
+            )
+        } else {
+            # For regular proxies
+            proxy_class <- if (inherits(proxy, "mapboxgl_proxy"))
+                "mapboxgl-proxy" else "maplibre-proxy"
+            message <- list(type = "remove_layer", layer = layer)
+        }
 
-    proxy$session$sendCustomMessage(
-        proxy_class,
-        list(id = proxy$id, message = message)
-    )
+        proxy$session$sendCustomMessage(
+            proxy_class,
+            list(id = proxy$id, message = message)
+        )
+    }
     proxy
 }
 

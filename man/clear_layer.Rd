@@ -2,18 +2,18 @@
 % Please edit documentation in R/shiny.R
 \name{clear_layer}
 \alias{clear_layer}
-\title{Clear a layer from a map using a proxy}
+\title{Clear layers from a map using a proxy}
 \usage{
 clear_layer(proxy, layer_id)
 }
 \arguments{
 \item{proxy}{A proxy object created by \code{mapboxgl_proxy} or \code{maplibre_proxy}.}
 
-\item{layer_id}{The ID of the layer to be removed.}
+\item{layer_id}{A character vector of layer IDs to be removed. Can be a single layer ID or multiple layer IDs.}
 }
 \value{
 The updated proxy object.
 }
 \description{
-This function allows a layer to be removed from an existing Mapbox GL map using a proxy object.
+This function allows one or more layers to be removed from an existing Mapbox GL map using a proxy object.
 }
