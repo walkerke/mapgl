@@ -42,7 +42,17 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="mapgl-development-version">mapgl (development version)<a class="anchor" aria-label="anchor" href="#mapgl-development-version"></a></h2>
-<ul><li>Comprehensive legend styling system: Major enhancement to legend functionality with extensive customization options:
+<ul><li>Added <code><a href="../reference/enable_shiny_hover.html">enable_shiny_hover()</a></code> function for optional hover events in Shiny applications:
+<ul><li>Provides <code>_hover</code> input for mouse coordinates and <code>_feature_hover</code> input for feature information</li>
+<li>Performance-conscious design: hover functionality is disabled by default and must be explicitly enabled</li>
+<li>Works with both <code><a href="../reference/maplibre.html">maplibre()</a></code> and <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code> widgets, including compare views</li>
+<li>Configurable options: <code>coordinates = TRUE/FALSE</code> and <code>features = TRUE/FALSE</code>
+</li>
+<li>Example: <code>maplibre() |&gt; add_circle_layer(...) |&gt; enable_shiny_hover()</code>
+</li>
+<li>Compare views support: hover events include map side (<code>"before"</code> or <code>"after"</code>) in input names</li>
+</ul></li>
+<li>Comprehensive legend styling system: Major enhancement to legend functionality with extensive customization options:
 <ul><li>New <code><a href="../reference/map_legends.html">legend_style()</a></code> function provides user-friendly interface for legend styling without requiring CSS knowledge</li>
 <li>Container styling: background colors/opacity, borders, border radius, padding, and customizable drop shadows</li>
 <li>Typography control: font families (with fallbacks), sizes, weights, and colors for both title and text</li>
