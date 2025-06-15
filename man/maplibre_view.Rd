@@ -6,8 +6,10 @@
 \usage{
 maplibre_view(
   data,
+  color = "navy",
   column = NULL,
   n = NULL,
+  palette = viridisLite::viridis,
   style = carto_style("positron"),
   ...
 )
@@ -15,9 +17,13 @@ maplibre_view(
 \arguments{
 \item{data}{An sf object to visualize}
 
+\item{color}{The color used to visualize points, lines, or polygons if \code{column} is NULL.  Defaults to \code{"navy"}.}
+
 \item{column}{The name of the column to visualize. If NULL (default), geometries are shown with default styling.}
 
 \item{n}{Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().}
+
+\item{palette}{Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.}
 
 \item{style}{The MapLibre style to use. Defaults to carto_style("positron").}
 
@@ -43,5 +49,10 @@ maplibre_view(nc, column = "AREA")
 
 # View with quantile breaks
 maplibre_view(nc, column = "AREA", n = 5)
+
+# Custom palette examples
+maplibre_view(nc, column = "AREA", palette = viridisLite::mako)
+maplibre_view(nc, column = "AREA", palette = function(n) RColorBrewer::brewer.pal(n, "RdYlBu"))
+maplibre_view(nc, column = "AREA", palette = colorRampPalette(c("red", "white", "blue")))
 }
 }

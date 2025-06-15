@@ -2117,7 +2117,9 @@ if (HTMLWidgets.shinyMode) {
                             !(sourceId.startsWith("maptiler") && !sourceId.includes("user")) && // Filter MapTiler sources but keep user ones
                             !sourceId.includes("terrain") && // Common terrain sources
                             !sourceId.includes("hillshade") && // Common hillshade sources
-                            !(sourceId.includes("basemap") && !sourceId.includes("user")) // Filter basemap sources but keep user ones
+                            !(sourceId.includes("basemap") && !sourceId.includes("user")) && // Filter basemap sources but keep user ones
+                            sourceId !== "satellite" && // Filter MapTiler satellite source specifically
+                            sourceId !== "aerial" // Filter aerial imagery sources
                         ) {
                             console.log("[MapGL Debug] Found user source via filtering:", sourceId);
                             if (!userSourceIds.includes(sourceId)) {
