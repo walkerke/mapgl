@@ -54,28 +54,49 @@ break points and generate appropriate step expressions for styling map layers.</
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">step_equal_interval</span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">column</span>,</span>
-<span>  <span class="va">data_values</span>,</span>
+<span>  data_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na_color <span class="op">=</span> <span class="st">"grey"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">step_quantile</span><span class="op">(</span><span class="va">column</span>, <span class="va">data_values</span>, n <span class="op">=</span> <span class="fl">5</span>, colors <span class="op">=</span> <span class="cn">NULL</span>, na_color <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span></span>
+<span><span class="fu">step_quantile</span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">column</span>,</span>
+<span>  data_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na_color <span class="op">=</span> <span class="st">"grey"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">step_jenks</span><span class="op">(</span><span class="va">column</span>, <span class="va">data_values</span>, n <span class="op">=</span> <span class="fl">5</span>, colors <span class="op">=</span> <span class="cn">NULL</span>, na_color <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">step_jenks</span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">column</span>,</span>
+<span>  data_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na_color <span class="op">=</span> <span class="st">"grey"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-column">column<a class="anchor" aria-label="anchor" href="#arg-column"></a></dt>
+<dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
+<dd><p>A data frame or sf object containing the data. If provided, data_values
+will be extracted from data[<a href="https://rdrr.io/pkg/shiny/man/column.html" class="external-link">column</a>]. Either data or data_values must be provided.</p></dd>
+
+
+<dt id="arg-column">column<a class="anchor" aria-label="anchor" href="#arg-column"></a></dt>
 <dd><p>The name of the column to use for the step expression.</p></dd>
 
 
 <dt id="arg-data-values">data_values<a class="anchor" aria-label="anchor" href="#arg-data-values"></a></dt>
-<dd><p>A numeric vector of the actual data values used to calculate breaks.</p></dd>
+<dd><p>A numeric vector of the actual data values used to calculate breaks.
+If NULL and data is provided, will be extracted from data[<a href="https://rdrr.io/pkg/shiny/man/column.html" class="external-link">column</a>].</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
@@ -121,14 +142,19 @@ break points and generate appropriate step expressions for styling map layers.</
 <span class="r-in"><span><span class="va">tx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://walker-data.com/tidycensus/reference/get_acs.html" class="external-link">get_acs</a></span><span class="op">(</span>geography <span class="op">=</span> <span class="st">"county"</span>, variables <span class="op">=</span> <span class="st">"B19013_001"</span>, </span></span>
 <span class="r-in"><span>              state <span class="op">=</span> <span class="st">"TX"</span>, geometry <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Equal interval classification</span></span></span>
-<span class="r-in"><span><span class="va">eq_class</span> <span class="op">&lt;-</span> <span class="fu">step_equal_interval</span><span class="op">(</span><span class="st">"estimate"</span>, <span class="va">tx</span><span class="op">$</span><span class="va">estimate</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># New recommended approach - cleaner interface</span></span></span>
+<span class="r-in"><span><span class="va">eq_class</span> <span class="op">&lt;-</span> <span class="fu">step_equal_interval</span><span class="op">(</span>data <span class="op">=</span> <span class="va">tx</span>, column <span class="op">=</span> <span class="st">"estimate"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Or with piping</span></span></span>
+<span class="r-in"><span><span class="va">eq_class</span> <span class="op">&lt;-</span> <span class="va">tx</span> <span class="op">|&gt;</span> <span class="fu">step_equal_interval</span><span class="op">(</span><span class="st">"estimate"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Quantile classification  </span></span></span>
-<span class="r-in"><span><span class="va">qt_class</span> <span class="op">&lt;-</span> <span class="fu">step_quantile</span><span class="op">(</span><span class="st">"estimate"</span>, <span class="va">tx</span><span class="op">$</span><span class="va">estimate</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">qt_class</span> <span class="op">&lt;-</span> <span class="fu">step_quantile</span><span class="op">(</span>data <span class="op">=</span> <span class="va">tx</span>, column <span class="op">=</span> <span class="st">"estimate"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Jenks natural breaks</span></span></span>
-<span class="r-in"><span><span class="va">jk_class</span> <span class="op">&lt;-</span> <span class="fu">step_jenks</span><span class="op">(</span><span class="st">"estimate"</span>, <span class="va">tx</span><span class="op">$</span><span class="va">estimate</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">jk_class</span> <span class="op">&lt;-</span> <span class="fu">step_jenks</span><span class="op">(</span>data <span class="op">=</span> <span class="va">tx</span>, column <span class="op">=</span> <span class="st">"estimate"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Original approach still works for backwards compatibility</span></span></span>
+<span class="r-in"><span><span class="va">eq_class_old</span> <span class="op">&lt;-</span> <span class="fu">step_equal_interval</span><span class="op">(</span>column <span class="op">=</span> <span class="st">"estimate"</span>, data_values <span class="op">=</span> <span class="va">tx</span><span class="op">$</span><span class="va">estimate</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use in a map with formatted legend</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="maplibre.html">maplibre</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
