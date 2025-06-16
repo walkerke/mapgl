@@ -12,6 +12,7 @@ step_equal_interval(
   column,
   data_values = NULL,
   n = 5,
+  palette = NULL,
   colors = NULL,
   na_color = "grey"
 )
@@ -21,6 +22,7 @@ step_quantile(
   column,
   data_values = NULL,
   n = 5,
+  palette = NULL,
   colors = NULL,
   na_color = "grey"
 )
@@ -30,22 +32,27 @@ step_jenks(
   column,
   data_values = NULL,
   n = 5,
+  palette = NULL,
   colors = NULL,
   na_color = "grey"
 )
 }
 \arguments{
 \item{data}{A data frame or sf object containing the data. If provided, data_values
-will be extracted from data[\link{column}]. Either data or data_values must be provided.}
+will be extracted from \code{data[[column]]}. Either data or data_values must be provided.}
 
 \item{column}{The name of the column to use for the step expression.}
 
 \item{data_values}{A numeric vector of the actual data values used to calculate breaks.
-If NULL and data is provided, will be extracted from data[\link{column}].}
+If NULL and data is provided, will be extracted from \code{data[[column]]}.}
 
 \item{n}{The number of classes/intervals to create. Defaults to 5.}
 
-\item{colors}{A vector of colors to use. If NULL, uses viridisLite::viridis(n).}
+\item{palette}{A function that takes n and returns a character vector of colors.
+If NULL and colors is also NULL, defaults to \code{viridisLite::viridis}.}
+
+\item{colors}{A character vector of colors to use. Must have exactly n colors
+for step classification functions. Either palette or colors should be provided, but not both.}
 
 \item{na_color}{The color to use for missing values. Defaults to "grey".}
 }
@@ -68,22 +75,21 @@ break points and generate appropriate step expressions for styling map layers.
 \dontrun{
 # Texas county income data
 library(tidycensus)
-tx <- get_acs(geography = "county", variables = "B19013_001", 
+tx <- get_acs(geography = "county", variables = "B19013_001",
               state = "TX", geometry = TRUE)
 
-# New recommended approach - cleaner interface
-eq_class <- step_equal_interval(data = tx, column = "estimate", n = 5)
+# Using palette function (recommended)
+eq_class <- step_equal_interval(data = tx, column = "estimate", n = 5,
+                                palette = viridisLite::plasma)
 # Or with piping
 eq_class <- tx |> step_equal_interval("estimate", n = 5)
 
-# Quantile classification  
-qt_class <- step_quantile(data = tx, column = "estimate", n = 5)
+# Using specific colors
+qt_class <- step_quantile(data = tx, column = "estimate", n = 3,
+                         colors = c("red", "yellow", "blue"))
 
-# Jenks natural breaks
+# Jenks natural breaks with default viridis
 jk_class <- step_jenks(data = tx, column = "estimate", n = 5)
-
-# Original approach still works for backwards compatibility
-eq_class_old <- step_equal_interval(column = "estimate", data_values = tx$estimate, n = 5)
 
 # Use in a map with formatted legend
 maplibre() |>
@@ -94,7 +100,7 @@ maplibre() |>
     colors = get_legend_colors(eq_class),
     type = "categorical"
   )
-  
+
 # Compare different methods
 print(eq_class, format = "currency")
 print(qt_class, format = "compact", prefix = "$")

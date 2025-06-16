@@ -1,7 +1,7 @@
 ---
 title: "Fundamentals of map design with mapgl"
-format: 
-  html: 
+format:
+  html:
     standalone: false
 editor: visual
 ---
@@ -24,12 +24,12 @@ fl_age <- get_acs(
   geography = "tract",
   variables = "B01002_001",
   state = "FL",
-  year = 2022,
+  year = 2023,
   geometry = TRUE
 )
 
 fl_map <- mapboxgl(mapbox_style("light"),
-                   bounds = fl_age) 
+                   bounds = fl_age)
 
 fl_map
 ```
@@ -38,14 +38,37 @@ fl_map
 
 Styling in Mapbox GL JS and Maplibre GL JS is typically handled through *expressions*. Expressions allow for quite a bit of customization for map-makers, but can feel clunky for R users. **mapgl** includes several functions to help R users translate their code into expressions for use in their data visualizations.
 
-The `interpolate()` function will create an `interpolate` expression, which smoothly transitions values between a series of stops. This means that you can natively create just about any color palette you want and map that palette seamlessly to your data.
-
-Below, we specify two values - 20 and 80 - and map the colors "lightblue" and "darkblue" to those values. Mapbox GL JS will smoothly interpolate colors between light blue and dark blue and map them to data values found in the specified `column`.
-
-The `add_legend()` function adds a legend to your map. In **mapgl**'s initial release, `add_legend()` does not automatically populate with values from the style. This gives users much more flexibility in how their format their legend, though users also need to take care to ensure that the legend appropriately represents their data. Future updates to the package may include functionality for automated legends.
+For continuous color scales, the `interpolate_palette()` function automatically calculates appropriate break points and creates smooth color transitions. You can specify the classification method ("equal", "quantile", or "jenks") and either a palette function or specific colors:
 
 ```{r}
-fl_map |> 
+# Automatic continuous scale with quantile breaks
+continuous_scale <- interpolate_palette(
+  data = fl_age,
+  column = "estimate",
+  method = "equal",
+  n = 5,
+  palette = viridisLite::plasma
+)
+
+fl_map |>
+  add_fill_layer(
+    id = "fl_tracts",
+    source = fl_age,
+    fill_color = continuous_scale$expression,
+    fill_opacity = 0.5
+  ) |>
+  add_legend(
+    "Median age in Florida",
+    values = get_legend_labels(continuous_scale, digits = 0),
+    colors = get_legend_colors(continuous_scale),
+    type = "continuous"
+  )
+```
+
+For lower-level control, the `interpolate()` function creates an `interpolate` expression where you manually specify values and stops. This gives you complete control over the color mapping:
+
+```{r}
+fl_map |>
   add_fill_layer(
   id = "fl_tracts",
   source = fl_age,
@@ -56,7 +79,7 @@ fl_map |>
     na_color = "lightgrey"
   ),
   fill_opacity = 0.5
- ) |> 
+ ) |>
   add_legend(
     "Median age in Florida",
     values = c(20, 80),
@@ -66,12 +89,40 @@ fl_map |>
 
 ### Categorical styling
 
-Cartographers may prefer a binned method for visualizing their data rather than the continuous palette shown above. In Mapbox GL JS and MapLibre, binned maps can be created with a `step` expression. The `step_expr()` function helps R users assemble this expression. Step expressions may feel a little unfamiliar to R users, as they require a `base` value followed by a series of `stops`. In the example below, we generate a five-color palette from ColorBrewer. The first color will be used as the base, and the other four colors as the stops. The `values` then specify the bin edges.
+Cartographers may prefer a binned method for visualizing their data rather than the continuous palette shown above. **mapgl** includes several classification functions that automate common choropleth workflows. The `step_equal_interval()` function creates equal interval breaks, while `step_quantile()` and `step_jenks()` create quantile and Jenks natural breaks respectively.
+
+These functions automatically calculate appropriate break points and generate step expressions. You can specify the number of classes and the color palette to use:
+
+```{r}
+# Automatic quantile classification with 5 classes
+eq_class <- step_quantile(
+  data = fl_age,
+  column = "estimate",
+  n = 5,
+  colors = RColorBrewer::brewer.pal(5, "PRGn")
+)
+
+fl_map |>
+  add_fill_layer(
+    id = "fl_tracts",
+    source = fl_age,
+    fill_color = eq_class$expression,
+    fill_opacity = 0.5
+  ) |>
+  add_legend(
+    "Median age in Florida",
+    values = get_legend_labels(eq_class, digits = 0, suffix = " years"),
+    colors = get_legend_colors(eq_class),
+    type = "categorical"
+  )
+```
+
+For lower-level control, you can still use the `step_expr()` function directly. Step expressions require a `base` value followed by a series of `stops` and threshold `values`:
 
 ```{r}
 brewer_pal <- RColorBrewer::brewer.pal(5, "RdYlBu")
 
-fl_map |> 
+fl_map |>
   add_fill_layer(
   id = "fl_tracts",
   source = fl_age,
@@ -83,7 +134,7 @@ fl_map |>
     na_color = "white"
   ),
   fill_opacity = 0.5
- ) |> 
+ ) |>
   add_legend(
     "Median age in Florida",
     values = c(
@@ -111,7 +162,7 @@ fl_age$popup <- glue::glue(
   "<strong>GEOID: </strong>{fl_age$GEOID}<br><strong>Median age: </strong>{fl_age$estimate}"
 )
 
-fl_map |> 
+fl_map |>
   add_fill_layer(
   id = "fl_tracts",
   source = fl_age,
@@ -128,7 +179,7 @@ fl_map |>
     fill_color = "yellow",
     fill_opacity = 1
   )
- ) |> 
+ ) |>
   add_legend(
     "Median age in Florida",
     values = c(20, 80),

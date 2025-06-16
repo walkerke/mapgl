@@ -62,7 +62,8 @@ methods as the step functions.</p>
 <span>  data_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"equal"</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  palette <span class="op">=</span> <span class="fu">viridisLite</span><span class="fu">::</span><span class="va"><a href="https://sjmgarnier.github.io/viridisLite/reference/viridis.html" class="external-link">viridis</a></span>,</span>
+<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na_color <span class="op">=</span> <span class="st">"grey"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -73,7 +74,7 @@ methods as the step functions.</p>
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>A data frame or sf object containing the data. If provided, data_values
-will be extracted from data[<a href="https://rdrr.io/pkg/shiny/man/column.html" class="external-link">column</a>]. Either data or data_values must be provided.</p></dd>
+will be extracted from <code>data[[column]]</code>. Either data or data_values must be provided.</p></dd>
 
 
 <dt id="arg-column">column<a class="anchor" aria-label="anchor" href="#arg-column"></a></dt>
@@ -82,7 +83,7 @@ will be extracted from data[<a href="https://rdrr.io/pkg/shiny/man/column.html" 
 
 <dt id="arg-data-values">data_values<a class="anchor" aria-label="anchor" href="#arg-data-values"></a></dt>
 <dd><p>A numeric vector of the actual data values used to calculate breaks.
-If NULL and data is provided, will be extracted from data[<a href="https://rdrr.io/pkg/shiny/man/column.html" class="external-link">column</a>].</p></dd>
+If NULL and data is provided, will be extracted from <code>data[[column]]</code>.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -96,7 +97,13 @@ If NULL and data is provided, will be extracted from data[<a href="https://rdrr.
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
 <dd><p>A function that takes n and returns a character vector of colors.
-Defaults to viridisLite::viridis.</p></dd>
+If NULL and colors is also NULL, defaults to <code><a href="https://sjmgarnier.github.io/viridisLite/reference/viridis.html" class="external-link">viridisLite::viridis</a></code>.</p></dd>
+
+
+<dt id="arg-colors">colors<a class="anchor" aria-label="anchor" href="#arg-colors"></a></dt>
+<dd><p>A character vector of colors to use. If provided, these colors
+will be interpolated to match the number of breaks if needed. Either palette
+or colors should be provided, but not both.</p></dd>
 
 
 <dt id="arg-na-color">na_color<a class="anchor" aria-label="anchor" href="#arg-na-color"></a></dt>
@@ -111,22 +118,25 @@ Defaults to viridisLite::viridis.</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Create continuous color scale - new recommended approach</span></span></span>
+<span class="r-in"><span><span class="co"># Create continuous color scale - using palette function</span></span></span>
 <span class="r-in"><span><span class="va">my_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">25</span>, <span class="fl">30</span>, <span class="fl">45</span>, <span class="fl">60</span>, <span class="fl">75</span>, <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">scale</span> <span class="op">&lt;-</span> <span class="fu">interpolate_palette</span><span class="op">(</span>data <span class="op">=</span> <span class="va">my_data</span>, column <span class="op">=</span> <span class="st">"value"</span>, method <span class="op">=</span> <span class="st">"equal"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">scale1</span> <span class="op">&lt;-</span> <span class="fu">interpolate_palette</span><span class="op">(</span>data <span class="op">=</span> <span class="va">my_data</span>, column <span class="op">=</span> <span class="st">"value"</span>,</span></span>
+<span class="r-in"><span>                             method <span class="op">=</span> <span class="st">"equal"</span>, n <span class="op">=</span> <span class="fl">5</span>, palette <span class="op">=</span> <span class="fu">viridisLite</span><span class="fu">::</span><span class="va"><a href="https://sjmgarnier.github.io/viridisLite/reference/viridis.html" class="external-link">plasma</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Using specific colors (will interpolate to 5 if needed)</span></span></span>
+<span class="r-in"><span><span class="va">scale2</span> <span class="op">&lt;-</span> <span class="fu">interpolate_palette</span><span class="op">(</span>data <span class="op">=</span> <span class="va">my_data</span>, column <span class="op">=</span> <span class="st">"value"</span>,</span></span>
+<span class="r-in"><span>                             method <span class="op">=</span> <span class="st">"equal"</span>, n <span class="op">=</span> <span class="fl">5</span>, colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"yellow"</span>, <span class="st">"blue"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Or with piping</span></span></span>
-<span class="r-in"><span><span class="va">scale</span> <span class="op">&lt;-</span> <span class="va">my_data</span> <span class="op">|&gt;</span> <span class="fu">interpolate_palette</span><span class="op">(</span><span class="st">"value"</span>, method <span class="op">=</span> <span class="st">"equal"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">scale3</span> <span class="op">&lt;-</span> <span class="va">my_data</span> <span class="op">|&gt;</span> <span class="fu">interpolate_palette</span><span class="op">(</span><span class="st">"value"</span>, method <span class="op">=</span> <span class="st">"equal"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use in a layer</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="add_fill_layer.html">add_fill_layer</a></span><span class="op">(</span><span class="va">map</span>, fill_color <span class="op">=</span> <span class="va">scale</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="add_fill_layer.html">add_fill_layer</a></span><span class="op">(</span><span class="va">map</span>, fill_color <span class="op">=</span> <span class="va">scale1</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Extract legend information  </span></span></span>
-<span class="r-in"><span><span class="va">labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="classification_helpers.html">get_legend_labels</a></span><span class="op">(</span><span class="va">scale</span>, format <span class="op">=</span> <span class="st">"currency"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">colors</span> <span class="op">&lt;-</span> <span class="va">scale</span><span class="op">$</span><span class="va">colors</span></span></span>
+<span class="r-in"><span><span class="co"># Extract legend information</span></span></span>
+<span class="r-in"><span><span class="va">labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="classification_helpers.html">get_legend_labels</a></span><span class="op">(</span><span class="va">scale1</span>, format <span class="op">=</span> <span class="st">"currency"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">colors</span> <span class="op">&lt;-</span> <span class="va">scale1</span><span class="op">$</span><span class="va">colors</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Original approach still works for backwards compatibility</span></span></span>
-<span class="r-in"><span><span class="va">data_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">25</span>, <span class="fl">30</span>, <span class="fl">45</span>, <span class="fl">60</span>, <span class="fl">75</span>, <span class="fl">90</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">scale_old</span> <span class="op">&lt;-</span> <span class="fu">interpolate_palette</span><span class="op">(</span>column <span class="op">=</span> <span class="st">"value"</span>, data_values <span class="op">=</span> <span class="va">data_values</span>, method <span class="op">=</span> <span class="st">"equal"</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

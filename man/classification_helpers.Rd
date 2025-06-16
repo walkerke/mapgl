@@ -62,14 +62,14 @@ get_breaks(scale)
 }
 \description{
 These functions extract different components from mapgl_classification objects
-(created by step_equal_interval(), step_quantile(), step_jenks()) and
-mapgl_continuous_scale objects (created by interpolate_palette()).
+(created by \code{step_equal_interval()}, \code{step_quantile()}, \code{step_jenks()}) and
+mapgl_continuous_scale objects (created by \code{interpolate_palette()}).
 }
 \examples{
 \dontrun{
 # Texas county income data
 library(tidycensus)
-tx <- get_acs(geography = "county", variables = "B19013_001", 
+tx <- get_acs(geography = "county", variables = "B19013_001",
               state = "TX", geometry = TRUE)
 
 # Classification examples
@@ -78,7 +78,7 @@ labels <- get_legend_labels(eq_class, format = "currency")
 colors <- get_legend_colors(eq_class)
 breaks <- get_breaks(eq_class)
 
-# Continuous scale examples  
+# Continuous scale examples
 scale <- interpolate_palette("estimate", tx$estimate, method = "quantile", n = 5)
 labels <- get_legend_labels(scale, format = "compact", prefix = "$")
 colors <- get_legend_colors(scale)
