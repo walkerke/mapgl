@@ -1,4 +1,4 @@
-# mapgl (development version)
+# mapgl 0.3
 
 * Added `enable_shiny_hover()` function for optional hover events in Shiny applications:
   - Provides `_hover` input for mouse coordinates and `_feature_hover` input for feature information
