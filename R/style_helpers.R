@@ -305,8 +305,11 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
 #' the values/stops matching automatically and supports the same classification
 #' methods as the step functions.
 #'
+#' @param data A data frame or sf object containing the data. If provided, data_values
+#'   will be extracted from data[[column]]. Either data or data_values must be provided.
 #' @param column The name of the column to use for the interpolation.
 #' @param data_values A numeric vector of the actual data values used to calculate breaks.
+#'   If NULL and data is provided, will be extracted from data[[column]].
 #' @param method The method for calculating breaks. Options are "equal" (equal intervals),
 #'   "quantile" (quantile breaks), or "jenks" (Jenks natural breaks). Defaults to "equal".
 #' @param n The number of break points to create. Defaults to 5.
@@ -319,9 +322,11 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
 #'
 #' @examples
 #' \dontrun{
-#' # Create continuous color scale
-#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
-#' scale <- interpolate_palette("value", data_values, method = "equal", n = 5)
+#' # Create continuous color scale - new recommended approach
+#' my_data <- data.frame(value = c(10, 25, 30, 45, 60, 75, 90))
+#' scale <- interpolate_palette(data = my_data, column = "value", method = "equal", n = 5)
+#' # Or with piping
+#' scale <- my_data |> interpolate_palette("value", method = "equal", n = 5)
 #' 
 #' # Use in a layer
 #' add_fill_layer(map, fill_color = scale$expression)
@@ -329,9 +334,23 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
 #' # Extract legend information  
 #' labels <- get_legend_labels(scale, format = "currency")
 #' colors <- scale$colors
+#' 
+#' # Original approach still works for backwards compatibility
+#' data_values <- c(10, 25, 30, 45, 60, 75, 90)
+#' scale_old <- interpolate_palette(column = "value", data_values = data_values, method = "equal", n = 5)
 #' }
-interpolate_palette <- function(column, data_values, method = "equal", n = 5, 
+interpolate_palette <- function(data = NULL, column, data_values = NULL, method = "equal", n = 5, 
                                palette = viridisLite::viridis, na_color = "grey") {
+    # Handle new data + column interface
+    if (!is.null(data) && is.null(data_values)) {
+        if (!column %in% names(data)) {
+            rlang::abort(paste0("Column '", column, "' not found in data"))
+        }
+        data_values <- data[[column]]
+    } else if (is.null(data_values)) {
+        rlang::abort("Either 'data' or 'data_values' must be provided")
+    }
+    
     if (!is.numeric(data_values)) {
         rlang::abort("data_values must be numeric")
     }
@@ -560,8 +579,11 @@ trim_hex_colors <- function(colors) {
 #' similar to choropleth mapping in GIS software. They automatically calculate
 #' break points and generate appropriate step expressions for styling map layers.
 #'
+#' @param data A data frame or sf object containing the data. If provided, data_values
+#'   will be extracted from data[[column]]. Either data or data_values must be provided.
 #' @param column The name of the column to use for the step expression.
 #' @param data_values A numeric vector of the actual data values used to calculate breaks.
+#'   If NULL and data is provided, will be extracted from data[[column]].
 #' @param n The number of classes/intervals to create. Defaults to 5.
 #' @param colors A vector of colors to use. If NULL, uses viridisLite::viridis(n).
 #' @param na_color The color to use for missing values. Defaults to "grey".
@@ -582,14 +604,19 @@ trim_hex_colors <- function(colors) {
 #' tx <- get_acs(geography = "county", variables = "B19013_001", 
 #'               state = "TX", geometry = TRUE)
 #'
-#' # Equal interval classification
-#' eq_class <- step_equal_interval("estimate", tx$estimate, n = 5)
+#' # New recommended approach - cleaner interface
+#' eq_class <- step_equal_interval(data = tx, column = "estimate", n = 5)
+#' # Or with piping
+#' eq_class <- tx |> step_equal_interval("estimate", n = 5)
 #' 
 #' # Quantile classification  
-#' qt_class <- step_quantile("estimate", tx$estimate, n = 5)
+#' qt_class <- step_quantile(data = tx, column = "estimate", n = 5)
 #' 
 #' # Jenks natural breaks
-#' jk_class <- step_jenks("estimate", tx$estimate, n = 5)
+#' jk_class <- step_jenks(data = tx, column = "estimate", n = 5)
+#' 
+#' # Original approach still works for backwards compatibility
+#' eq_class_old <- step_equal_interval(column = "estimate", data_values = tx$estimate, n = 5)
 #' 
 #' # Use in a map with formatted legend
 #' maplibre() |>
@@ -612,7 +639,17 @@ NULL
 
 #' @rdname step_classification
 #' @export
-step_equal_interval <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
+step_equal_interval <- function(data = NULL, column, data_values = NULL, n = 5, colors = NULL, na_color = "grey") {
+    # Handle new data + column interface
+    if (!is.null(data) && is.null(data_values)) {
+        if (!column %in% names(data)) {
+            rlang::abort(paste0("Column '", column, "' not found in data"))
+        }
+        data_values <- data[[column]]
+    } else if (is.null(data_values)) {
+        rlang::abort("Either 'data' or 'data_values' must be provided")
+    }
+    
     if (!is.numeric(data_values)) {
         rlang::abort("data_values must be numeric")
     }
@@ -693,7 +730,17 @@ step_equal_interval <- function(column, data_values, n = 5, colors = NULL, na_co
 
 #' @rdname step_classification
 #' @export
-step_quantile <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
+step_quantile <- function(data = NULL, column, data_values = NULL, n = 5, colors = NULL, na_color = "grey") {
+    # Handle new data + column interface
+    if (!is.null(data) && is.null(data_values)) {
+        if (!column %in% names(data)) {
+            rlang::abort(paste0("Column '", column, "' not found in data"))
+        }
+        data_values <- data[[column]]
+    } else if (is.null(data_values)) {
+        rlang::abort("Either 'data' or 'data_values' must be provided")
+    }
+    
     if (!is.numeric(data_values)) {
         rlang::abort("data_values must be numeric")
     }
@@ -779,7 +826,17 @@ step_quantile <- function(column, data_values, n = 5, colors = NULL, na_color = 
 
 #' @rdname step_classification
 #' @export
-step_jenks <- function(column, data_values, n = 5, colors = NULL, na_color = "grey") {
+step_jenks <- function(data = NULL, column, data_values = NULL, n = 5, colors = NULL, na_color = "grey") {
+    # Handle new data + column interface
+    if (!is.null(data) && is.null(data_values)) {
+        if (!column %in% names(data)) {
+            rlang::abort(paste0("Column '", column, "' not found in data"))
+        }
+        data_values <- data[[column]]
+    } else if (is.null(data_values)) {
+        rlang::abort("Either 'data' or 'data_values' must be provided")
+    }
+    
     if (!is.numeric(data_values)) {
         rlang::abort("data_values must be numeric")
     }

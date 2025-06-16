@@ -5,8 +5,9 @@
 \title{Create an interpolation expression with automatic palette and break calculation}
 \usage{
 interpolate_palette(
+  data = NULL,
   column,
-  data_values,
+  data_values = NULL,
   method = "equal",
   n = 5,
   palette = viridisLite::viridis,
@@ -14,9 +15,13 @@ interpolate_palette(
 )
 }
 \arguments{
+\item{data}{A data frame or sf object containing the data. If provided, data_values
+will be extracted from data[\link{column}]. Either data or data_values must be provided.}
+
 \item{column}{The name of the column to use for the interpolation.}
 
-\item{data_values}{A numeric vector of the actual data values used to calculate breaks.}
+\item{data_values}{A numeric vector of the actual data values used to calculate breaks.
+If NULL and data is provided, will be extracted from data[\link{column}].}
 
 \item{method}{The method for calculating breaks. Options are "equal" (equal intervals),
 "quantile" (quantile breaks), or "jenks" (Jenks natural breaks). Defaults to "equal".}
@@ -39,9 +44,11 @@ methods as the step functions.
 }
 \examples{
 \dontrun{
-# Create continuous color scale
-data_values <- c(10, 25, 30, 45, 60, 75, 90)
-scale <- interpolate_palette("value", data_values, method = "equal", n = 5)
+# Create continuous color scale - new recommended approach
+my_data <- data.frame(value = c(10, 25, 30, 45, 60, 75, 90))
+scale <- interpolate_palette(data = my_data, column = "value", method = "equal", n = 5)
+# Or with piping
+scale <- my_data |> interpolate_palette("value", method = "equal", n = 5)
 
 # Use in a layer
 add_fill_layer(map, fill_color = scale$expression)
@@ -49,5 +56,9 @@ add_fill_layer(map, fill_color = scale$expression)
 # Extract legend information  
 labels <- get_legend_labels(scale, format = "currency")
 colors <- scale$colors
+
+# Original approach still works for backwards compatibility
+data_values <- c(10, 25, 30, 45, 60, 75, 90)
+scale_old <- interpolate_palette(column = "value", data_values = data_values, method = "equal", n = 5)
 }
 }

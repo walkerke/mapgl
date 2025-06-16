@@ -8,21 +8,40 @@
 \title{Step expressions with automatic classification}
 \usage{
 step_equal_interval(
+  data = NULL,
   column,
-  data_values,
+  data_values = NULL,
   n = 5,
   colors = NULL,
   na_color = "grey"
 )
 
-step_quantile(column, data_values, n = 5, colors = NULL, na_color = "grey")
+step_quantile(
+  data = NULL,
+  column,
+  data_values = NULL,
+  n = 5,
+  colors = NULL,
+  na_color = "grey"
+)
 
-step_jenks(column, data_values, n = 5, colors = NULL, na_color = "grey")
+step_jenks(
+  data = NULL,
+  column,
+  data_values = NULL,
+  n = 5,
+  colors = NULL,
+  na_color = "grey"
+)
 }
 \arguments{
+\item{data}{A data frame or sf object containing the data. If provided, data_values
+will be extracted from data[\link{column}]. Either data or data_values must be provided.}
+
 \item{column}{The name of the column to use for the step expression.}
 
-\item{data_values}{A numeric vector of the actual data values used to calculate breaks.}
+\item{data_values}{A numeric vector of the actual data values used to calculate breaks.
+If NULL and data is provided, will be extracted from data[\link{column}].}
 
 \item{n}{The number of classes/intervals to create. Defaults to 5.}
 
@@ -52,14 +71,19 @@ library(tidycensus)
 tx <- get_acs(geography = "county", variables = "B19013_001", 
               state = "TX", geometry = TRUE)
 
-# Equal interval classification
-eq_class <- step_equal_interval("estimate", tx$estimate, n = 5)
+# New recommended approach - cleaner interface
+eq_class <- step_equal_interval(data = tx, column = "estimate", n = 5)
+# Or with piping
+eq_class <- tx |> step_equal_interval("estimate", n = 5)
 
 # Quantile classification  
-qt_class <- step_quantile("estimate", tx$estimate, n = 5)
+qt_class <- step_quantile(data = tx, column = "estimate", n = 5)
 
 # Jenks natural breaks
-jk_class <- step_jenks("estimate", tx$estimate, n = 5)
+jk_class <- step_jenks(data = tx, column = "estimate", n = 5)
+
+# Original approach still works for backwards compatibility
+eq_class_old <- step_equal_interval(column = "estimate", data_values = tx$estimate, n = 5)
 
 # Use in a map with formatted legend
 maplibre() |>
