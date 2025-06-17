@@ -1617,6 +1617,7 @@ if (HTMLWidgets.shinyMode) {
                     }
                 }
             }
+
             if (message.type === "set_filter") {
                 map.setFilter(message.layer, message.filter);
                 // Track filter state for layer restoration
@@ -1954,11 +1955,30 @@ if (HTMLWidgets.shinyMode) {
                 }
                 layerState.paintProperties[layerId][propertyName] = newValue;
             } else if (message.type === "query_rendered_features") {
-                const features = map.queryRenderedFeatures(message.geometry, {
-                    layers: message.layers,
-                    filter: message.filter,
+                //debugger;
+                var features = map.queryRenderedFeatures(message.geometry, {
+                    layers: [message.layer]
+                    //filter: message.filter,
                 });
-                Shiny.setInputValue(el.id + "_feature_query", features);
+                var properties = features.map(f => f.properties);
+
+                Shiny.setInputValue(
+                    data.id + "_feature_query", 
+                    JSON.stringify(properties),
+                    {priority: "event"}
+                );
+            } else if (message.type === "query_source_features") {
+                debugger;
+                var features = map.querySourceFeatures(message.source, {
+                    sourceLayer: [message.layer]
+                });
+                var properties = features.map(f => f.properties);
+
+                Shiny.setInputValue(
+                    data.id + "_source_query", 
+                    JSON.stringify(properties),
+                    {priority: "event"}
+                );
             } else if (message.type === "add_legend") {
                 // Extract legend ID from HTML to track it
                 const legendIdMatch = message.html.match(/id="([^"]+)"/);
