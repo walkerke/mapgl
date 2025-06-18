@@ -670,11 +670,11 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
 #' See [queryrenderedfeatures][https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#queryrenderedfeatures]
 #'
 #' @return Nothing, but updates `input$map_feature_query`
-#' @export query_rendered_features
+#' @export update_feature_query
 #'
-#query_rendered_features <- function(map, layer_id = NULL, geometry = NULL) {
 update_feature_query <- function(map, layer_id = NULL, geometry = NULL
                                  ) {
+  #query_rendered_features <- function(map, layer_id = NULL, geometry = NULL) {
   #browser()
   if( !(inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy"))
       ) {
