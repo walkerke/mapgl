@@ -126,7 +126,7 @@ function onClickPopup(e, map, popupProperty, layerId) {
     window._mapboxPopups[layerId] = popup;
 
     // Remove reference when popup is closed
-    popup.on('close', function() {
+    popup.on('close', function () {
         if (window._mapboxPopups[layerId] === popup) {
             delete window._mapboxPopups[layerId];
         }
@@ -330,6 +330,30 @@ HTMLWidgets.widget({
                                 ymax: bounds.getNorth(),
                             });
                         });
+
+                        if (x.viewport_features && x.viewport_features.enabled) {
+
+                            map.on("moveend", function (e) {
+                                debugger;
+                                var features = map.queryRenderedFeatures(null, {
+                                    layers: [x.viewport_features.layer]
+                                });
+
+                                if (features.length > 0) {
+                                    var properties = features.map(f => f.properties);
+
+                                    Shiny.setInputValue(
+                                        el.id + "_bbox_features",
+                                        JSON.stringify(properties)
+                                    );
+                                } else {
+                                    Shiny.setInputValue(
+                                        el.id + "_bbox_features",
+                                        null
+                                    );
+                                }
+                            });
+                        }
                     }
 
                     // Set config properties if provided
@@ -626,7 +650,7 @@ HTMLWidgets.widget({
                                                 const featureState = {
                                                     source:
                                                         typeof layer.source ===
-                                                        "string"
+                                                            "string"
                                                             ? layer.source
                                                             : layer.id,
                                                     id: hoveredFeatureId,
@@ -644,7 +668,7 @@ HTMLWidgets.widget({
                                             const featureState = {
                                                 source:
                                                     typeof layer.source ===
-                                                    "string"
+                                                        "string"
                                                         ? layer.source
                                                         : layer.id,
                                                 id: hoveredFeatureId,
@@ -666,7 +690,7 @@ HTMLWidgets.widget({
                                         const featureState = {
                                             source:
                                                 typeof layer.source ===
-                                                "string"
+                                                    "string"
                                                     ? layer.source
                                                     : layer.id,
                                             id: hoveredFeatureId,
@@ -785,7 +809,7 @@ HTMLWidgets.widget({
 
                     // Add custom controls if any are defined
                     if (x.custom_controls) {
-                        Object.keys(x.custom_controls).forEach(function(key) {
+                        Object.keys(x.custom_controls).forEach(function (key) {
                             const controlOptions = x.custom_controls[key];
                             const customControlContainer = document.createElement("div");
 
@@ -798,10 +822,10 @@ HTMLWidgets.widget({
                             customControlContainer.innerHTML = controlOptions.html;
 
                             const customControl = {
-                                onAdd: function() {
+                                onAdd: function () {
                                     return customControlContainer;
                                 },
-                                onRemove: function() {
+                                onRemove: function () {
                                     if (customControlContainer.parentNode) {
                                         customControlContainer.parentNode.removeChild(customControlContainer);
                                     }
@@ -834,7 +858,7 @@ HTMLWidgets.widget({
                             if (projectionConfig.projection) {
                                 const projection =
                                     typeof projectionConfig.projection ===
-                                    "string"
+                                        "string"
                                         ? { type: projectionConfig.projection }
                                         : projectionConfig.projection;
                                 map.setProjection(projection);
@@ -848,21 +872,20 @@ HTMLWidgets.widget({
                             forwardGeocode: async (config) => {
                                 const features = [];
                                 try {
-                                    const request = `https://nominatim.openstreetmap.org/search?q=${
-                                        config.query
-                                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                                    const request = `https://nominatim.openstreetmap.org/search?q=${config.query
+                                        }&format=geojson&polygon_geojson=1&addressdetails=1`;
                                     const response = await fetch(request);
                                     const geojson = await response.json();
                                     for (const feature of geojson.features) {
                                         const center = [
                                             feature.bbox[0] +
-                                                (feature.bbox[2] -
-                                                    feature.bbox[0]) /
-                                                    2,
+                                            (feature.bbox[2] -
+                                                feature.bbox[0]) /
+                                            2,
                                             feature.bbox[1] +
-                                                (feature.bbox[3] -
-                                                    feature.bbox[1]) /
-                                                    2,
+                                            (feature.bbox[3] -
+                                                feature.bbox[1]) /
+                                            2,
                                         ];
                                         const point = {
                                             type: "Feature",
@@ -996,7 +1019,7 @@ HTMLWidgets.widget({
 
                         // Process any queued features
                         if (x.draw_features_queue) {
-                            x.draw_features_queue.forEach(function(data) {
+                            x.draw_features_queue.forEach(function (data) {
                                 if (data.clear_existing) {
                                     draw.deleteAll();
                                 }
@@ -1193,7 +1216,7 @@ HTMLWidgets.widget({
                         let initialView = {};
 
                         // Capture the initial view after the map has loaded and all view operations are complete
-                        map.once('load', function() {
+                        map.once('load', function () {
                             initialView = {
                                 center: map.getCenter(),
                                 zoom: map.getZoom(),
@@ -1510,36 +1533,36 @@ HTMLWidgets.widget({
                         // add hover listener for shinyMode if enabled
                         if (x.hover_events && x.hover_events.enabled) {
                             map.on("mousemove", function (e) {
-                              // Feature hover events
-                              if (x.hover_events.features) {
-                                const features = map.queryRenderedFeatures(e.point);
+                                // Feature hover events
+                                if (x.hover_events.features) {
+                                    const features = map.queryRenderedFeatures(e.point);
 
-                                if(features.length > 0) {
-                                  const feature = features[0];
-                                  Shiny.onInputChange(el.id + "_feature_hover", {
-                                    id: feature.id,
-                                          properties: feature.properties,
-                                          layer: feature.layer.id,
-                                          lng: e.lngLat.lng,
-                                          lat: e.lngLat.lat,
-                                          time: new Date(),
-                                      });
-                                } else {
-                                  Shiny.onInputChange(
-                                    el.id + "_feature_hover",
-                                    null,
-                                );
-                              }
-                              }
+                                    if (features.length > 0) {
+                                        const feature = features[0];
+                                        Shiny.onInputChange(el.id + "_feature_hover", {
+                                            id: feature.id,
+                                            properties: feature.properties,
+                                            layer: feature.layer.id,
+                                            lng: e.lngLat.lng,
+                                            lat: e.lngLat.lat,
+                                            time: new Date(),
+                                        });
+                                    } else {
+                                        Shiny.onInputChange(
+                                            el.id + "_feature_hover",
+                                            null,
+                                        );
+                                    }
+                                }
 
-                              // Coordinate hover events
-                              if (x.hover_events.coordinates) {
-                                Shiny.onInputChange(el.id + "_hover", {
-                                    lng: e.lngLat.lng,
-                                    lat: e.lngLat.lat,
-                                    time: new Date(),
-                                  });
-                              }
+                                // Coordinate hover events
+                                if (x.hover_events.coordinates) {
+                                    Shiny.onInputChange(el.id + "_hover", {
+                                        lng: e.lngLat.lng,
+                                        lat: e.lngLat.lat,
+                                        time: new Date(),
+                                    });
+                                }
                             });
                         }
                     }
@@ -1725,7 +1748,7 @@ if (HTMLWidgets.shinyMode) {
                                         const featureState = {
                                             source:
                                                 typeof message.layer.source ===
-                                                "string"
+                                                    "string"
                                                     ? message.layer.source
                                                     : message.layer.id,
                                             id: hoveredFeatureId,
@@ -1743,7 +1766,7 @@ if (HTMLWidgets.shinyMode) {
                                     const featureState = {
                                         source:
                                             typeof message.layer.source ===
-                                            "string"
+                                                "string"
                                                 ? message.layer.source
                                                 : message.layer.id,
                                         id: hoveredFeatureId,
@@ -1765,7 +1788,7 @@ if (HTMLWidgets.shinyMode) {
                                 const featureState = {
                                     source:
                                         typeof message.layer.source ===
-                                        "string"
+                                            "string"
                                             ? message.layer.source
                                             : message.layer.id,
                                     id: hoveredFeatureId,
@@ -1963,9 +1986,9 @@ if (HTMLWidgets.shinyMode) {
                 var properties = features.map(f => f.properties);
 
                 Shiny.setInputValue(
-                    data.id + "_feature_query", 
+                    data.id + "_feature_query",
                     JSON.stringify(properties),
-                    {priority: "event"}
+                    { priority: "event" }
                 );
             } else if (message.type === "query_source_features") {
                 debugger;
@@ -1975,9 +1998,9 @@ if (HTMLWidgets.shinyMode) {
                 //var properties = features.map(f => f.properties);
 
                 Shiny.setInputValue(
-                    data.id + "_source_query", 
-                    JSON.stringify(features), 
-                    {priority: "event"}
+                    data.id + "_source_query",
+                    JSON.stringify(features),
+                    { priority: "event" }
                 );
             } else if (message.type === "add_legend") {
                 // Extract legend ID from HTML to track it
@@ -2043,7 +2066,7 @@ if (HTMLWidgets.shinyMode) {
                     const knownUserLayerIds = [];
 
                     // For each layer in the current style, determine if it's a user-added layer
-                    currentStyle.layers.forEach(function(layer) {
+                    currentStyle.layers.forEach(function (layer) {
                         const layerId = layer.id;
 
                         // Critical: Check for nc_counties specifically since we know that's used in the test app
@@ -2120,8 +2143,8 @@ if (HTMLWidgets.shinyMode) {
                         }
                         // Strategy 2: Check for source data URL patterns typical of R-generated data
                         else if (source.url && typeof source.url === 'string' &&
-                                 (source.url.includes("data:application/json") ||
-                                  source.url.includes("blob:"))) {
+                            (source.url.includes("data:application/json") ||
+                                source.url.includes("blob:"))) {
                             console.log("[MapGL Debug] Found user source with data URL:", sourceId);
                             if (!userSourceIds.includes(sourceId)) {
                                 userSourceIds.push(sourceId);
@@ -2164,7 +2187,7 @@ if (HTMLWidgets.shinyMode) {
 
                     // Identify layers using user-added sources or known user layer IDs
                     // ONLY include layers that use genuinely user-added sources (not base map sources)
-                    currentStyle.layers.forEach(function(layer) {
+                    currentStyle.layers.forEach(function (layer) {
                         // Check if this layer uses a genuine user source (not filtered out base map sources)
                         const usesUserSource = userSourceIds.includes(layer.source);
                         const isKnownUserLayer = knownUserLayerIds.includes(layer.id);
@@ -2199,17 +2222,17 @@ if (HTMLWidgets.shinyMode) {
                         window._mapglPreservedData = {};
                     }
                     window._mapglPreservedData[map.getContainer().id] = {
-                        sources: userSourceIds.map(id => ({id, source: currentStyle.sources[id]})),
+                        sources: userSourceIds.map(id => ({ id, source: currentStyle.sources[id] })),
                         layers: userLayers
                     };
 
                     // Set up event listener to re-add sources and layers after style loads
-                    const onStyleLoad = function() {
+                    const onStyleLoad = function () {
                         console.log("[MapGL Debug] style.load event fired");
 
                         try {
                             // Re-add user sources
-                            userSourceIds.forEach(function(sourceId) {
+                            userSourceIds.forEach(function (sourceId) {
                                 try {
                                     if (!map.getSource(sourceId)) {
                                         const source = currentStyle.sources[sourceId];
@@ -2222,7 +2245,7 @@ if (HTMLWidgets.shinyMode) {
                             });
 
                             // Re-add user layers
-                            userLayers.forEach(function(layer) {
+                            userLayers.forEach(function (layer) {
                                 try {
                                     if (!map.getLayer(layer.id)) {
                                         console.log("[MapGL Debug] Re-adding layer:", layer.id);
@@ -2257,7 +2280,7 @@ if (HTMLWidgets.shinyMode) {
                                             // Re-add tooltip handlers
                                             const tooltipProperty = layer.tooltip || "NAME";
 
-                                            const mouseMoveHandler = function(e) {
+                                            const mouseMoveHandler = function (e) {
                                                 map.getCanvas().style.cursor = "pointer";
                                                 if (e.features.length > 0) {
                                                     const description = e.features[0].properties[tooltipProperty];
@@ -2265,7 +2288,7 @@ if (HTMLWidgets.shinyMode) {
                                                 }
                                             };
 
-                                            const mouseLeaveHandler = function() {
+                                            const mouseLeaveHandler = function () {
                                                 map.getCanvas().style.cursor = "";
                                                 tooltip.remove();
                                             };
@@ -2419,7 +2442,7 @@ if (HTMLWidgets.shinyMode) {
                                     }
 
                                     // Create new popup handler
-                                    const clickHandler = function(e) {
+                                    const clickHandler = function (e) {
                                         onClickPopup(e, map, popupProperty, layerId);
                                     };
 
@@ -2484,7 +2507,7 @@ if (HTMLWidgets.shinyMode) {
                     // Some MapLibre styles or versions may have different event timing
                     if (userLayers.length > 0) {
                         // Set a timeout to check if layers were added after a reasonable delay
-                        setTimeout(function() {
+                        setTimeout(function () {
                             try {
                                 console.log("[MapGL Debug] Running backup layer check");
                                 const mapId = map.getContainer().id;
@@ -2497,7 +2520,7 @@ if (HTMLWidgets.shinyMode) {
                                         console.log("[MapGL Debug] Backup restoration needed for layers");
 
                                         // Re-add sources first
-                                        preserved.sources.forEach(function(src) {
+                                        preserved.sources.forEach(function (src) {
                                             try {
                                                 if (!map.getSource(src.id)) {
                                                     console.log("[MapGL Debug] Backup: adding source", src.id);
@@ -2509,7 +2532,7 @@ if (HTMLWidgets.shinyMode) {
                                         });
 
                                         // Then re-add layers
-                                        preserved.layers.forEach(function(layer) {
+                                        preserved.layers.forEach(function (layer) {
                                             try {
                                                 if (!map.getLayer(layer.id)) {
                                                     console.log("[MapGL Debug] Backup: adding layer", layer.id);
@@ -2528,7 +2551,7 @@ if (HTMLWidgets.shinyMode) {
                                                         // Re-add tooltip handlers
                                                         const tooltipProperty = "NAME";
 
-                                                        const mouseMoveHandler = function(e) {
+                                                        const mouseMoveHandler = function (e) {
                                                             map.getCanvas().style.cursor = "pointer";
                                                             if (e.features.length > 0) {
                                                                 const description = e.features[0].properties[tooltipProperty];
@@ -2536,7 +2559,7 @@ if (HTMLWidgets.shinyMode) {
                                                             }
                                                         };
 
-                                                        const mouseLeaveHandler = function() {
+                                                        const mouseLeaveHandler = function () {
                                                             map.getCanvas().style.cursor = "";
                                                             tooltip.remove();
                                                         };
@@ -2677,7 +2700,7 @@ if (HTMLWidgets.shinyMode) {
                                                         map.off("click", layerId, window._mapboxClickHandlers[layerId]);
                                                     }
 
-                                                    const clickHandler = function(e) {
+                                                    const clickHandler = function (e) {
                                                         onClickPopup(e, map, popupProperty, layerId);
                                                     };
 
@@ -2738,7 +2761,7 @@ if (HTMLWidgets.shinyMode) {
                         }, 500); // 500ms delay - faster recovery
 
                         // Add a second backup with a bit more delay in case the first one fails
-                        setTimeout(function() {
+                        setTimeout(function () {
                             try {
                                 console.log("[MapGL Debug] Running second backup layer check");
                                 const mapId = map.getContainer().id;
@@ -2751,7 +2774,7 @@ if (HTMLWidgets.shinyMode) {
                                         console.log("[MapGL Debug] Second backup restoration needed");
 
                                         // Re-add sources first
-                                        preserved.sources.forEach(function(src) {
+                                        preserved.sources.forEach(function (src) {
                                             try {
                                                 if (!map.getSource(src.id)) {
                                                     console.log("[MapGL Debug] Second backup: adding source", src.id);
@@ -2763,7 +2786,7 @@ if (HTMLWidgets.shinyMode) {
                                         });
 
                                         // Then re-add layers
-                                        preserved.layers.forEach(function(layer) {
+                                        preserved.layers.forEach(function (layer) {
                                             try {
                                                 if (!map.getLayer(layer.id)) {
                                                     console.log("[MapGL Debug] Second backup: adding layer", layer.id);
@@ -2782,7 +2805,7 @@ if (HTMLWidgets.shinyMode) {
                                                         // Re-add tooltip handlers
                                                         const tooltipProperty = "NAME";
 
-                                                        const mouseMoveHandler = function(e) {
+                                                        const mouseMoveHandler = function (e) {
                                                             map.getCanvas().style.cursor = "pointer";
                                                             if (e.features.length > 0) {
                                                                 const description = e.features[0].properties[tooltipProperty];
@@ -2790,7 +2813,7 @@ if (HTMLWidgets.shinyMode) {
                                                             }
                                                         };
 
-                                                        const mouseLeaveHandler = function() {
+                                                        const mouseLeaveHandler = function () {
                                                             map.getCanvas().style.cursor = "";
                                                             tooltip.remove();
                                                         };
@@ -2931,7 +2954,7 @@ if (HTMLWidgets.shinyMode) {
                                                         map.off("click", layerId, window._mapboxClickHandlers[layerId]);
                                                     }
 
-                                                    const clickHandler = function(e) {
+                                                    const clickHandler = function (e) {
                                                         onClickPopup(e, map, popupProperty, layerId);
                                                     };
 
@@ -3295,17 +3318,16 @@ if (HTMLWidgets.shinyMode) {
                     forwardGeocode: async (config) => {
                         const features = [];
                         try {
-                            const request = `https://nominatim.openstreetmap.org/search?q=${
-                                config.query
-                            }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                            const request = `https://nominatim.openstreetmap.org/search?q=${config.query
+                                }&format=geojson&polygon_geojson=1&addressdetails=1`;
                             const response = await fetch(request);
                             const geojson = await response.json();
                             for (const feature of geojson.features) {
                                 const center = [
                                     feature.bbox[0] +
-                                        (feature.bbox[2] - feature.bbox[0]) / 2,
+                                    (feature.bbox[2] - feature.bbox[0]) / 2,
                                     feature.bbox[1] +
-                                        (feature.bbox[3] - feature.bbox[1]) / 2,
+                                    (feature.bbox[3] - feature.bbox[1]) / 2,
                                 ];
                                 const point = {
                                     type: "Feature",
@@ -3782,10 +3804,10 @@ if (HTMLWidgets.shinyMode) {
             customControlContainer.innerHTML = controlOptions.html;
 
             const customControl = {
-                onAdd: function() {
+                onAdd: function () {
                     return customControlContainer;
                 },
-                onRemove: function() {
+                onRemove: function () {
                     if (customControlContainer.parentNode) {
                         customControlContainer.parentNode.removeChild(customControlContainer);
                     }
