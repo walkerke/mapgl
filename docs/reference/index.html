@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -266,7 +266,7 @@
       </dl></div><div class="section level2">
       <h2 id="legends">Legends<a class="anchor" aria-label="anchor" href="#legends"></a></h2>
 
-      <div class="section-desc"><p>Functions for adding and managing map legends</p></div>
+      <div class="section-desc"><p>Functions for adding and managing map legends with customizable styling</p></div>
 
 
     </div><div class="section level2">
@@ -276,28 +276,10 @@
 
       <dl><dt>
 
-          <code><a href="add_legend.html">add_legend()</a></code>
+          <code><a href="map_legends.html">legend_style()</a></code> <code><a href="map_legends.html">add_legend()</a></code> <code><a href="map_legends.html">add_categorical_legend()</a></code> <code><a href="map_legends.html">add_continuous_legend()</a></code> <code><a href="map_legends.html">clear_legend()</a></code>
 
         </dt>
-        <dd>Add a legend to a Mapbox GL map</dd>
-      </dl><dl><dt>
-
-          <code><a href="add_categorical_legend.html">add_categorical_legend()</a></code>
-
-        </dt>
-        <dd>Add a categorical legend to a Mapbox GL map</dd>
-      </dl><dl><dt>
-
-          <code><a href="add_continuous_legend.html">add_continuous_legend()</a></code>
-
-        </dt>
-        <dd>Add a continuous legend</dd>
-      </dl><dl><dt>
-
-          <code><a href="clear_legend.html">clear_legend()</a></code>
-
-        </dt>
-        <dd>Clear legend(s) from a map in a proxy session</dd>
+        <dd>Add legends to maps with customizable styling</dd>
       </dl></div><div class="section level2">
       <h2 id="markers">Markers<a class="anchor" aria-label="anchor" href="#markers"></a></h2>
 
@@ -392,6 +374,35 @@
 
         </dt>
         <dd>Prepare cluster options for circle layers</dd>
+      </dl></div><div class="section level2">
+      <h2 id="data-classification">Data Classification<a class="anchor" aria-label="anchor" href="#data-classification"></a></h2>
+
+      <div class="section-desc"><p>Functions for automatic data classification and choropleth styling</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="step_classification.html">step_equal_interval()</a></code> <code><a href="step_classification.html">step_quantile()</a></code> <code><a href="step_classification.html">step_jenks()</a></code>
+
+        </dt>
+        <dd>Step expressions with automatic classification</dd>
+      </dl><dl><dt>
+
+          <code><a href="interpolate_palette.html">interpolate_palette()</a></code>
+
+        </dt>
+        <dd>Create an interpolation expression with automatic palette and break calculation</dd>
+      </dl><dl><dt>
+
+          <code><a href="classification_helpers.html">get_legend_labels()</a></code> <code><a href="classification_helpers.html">get_legend_colors()</a></code> <code><a href="classification_helpers.html">get_breaks()</a></code> <code><a href="classification_helpers.html">print(<i>&lt;mapgl_classification&gt;</i>)</a></code> <code><a href="classification_helpers.html">print(<i>&lt;mapgl_continuous_scale&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Extract information from classification and continuous scale objects</dd>
       </dl></div><div class="section level2">
       <h2 id="camera-and-view">Camera and View<a class="anchor" aria-label="anchor" href="#camera-and-view"></a></h2>
 
@@ -538,7 +549,7 @@
           <code><a href="clear_layer.html">clear_layer()</a></code>
 
         </dt>
-        <dd>Clear a layer from a map using a proxy</dd>
+        <dd>Clear layers from a map using a proxy</dd>
       </dl><dl><dt>
 
           <code><a href="move_layer.html">move_layer()</a></code>
@@ -628,6 +639,12 @@
 
         </dt>
         <dd>Create a proxy object for a Maplibre GL Compare widget in Shiny</dd>
+      </dl><dl><dt>
+
+          <code><a href="enable_shiny_hover.html">enable_shiny_hover()</a></code>
+
+        </dt>
+        <dd>Enable hover events for Shiny applications</dd>
       </dl></div><div class="section level2">
       <h2 id="advanced-features">Advanced Features<a class="anchor" aria-label="anchor" href="#advanced-features"></a></h2>
 
@@ -669,6 +686,12 @@
 
         </dt>
         <dd>Add features to an existing draw control</dd>
+      </dl><dl><dt>
+
+          <code><a href="clear_drawn_features.html">clear_drawn_features()</a></code>
+
+        </dt>
+        <dd>Clear all drawn features from a map</dd>
       </dl></div><div class="section level2">
       <h2 id="story-maps">Story Maps<a class="anchor" aria-label="anchor" href="#story-maps"></a></h2>
 

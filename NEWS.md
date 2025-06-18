@@ -1,4 +1,48 @@
-# mapgl (development version)
+# mapgl 0.3
+
+* Added `enable_shiny_hover()` function for optional hover events in Shiny applications:
+  - Provides `_hover` input for mouse coordinates and `_feature_hover` input for feature information
+  - Performance-conscious design: hover functionality is disabled by default and must be explicitly enabled
+  - Works with both `maplibre()` and `mapboxgl()` widgets, including compare views
+  - Configurable options: `coordinates = TRUE/FALSE` and `features = TRUE/FALSE`
+  - Example: `maplibre() |> add_circle_layer(...) |> enable_shiny_hover()`
+  - Compare views support: hover events include map side (`"before"` or `"after"`) in input names
+
+* Comprehensive legend styling system: Major enhancement to legend functionality with extensive customization options:
+  - New `legend_style()` function provides user-friendly interface for legend styling without requiring CSS knowledge
+  - Container styling: background colors/opacity, borders, border radius, padding, and customizable drop shadows
+  - Typography control: font families (with fallbacks), sizes, weights, and colors for both title and text
+  - Element borders: add borders around categorical patches/circles and continuous color bars for improved visibility
+  - Shadow customization: control shadow color, size, and opacity for professional appearance
+  - Works with custom legend IDs and maintains full backward compatibility
+  - All legend functions now consolidated under unified `map_legends` documentation
+
+* Advanced data classification system: New functions for automatic choropleth mapping similar to GIS software:
+  - `step_equal_interval()`, `step_quantile()`, and `step_jenks()` for automatic classification with equal interval, quantile, and Jenks natural breaks methods
+  - `interpolate_palette()` for continuous color scaling with multiple interpolation methods
+  - Helper functions `get_legend_labels()`, `get_legend_colors()`, and `get_breaks()` for extracting classification metadata
+  - Comprehensive number formatting support (currency, percent, scientific, compact notation) with customizable prefixes, suffixes, and decimal places
+  - Seamless integration with existing legend system and step expressions
+  - Built on `classInt` package for robust statistical classification algorithms
+
+* Enhanced MapTiler integration: Expanded support for MapTiler mapping styles:
+  - Added support for MapTiler style variants through new `variant` parameter in `maptiler_style()`
+  - Support for light/dark variants of streets style and hybrid satellite imagery
+  - Improved style switching with proper handling of MapTiler-specific features
+  - Better integration with basemap switcher functionality
+
+* Robust `set_style()` improvements: Fixed critical issues with dynamic style switching in Shiny applications:
+  - Resolved #100: `set_style()` now properly preserves user-added layers, sources, popups, tooltips, and other map elements when switching base styles
+  - Enhanced state tracking system maintains map configuration across style changes
+  - Improved compatibility with basemap switcher controls for seamless style transitions
+  - Fixed legend reversion issues when changing map styles
+  - Better handling of map configuration properties in both regular and compare environments
+
+* New `number_format()` function: Comprehensive number formatting for tooltips and map content:
+  - Support for currency, percentage, scientific notation, and compact formats
+  - Customizable decimal places, thousands separators, and currency symbols
+  - Integration with tooltip expressions for dynamic number formatting
+  - Works with both static content and expression-based tooltips
 
 * Enhanced draw control functionality with improved feature editing capabilities:
   - Added ability to load existing features from map sources into the draw control for editing either when initializing the draw control or via `add_features_to_draw()`

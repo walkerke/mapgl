@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,8 +41,57 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="mapgl-development-version">mapgl (development version)<a class="anchor" aria-label="anchor" href="#mapgl-development-version"></a></h2>
-<ul><li>Enhanced draw control functionality with improved feature editing capabilities:
+<h2 class="pkg-version" data-toc-text="0.3" id="mapgl-03">mapgl 0.3<a class="anchor" aria-label="anchor" href="#mapgl-03"></a></h2>
+<ul><li>Added <code><a href="../reference/enable_shiny_hover.html">enable_shiny_hover()</a></code> function for optional hover events in Shiny applications:
+<ul><li>Provides <code>_hover</code> input for mouse coordinates and <code>_feature_hover</code> input for feature information</li>
+<li>Performance-conscious design: hover functionality is disabled by default and must be explicitly enabled</li>
+<li>Works with both <code><a href="../reference/maplibre.html">maplibre()</a></code> and <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code> widgets, including compare views</li>
+<li>Configurable options: <code>coordinates = TRUE/FALSE</code> and <code>features = TRUE/FALSE</code>
+</li>
+<li>Example: <code>maplibre() |&gt; add_circle_layer(...) |&gt; enable_shiny_hover()</code>
+</li>
+<li>Compare views support: hover events include map side (<code>"before"</code> or <code>"after"</code>) in input names</li>
+</ul></li>
+<li>Comprehensive legend styling system: Major enhancement to legend functionality with extensive customization options:
+<ul><li>New <code><a href="../reference/map_legends.html">legend_style()</a></code> function provides user-friendly interface for legend styling without requiring CSS knowledge</li>
+<li>Container styling: background colors/opacity, borders, border radius, padding, and customizable drop shadows</li>
+<li>Typography control: font families (with fallbacks), sizes, weights, and colors for both title and text</li>
+<li>Element borders: add borders around categorical patches/circles and continuous color bars for improved visibility</li>
+<li>Shadow customization: control shadow color, size, and opacity for professional appearance</li>
+<li>Works with custom legend IDs and maintains full backward compatibility</li>
+<li>All legend functions now consolidated under unified <code>map_legends</code> documentation</li>
+</ul></li>
+<li>Advanced data classification system: New functions for automatic choropleth mapping similar to GIS software:
+<ul><li>
+<code><a href="../reference/step_classification.html">step_equal_interval()</a></code>, <code><a href="../reference/step_classification.html">step_quantile()</a></code>, and <code><a href="../reference/step_classification.html">step_jenks()</a></code> for automatic classification with equal interval, quantile, and Jenks natural breaks methods</li>
+<li>
+<code><a href="../reference/interpolate_palette.html">interpolate_palette()</a></code> for continuous color scaling with multiple interpolation methods</li>
+<li>Helper functions <code><a href="../reference/classification_helpers.html">get_legend_labels()</a></code>, <code><a href="../reference/classification_helpers.html">get_legend_colors()</a></code>, and <code><a href="../reference/classification_helpers.html">get_breaks()</a></code> for extracting classification metadata</li>
+<li>Comprehensive number formatting support (currency, percent, scientific, compact notation) with customizable prefixes, suffixes, and decimal places</li>
+<li>Seamless integration with existing legend system and step expressions</li>
+<li>Built on <code>classInt</code> package for robust statistical classification algorithms</li>
+</ul></li>
+<li>Enhanced MapTiler integration: Expanded support for MapTiler mapping styles:
+<ul><li>Added support for MapTiler style variants through new <code>variant</code> parameter in <code><a href="../reference/maptiler_style.html">maptiler_style()</a></code>
+</li>
+<li>Support for light/dark variants of streets style and hybrid satellite imagery</li>
+<li>Improved style switching with proper handling of MapTiler-specific features</li>
+<li>Better integration with basemap switcher functionality</li>
+</ul></li>
+<li>Robust <code><a href="../reference/set_style.html">set_style()</a></code> improvements: Fixed critical issues with dynamic style switching in Shiny applications:
+<ul><li>Resolved <a href="https://github.com/walkerke/mapgl/issues/100" class="external-link">#100</a>: <code><a href="../reference/set_style.html">set_style()</a></code> now properly preserves user-added layers, sources, popups, tooltips, and other map elements when switching base styles</li>
+<li>Enhanced state tracking system maintains map configuration across style changes</li>
+<li>Improved compatibility with basemap switcher controls for seamless style transitions</li>
+<li>Fixed legend reversion issues when changing map styles</li>
+<li>Better handling of map configuration properties in both regular and compare environments</li>
+</ul></li>
+<li>New <code><a href="../reference/number_format.html">number_format()</a></code> function: Comprehensive number formatting for tooltips and map content:
+<ul><li>Support for currency, percentage, scientific notation, and compact formats</li>
+<li>Customizable decimal places, thousands separators, and currency symbols</li>
+<li>Integration with tooltip expressions for dynamic number formatting</li>
+<li>Works with both static content and expression-based tooltips</li>
+</ul></li>
+<li>Enhanced draw control functionality with improved feature editing capabilities:
 <ul><li>Added ability to load existing features from map sources into the draw control for editing either when initializing the draw control or via <code><a href="../reference/add_features_to_draw.html">add_features_to_draw()</a></code>
 </li>
 <li>Fixed vertex styling to properly highlight selected vertices during editing</li>
@@ -74,7 +123,7 @@
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="mapgl-021">mapgl 0.2.1<a class="anchor" aria-label="anchor" href="#mapgl-021"></a></h2><p class="text-muted">CRAN release: 2025-03-18</p>
-<ul><li>Improved styling and positioning behavior of the layers control. Users can now customize the appearance of the layers control, and the layers control is collapsed by default with cleaner appearance. Added ability to link legends to specific layers with the new <code>layer_id</code> parameter in <code><a href="../reference/add_legend.html">add_legend()</a></code>. When a layer is toggled in the layers control, its associated legend will automatically show or hide.</li>
+<ul><li>Improved styling and positioning behavior of the layers control. Users can now customize the appearance of the layers control, and the layers control is collapsed by default with cleaner appearance. Added ability to link legends to specific layers with the new <code>layer_id</code> parameter in <code><a href="../reference/map_legends.html">add_legend()</a></code>. When a layer is toggled in the layers control, its associated legend will automatically show or hide.</li>
 <li>Added support for custom legend positioning with new margin parameters (<code>margin_top</code>, <code>margin_right</code>, <code>margin_bottom</code>, <code>margin_left</code>) that allow fine-grained control over legend placement.</li>
 <li>Fixed layers control toggle button state to correctly reflect the initial visibility of layers, resolving the issue with layers set to <code>visibility = "none"</code> showing as active in the control.</li>
 <li>Support for the <code><a href="../reference/compare.html">compare()</a></code> plugin in Shiny applications, with new rendering and proxy functions for comparison apps in Mapbox and MapLibre.</li>

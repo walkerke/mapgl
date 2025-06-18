@@ -840,6 +840,90 @@ add_features_to_draw <- function(map, source, clear_existing = FALSE) {
   return(map)
 }
 
+#' Clear all drawn features from a map
+#'
+#' This function removes all features that have been drawn using the draw control
+#' on a Mapbox GL or MapLibre GL map in a Shiny application.
+#'
+#' @param map A proxy object created by the `mapboxgl_proxy` or `maplibre_proxy` functions.
+#'
+#' @return The modified map object with all drawn features cleared.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # In a Shiny application
+#' library(shiny)
+#' library(mapgl)
+#'
+#' ui <- fluidPage(
+#'     mapboxglOutput("map"),
+#'     actionButton("clear_btn", "Clear Drawn Features")
+#' )
+#'
+#' server <- function(input, output, session) {
+#'     output$map <- renderMapboxgl({
+#'         mapboxgl(
+#'             style = mapbox_style("streets"),
+#'             center = c(-74.50, 40),
+#'             zoom = 9
+#'         ) |>
+#'             add_draw_control()
+#'     })
+#'
+#'     observeEvent(input$clear_btn, {
+#'         mapboxgl_proxy("map") |>
+#'             clear_drawn_features()
+#'     })
+#' }
+#'
+#' shinyApp(ui, server)
+#' }
+clear_drawn_features <- function(map) {
+  if (
+    !any(
+      inherits(map, "mapboxgl_proxy"),
+      inherits(map, "maplibre_proxy")
+    )
+  ) {
+    stop(
+      "clear_drawn_features() can only be used with mapboxgl_proxy() or maplibre_proxy()"
+    )
+  }
+
+  if (
+    inherits(map, "mapboxgl_compare_proxy") ||
+      inherits(map, "maplibre_compare_proxy")
+  ) {
+    # For compare proxies
+    proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+      "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+    map$session$sendCustomMessage(
+      proxy_class,
+      list(
+        id = map$id,
+        message = list(
+          type = "clear_drawn_features",
+          map = map$map_side
+        )
+      )
+    )
+  } else {
+    # For regular proxies
+    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
+      "mapboxgl-proxy" else "maplibre-proxy"
+    map$session$sendCustomMessage(
+      proxy_class,
+      list(
+        id = map$id,
+        message = list(type = "clear_drawn_features")
+      )
+    )
+  }
+
+  return(map)
+}
+
 #' Add a geocoder control to a map
 #'
 #' This function adds a Geocoder search bar to a Mapbox GL or MapLibre GL map.

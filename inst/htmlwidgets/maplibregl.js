@@ -1507,33 +1507,41 @@ HTMLWidgets.widget({
                             });
                         });
 
-                        // also add hover listener for shinyMode!
-                        map.on("mousemove", function (e) {
-                          const features = map.queryRenderedFeatures(e.point);
+                        // add hover listener for shinyMode if enabled
+                        if (x.hover_events && x.hover_events.enabled) {
+                            map.on("mousemove", function (e) {
+                              // Feature hover events
+                              if (x.hover_events.features) {
+                                const features = map.queryRenderedFeatures(e.point);
 
-                          if(features.length > 0) {
-                            const feature = features[0];
-                            Shiny.onInputChange(el.id + "_feature_hover", {
-                              id: feature.id,
-                                    properties: feature.properties,
-                                    layer: feature.layer.id,
+                                if(features.length > 0) {
+                                  const feature = features[0];
+                                  Shiny.onInputChange(el.id + "_feature_hover", {
+                                    id: feature.id,
+                                          properties: feature.properties,
+                                          layer: feature.layer.id,
+                                          lng: e.lngLat.lng,
+                                          lat: e.lngLat.lat,
+                                          time: new Date(),
+                                      });
+                                } else {
+                                  Shiny.onInputChange(
+                                    el.id + "_feature_hover",
+                                    null,
+                                );
+                              }
+                              }
+
+                              // Coordinate hover events
+                              if (x.hover_events.coordinates) {
+                                Shiny.onInputChange(el.id + "_hover", {
                                     lng: e.lngLat.lng,
                                     lat: e.lngLat.lat,
                                     time: new Date(),
-                                });
-                          } else {
-                            Shiny.onInputChange(
-                              el.id + "_feature_hover",
-                              null,
-                          );
+                                  });
+                              }
+                            });
                         }
-
-                        Shiny.onInputChange(el.id + "_hover", {
-                            lng: e.lngLat.lng,
-                            lat: e.lngLat.let,
-                            time: new Date(),
-                          });
-                        });
                     }
 
                     el.map = map;
@@ -1609,6 +1617,7 @@ if (HTMLWidgets.shinyMode) {
                     }
                 }
             }
+
             if (message.type === "set_filter") {
                 map.setFilter(message.layer, message.filter);
                 // Track filter state for layer restoration
@@ -1946,11 +1955,30 @@ if (HTMLWidgets.shinyMode) {
                 }
                 layerState.paintProperties[layerId][propertyName] = newValue;
             } else if (message.type === "query_rendered_features") {
-                const features = map.queryRenderedFeatures(message.geometry, {
-                    layers: message.layers,
-                    filter: message.filter,
+                //debugger;
+                var features = map.queryRenderedFeatures(message.geometry, {
+                    layers: [message.layer]
+                    //filter: message.filter,
                 });
-                Shiny.setInputValue(el.id + "_feature_query", features);
+                var properties = features.map(f => f.properties);
+
+                Shiny.setInputValue(
+                    data.id + "_feature_query", 
+                    JSON.stringify(properties),
+                    {priority: "event"}
+                );
+            } else if (message.type === "query_source_features") {
+                debugger;
+                var features = map.querySourceFeatures(message.source, {
+                    sourceLayer: [message.layer]
+                });
+                //var properties = features.map(f => f.properties);
+
+                Shiny.setInputValue(
+                    data.id + "_source_query", 
+                    JSON.stringify(features), 
+                    {priority: "event"}
+                );
             } else if (message.type === "add_legend") {
                 // Extract legend ID from HTML to track it
                 const legendIdMatch = message.html.match(/id="([^"]+)"/);
@@ -2109,7 +2137,9 @@ if (HTMLWidgets.shinyMode) {
                             !(sourceId.startsWith("maptiler") && !sourceId.includes("user")) && // Filter MapTiler sources but keep user ones
                             !sourceId.includes("terrain") && // Common terrain sources
                             !sourceId.includes("hillshade") && // Common hillshade sources
-                            !(sourceId.includes("basemap") && !sourceId.includes("user")) // Filter basemap sources but keep user ones
+                            !(sourceId.includes("basemap") && !sourceId.includes("user")) && // Filter basemap sources but keep user ones
+                            sourceId !== "satellite" && // Filter MapTiler satellite source specifically
+                            sourceId !== "aerial" // Filter aerial imagery sources
                         ) {
                             console.log("[MapGL Debug] Found user source via filtering:", sourceId);
                             if (!userSourceIds.includes(sourceId)) {

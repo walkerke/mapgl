@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">set_paint_property</span><span class="op">(</span><span class="va">map</span>, <span class="va">layer</span>, <span class="va">name</span>, <span class="va">value</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">set_paint_property</span><span class="op">(</span><span class="va">map</span>, layer_id <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">name</span>, <span class="va">value</span>, layer <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,7 +58,7 @@
 <dd><p>A map object created by the <code>mapboxgl</code> or <code>maplibre</code> function, or a proxy object.</p></dd>
 
 
-<dt id="arg-layer">layer<a class="anchor" aria-label="anchor" href="#arg-layer"></a></dt>
+<dt id="arg-layer-id">layer_id<a class="anchor" aria-label="anchor" href="#arg-layer-id"></a></dt>
 <dd><p>The ID of the layer to update.</p></dd>
 
 
@@ -68,6 +68,10 @@
 
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
 <dd><p>The value to set the property to.</p></dd>
+
+
+<dt id="arg-layer">layer<a class="anchor" aria-label="anchor" href="#arg-layer"></a></dt>
+<dd><p>Deprecated. Use <code>layer_id</code> instead.</p></dd>
 
 </dl></div>
     <div class="section level2">

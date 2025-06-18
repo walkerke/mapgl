@@ -31,3 +31,9 @@ download.file(
   "https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/maplibre-gl-geocoder.css",
   destfile = "inst/htmlwidgets/lib/maplibre-gl-geocoder/maplibre-gl-geocoder.css"
 )
+
+# PMTiles:
+download.file(
+  "https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js",
+  destfile = "inst/htmlwidgets/lib/pmtiles/pmtiles.js"
+)

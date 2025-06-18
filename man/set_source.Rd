@@ -4,14 +4,16 @@
 \alias{set_source}
 \title{Set source of a map layer}
 \usage{
-set_source(map, layer, source)
+set_source(map, layer_id = NULL, source, layer = NULL)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or a proxy object.}
 
-\item{layer}{The ID of the layer to update.}
+\item{layer_id}{The ID of the layer to update.}
 
 \item{source}{An sf object (which will be converted to a GeoJSON source).}
+
+\item{layer}{Deprecated. Use \code{layer_id} instead.}
 }
 \value{
 The updated map object.
