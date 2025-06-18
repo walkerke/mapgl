@@ -41,7 +41,7 @@ Styling in Mapbox GL JS and Maplibre GL JS is typically handled through *express
 For continuous color scales, the `interpolate_palette()` function automatically calculates appropriate break points and creates smooth color transitions. You can specify the classification method ("equal", "quantile", or "jenks") and either a palette function or specific colors:
 
 ```{r}
-# Automatic continuous scale with quantile breaks
+# Automatic continuous scale with equal breaks
 continuous_scale <- interpolate_palette(
   data = fl_age,
   column = "estimate",
@@ -95,7 +95,7 @@ These functions automatically calculate appropriate break points and generate st
 
 ```{r}
 # Automatic quantile classification with 5 classes
-eq_class <- step_quantile(
+q_class <- step_quantile(
   data = fl_age,
   column = "estimate",
   n = 5,
@@ -106,13 +106,13 @@ fl_map |>
   add_fill_layer(
     id = "fl_tracts",
     source = fl_age,
-    fill_color = eq_class$expression,
+    fill_color = q_class$expression,
     fill_opacity = 0.5
   ) |>
   add_legend(
     "Median age in Florida",
-    values = get_legend_labels(eq_class, digits = 0, suffix = " years"),
-    colors = get_legend_colors(eq_class),
+    values = get_legend_labels(q_class, digits = 0, suffix = " years"),
+    colors = get_legend_colors(q_class),
     type = "categorical"
   )
 ```
