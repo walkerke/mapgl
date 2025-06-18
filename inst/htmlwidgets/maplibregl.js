@@ -1972,11 +1972,11 @@ if (HTMLWidgets.shinyMode) {
                 var features = map.querySourceFeatures(message.source, {
                     sourceLayer: [message.layer]
                 });
-                var properties = features.map(f => f.properties);
+                //var properties = features.map(f => f.properties);
 
                 Shiny.setInputValue(
                     data.id + "_source_query", 
-                    JSON.stringify(properties),
+                    JSON.stringify(features), 
                     {priority: "event"}
                 );
             } else if (message.type === "add_legend") {

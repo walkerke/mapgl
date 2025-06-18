@@ -777,10 +777,10 @@ update_feature_query <- function(map, layer_id = NULL, geometry = NULL
 #' See
 #' [querySourceFeatures][https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#querysourcefeatures]
 #'
-#' @return Nothing, but updates `input$map_source_query`
+#' @return Nothing, but updates `input$map_source_query` in shiny contexts.
 #' @export update_source_query
 #'
-update_source_query <- function(map, source_id, layer_id = NULL
+update_source_query <- function(map, source_id, source_layer = NULL
                                 ) {
 
   #browser()
@@ -803,7 +803,7 @@ update_source_query <- function(map, source_id, layer_id = NULL
   message.content <- list(
     type = "query_source_features",
     source = source_id,
-    layer = layer_id
+    layer = source_layer
   )
 
   if (
