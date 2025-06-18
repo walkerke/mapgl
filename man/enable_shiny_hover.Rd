@@ -35,7 +35,7 @@ server <- function(input, output) {
     maplibre() |>
       enable_shiny_hover()
   })
-  
+
   output$hover_info <- renderText({
     paste("Mouse at:", input$map_hover$lng, input$map_hover$lat)
   })
