@@ -41,7 +41,7 @@ Styling in Mapbox GL JS and Maplibre GL JS is typically handled through *express
 For continuous color scales, the `interpolate_palette()` function automatically calculates appropriate break points and creates smooth color transitions. You can specify the classification method ("equal", "quantile", or "jenks") and either a palette function or specific colors:
 
 ```{r}
-# Automatic continuous scale with quantile breaks
+# Automatic continuous scale with equal breaks
 continuous_scale <- interpolate_palette(
   data = fl_age,
   column = "estimate",
