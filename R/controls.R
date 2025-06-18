@@ -1369,3 +1369,140 @@ add_control <- function(
 
   return(map)
 }
+
+#' Add a box query control to a map
+#'
+#' This function adds a box query control to a Mapbox GL or MapLibre GL map.
+#' The control allows users to draw a bounding box to query features within that area.
+#' When active, box zoom is disabled and users can hold Shift+Click to draw a selection box.
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
+#' @param position The position of the control. Can be one of "top-left", "top-right",
+#'   "bottom-left", or "bottom-right". Default is "top-right".
+#' @param layers A character vector of layer names to include in the query. If `NULL` (default), all layers are queried.
+#' @param highlighted_layer The layer ID to use for highlighting selected features. If `NULL`, no highlighting occurs.
+#' @param filter_property The property name to use for filtering the highlighted layer. If `NULL`, the control will attempt to use feature.id or the first available property.
+#' @param highlight_color The color to use for highlighting selected features. Default is "#6e599f".
+#' @param highlight_opacity The opacity of highlighted features. Default is 0.75.
+#' @param highlight_outline_color The outline color for highlighted features. Default is "#484896".
+#' @param box_color The color of the selection box. Default is "#3887be".
+#' @param box_opacity The opacity of the selection box. Default is 0.1.
+#' @param box_border_color The border color of the selection box. Default is "#3887be".
+#' @param box_border_width The border width of the selection box in pixels. Default is 2.
+#' @param max_features Maximum number of features to select. Default is 1000.
+#'
+#' @return The modified map object with the box query control added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#' library(sf)
+#'
+#' # Create a map with box query control
+#' nc <- st_read(system.file("shape/nc.shp", package = "sf"))
+#' 
+#' maplibre(style = carto_style("positron")) |>
+#'   fit_bounds(nc) |>
+#'   add_fill_layer(
+#'     id = "counties",
+#'     source = nc,
+#'     fill_color = "lightblue",
+#'     fill_opacity = 0.5
+#'   ) |>
+#'   add_fill_layer(
+#'     id = "counties_highlighted", 
+#'     source = nc,
+#'     fill_color = "orange",
+#'     fill_opacity = 0.8,
+#'     filter = c("in", "FIPS", "")
+#'   ) |>
+#'   add_box_query_control(
+#'     layers = "counties",
+#'     highlighted_layer = "counties_highlighted",
+#'     filter_property = "FIPS"
+#'   )
+#' }
+add_box_query_control <- function(
+  map,
+  position = "top-right",
+  layers = NULL,
+  highlighted_layer = NULL,
+  filter_property = NULL,
+  highlight_color = "#6e599f",
+  highlight_opacity = 0.75,
+  highlight_outline_color = "#484896",
+  box_color = "#3887be",
+  box_opacity = 0.1,
+  box_border_color = "#3887be",
+  box_border_width = 2,
+  max_features = 1000
+) {
+  control_id <- paste0("box-query-control-", as.hexmode(sample(1:1000000, 1)))
+  
+  box_query_control <- list(
+    position = position,
+    layers = layers,
+    highlighted_layer = highlighted_layer,
+    filter_property = filter_property,
+    highlight_color = highlight_color,
+    highlight_opacity = highlight_opacity,
+    highlight_outline_color = highlight_outline_color,
+    box_color = box_color,
+    box_opacity = box_opacity,
+    box_border_color = box_border_color,
+    box_border_width = box_border_width,
+    max_features = max_features
+  )
+
+  if (
+    inherits(map, "mapboxgl_proxy") ||
+      inherits(map, "maplibre_proxy")
+  ) {
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_box_query_control",
+            control_id = control_id,
+            options = box_query_control,
+            map = map$map_side
+          )
+        )
+      )
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+        "mapboxgl-proxy"
+      } else {
+        "maplibre-proxy"
+      }
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_box_query_control",
+            control_id = control_id,
+            options = box_query_control
+          )
+        )
+      )
+    }
+  } else {
+    if (is.null(map$x$box_query_control)) {
+      map$x$box_query_control <- list()
+    }
+    map$x$box_query_control <- box_query_control
+  }
+
+  return(map)
+}

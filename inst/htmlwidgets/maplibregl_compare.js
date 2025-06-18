@@ -871,6 +871,50 @@ HTMLWidgets.widget({
                                     layerState.paintProperties[layerId] = {};
                                 }
                                 layerState.paintProperties[layerId][propertyName] = newValue;
+                            } else if (message.type === "query_rendered_features") {
+                                // Query rendered features
+                                let queryOptions = {};
+                                if (message.layers) {
+                                  // Ensure layers is always an array
+                                  queryOptions.layers = Array.isArray(message.layers) ? message.layers : [message.layers];
+                                }
+                                if (message.filter) queryOptions.filter = message.filter;
+                                
+                                let features;
+                                if (message.geometry) {
+                                  features = map.queryRenderedFeatures(message.geometry, queryOptions);
+                                } else {
+                                  // No geometry specified - query entire viewport
+                                  features = map.queryRenderedFeatures(queryOptions);
+                                }
+                                
+                                // Deduplicate features by id or by properties if no id
+                                const uniqueFeatures = new Map();
+                                features.forEach(function(feature) {
+                                  let key;
+                                  if (feature.id !== undefined && feature.id !== null) {
+                                    key = feature.id;
+                                  } else {
+                                    // Create a key from properties if no id available
+                                    key = JSON.stringify(feature.properties);
+                                  }
+                                  
+                                  if (!uniqueFeatures.has(key)) {
+                                    uniqueFeatures.set(key, feature);
+                                  }
+                                });
+                                
+                                // Convert to GeoJSON FeatureCollection
+                                const deduplicatedFeatures = Array.from(uniqueFeatures.values());
+                                const featureCollection = {
+                                  type: "FeatureCollection",
+                                  features: deduplicatedFeatures
+                                };
+                                
+                                Shiny.setInputValue(
+                                  data.id + "_queried_features",
+                                  JSON.stringify(featureCollection)
+                                );
                             } else if (message.type === "add_legend") {
                                 if (!message.add) {
                                     const existingLegends =
