@@ -334,7 +334,7 @@ HTMLWidgets.widget({
                         if (x.viewport_features && x.viewport_features.enabled) {
 
                             map.on("moveend", function (e) {
-                                debugger;
+
                                 var features = map.queryRenderedFeatures(null, {
                                     layers: [x.viewport_features.layer]
                                 });
@@ -1978,7 +1978,7 @@ if (HTMLWidgets.shinyMode) {
                 }
                 layerState.paintProperties[layerId][propertyName] = newValue;
             } else if (message.type === "query_rendered_features") {
-                //debugger;
+                
                 var features = map.queryRenderedFeatures(message.geometry, {
                     layers: [message.layer]
                     //filter: message.filter,
@@ -1991,7 +1991,7 @@ if (HTMLWidgets.shinyMode) {
                     { priority: "event" }
                 );
             } else if (message.type === "query_source_features") {
-                debugger;
+                
                 var features = map.querySourceFeatures(message.source, {
                     sourceLayer: [message.layer]
                 });
