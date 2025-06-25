@@ -11,9 +11,10 @@
 #' @param values The values being represented on the map (either a vector of categories or a vector of stops).
 #' @param colors The corresponding colors for the values (either a vector of colors, a single color, or an interpolate function).
 #' @param type One of "continuous" or "categorical" (for `add_legend` only).
-#' @param circular_patches Logical, whether to use circular patches in the legend (only for categorical legends).
+#' @param circular_patches (Deprecated) Logical, whether to use circular patches in the legend. Use `patch_shape = "circle"` instead.
+#' @param patch_shape Character, the shape of patches to use in categorical legends. One of "square", "circle", "line", or "hexagon". Default is "square".
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
-#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).
+#' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends). For line patches, this controls the line thickness.
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
 #' @param unique_id Optional. A unique identifier for the legend. If not provided, a random ID will be generated.
 #' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
@@ -114,13 +115,13 @@
 #'             element_border_width = 1
 #'           ))
 #'           
-#' # Categorical legend with circular patches and styling
+#' # Categorical legend with circular patches
 #' add_categorical_legend(
 #'     map = map,
 #'     legend_title = "Population",
 #'     values = c("Low", "Medium", "High"),
 #'     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
-#'     circular_patches = TRUE,
+#'     patch_shape = "circle",
 #'     sizes = c(10, 15, 20),
 #'     style = legend_style(
 #'       background_opacity = 0.95,
@@ -130,6 +131,26 @@
 #'       element_border_color = "black",
 #'       element_border_width = 1
 #'     )
+#' )
+#' 
+#' # Legend with line patches for line layers
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "Road Type",
+#'     values = c("Highway", "Primary", "Secondary"),
+#'     colors = c("#000000", "#333333", "#666666"),
+#'     patch_shape = "line",
+#'     sizes = c(5, 3, 1)  # Line thickness in pixels
+#' )
+#' 
+#' # Legend with hexagon patches (e.g., for H3 data)
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "H3 Hexagon Categories",
+#'     values = c("Urban", "Suburban", "Rural"),
+#'     colors = c("#8B0000", "#FF6347", "#90EE90"),
+#'     patch_shape = "hexagon",
+#'     sizes = 25
 #' )
 #' 
 #' # Create reusable legend styling
@@ -330,9 +351,13 @@ legend_style <- function(
     element_border_color <- if (is.null(style$element_border_color)) "gray" else style$element_border_color
     element_border_width <- if (is.null(style$element_border_width)) 1 else style$element_border_width
     
-    # For categorical legend patches/circles
-    css_rules <- c(css_rules, sprintf("#%s .legend-color {\n  border: %dpx solid %s !important;\n  box-sizing: border-box !important;\n}", 
+    # For categorical legend patches/circles (non-SVG elements)
+    css_rules <- c(css_rules, sprintf("#%s .legend-color:not(svg) {\n  border: %dpx solid %s !important;\n  box-sizing: border-box !important;\n}", 
                                      unique_id, element_border_width, element_border_color))
+    
+    # For SVG hexagon elements
+    css_rules <- c(css_rules, sprintf("#%s .legend-shape-hexagon polygon {\n  stroke: %s !important;\n  stroke-width: %d !important;\n}", 
+                                     unique_id, element_border_color, element_border_width))
     
     # Adjust patch container padding to accommodate borders
     padding_adjustment <- element_border_width
@@ -360,6 +385,7 @@ add_legend <- function(
     colors,
     type = c("continuous", "categorical"),
     circular_patches = FALSE,
+    patch_shape = "square",
     position = "top-left",
     sizes = NULL,
     add = FALSE,
@@ -401,6 +427,7 @@ add_legend <- function(
             values,
             colors,
             circular_patches,
+            patch_shape,
             position,
             unique_id,
             sizes,
@@ -424,6 +451,7 @@ add_categorical_legend <- function(
     values,
     colors,
     circular_patches = FALSE,
+    patch_shape = "square",
     position = "top-left",
     unique_id = NULL,
     sizes = NULL,
@@ -436,6 +464,18 @@ add_categorical_legend <- function(
     margin_left = NULL,
     style = NULL
 ) {
+    # Handle deprecation of circular_patches
+    if (!missing(circular_patches) && circular_patches) {
+        warning("The 'circular_patches' argument is deprecated. Use 'patch_shape = \"circle\"' instead.",
+                call. = FALSE)
+        patch_shape <- "circle"
+    }
+    
+    # Validate patch_shape
+    valid_shapes <- c("square", "circle", "line", "hexagon")
+    if (!patch_shape %in% valid_shapes) {
+        stop("'patch_shape' must be one of: ", paste(valid_shapes, collapse = ", "))
+    }
     # Validate and prepare inputs
     if (length(colors) == 1) {
         colors <- rep(colors, length(values))
@@ -445,18 +485,14 @@ add_categorical_legend <- function(
         )
     }
 
-    # Give a default size of 20 if no size supplied
+    # Give a default size if no size supplied
     if (is.null(sizes)) {
-        if (circular_patches) {
-            sizes <- 10
-        } else {
-            sizes <- 20
-        }
-    }
-
-    # If circular patches is TRUE, multiply by 2 to get a diameter of the circle
-    if (circular_patches) {
-        sizes <- sizes * 2
+        sizes <- switch(patch_shape,
+            "circle" = 20,
+            "line" = 3,  # Default line thickness
+            "hexagon" = 20,
+            20  # default for square
+        )
     }
 
     if (length(sizes) == 1) {
@@ -468,24 +504,57 @@ add_categorical_legend <- function(
     }
 
     max_size <- max(sizes)
+    
+    # Create a function to generate hexagon SVG
+    create_hexagon_svg <- function(color, size) {
+        # Flat-top hexagon coordinates (for H3 compatibility)
+        # Width should be greater than height for flat-top
+        # Using a viewBox with padding for stroke (4px on each side = 108x94.6)
+        # Adjust polygon coordinates to account for padding
+        paste0(
+            '<svg class="legend-color legend-shape-hexagon" width="', size, '" height="', round(size * 0.866), '" ',
+            'viewBox="0 0 108 94.6" preserveAspectRatio="xMidYMid meet">',
+            '<polygon points="29,4 79,4 104,47.3 79,90.6 29,90.6 4,47.3" ',
+            'fill="', color, '" />',
+            '</svg>'
+        )
+    }
 
     legend_items <- lapply(seq_along(values), function(i) {
-        shape_style <- if (circular_patches) "border-radius: 50%;" else ""
-        size_style <- if (!is.null(sizes))
-            sprintf("width: %dpx; height: %dpx;", sizes[i], sizes[i]) else ""
+        patch_html <- switch(patch_shape,
+            "square" = paste0(
+                '<span class="legend-color legend-shape-square" style="background-color:',
+                colors[i], '; width: ', sizes[i], 'px; height: ', sizes[i], 'px;"></span>'
+            ),
+            "circle" = paste0(
+                '<span class="legend-color legend-shape-circle" style="background-color:',
+                colors[i], '; width: ', sizes[i], 'px; height: ', sizes[i], 'px; border-radius: 50%;"></span>'
+            ),
+            "line" = paste0(
+                '<span class="legend-color legend-shape-line" style="background-color:',
+                colors[i], '; width: 30px; height: ', round(sizes[i]), 'px; display: block;"></span>'
+            ),
+            "hexagon" = create_hexagon_svg(colors[i], sizes[i])
+        )
+        
+        # Adjust container dimensions based on shape
+        if (patch_shape == "line") {
+            container_width <- 30
+            container_height <- max(sizes)  # Use max line thickness for consistent spacing
+        } else {
+            container_width <- max_size
+            container_height <- max_size
+        }
+        
         paste0(
             '<div class="legend-item">',
             '<div class="legend-patch-container" style="width:',
-            max_size,
+            container_width,
             "px; height:",
-            max_size,
+            container_height,
             'px;">',
-            '<span class="legend-color" style="background-color:',
-            colors[i],
-            ";",
-            shape_style,
-            size_style,
-            '"></span></div>',
+            patch_html,
+            '</div>',
             '<span class="legend-text">',
             values[i],
             "</span>",
@@ -615,6 +684,21 @@ add_categorical_legend <- function(
         " .legend-color {
       display: inline-block;
       flex-shrink: 0;
+    }
+    #",
+        unique_id,
+        " .legend-shape-line {
+      align-self: center;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+    #",
+        unique_id,
+        " .legend-shape-hexagon {
+      display: block;
     }
     #",
         unique_id,

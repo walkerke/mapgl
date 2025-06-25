@@ -38,6 +38,7 @@ add_legend(
   colors,
   type = c("continuous", "categorical"),
   circular_patches = FALSE,
+  patch_shape = "square",
   position = "top-left",
   sizes = NULL,
   add = FALSE,
@@ -57,6 +58,7 @@ add_categorical_legend(
   values,
   colors,
   circular_patches = FALSE,
+  patch_shape = "square",
   position = "top-left",
   unique_id = NULL,
   sizes = NULL,
@@ -138,11 +140,13 @@ clear_legend(map, legend_ids = NULL)
 
 \item{type}{One of "continuous" or "categorical" (for \code{add_legend} only).}
 
-\item{circular_patches}{Logical, whether to use circular patches in the legend (only for categorical legends).}
+\item{circular_patches}{(Deprecated) Logical, whether to use circular patches in the legend. Use \code{patch_shape = "circle"} instead.}
+
+\item{patch_shape}{Character, the shape of patches to use in categorical legends. One of "square", "circle", "line", or "hexagon". Default is "square".}
 
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 
-\item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends).}
+\item{sizes}{An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends). For line patches, this controls the line thickness.}
 
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 
@@ -237,13 +241,13 @@ add_legend(map, "Elevation",
             element_border_width = 1
           ))
           
-# Categorical legend with circular patches and styling
+# Categorical legend with circular patches
 add_categorical_legend(
     map = map,
     legend_title = "Population",
     values = c("Low", "Medium", "High"),
     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
-    circular_patches = TRUE,
+    patch_shape = "circle",
     sizes = c(10, 15, 20),
     style = legend_style(
       background_opacity = 0.95,
@@ -253,6 +257,26 @@ add_categorical_legend(
       element_border_color = "black",
       element_border_width = 1
     )
+)
+
+# Legend with line patches for line layers
+add_categorical_legend(
+    map = map,
+    legend_title = "Road Type",
+    values = c("Highway", "Primary", "Secondary"),
+    colors = c("#000000", "#333333", "#666666"),
+    patch_shape = "line",
+    sizes = c(5, 3, 1)  # Line thickness in pixels
+)
+
+# Legend with hexagon patches (e.g., for H3 data)
+add_categorical_legend(
+    map = map,
+    legend_title = "H3 Hexagon Categories",
+    values = c("Urban", "Suburban", "Rural"),
+    colors = c("#8B0000", "#FF6347", "#90EE90"),
+    patch_shape = "hexagon",
+    sizes = 25
 )
 
 # Create reusable legend styling
