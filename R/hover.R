@@ -4,8 +4,12 @@
 #' in Shiny applications, providing `_hover` and `_feature_hover` input values.
 #'
 #' @param map A maplibre or mapboxgl widget object.
-#' @param coordinates Logical. If TRUE, provides general mouse coordinates via `_hover` input. Defaults to TRUE.
-#' @param features Logical. If TRUE, provides feature information via `_feature_hover` input when hovering over map features. Defaults to TRUE.
+#' @param layer_id the layer id for which to retrieve hovered features, if
+#'   features is enabled. If NULL, will return features for all layers.
+#' @param coordinates Logical. If TRUE, provides general mouse coordinates via
+#'   `_hover` input. Defaults to TRUE.
+#' @param features Logical. If TRUE, provides feature information via
+#'   `_feature_hover` input when hovering over map features. Defaults to TRUE.
 #'
 #' @return The modified map object with hover events enabled.
 #' @export
@@ -33,7 +37,10 @@
 #'
 #' shinyApp(ui, server)
 #' }
-enable_shiny_hover <- function(map, coordinates = TRUE, features = TRUE) {
+enable_shiny_hover <- function(map,
+                               layer_id = NULL,
+                               coordinates = TRUE,
+                               features = TRUE) {
 
   # Check if map is valid
   if (!inherits(map, c("maplibregl", "mapboxgl"))) {
@@ -46,6 +53,7 @@ enable_shiny_hover <- function(map, coordinates = TRUE, features = TRUE) {
   }
 
   map$x$hover_events$enabled <- TRUE
+  map$x$hover_events$layer_id <- layer_id
   map$x$hover_events$coordinates <- coordinates
   map$x$hover_events$features <- features
 

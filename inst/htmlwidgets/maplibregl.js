@@ -1535,7 +1535,9 @@ HTMLWidgets.widget({
                             map.on("mousemove", function (e) {
                                 // Feature hover events
                                 if (x.hover_events.features) {
-                                    const features = map.queryRenderedFeatures(e.point);
+
+                                    const options = x.hover_events.layer_id ? { layers: [x.hover_events.layer_id] } : undefined;
+                                    const features = map.queryRenderedFeatures(e.point, options);
 
                                     if (features.length > 0) {
                                         const feature = features[0];
