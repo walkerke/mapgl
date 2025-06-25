@@ -2,14 +2,11 @@
 % Please edit documentation in R/legends.R
 \name{map_legends}
 \alias{map_legends}
-\alias{.translate_style_to_css}
 \alias{add_legend}
 \alias{add_categorical_legend}
 \alias{add_continuous_legend}
 \title{Add legends to Mapbox GL and MapLibre GL maps}
 \usage{
-.translate_style_to_css(style, unique_id)
-
 add_legend(
   map,
   legend_title,
@@ -69,10 +66,6 @@ add_continuous_legend(
 )
 }
 \arguments{
-\item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
-
-\item{unique_id}{Optional. A unique identifier for the legend. If not provided, a random ID will be generated.}
-
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
 
 \item{legend_title}{The title of the legend.}
@@ -93,6 +86,8 @@ add_continuous_legend(
 
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 
+\item{unique_id}{Optional. A unique identifier for the legend. If not provided, a random ID will be generated.}
+
 \item{width}{The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.}
 
 \item{layer_id}{The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.}
@@ -104,6 +99,8 @@ add_continuous_legend(
 \item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
 
 \item{margin_left}{Custom left margin in pixels. Default is NULL.}
+
+\item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
 }
 \value{
 The updated map object with the legend added.
@@ -115,13 +112,13 @@ to customize appearance and \code{clear_legend()} to remove legends.
 \examples{
 \dontrun{
 # Basic categorical legend
-add_legend(map, "Population", 
+add_legend(map, "Population",
           values = c("Low", "Medium", "High"),
           colors = c("blue", "yellow", "red"),
           type = "categorical")
 
 # Continuous legend with custom styling
-add_legend(map, "Income", 
+add_legend(map, "Income",
           values = c(0, 50000, 100000),
           colors = c("blue", "yellow", "red"),
           type = "continuous",
@@ -134,9 +131,9 @@ add_legend(map, "Income",
             font_family = "Times New Roman",
             title_font_weight = "bold"
           ))
-          
+
 # Legend with custom styling using a list
-add_legend(map, "Temperature", 
+add_legend(map, "Temperature",
           values = c(0, 50, 100),
           colors = c("blue", "yellow", "red"),
           type = "continuous",
@@ -150,7 +147,7 @@ add_legend(map, "Temperature",
           ))
 
 # Dark legend with white element borders
-add_legend(map, "Elevation", 
+add_legend(map, "Elevation",
           values = c(0, 1000, 2000, 3000),
           colors = c("#2c7bb6", "#abd9e9", "#fdae61", "#d7191c"),
           type = "continuous",
@@ -161,7 +158,7 @@ add_legend(map, "Elevation",
             element_border_color = "white",
             element_border_width = 1
           ))
-          
+
 # Categorical legend with circular patches
 add_categorical_legend(
     map = map,

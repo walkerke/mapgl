@@ -2,7 +2,6 @@
 
 S3method(print,mapgl_classification)
 S3method(print,mapgl_continuous_scale)
-export(.translate_style_to_css)
 export(add_categorical_legend)
 export(add_circle_layer)
 export(add_continuous_legend)
