@@ -90,6 +90,8 @@ reference:
     desc: "Functions for adding and managing map legends with customizable styling"
     contents:
       - map_legends
+      - legend_style
+      - clear_legend
 
   - title: "Markers"
     desc: "Functions for adding and managing markers"

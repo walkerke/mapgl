@@ -46,6 +46,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/clear_controls.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_drawn_features.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_layer.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/clear_legend.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_markers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/cluster_options.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/compare.html</loc></url>
@@ -61,6 +62,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/interpolate.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/interpolate_palette.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/jump_to.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/legend_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/map_legends.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/mapbox_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/mapboxgl.html</loc></url>
