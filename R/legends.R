@@ -1,7 +1,7 @@
-#' Add legends to maps with customizable styling
+#' Add legends to Mapbox GL and MapLibre GL maps
 #'
-#' These functions provide a comprehensive system for adding categorical and continuous 
-#' legends to Mapbox GL and MapLibre GL maps, with extensive styling customization options.
+#' These functions add categorical and continuous legends to maps. Use \code{legend_style()} 
+#' to customize appearance and \code{clear_legend()} to remove legends.
 #'
 #' @name map_legends
 #' @rdname map_legends
@@ -24,44 +24,8 @@
 #' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
 #' @param margin_right Custom right margin in pixels. Default is NULL.
 #' @param style Optional styling options created by \code{legend_style()} or a list of style options.
-#' @param legend_ids Optional. A character vector of legend IDs to clear (for \code{clear_legend} only). If not provided, all legends will be cleared.
 #'
-#' @section Legend Styling:
-#' The \code{legend_style()} function creates user-friendly styling options:
-#' 
-#' \describe{
-#'   \item{Container styling}{\code{background_color}, \code{background_opacity}, \code{border_color}, \code{border_width}, \code{border_radius}, \code{padding}}
-#'   \item{Typography}{\code{font_family}, \code{title_font_family}, \code{font_weight}, \code{title_font_weight}, \code{text_color}, \code{title_color}, \code{text_size}, \code{title_size}}
-#'   \item{Element borders}{\code{element_border_color}, \code{element_border_width} (for patches/circles and color bars)}
-#'   \item{Shadows}{\code{shadow}, \code{shadow_color}, \code{shadow_size}}
-#' }
-#'
-#' @param background_color Background color for the legend container (e.g., "white", "#ffffff").
-#' @param background_opacity Opacity of the legend background (0-1, where 1 is fully opaque).
-#' @param border_color Color of the legend border (e.g., "black", "#000000").
-#' @param border_width Width of the legend border in pixels.
-#' @param border_radius Border radius for rounded corners in pixels.
-#' @param text_color Color of the legend text (e.g., "black", "#000000").
-#' @param text_size Size of the legend text in pixels.
-#' @param title_color Color of the legend title text.
-#' @param title_size Size of the legend title text in pixels.
-#' @param font_family Font family for legend text (e.g., "Arial", "Times New Roman", "Open Sans").
-#' @param title_font_family Font family for legend title (defaults to font_family if not specified).
-#' @param font_weight Font weight for legend text (e.g., "normal", "bold", "lighter", or numeric like 400, 700).
-#' @param title_font_weight Font weight for legend title (defaults to font_weight if not specified).
-#' @param element_border_color Color for borders around legend elements (color bar for continuous, patches/circles for categorical).
-#' @param element_border_width Width in pixels for borders around legend elements.
-#' @param shadow Logical, whether to add a drop shadow to the legend.
-#' @param shadow_color Color of the drop shadow (e.g., "black", "rgba(0,0,0,0.3)").
-#' @param shadow_size Size/blur radius of the drop shadow in pixels.
-#' @param padding Internal padding of the legend container in pixels.
-#'
-#' @return 
-#' \describe{
-#'   \item{add_legend, add_categorical_legend, add_continuous_legend}{The updated map object with the legend added.}
-#'   \item{legend_style}{A list of class "mapgl_legend_style" containing the styling options.}
-#'   \item{clear_legend}{The updated map object with the specified legend(s) cleared.}
-#' }
+#' @return The updated map object with the legend added.
 #'
 #' @export
 #'
@@ -73,12 +37,12 @@
 #'           colors = c("blue", "yellow", "red"),
 #'           type = "categorical")
 #' 
-#' # Continuous legend with custom styling using legend_style()
+#' # Continuous legend with custom styling
 #' add_legend(map, "Income", 
 #'           values = c(0, 50000, 100000),
 #'           colors = c("blue", "yellow", "red"),
 #'           type = "continuous",
-#'           style = legend_style(
+#'           style = list(
 #'             background_color = "white",
 #'             background_opacity = 0.9,
 #'             border_width = 2,
@@ -107,7 +71,7 @@
 #'           values = c(0, 1000, 2000, 3000),
 #'           colors = c("#2c7bb6", "#abd9e9", "#fdae61", "#d7191c"),
 #'           type = "continuous",
-#'           style = legend_style(
+#'           style = list(
 #'             background_color = "#2c3e50",
 #'             text_color = "white",
 #'             title_color = "white",
@@ -123,7 +87,7 @@
 #'     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
 #'     patch_shape = "circle",
 #'     sizes = c(10, 15, 20),
-#'     style = legend_style(
+#'     style = list(
 #'       background_opacity = 0.95,
 #'       border_width = 1,
 #'       border_color = "gray",
@@ -203,73 +167,8 @@
 #'     patch_shape = custom_svg
 #' )
 #' 
-#' # Create reusable legend styling
-#' dark_style <- legend_style(
-#'   background_color = "#2c3e50",
-#'   text_color = "white",
-#'   title_color = "white",
-#'   font_family = "Arial",
-#'   title_font_weight = "bold",
-#'   element_border_color = "white",
-#'   element_border_width = 1,
-#'   shadow = TRUE,
-#'   shadow_color = "rgba(0,0,0,0.3)",
-#'   shadow_size = 6
-#' )
-#' 
-#' # Clear specific legends
-#' clear_legend(map_proxy, legend_ids = c("legend-1", "legend-2"))
 #' }
-#' @export
-legend_style <- function(
-  background_color = NULL,
-  background_opacity = NULL,
-  border_color = NULL,
-  border_width = NULL,
-  border_radius = NULL,
-  text_color = NULL,
-  text_size = NULL,
-  title_color = NULL,
-  title_size = NULL,
-  font_family = NULL,
-  title_font_family = NULL,
-  font_weight = NULL,
-  title_font_weight = NULL,
-  element_border_color = NULL,
-  element_border_width = NULL,
-  shadow = NULL,
-  shadow_color = NULL,
-  shadow_size = NULL,
-  padding = NULL
-) {
-  style_list <- list(
-    background_color = background_color,
-    background_opacity = background_opacity,
-    border_color = border_color,
-    border_width = border_width,
-    border_radius = border_radius,
-    text_color = text_color,
-    text_size = text_size,
-    title_color = title_color,
-    title_size = title_size,
-    font_family = font_family,
-    title_font_family = title_font_family,
-    font_weight = font_weight,
-    title_font_weight = title_font_weight,
-    element_border_color = element_border_color,
-    element_border_width = element_border_width,
-    shadow = shadow,
-    shadow_color = shadow_color,
-    shadow_size = shadow_size,
-    padding = padding
-  )
-  
-  # Remove NULL values
-  style_list <- style_list[!sapply(style_list, is.null)]
-  
-  class(style_list) <- "mapgl_legend_style"
-  return(style_list)
-}
+
 
 # Internal function to convert style options to CSS
 .translate_style_to_css <- function(style, unique_id) {
@@ -1122,9 +1021,156 @@ add_continuous_legend <- function(
     }
 }
 
-
-#' @rdname map_legends
+#' Create custom styling for map legends
+#'
+#' This function creates a styling object that can be passed to legend functions
+#' to customize the appearance of legends, including colors, fonts, borders, and shadows.
+#'
+#' @name legend_style
+#' @rdname legend_style
+#'
+#' @param background_color Background color for the legend container (e.g., "white", "#ffffff").
+#' @param background_opacity Opacity of the legend background (0-1, where 1 is fully opaque).
+#' @param border_color Color of the legend border (e.g., "black", "#000000").
+#' @param border_width Width of the legend border in pixels.
+#' @param border_radius Border radius for rounded corners in pixels.
+#' @param text_color Color of the legend text (e.g., "black", "#000000").
+#' @param text_size Size of the legend text in pixels.
+#' @param title_color Color of the legend title text.
+#' @param title_size Size of the legend title text in pixels.
+#' @param font_family Font family for legend text (e.g., "Arial", "Times New Roman", "Open Sans").
+#' @param title_font_family Font family for legend title (defaults to font_family if not specified).
+#' @param font_weight Font weight for legend text (e.g., "normal", "bold", "lighter", or numeric like 400, 700).
+#' @param title_font_weight Font weight for legend title (defaults to font_weight if not specified).
+#' @param element_border_color Color for borders around legend elements (color bar for continuous, patches/circles for categorical).
+#' @param element_border_width Width in pixels for borders around legend elements.
+#' @param shadow Logical, whether to add a drop shadow to the legend.
+#' @param shadow_color Color of the drop shadow (e.g., "black", "rgba(0,0,0,0.3)").
+#' @param shadow_size Size/blur radius of the drop shadow in pixels.
+#' @param padding Internal padding of the legend container in pixels.
+#'
+#' @return A list of class "mapgl_legend_style" containing the styling options.
+#'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create a dark theme legend style
+#' dark_style <- legend_style(
+#'   background_color = "#2c3e50",
+#'   text_color = "white",
+#'   title_color = "white",
+#'   font_family = "Arial",
+#'   title_font_weight = "bold",
+#'   element_border_color = "white",
+#'   element_border_width = 1,
+#'   shadow = TRUE,
+#'   shadow_color = "rgba(0,0,0,0.3)",
+#'   shadow_size = 6
+#' )
+#' 
+#' # Use the style in a legend
+#' add_categorical_legend(
+#'   map = map,
+#'   legend_title = "Categories",
+#'   values = c("A", "B", "C"),
+#'   colors = c("red", "green", "blue"),
+#'   style = dark_style
+#' )
+#' 
+#' # Create a minimal style with just borders
+#' minimal_style <- legend_style(
+#'   element_border_color = "gray",
+#'   element_border_width = 1
+#' )
+#' }
+legend_style <- function(
+  background_color = NULL,
+  background_opacity = NULL,
+  border_color = NULL,
+  border_width = NULL,
+  border_radius = NULL,
+  text_color = NULL,
+  text_size = NULL,
+  title_color = NULL,
+  title_size = NULL,
+  font_family = NULL,
+  title_font_family = NULL,
+  font_weight = NULL,
+  title_font_weight = NULL,
+  element_border_color = NULL,
+  element_border_width = NULL,
+  shadow = NULL,
+  shadow_color = NULL,
+  shadow_size = NULL,
+  padding = NULL
+) {
+  style_list <- list(
+    background_color = background_color,
+    background_opacity = background_opacity,
+    border_color = border_color,
+    border_width = border_width,
+    border_radius = border_radius,
+    text_color = text_color,
+    text_size = text_size,
+    title_color = title_color,
+    title_size = title_size,
+    font_family = font_family,
+    title_font_family = title_font_family,
+    font_weight = font_weight,
+    title_font_weight = title_font_weight,
+    element_border_color = element_border_color,
+    element_border_width = element_border_width,
+    shadow = shadow,
+    shadow_color = shadow_color,
+    shadow_size = shadow_size,
+    padding = padding
+  )
+  
+  # Remove NULL values
+  style_list <- style_list[!sapply(style_list, is.null)]
+  
+  class(style_list) <- "mapgl_legend_style"
+  return(style_list)
+}
+
+#' Clear legends from a map
+#'
+#' Remove one or more legends from a Mapbox GL or MapLibre GL map in a Shiny application.
+#'
+#' @param map A map proxy object created by \code{mapboxgl_proxy()} or \code{maplibre_proxy()}.
+#' @param legend_ids Optional. A character vector of legend IDs to clear. If not provided, all legends will be cleared.
+#'
+#' @return The updated map proxy object with the specified legend(s) cleared.
+#'
+#' @note This function can only be used with map proxy objects in Shiny applications. 
+#' It cannot be used with static map objects.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # In a Shiny server function:
+#' 
+#' # Clear all legends
+#' observeEvent(input$clear_all, {
+#'   mapboxgl_proxy("map") %>%
+#'     clear_legend()
+#' })
+#' 
+#' # Clear specific legends by ID
+#' observeEvent(input$clear_specific, {
+#'   mapboxgl_proxy("map") %>%
+#'     clear_legend(legend_ids = c("legend-1", "legend-2"))
+#' })
+#' 
+#' # Clear legend after removing a layer
+#' observeEvent(input$remove_layer, {
+#'   mapboxgl_proxy("map") %>%
+#'     remove_layer("my_layer") %>%
+#'     clear_legend(legend_ids = "my_layer_legend")
+#' })
+#' }
 clear_legend <- function(map, legend_ids = NULL) {
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
         proxy_class <- ifelse(

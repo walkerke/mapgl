@@ -2,34 +2,13 @@
 % Please edit documentation in R/legends.R
 \name{map_legends}
 \alias{map_legends}
-\alias{legend_style}
+\alias{.translate_style_to_css}
 \alias{add_legend}
 \alias{add_categorical_legend}
 \alias{add_continuous_legend}
-\alias{clear_legend}
-\title{Add legends to maps with customizable styling}
+\title{Add legends to Mapbox GL and MapLibre GL maps}
 \usage{
-legend_style(
-  background_color = NULL,
-  background_opacity = NULL,
-  border_color = NULL,
-  border_width = NULL,
-  border_radius = NULL,
-  text_color = NULL,
-  text_size = NULL,
-  title_color = NULL,
-  title_size = NULL,
-  font_family = NULL,
-  title_font_family = NULL,
-  font_weight = NULL,
-  title_font_weight = NULL,
-  element_border_color = NULL,
-  element_border_width = NULL,
-  shadow = NULL,
-  shadow_color = NULL,
-  shadow_size = NULL,
-  padding = NULL
-)
+.translate_style_to_css(style, unique_id)
 
 add_legend(
   map,
@@ -88,47 +67,11 @@ add_continuous_legend(
   margin_left = NULL,
   style = NULL
 )
-
-clear_legend(map, legend_ids = NULL)
 }
 \arguments{
-\item{background_color}{Background color for the legend container (e.g., "white", "#ffffff").}
+\item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
 
-\item{background_opacity}{Opacity of the legend background (0-1, where 1 is fully opaque).}
-
-\item{border_color}{Color of the legend border (e.g., "black", "#000000").}
-
-\item{border_width}{Width of the legend border in pixels.}
-
-\item{border_radius}{Border radius for rounded corners in pixels.}
-
-\item{text_color}{Color of the legend text (e.g., "black", "#000000").}
-
-\item{text_size}{Size of the legend text in pixels.}
-
-\item{title_color}{Color of the legend title text.}
-
-\item{title_size}{Size of the legend title text in pixels.}
-
-\item{font_family}{Font family for legend text (e.g., "Arial", "Times New Roman", "Open Sans").}
-
-\item{title_font_family}{Font family for legend title (defaults to font_family if not specified).}
-
-\item{font_weight}{Font weight for legend text (e.g., "normal", "bold", "lighter", or numeric like 400, 700).}
-
-\item{title_font_weight}{Font weight for legend title (defaults to font_weight if not specified).}
-
-\item{element_border_color}{Color for borders around legend elements (color bar for continuous, patches/circles for categorical).}
-
-\item{element_border_width}{Width in pixels for borders around legend elements.}
-
-\item{shadow}{Logical, whether to add a drop shadow to the legend.}
-
-\item{shadow_color}{Color of the drop shadow (e.g., "black", "rgba(0,0,0,0.3)").}
-
-\item{shadow_size}{Size/blur radius of the drop shadow in pixels.}
-
-\item{padding}{Internal padding of the legend container in pixels.}
+\item{unique_id}{Optional. A unique identifier for the legend. If not provided, a random ID will be generated.}
 
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
 
@@ -150,8 +93,6 @@ clear_legend(map, legend_ids = NULL)
 
 \item{add}{Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.}
 
-\item{unique_id}{Optional. A unique identifier for the legend. If not provided, a random ID will be generated.}
-
 \item{width}{The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.}
 
 \item{layer_id}{The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.}
@@ -163,34 +104,14 @@ clear_legend(map, legend_ids = NULL)
 \item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
 
 \item{margin_left}{Custom left margin in pixels. Default is NULL.}
-
-\item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
-
-\item{legend_ids}{Optional. A character vector of legend IDs to clear (for \code{clear_legend} only). If not provided, all legends will be cleared.}
 }
 \value{
-\describe{
-\item{add_legend, add_categorical_legend, add_continuous_legend}{The updated map object with the legend added.}
-\item{legend_style}{A list of class "mapgl_legend_style" containing the styling options.}
-\item{clear_legend}{The updated map object with the specified legend(s) cleared.}
-}
+The updated map object with the legend added.
 }
 \description{
-These functions provide a comprehensive system for adding categorical and continuous
-legends to Mapbox GL and MapLibre GL maps, with extensive styling customization options.
+These functions add categorical and continuous legends to maps. Use \code{legend_style()}
+to customize appearance and \code{clear_legend()} to remove legends.
 }
-\section{Legend Styling}{
-
-The \code{legend_style()} function creates user-friendly styling options:
-
-\describe{
-\item{Container styling}{\code{background_color}, \code{background_opacity}, \code{border_color}, \code{border_width}, \code{border_radius}, \code{padding}}
-\item{Typography}{\code{font_family}, \code{title_font_family}, \code{font_weight}, \code{title_font_weight}, \code{text_color}, \code{title_color}, \code{text_size}, \code{title_size}}
-\item{Element borders}{\code{element_border_color}, \code{element_border_width} (for patches/circles and color bars)}
-\item{Shadows}{\code{shadow}, \code{shadow_color}, \code{shadow_size}}
-}
-}
-
 \examples{
 \dontrun{
 # Basic categorical legend
@@ -199,12 +120,12 @@ add_legend(map, "Population",
           colors = c("blue", "yellow", "red"),
           type = "categorical")
 
-# Continuous legend with custom styling using legend_style()
+# Continuous legend with custom styling
 add_legend(map, "Income", 
           values = c(0, 50000, 100000),
           colors = c("blue", "yellow", "red"),
           type = "continuous",
-          style = legend_style(
+          style = list(
             background_color = "white",
             background_opacity = 0.9,
             border_width = 2,
@@ -233,7 +154,7 @@ add_legend(map, "Elevation",
           values = c(0, 1000, 2000, 3000),
           colors = c("#2c7bb6", "#abd9e9", "#fdae61", "#d7191c"),
           type = "continuous",
-          style = legend_style(
+          style = list(
             background_color = "#2c3e50",
             text_color = "white",
             title_color = "white",
@@ -249,7 +170,7 @@ add_categorical_legend(
     colors = c("#FED976", "#FEB24C", "#FD8D3C"),
     patch_shape = "circle",
     sizes = c(10, 15, 20),
-    style = legend_style(
+    style = list(
       background_opacity = 0.95,
       border_width = 1,
       border_color = "gray",
@@ -329,21 +250,5 @@ add_categorical_legend(
     patch_shape = custom_svg
 )
 
-# Create reusable legend styling
-dark_style <- legend_style(
-  background_color = "#2c3e50",
-  text_color = "white",
-  title_color = "white",
-  font_family = "Arial",
-  title_font_weight = "bold",
-  element_border_color = "white",
-  element_border_width = 1,
-  shadow = TRUE,
-  shadow_color = "rgba(0,0,0,0.3)",
-  shadow_size = 6
-)
-
-# Clear specific legends
-clear_legend(map_proxy, legend_ids = c("legend-1", "legend-2"))
 }
 }
