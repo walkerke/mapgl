@@ -142,7 +142,7 @@ clear_legend(map, legend_ids = NULL)
 
 \item{circular_patches}{(Deprecated) Logical, whether to use circular patches in the legend. Use \code{patch_shape = "circle"} instead.}
 
-\item{patch_shape}{Character, the shape of patches to use in categorical legends. One of "square", "circle", "line", or "hexagon". Default is "square".}
+\item{patch_shape}{Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string (e.g., '\if{html}{\out{<polygon points="50,10 90,90 10,90" />}}'), or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".}
 
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 
@@ -277,6 +277,56 @@ add_categorical_legend(
     colors = c("#8B0000", "#FF6347", "#90EE90"),
     patch_shape = "hexagon",
     sizes = 25
+)
+
+# Custom SVG shapes - triangle
+add_categorical_legend(
+    map = map,
+    legend_title = "Mountain Peaks",
+    values = c("High", "Medium", "Low"),
+    colors = c("#8B4513", "#CD853F", "#F4A460"),
+    patch_shape = '<polygon points="50,10 90,90 10,90" />'
+)
+
+# Custom SVG shapes - star
+add_categorical_legend(
+    map = map,
+    legend_title = "Ratings",
+    values = c("5 Star", "4 Star", "3 Star"),
+    colors = c("#FFD700", "#FFA500", "#FF6347"),
+    patch_shape = '<path d="M50,5 L61,35 L95,35 L68,57 L79,91 L50,70 L21,91 L32,57 L5,35 L39,35 Z" />'
+)
+
+# Custom SVG with complete SVG string
+add_categorical_legend(
+    map = map,
+    legend_title = "Custom Icons",
+    values = c("Location A", "Location B"),
+    colors = c("#FF0000", "#0000FF"),
+    patch_shape = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" /></svg>'
+)
+
+# Using sf objects directly as patch shapes
+library(sf)
+nc <- st_read(system.file("shape/nc.shp", package = "sf"))
+county_shape <- nc[1, ]  # Get first county
+
+add_categorical_legend(
+    map = map,
+    legend_title = "County Types",
+    values = c("Rural", "Urban", "Suburban"),
+    colors = c("#228B22", "#8B0000", "#FFD700"),
+    patch_shape = county_shape  # sf object automatically converted to SVG
+)
+
+# For advanced users needing custom conversion options
+custom_svg <- mapgl:::.sf_to_svg(county_shape, simplify = TRUE, tolerance = 0.001, fit_viewbox = TRUE)
+add_categorical_legend(
+    map = map,
+    legend_title = "Custom Converted Shape",
+    values = c("Type A"),
+    colors = c("#4169E1"),
+    patch_shape = custom_svg
 )
 
 # Create reusable legend styling

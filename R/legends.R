@@ -12,7 +12,7 @@
 #' @param colors The corresponding colors for the values (either a vector of colors, a single color, or an interpolate function).
 #' @param type One of "continuous" or "categorical" (for `add_legend` only).
 #' @param circular_patches (Deprecated) Logical, whether to use circular patches in the legend. Use `patch_shape = "circle"` instead.
-#' @param patch_shape Character, the shape of patches to use in categorical legends. One of "square", "circle", "line", or "hexagon". Default is "square".
+#' @param patch_shape Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string (e.g., '<polygon points="50,10 90,90 10,90" />'), or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends). For line patches, this controls the line thickness.
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
@@ -153,6 +153,56 @@
 #'     sizes = 25
 #' )
 #' 
+#' # Custom SVG shapes - triangle
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "Mountain Peaks",
+#'     values = c("High", "Medium", "Low"),
+#'     colors = c("#8B4513", "#CD853F", "#F4A460"),
+#'     patch_shape = '<polygon points="50,10 90,90 10,90" />'
+#' )
+#' 
+#' # Custom SVG shapes - star
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "Ratings",
+#'     values = c("5 Star", "4 Star", "3 Star"),
+#'     colors = c("#FFD700", "#FFA500", "#FF6347"),
+#'     patch_shape = '<path d="M50,5 L61,35 L95,35 L68,57 L79,91 L50,70 L21,91 L32,57 L5,35 L39,35 Z" />'
+#' )
+#' 
+#' # Custom SVG with complete SVG string
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "Custom Icons",
+#'     values = c("Location A", "Location B"),
+#'     colors = c("#FF0000", "#0000FF"),
+#'     patch_shape = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" /></svg>'
+#' )
+#' 
+#' # Using sf objects directly as patch shapes
+#' library(sf)
+#' nc <- st_read(system.file("shape/nc.shp", package = "sf"))
+#' county_shape <- nc[1, ]  # Get first county
+#' 
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "County Types",
+#'     values = c("Rural", "Urban", "Suburban"),
+#'     colors = c("#228B22", "#8B0000", "#FFD700"),
+#'     patch_shape = county_shape  # sf object automatically converted to SVG
+#' )
+#' 
+#' # For advanced users needing custom conversion options
+#' custom_svg <- mapgl:::.sf_to_svg(county_shape, simplify = TRUE, tolerance = 0.001, fit_viewbox = TRUE)
+#' add_categorical_legend(
+#'     map = map,
+#'     legend_title = "Custom Converted Shape",
+#'     values = c("Type A"),
+#'     colors = c("#4169E1"),
+#'     patch_shape = custom_svg
+#' )
+#' 
 #' # Create reusable legend styling
 #' dark_style <- legend_style(
 #'   background_color = "#2c3e50",
@@ -170,6 +220,7 @@
 #' # Clear specific legends
 #' clear_legend(map_proxy, legend_ids = c("legend-1", "legend-2"))
 #' }
+#' @export
 legend_style <- function(
   background_color = NULL,
   background_opacity = NULL,
@@ -359,6 +410,10 @@ legend_style <- function(
     css_rules <- c(css_rules, sprintf("#%s .legend-shape-hexagon polygon {\n  stroke: %s !important;\n  stroke-width: %d !important;\n}", 
                                      unique_id, element_border_color, element_border_width))
     
+    # For custom SVG elements (apply to all SVG child elements)
+    css_rules <- c(css_rules, sprintf("#%s .legend-shape-custom * {\n  stroke: %s !important;\n  stroke-width: %d !important;\n}", 
+                                     unique_id, element_border_color, element_border_width))
+    
     # Adjust patch container padding to accommodate borders
     padding_adjustment <- element_border_width
     css_rules <- c(css_rules, sprintf("#%s .legend-patch-container {\n  padding: %dpx !important;\n}", 
@@ -471,10 +526,34 @@ add_categorical_legend <- function(
         patch_shape <- "circle"
     }
     
+    # Handle sf objects by converting to SVG
+    if (inherits(patch_shape, "sf")) {
+        patch_shape <- .sf_to_svg(patch_shape)
+    }
+    
+    # Determine if patch_shape is a built-in shape or custom SVG
+    built_in_shapes <- c("square", "circle", "line", "hexagon")
+    is_custom_svg <- !patch_shape %in% built_in_shapes
+    
     # Validate patch_shape
-    valid_shapes <- c("square", "circle", "line", "hexagon")
-    if (!patch_shape %in% valid_shapes) {
-        stop("'patch_shape' must be one of: ", paste(valid_shapes, collapse = ", "))
+    if (is_custom_svg) {
+        # Check if it looks like a valid SVG string
+        if (!is.character(patch_shape) || nchar(patch_shape) == 0) {
+            stop("'patch_shape' must be one of: ", paste(c(built_in_shapes, "a custom SVG string, or an sf object"), collapse = ", "))
+        }
+        
+        # Basic SVG validation - should contain < and >
+        if (!grepl("<.*>", patch_shape)) {
+            stop("Custom SVG patch_shape appears invalid. It should contain SVG elements like '<path d=\"...\" />' or '<polygon points=\"...\" />'. Got: ", substr(patch_shape, 1, 50), if(nchar(patch_shape) > 50) "..." else "")
+        }
+    }
+    
+    # Extract SVG string for custom shapes
+    svg_shape <- if (is_custom_svg) patch_shape else NULL
+    
+    # Set patch_shape to "custom" for processing
+    if (is_custom_svg) {
+        patch_shape <- "custom"
     }
     # Validate and prepare inputs
     if (length(colors) == 1) {
@@ -505,6 +584,89 @@ add_categorical_legend <- function(
 
     max_size <- max(sizes)
     
+    # Function to process custom SVG shapes
+    .process_custom_svg <- function(svg_string, color, size) {
+        # Remove whitespace and normalize
+        svg_string <- gsub("\\s+", " ", trimws(svg_string))
+        
+        # Check if it's a complete SVG or just an element
+        is_complete_svg <- grepl("^\\s*<svg", svg_string, ignore.case = TRUE)
+        
+        if (is_complete_svg) {
+            # Extract viewBox and content from complete SVG
+            viewbox_match <- regexpr('viewBox\\s*=\\s*["\']([^"\']+)["\']', svg_string, ignore.case = TRUE)
+            if (viewbox_match != -1) {
+                viewbox <- regmatches(svg_string, viewbox_match)
+                viewbox <- gsub('.*viewBox\\s*=\\s*["\']([^"\']+)["\'].*', '\\1', viewbox, ignore.case = TRUE)
+            } else {
+                viewbox <- "0 0 100 100"  # Default viewBox
+            }
+            
+            # Extract content between svg tags
+            content_match <- regexpr('<svg[^>]*>(.*)</svg>', svg_string, ignore.case = TRUE)
+            if (content_match != -1) {
+                content <- gsub('<svg[^>]*>(.*)</svg>', '\\1', svg_string, ignore.case = TRUE)
+            } else {
+                content <- svg_string
+            }
+        } else {
+            # It's just an SVG element, wrap it in SVG tags
+            viewbox <- "0 0 100 100"  # Default viewBox
+            content <- svg_string
+        }
+        
+        # Replace colors in the content
+        content <- .replace_svg_colors(content, color)
+        
+        # Calculate aspect ratio from viewBox
+        viewbox_parts <- strsplit(trimws(viewbox), "\\s+")[[1]]
+        if (length(viewbox_parts) >= 4) {
+            vb_width <- as.numeric(viewbox_parts[3])
+            vb_height <- as.numeric(viewbox_parts[4])
+            aspect_ratio <- vb_width / vb_height
+        } else {
+            aspect_ratio <- 1  # Default to square
+        }
+        
+        # Determine final dimensions maintaining aspect ratio
+        if (aspect_ratio >= 1) {
+            # Wider than tall
+            final_width <- size
+            final_height <- round(size / aspect_ratio)
+        } else {
+            # Taller than wide
+            final_width <- round(size * aspect_ratio)
+            final_height <- size
+        }
+        
+        # Create the final SVG
+        paste0(
+            '<svg class="legend-color legend-shape-custom" width="', final_width, '" height="', final_height, '" ',
+            'viewBox="', viewbox, '" preserveAspectRatio="xMidYMid meet">',
+            content,
+            '</svg>'
+        )
+    }
+    
+    # Function to replace colors in SVG content
+    .replace_svg_colors <- function(svg_content, new_color) {
+        # Replace common color attributes
+        svg_content <- gsub('fill\\s*=\\s*["\'][^"\']*["\']', paste0('fill="', new_color, '"'), svg_content, ignore.case = TRUE)
+        svg_content <- gsub('stroke\\s*=\\s*["\'][^"\']*["\']', paste0('stroke="', new_color, '"'), svg_content, ignore.case = TRUE)
+        
+        # Also handle fill and stroke in style attributes
+        svg_content <- gsub('fill\\s*:\\s*[^;]+', paste0('fill:', new_color), svg_content, ignore.case = TRUE)
+        svg_content <- gsub('stroke\\s*:\\s*[^;]+', paste0('stroke:', new_color), svg_content, ignore.case = TRUE)
+        
+        # If no fill or stroke found, add fill
+        if (!grepl('fill\\s*[=:]', svg_content, ignore.case = TRUE)) {
+            # Add fill attribute to the first element
+            svg_content <- gsub('(<[^>]+)>', paste0('\\1 fill="', new_color, '">'), svg_content, perl = TRUE)
+        }
+        
+        return(svg_content)
+    }
+    
     # Create a function to generate hexagon SVG
     create_hexagon_svg <- function(color, size) {
         # Flat-top hexagon coordinates (for H3 compatibility)
@@ -534,7 +696,8 @@ add_categorical_legend <- function(
                 '<span class="legend-color legend-shape-line" style="background-color:',
                 colors[i], '; width: 30px; height: ', round(sizes[i]), 'px; display: block;"></span>'
             ),
-            "hexagon" = create_hexagon_svg(colors[i], sizes[i])
+            "hexagon" = create_hexagon_svg(colors[i], sizes[i]),
+            "custom" = .process_custom_svg(svg_shape, colors[i], sizes[i])
         )
         
         # Adjust container dimensions based on shape
@@ -698,6 +861,11 @@ add_categorical_legend <- function(
     #",
         unique_id,
         " .legend-shape-hexagon {
+      display: block;
+    }
+    #",
+        unique_id,
+        " .legend-shape-custom {
       display: block;
     }
     #",
