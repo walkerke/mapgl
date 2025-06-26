@@ -1,5 +1,5 @@
 /**
- * mapbox-pmtiles v1.0.0 - Optimized Version
+ * mapbox-pmtiles v1.0.53 - Optimized Version
  * Original source: https://github.com/am2222/mapbox-pmtiles
  * License: MIT
  *
