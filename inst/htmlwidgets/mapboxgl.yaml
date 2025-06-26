@@ -33,3 +33,13 @@ dependencies:
     src: "htmlwidgets/lib/mapbox-gl-globe-minimap"
     script:
       - "bundle.js"
+  - name: pmtiles
+    version: 4.3.0
+    src: "htmlwidgets/lib/pmtiles"
+    script:
+      - "pmtiles.js"
+  - name: mapbox-pmtiles
+    version: 1.0.0
+    src: "htmlwidgets/lib/mapbox-pmtiles"
+    script:
+      - "pmtiles-source.js"
