@@ -42,4 +42,4 @@ dependencies:
     version: 1.0.0
     src: "htmlwidgets/lib/mapbox-pmtiles"
     script:
-      - "pmtiles-source-optimized.js"
+      - "pmtiles-source-optimized-v2.js"
