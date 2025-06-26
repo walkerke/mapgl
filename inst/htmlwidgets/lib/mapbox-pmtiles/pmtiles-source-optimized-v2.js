@@ -176,6 +176,7 @@
       this.config = { ...DEFAULT_OPTIONS, ...options };
       this.destroyed = false;
       this.paused = false;
+      this.dispatcher = null;
       
       // Instance-scoped resources
       this.workerPool = [];
@@ -210,10 +211,15 @@
     initializeWorkerPool(dispatcher) {
       if (this.destroyed) return;
       
-      if (this.workerPool.length === 0 && dispatcher) {
+      // Store dispatcher reference
+      if (dispatcher) {
+        this.dispatcher = dispatcher;
+      }
+      
+      if (this.workerPool.length === 0 && this.dispatcher) {
         for (let i = 0; i < this.config.workerPoolSize; i++) {
           try {
-            this.workerPool.push(dispatcher.getActor());
+            this.workerPool.push(this.dispatcher.getActor());
           } catch (error) {
             console.warn('[PMTiles] Failed to create worker:', error);
           }
@@ -229,7 +235,19 @@
      * Get next worker from pool (round-robin)
      */
     getWorkerFromPool() {
-      if (this.destroyed || this.workerPool.length === 0) {
+      if (this.destroyed) {
+        return null;
+      }
+      
+      // Try to initialize workers if not done yet
+      if (this.workerPool.length === 0 && this.dispatcher) {
+        this.initializeWorkerPool(this.dispatcher);
+      }
+      
+      if (this.workerPool.length === 0) {
+        if (this.config.enableDebugLogging) {
+          console.warn('[PMTiles] Worker pool is empty, dispatcher available:', !!this.dispatcher);
+        }
         return null;
       }
       
@@ -836,6 +854,17 @@
       if (!tile.actor || tile.state === "expired") {
         // Use shared worker pool
         tile.actor = this.resourceManager.getWorkerFromPool();
+        
+        // Fallback to dispatcher if worker pool failed
+        if (!tile.actor && this.dispatcher) {
+          try {
+            tile.actor = this.dispatcher.getActor();
+          } catch (error) {
+            console.warn('[PMTiles] Failed to get fallback worker:', error);
+            return callback(new Error('No workers available'));
+          }
+        }
+        
         if (!tile.actor) {
           return callback(new Error('No workers available'));
         }
