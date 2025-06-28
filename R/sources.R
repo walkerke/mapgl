@@ -523,3 +523,107 @@ add_video_source <- function(map, id, urls, coordinates) {
 
   return(map)
 }
+
+
+#' Add a PMTiles source to a Mapbox GL or Maplibre GL map
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` function.
+#' @param id A unique ID for the source.
+#' @param url A URL pointing to the PMTiles archive.
+#' @param ... Additional arguments to be passed to the JavaScript addSource method.
+#'
+#' @return The modified map object with the new source added.
+#' @export
+#' @examples
+#' \dontrun{
+#' # For MapLibre GL JS (uses native PMTiles support)
+#' maplibre()
+#'   add_pmtiles_source(
+#'     id = "pmtiles-source",
+#'     url = "https://example.com/data.pmtiles"
+#'   ) |>
+#'   add_layer(
+#'     id = "pmtiles-layer",
+#'     source = "pmtiles-source",
+#'     source_layer = "layer-name",
+#'     type = "fill",
+#'     paint = list(
+#'       "fill-color" = "blue"
+#'     )
+#'   )
+#'
+#' # For Mapbox GL JS (uses custom PMTiles source type)
+#' mapboxgl() |>
+#'   add_pmtiles_source(
+#'     id = "pmtiles-source",
+#'     url = "https://example.com/data.pmtiles"
+#'   ) |>
+#'   add_layer(
+#'     id = "pmtiles-layer",
+#'     source = "pmtiles-source",
+#'     source_layer = "layer-name",
+#'     type = "fill",
+#'     paint = list(
+#'       "fill-color" = "blue"
+#'     )
+#'   )
+#' }
+add_pmtiles_source <- function(map, id, url, ...) {
+  # Detect if we're using Mapbox GL JS or MapLibre GL JS
+  is_mapbox <- inherits(map, "mapboxgl") || inherits(map, "mapboxgl_proxy") ||
+               inherits(map, "mapboxgl_compare") || inherits(map, "mapboxgl_compare_proxy")
+
+  if (is_mapbox) {
+    # For Mapbox GL JS, use the custom PMTiles source type
+    source <- list(
+      id = id,
+      type = "pmtile-source",  # Custom source type from mapbox-pmtiles
+      url = url  # No pmtiles:// prefix needed
+    )
+  } else {
+    # For MapLibre GL JS, use the native pmtiles:// protocol
+    source <- list(
+      id = id,
+      type = "vector",  # Standard vector source
+      url = paste0("pmtiles://", url)  # Add pmtiles:// prefix
+    )
+  }
+
+  # Add any additional arguments
+  extra_args <- list(...)
+  source <- c(source, extra_args)
+
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_source",
+            source = source,
+            map = map$map_side
+          )
+        )
+      )
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(id = map$id, message = list(type = "add_source", source = source))
+      )
+    }
+  } else {
+    map$x$sources <- c(map$x$sources, list(source))
+  }
+
+  return(map)
+}

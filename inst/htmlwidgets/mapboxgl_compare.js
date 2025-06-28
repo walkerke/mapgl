@@ -159,6 +159,16 @@ HTMLWidgets.widget({
           console.error("Mapbox GL Compare plugin is not loaded.");
           return;
         }
+        
+        // Register PMTiles source type if available
+        if (typeof MapboxPmTilesSource !== "undefined" && typeof pmtiles !== "undefined") {
+          try {
+            mapboxgl.Style.setSourceType(PMTILES_SOURCE_TYPE, MapboxPmTilesSource);
+            console.log("PMTiles support enabled for Mapbox GL JS Compare");
+          } catch (e) {
+            console.warn("Failed to register PMTiles source type:", e);
+          }
+        }
 
         // Create container divs for the maps
         const beforeContainerId = `${el.id}-before`;
@@ -473,6 +483,18 @@ HTMLWidgets.widget({
                       sourceConfig[key] = message.source[key];
                     }
                   });
+                  map.addSource(message.source.id, sourceConfig);
+                } else {
+                  // Handle custom source types (like pmtile-source)
+                  const sourceConfig = { type: message.source.type };
+                  
+                  // Copy all properties except id
+                  Object.keys(message.source).forEach(function (key) {
+                    if (key !== "id") {
+                      sourceConfig[key] = message.source[key];
+                    }
+                  });
+                  
                   map.addSource(message.source.id, sourceConfig);
                 }
               } else if (message.type === "add_layer") {
