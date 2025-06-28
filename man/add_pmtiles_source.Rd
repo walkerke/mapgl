@@ -23,35 +23,30 @@ Add a PMTiles source to a Mapbox GL or Maplibre GL map
 }
 \examples{
 \dontrun{
-# For MapLibre GL JS (uses native PMTiles support)
-maplibre()
-  add_pmtiles_source(
-    id = "pmtiles-source",
-    url = "https://example.com/data.pmtiles"
-  ) |>
-  add_layer(
-    id = "pmtiles-layer",
-    source = "pmtiles-source",
-    source_layer = "layer-name",
-    type = "fill",
-    paint = list(
-      "fill-color" = "blue"
-    )
-  )
 
-# For Mapbox GL JS (uses custom PMTiles source type)
-mapboxgl() |>
+# Visualize the Overture Maps places data as PMTiles
+# Works with either `maplibre()` or `mapboxgl()`
+
+library(mapgl)
+
+maplibre(style = maptiler_style("basic", variant = "dark")) |>
+  set_projection("globe") |>
   add_pmtiles_source(
-    id = "pmtiles-source",
-    url = "https://example.com/data.pmtiles"
+    id = "places-source",
+    url = "https://overturemaps-tiles-us-west-2-beta.s3.amazonaws.com/2025-06-25/places.pmtiles"
   ) |>
-  add_layer(
-    id = "pmtiles-layer",
-    source = "pmtiles-source",
-    source_layer = "layer-name",
-    type = "fill",
-    paint = list(
-      "fill-color" = "blue"
+  add_circle_layer(
+    id = "places-layer",
+    source = "places-source",
+    source_layer = "place",
+    circle_color = "cyan",
+    circle_opacity = 0.7,
+    circle_radius = 4,
+    tooltip = concat(
+      "Name: ",
+      get_column("@name"),
+      "<br>Confidence: ",
+      number_format(get_column("confidence"), maximum_fraction_digits = 2)
     )
   )
 }

@@ -495,8 +495,11 @@ add_video_source <- function(map, id, urls, coordinates) {
         inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
-      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
-        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) {
+        "mapboxgl-compare-proxy"
+      } else {
+        "maplibre-compare-proxy"
+      }
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -510,8 +513,11 @@ add_video_source <- function(map, id, urls, coordinates) {
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+        "mapboxgl-proxy"
+      } else {
         "maplibre-proxy"
+      }
       map$session$sendCustomMessage(
         proxy_class,
         list(id = map$id, message = list(type = "add_source", source = source))
@@ -536,56 +542,53 @@ add_video_source <- function(map, id, urls, coordinates) {
 #' @export
 #' @examples
 #' \dontrun{
-#' # For MapLibre GL JS (uses native PMTiles support)
-#' maplibre()
-#'   add_pmtiles_source(
-#'     id = "pmtiles-source",
-#'     url = "https://example.com/data.pmtiles"
-#'   ) |>
-#'   add_layer(
-#'     id = "pmtiles-layer",
-#'     source = "pmtiles-source",
-#'     source_layer = "layer-name",
-#'     type = "fill",
-#'     paint = list(
-#'       "fill-color" = "blue"
-#'     )
-#'   )
 #'
-#' # For Mapbox GL JS (uses custom PMTiles source type)
-#' mapboxgl() |>
+#' # Visualize the Overture Maps places data as PMTiles
+#' # Works with either `maplibre()` or `mapboxgl()`
+#'
+#' library(mapgl)
+#'
+#' maplibre(style = maptiler_style("basic", variant = "dark")) |>
+#'   set_projection("globe") |>
 #'   add_pmtiles_source(
-#'     id = "pmtiles-source",
-#'     url = "https://example.com/data.pmtiles"
+#'     id = "places-source",
+#'     url = "https://overturemaps-tiles-us-west-2-beta.s3.amazonaws.com/2025-06-25/places.pmtiles"
 #'   ) |>
-#'   add_layer(
-#'     id = "pmtiles-layer",
-#'     source = "pmtiles-source",
-#'     source_layer = "layer-name",
-#'     type = "fill",
-#'     paint = list(
-#'       "fill-color" = "blue"
+#'   add_circle_layer(
+#'     id = "places-layer",
+#'     source = "places-source",
+#'     source_layer = "place",
+#'     circle_color = "cyan",
+#'     circle_opacity = 0.7,
+#'     circle_radius = 4,
+#'     tooltip = concat(
+#'       "Name: ",
+#'       get_column("@name"),
+#'       "<br>Confidence: ",
+#'       number_format(get_column("confidence"), maximum_fraction_digits = 2)
 #'     )
 #'   )
 #' }
 add_pmtiles_source <- function(map, id, url, ...) {
   # Detect if we're using Mapbox GL JS or MapLibre GL JS
-  is_mapbox <- inherits(map, "mapboxgl") || inherits(map, "mapboxgl_proxy") ||
-               inherits(map, "mapboxgl_compare") || inherits(map, "mapboxgl_compare_proxy")
+  is_mapbox <- inherits(map, "mapboxgl") ||
+    inherits(map, "mapboxgl_proxy") ||
+    inherits(map, "mapboxgl_compare") ||
+    inherits(map, "mapboxgl_compare_proxy")
 
   if (is_mapbox) {
     # For Mapbox GL JS, use the custom PMTiles source type
     source <- list(
       id = id,
-      type = "pmtile-source",  # Custom source type from mapbox-pmtiles
-      url = url  # No pmtiles:// prefix needed
+      type = "pmtile-source", # Custom source type from mapbox-pmtiles
+      url = url # No pmtiles:// prefix needed
     )
   } else {
     # For MapLibre GL JS, use the native pmtiles:// protocol
     source <- list(
       id = id,
-      type = "vector",  # Standard vector source
-      url = paste0("pmtiles://", url)  # Add pmtiles:// prefix
+      type = "vector", # Standard vector source
+      url = paste0("pmtiles://", url) # Add pmtiles:// prefix
     )
   }
 

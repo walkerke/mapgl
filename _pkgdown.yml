@@ -70,6 +70,7 @@ reference:
       - add_image_source
       - add_video_source
       - add_h3j_source
+      - add_pmtiles_source
 
   - title: "Map Controls"
     desc: "Functions to add interactive controls to your map"
