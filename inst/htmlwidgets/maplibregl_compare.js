@@ -454,6 +454,18 @@ HTMLWidgets.widget({
                                         }
                                     });
                                     map.addSource(message.source.id, sourceConfig);
+                                } else {
+                                    // Handle custom source types
+                                    const sourceConfig = { type: message.source.type };
+                                    
+                                    // Copy all properties except id
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
+                                    });
+                                    
+                                    map.addSource(message.source.id, sourceConfig);
                                 }
                             } else if (message.type === "add_layer") {
                                 try {

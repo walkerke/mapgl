@@ -24,7 +24,7 @@ Add a PMTiles source to a Mapbox GL or Maplibre GL map
 \examples{
 \dontrun{
 # For MapLibre GL JS (uses native PMTiles support)
-maplibre()  < /dev/null | >
+maplibre()
   add_pmtiles_source(
     id = "pmtiles-source",
     url = "https://example.com/data.pmtiles"
@@ -40,9 +40,9 @@ maplibre()  < /dev/null | >
   )
 
 # For Mapbox GL JS (uses custom PMTiles source type)
-mapboxgl(access_token = "your-token-here") |>
+mapboxgl() |>
   add_pmtiles_source(
-    id = "pmtiles-source", 
+    id = "pmtiles-source",
     url = "https://example.com/data.pmtiles"
   ) |>
   add_layer(

@@ -537,7 +537,7 @@ add_video_source <- function(map, id, urls, coordinates) {
 #' @examples
 #' \dontrun{
 #' # For MapLibre GL JS (uses native PMTiles support)
-#' maplibre()  < /dev/null | >
+#' maplibre()
 #'   add_pmtiles_source(
 #'     id = "pmtiles-source",
 #'     url = "https://example.com/data.pmtiles"
@@ -551,11 +551,11 @@ add_video_source <- function(map, id, urls, coordinates) {
 #'       "fill-color" = "blue"
 #'     )
 #'   )
-#' 
+#'
 #' # For Mapbox GL JS (uses custom PMTiles source type)
-#' mapboxgl(access_token = "your-token-here") |>
+#' mapboxgl() |>
 #'   add_pmtiles_source(
-#'     id = "pmtiles-source", 
+#'     id = "pmtiles-source",
 #'     url = "https://example.com/data.pmtiles"
 #'   ) |>
 #'   add_layer(
@@ -572,7 +572,7 @@ add_pmtiles_source <- function(map, id, url, ...) {
   # Detect if we're using Mapbox GL JS or MapLibre GL JS
   is_mapbox <- inherits(map, "mapboxgl") || inherits(map, "mapboxgl_proxy") ||
                inherits(map, "mapboxgl_compare") || inherits(map, "mapboxgl_compare_proxy")
-  
+
   if (is_mapbox) {
     # For Mapbox GL JS, use the custom PMTiles source type
     source <- list(
@@ -588,11 +588,11 @@ add_pmtiles_source <- function(map, id, url, ...) {
       url = paste0("pmtiles://", url)  # Add pmtiles:// prefix
     )
   }
-  
+
   # Add any additional arguments
   extra_args <- list(...)
   source <- c(source, extra_args)
-  
+
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
@@ -624,6 +624,6 @@ add_pmtiles_source <- function(map, id, url, ...) {
   } else {
     map$x$sources <- c(map$x$sources, list(source))
   }
-  
+
   return(map)
 }

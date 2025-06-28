@@ -39,7 +39,7 @@ dependencies:
     script:
       - "pmtiles.js"
   - name: mapbox-pmtiles
-    version: 1.0.0
+    version: 1.1.0
     src: "htmlwidgets/lib/mapbox-pmtiles"
     script:
       - "pmtiles-source-optimized-v2.js"
