@@ -1412,9 +1412,13 @@ HTMLWidgets.widget({
                 // Feature hover events
                 if (x.hover_events.features) {
                   const options = x.hover_events.layer_id
-                    ? { layers: Array.isArray(x.hover_events.layer_id) 
-                        ? x.hover_events.layer_id 
-                        : x.hover_events.layer_id.split(',').map(id => id.trim()) }
+                    ? {
+                        layers: Array.isArray(x.hover_events.layer_id)
+                          ? x.hover_events.layer_id
+                          : x.hover_events.layer_id
+                              .split(",")
+                              .map((id) => id.trim()),
+                      }
                     : undefined;
                   const features = map.queryRenderedFeatures(e.point, options);
 
@@ -1817,11 +1821,51 @@ if (HTMLWidgets.shinyMode) {
         }
         layerState.paintProperties[layerId][propertyName] = newValue;
       } else if (message.type === "query_rendered_features") {
-        const features = map.queryRenderedFeatures(message.geometry, {
-          layers: message.layers,
-          filter: message.filter,
+        // Query rendered features
+        let queryOptions = {};
+        if (message.layers) {
+          // Ensure layers is always an array
+          queryOptions.layers = Array.isArray(message.layers)
+            ? message.layers
+            : [message.layers];
+        }
+        if (message.filter) queryOptions.filter = message.filter;
+
+        let features;
+        if (message.geometry) {
+          features = map.queryRenderedFeatures(message.geometry, queryOptions);
+        } else {
+          // No geometry specified - query entire viewport
+          features = map.queryRenderedFeatures(queryOptions);
+        }
+
+        // Deduplicate features by id or by properties if no id
+        const uniqueFeatures = new Map();
+        features.forEach(function (feature) {
+          let key;
+          if (feature.id !== undefined && feature.id !== null) {
+            key = feature.id;
+          } else {
+            // Create a key from properties if no id available
+            key = JSON.stringify(feature.properties);
+          }
+
+          if (!uniqueFeatures.has(key)) {
+            uniqueFeatures.set(key, feature);
+          }
         });
-        Shiny.setInputValue(el.id + "_feature_query", features);
+
+        // Convert to GeoJSON FeatureCollection
+        const deduplicatedFeatures = Array.from(uniqueFeatures.values());
+        const featureCollection = {
+          type: "FeatureCollection",
+          features: deduplicatedFeatures,
+        };
+
+        Shiny.setInputValue(
+          data.id + "_queried_features",
+          JSON.stringify(featureCollection),
+        );
       } else if (message.type === "add_legend") {
         // Extract legend ID from HTML to track it
         const legendIdMatch = message.html.match(/id="([^"]+)"/);
