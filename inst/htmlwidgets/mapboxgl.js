@@ -293,9 +293,15 @@ HTMLWidgets.widget({
         }
 
         // Register PMTiles source type if available
-        if (typeof MapboxPmTilesSource !== "undefined" && typeof pmtiles !== "undefined") {
+        if (
+          typeof MapboxPmTilesSource !== "undefined" &&
+          typeof pmtiles !== "undefined"
+        ) {
           try {
-            mapboxgl.Style.setSourceType(PMTILES_SOURCE_TYPE, MapboxPmTilesSource);
+            mapboxgl.Style.setSourceType(
+              PMTILES_SOURCE_TYPE,
+              MapboxPmTilesSource,
+            );
             console.log("PMTiles support enabled for Mapbox GL JS");
           } catch (e) {
             console.warn("Failed to register PMTiles source type:", e);
@@ -490,14 +496,14 @@ HTMLWidgets.widget({
               } else {
                 // Handle custom source types (like pmtile-source)
                 const sourceOptions = { type: source.type };
-                
+
                 // Copy all properties except id
                 for (const [key, value] of Object.entries(source)) {
                   if (key !== "id") {
                     sourceOptions[key] = value;
                   }
                 }
-                
+
                 map.addSource(source.id, sourceOptions);
               }
             });
@@ -1365,38 +1371,40 @@ HTMLWidgets.widget({
 
             // add hover listener for shinyMode if enabled
             if (x.hover_events && x.hover_events.enabled) {
-                map.on("mousemove", function (e) {
-                  // Feature hover events
-                  if (x.hover_events.features) {
-                    const features = map.queryRenderedFeatures(e.point);
+              map.on("mousemove", function (e) {
+                // Feature hover events
+                if (x.hover_events.features) {
+                  const options = x.hover_events.layer_id
+                    ? { layers: Array.isArray(x.hover_events.layer_id) 
+                        ? x.hover_events.layer_id 
+                        : x.hover_events.layer_id.split(',').map(id => id.trim()) }
+                    : undefined;
+                  const features = map.queryRenderedFeatures(e.point, options);
 
-                    if(features.length > 0) {
-                      const feature = features[0];
-                      Shiny.onInputChange(el.id + "_feature_hover", {
-                        id: feature.id,
-                              properties: feature.properties,
-                              layer: feature.layer.id,
-                              lng: e.lngLat.lng,
-                              lat: e.lngLat.lat,
-                              time: new Date(),
-                          });
-                    } else {
-                      Shiny.onInputChange(
-                        el.id + "_feature_hover",
-                        null,
-                    );
+                  if (features.length > 0) {
+                    const feature = features[0];
+                    Shiny.onInputChange(el.id + "_feature_hover", {
+                      id: feature.id,
+                      properties: feature.properties,
+                      layer: feature.layer.id,
+                      lng: e.lngLat.lng,
+                      lat: e.lngLat.lat,
+                      time: new Date(),
+                    });
+                  } else {
+                    Shiny.onInputChange(el.id + "_feature_hover", null);
                   }
-                  }
+                }
 
-                  // Coordinate hover events  
-                  if (x.hover_events.coordinates) {
-                    Shiny.onInputChange(el.id + "_hover", {
-                        lng: e.lngLat.lng,
-                        lat: e.lngLat.lat,
-                        time: new Date(),
-                      });
-                  }
-                });
+                // Coordinate hover events
+                if (x.hover_events.coordinates) {
+                  Shiny.onInputChange(el.id + "_hover", {
+                    lng: e.lngLat.lng,
+                    lat: e.lngLat.lat,
+                    time: new Date(),
+                  });
+                }
+              });
             }
           }
 
@@ -1606,14 +1614,14 @@ if (HTMLWidgets.shinyMode) {
         } else {
           // Handle custom source types (like pmtile-source)
           const sourceConfig = { type: message.source.type };
-          
+
           // Copy all properties except id
           Object.keys(message.source).forEach(function (key) {
             if (key !== "id") {
               sourceConfig[key] = message.source[key];
             }
           });
-          
+
           map.addSource(message.source.id, sourceConfig);
         }
       } else if (message.type === "add_layer") {

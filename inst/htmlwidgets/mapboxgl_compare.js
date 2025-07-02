@@ -1674,7 +1674,12 @@ HTMLWidgets.widget({
               if (window.Shiny) {
                 // Feature hover events
                 if (mapConfig.hover_events.features) {
-                  const features = map.queryRenderedFeatures(e.point);
+                  const options = mapConfig.hover_events.layer_id
+                    ? { layers: Array.isArray(mapConfig.hover_events.layer_id) 
+                        ? mapConfig.hover_events.layer_id 
+                        : mapConfig.hover_events.layer_id.split(',').map(id => id.trim()) }
+                    : undefined;
+                  const features = map.queryRenderedFeatures(e.point, options);
 
                   if(features.length > 0) {
                     const feature = features[0];
