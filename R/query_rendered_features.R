@@ -1,8 +1,10 @@
 #' Query rendered features on a map in a Shiny session
 #'
-#' This function triggers a query for rendered features on a map using a proxy object.
-#' Use `get_queried_features()` to retrieve the results as an sf object, or use the
-#' `callback` parameter to handle results automatically when they're ready.
+#' This function queries features that are currently rendered (visible) in the map viewport.
+#' Only features within the current viewport bounds will be returned - features outside the 
+#' visible area or hidden due to zoom constraints will not be included. Use `get_queried_features()` 
+#' to retrieve the results as an sf object, or use the `callback` parameter to handle results 
+#' automatically when they're ready.
 #'
 #' @param proxy A MapboxGL or Maplibre proxy object, defined with `mapboxgl_proxy()`, `maplibre_proxy()`, 
 #'   `mapboxgl_compare_proxy()`, or `maplibre_compare_proxy()`
@@ -20,17 +22,26 @@
 #'   If provided, this avoids timing issues by automatically handling results when they're available.
 #'
 #' @details
+#' ## Viewport Limitation
+#' 
+#' This function only queries features that are currently rendered in the map viewport. Features
+#' outside the visible area will not be returned, even if they exist in the data source. This 
+#' includes features that are:
+#' - Outside the current map bounds
+#' - Hidden due to zoom level constraints (minzoom/maxzoom)
+#' - Not yet loaded (if using vector tiles)
+#' 
 #' ## Avoiding Race Conditions
 #'
-#' **IMPORTANT**: `set_filter()` is asynchronous while `query_features()` is synchronous.
-#' Calling `query_features()` immediately after `set_filter()` will return features from the
+#' **IMPORTANT**: `set_filter()` is asynchronous while `query_rendered_features()` is synchronous.
+#' Calling `query_rendered_features()` immediately after `set_filter()` will return features from the
 #' PREVIOUS filter state, not the new one.
 #'
 #' ### Safe Usage Patterns:
 #'
 #' **Pattern 1: Query First, Then Filter (Recommended)**
 #' ```r
-#' query_features(proxy, layer_id = "counties", callback = function(features) {
+#' query_rendered_features(proxy, layer_id = "counties", callback = function(features) {
 #'   # Process features, then update map based on results
 #'   proxy |> set_filter("highlight", list("in", "id", features$id))
 #' })
@@ -39,8 +50,8 @@
 #' **Pattern 2: Use Filter Parameter Instead**
 #' ```r
 #' # Query with filter without changing map display
-#' query_features(proxy, filter = list(">=", "population", 1000),
-#'                callback = function(features) {
+#' query_rendered_features(proxy, filter = list(">=", "population", 1000),
+#'                          callback = function(features) {
 #'   # Process filtered results without race condition
 #' })
 #' ```
@@ -49,7 +60,7 @@
 #' ```r
 #' # WRONG - This will return stale results!
 #' proxy |> set_filter("layer", new_filter)
-#' query_features(proxy, layer_id = "layer")  # Gets OLD filter results
+#' query_rendered_features(proxy, layer_id = "layer")  # Gets OLD filter results
 #' ```
 #'
 #' @return The proxy object (invisibly). Use `get_queried_features()` to retrieve the query results manually,
@@ -60,7 +71,7 @@
 #' \dontrun{
 #' # Pattern 1: Query first, then filter (RECOMMENDED)
 #' proxy <- maplibre_proxy("map")
-#' query_features(proxy, layer_id = "counties", callback = function(features) {
+#' query_rendered_features(proxy, layer_id = "counties", callback = function(features) {
 #'   if (nrow(features) > 0) {
 #'     # Filter map based on query results - no race condition
 #'     proxy |> set_filter("selected", list("in", "id", features$id))
@@ -68,24 +79,24 @@
 #' })
 #'
 #' # Pattern 2: Use filter parameter to avoid race conditions
-#' query_features(proxy,
-#'                filter = list(">=", "population", 50000),
-#'                callback = function(features) {
+#' query_rendered_features(proxy,
+#'                         filter = list(">=", "population", 50000),
+#'                         callback = function(features) {
 #'   # These results are guaranteed to match the filter
 #'   print(paste("Found", nrow(features), "high population areas"))
 #' })
 #'
 #' # Query specific bounding box with callback
-#' query_features(proxy, geometry = c(100, 100, 200, 200),
-#'                layer_id = "counties", callback = function(features) {
+#' query_rendered_features(proxy, geometry = c(100, 100, 200, 200),
+#'                         layer_id = "counties", callback = function(features) {
 #'   print(paste("Found", nrow(features), "features"))
 #' })
 #'
 #' # ANTI-PATTERN - Don't do this!
 #' # proxy |> set_filter("layer", new_filter)
-#' # query_features(proxy, layer_id = "layer")  # Will get stale results!
+#' # query_rendered_features(proxy, layer_id = "layer")  # Will get stale results!
 #' }
-query_features <- function(
+query_rendered_features <- function(
   proxy,
   geometry = NULL,
   layer_id = NULL,
@@ -210,8 +221,9 @@ query_features <- function(
 
 #' Get queried features from a map as an sf object
 #'
-#' This function retrieves the results of a feature query triggered by `query_features()`.
-#' It returns the features as a deduplicated sf object.
+#' This function retrieves the results of a feature query triggered by `query_rendered_features()`.
+#' It returns the features as a deduplicated sf object. Note that only features that were
+#' visible in the viewport at the time of the query will be included.
 #'
 #' @param map A map object (mapboxgl, maplibre) or proxy object (mapboxgl_proxy, maplibre_proxy, 
 #'   mapboxgl_compare_proxy, maplibre_compare_proxy)
@@ -224,7 +236,7 @@ query_features <- function(
 #' # In a Shiny server function:
 #' observeEvent(input$query_button, {
 #'     proxy <- maplibre_proxy("map")
-#'     query_features(proxy, layer_id = "counties")
+#'     query_rendered_features(proxy, layer_id = "counties")
 #'     features <- get_queried_features(proxy)
 #'     print(nrow(features))
 #' })
