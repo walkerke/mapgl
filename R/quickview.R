@@ -10,6 +10,8 @@
 #' @param palette Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.
 #' @param style The Mapbox style to use. Defaults to mapbox_style("light").
 #' @param layer_id The layer ID to use for the visualization. Defaults to "quickview".
+#' @param legend Logical, whether to add a legend when a column is specified. Defaults to TRUE.
+#' @param legend_position The position of the legend on the map. Defaults to "top-left".
 #' @param ... Additional arguments passed to mapboxgl()
 #'
 #' @return A Mapbox GL map object
@@ -42,6 +44,8 @@ mapboxgl_view <- function(
   palette = viridisLite::viridis,
   style = mapbox_style("light"),
   layer_id = "quickview",
+  legend = TRUE,
+  legend_position = "top-left",
   ...
 ) {
   if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
@@ -124,7 +128,8 @@ mapboxgl_view <- function(
       is_single_band &&
         !is.null(raster_values) &&
         length(raster_values) > 0 &&
-        min_val != max_val
+        min_val != max_val &&
+        legend
     ) {
       # Use same approach as vector continuous legends with 5 equal-interval breaks
       breaks <- seq(min_val, max_val, length.out = 5)
@@ -135,7 +140,8 @@ mapboxgl_view <- function(
           legend_title = if (!is.null(column)) column else "Values",
           values = c(round(min_val, 2), round(max_val, 2)),
           colors = legend_colors,
-          type = "continuous"
+          type = "continuous",
+          position = legend_position
         )
     }
 
@@ -214,21 +220,27 @@ mapboxgl_view <- function(
               circle_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical",
-              circular_patches = TRUE
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                circular_patches = TRUE,
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -248,13 +260,19 @@ mapboxgl_view <- function(
               circle_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -275,14 +293,19 @@ mapboxgl_view <- function(
             circle_radius = 5,
             circle_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical",
-            circular_patches = TRUE
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              circular_patches = TRUE,
+              position = legend_position
+            )
+        }
       }
     }
   } else if (grepl("LINESTRING|MULTILINESTRING", geom_type)) {
@@ -340,20 +363,26 @@ mapboxgl_view <- function(
               line_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -373,13 +402,19 @@ mapboxgl_view <- function(
               line_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -400,13 +435,18 @@ mapboxgl_view <- function(
             line_width = 2,
             line_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical"
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              position = legend_position
+            )
+        }
       }
     }
   } else {
@@ -464,20 +504,26 @@ mapboxgl_view <- function(
               fill_outline_color = "white",
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -497,13 +543,19 @@ mapboxgl_view <- function(
               fill_outline_color = "white",
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -524,13 +576,18 @@ mapboxgl_view <- function(
             fill_opacity = 0.6,
             fill_outline_color = "white",
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical"
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              position = legend_position
+            )
+        }
       }
     }
   }
@@ -550,6 +607,8 @@ mapboxgl_view <- function(
 #' @param palette Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.
 #' @param style The MapLibre style to use. Defaults to carto_style("positron").
 #' @param layer_id The layer ID to use for the visualization. Defaults to "quickview".
+#' @param legend Logical, whether to add a legend when a column is specified. Defaults to TRUE.
+#' @param legend_position The position of the legend on the map. Defaults to "top-left".
 #' @param ... Additional arguments passed to maplibre()
 #'
 #' @return A MapLibre GL map object
@@ -582,6 +641,8 @@ maplibre_view <- function(
   palette = viridisLite::viridis,
   style = carto_style("positron"),
   layer_id = "quickview",
+  legend = TRUE,
+  legend_position = "top-left",
   ...
 ) {
   if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
@@ -754,21 +815,27 @@ maplibre_view <- function(
               circle_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical",
-              circular_patches = TRUE
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                circular_patches = TRUE,
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -788,13 +855,19 @@ maplibre_view <- function(
               circle_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -815,14 +888,19 @@ maplibre_view <- function(
             circle_radius = 5,
             circle_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical",
-            circular_patches = TRUE
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              circular_patches = TRUE,
+              position = legend_position
+            )
+        }
       }
     }
   } else if (grepl("LINESTRING|MULTILINESTRING", geom_type)) {
@@ -880,20 +958,26 @@ maplibre_view <- function(
               line_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -913,13 +997,19 @@ maplibre_view <- function(
               line_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -940,13 +1030,18 @@ maplibre_view <- function(
             line_width = 2,
             line_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical"
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              position = legend_position
+            )
+        }
       }
     }
   } else {
@@ -1004,20 +1099,26 @@ maplibre_view <- function(
               fill_outline_color = "white",
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -1037,13 +1138,19 @@ maplibre_view <- function(
               fill_outline_color = "white",
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -1064,13 +1171,18 @@ maplibre_view <- function(
             fill_opacity = 0.6,
             fill_outline_color = "white",
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical"
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              position = legend_position
+            )
+        }
       }
     }
   }
@@ -1091,6 +1203,8 @@ maplibre_view <- function(
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
 #' @param palette Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.
 #' @param layer_id The layer ID to use for the visualization. If NULL, a unique ID will be auto-generated.
+#' @param legend Logical, whether to add a legend when a column is specified. Defaults to FALSE for subsequent layers to avoid overwriting existing legends.
+#' @param legend_position The position of the legend on the map. Defaults to "bottom-left".
 #'
 #' @return The map object with the new layer added
 #' @export
@@ -1120,7 +1234,9 @@ add_view <- function(
   column = NULL,
   n = NULL,
   palette = viridisLite::viridis,
-  layer_id = NULL
+  layer_id = NULL,
+  legend = FALSE,
+  legend_position = "bottom-left"
 ) {
   # Validate map object
   if (
@@ -1203,7 +1319,8 @@ add_view <- function(
       is_single_band &&
         !is.null(raster_values) &&
         length(raster_values) > 0 &&
-        min_val != max_val
+        min_val != max_val &&
+        legend
     ) {
       # Use same approach as vector continuous legends with 5 equal-interval breaks
       breaks <- seq(min_val, max_val, length.out = 5)
@@ -1214,7 +1331,9 @@ add_view <- function(
           legend_title = if (!is.null(column)) column else "Values",
           values = c(round(min_val, 2), round(max_val, 2)),
           colors = legend_colors,
-          type = "continuous"
+          type = "continuous",
+          position = legend_position,
+          add = TRUE
         )
     }
 
@@ -1299,21 +1418,27 @@ add_view <- function(
               circle_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical",
-              circular_patches = TRUE
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                circular_patches = TRUE,
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -1333,13 +1458,19 @@ add_view <- function(
               circle_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -1360,14 +1491,19 @@ add_view <- function(
             circle_radius = 5,
             circle_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical",
-            circular_patches = TRUE
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              circular_patches = TRUE,
+              position = legend_position
+            )
+        }
       }
     }
   } else if (grepl("LINESTRING|MULTILINESTRING", geom_type)) {
@@ -1425,20 +1561,26 @@ add_view <- function(
               line_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -1458,13 +1600,19 @@ add_view <- function(
               line_opacity = 0.8,
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -1485,13 +1633,18 @@ add_view <- function(
             line_width = 2,
             line_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical"
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              position = legend_position
+            )
+        }
       }
     }
   } else {
@@ -1549,20 +1702,26 @@ add_view <- function(
               fill_outline_color = "white",
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(
-                paste0("< ", round(breaks[2], 2)),
-                if (n_breaks > 1) {
-                  sapply(2:n_breaks, function(i) {
-                    paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
-                  })
-                } else NULL
-              ),
-              colors = colors,
-              type = "categorical"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(
+                  paste0("< ", round(breaks[2], 2)),
+                  if (n_breaks > 1) {
+                    sapply(2:n_breaks, function(i) {
+                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                    })
+                  } else NULL
+                ),
+                colors = colors,
+                type = "categorical",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         } else {
           # Use continuous interpolation with 5 equal-interval breaks
           breaks <- seq(min_val, max_val, length.out = 5)
@@ -1582,13 +1741,19 @@ add_view <- function(
               fill_outline_color = "white",
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
-            ) |>
-            add_legend(
-              legend_title = column,
-              values = c(round(min_val, 2), round(max_val, 2)),
-              colors = colors,
-              type = "continuous"
             )
+          
+          if (legend) {
+            map <- map |>
+              add_legend(
+                legend_title = column,
+                values = c(round(min_val, 2), round(max_val, 2)),
+                colors = colors,
+                type = "continuous",
+                position = legend_position,
+                add = TRUE
+              )
+          }
         }
       } else {
         # Categorical column
@@ -1609,13 +1774,18 @@ add_view <- function(
             fill_opacity = 0.6,
             fill_outline_color = "white",
             popup = if (exists("popup_content", data)) "popup_content" else NULL
-          ) |>
-          add_legend(
-            legend_title = column,
-            values = as.character(unique_vals),
-            colors = colors,
-            type = "categorical"
           )
+        
+        if (legend) {
+          map <- map |>
+            add_legend(
+              legend_title = column,
+              values = as.character(unique_vals),
+              colors = colors,
+              type = "categorical",
+              position = legend_position
+            )
+        }
       }
     }
   }

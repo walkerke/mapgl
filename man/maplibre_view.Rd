@@ -12,6 +12,8 @@ maplibre_view(
   palette = viridisLite::viridis,
   style = carto_style("positron"),
   layer_id = "quickview",
+  legend = TRUE,
+  legend_position = "top-left",
   ...
 )
 }
@@ -29,6 +31,10 @@ maplibre_view(
 \item{style}{The MapLibre style to use. Defaults to carto_style("positron").}
 
 \item{layer_id}{The layer ID to use for the visualization. Defaults to "quickview".}
+
+\item{legend}{Logical, whether to add a legend when a column is specified. Defaults to TRUE.}
+
+\item{legend_position}{The position of the legend on the map. Defaults to "top-left".}
 
 \item{...}{Additional arguments passed to maplibre()}
 }

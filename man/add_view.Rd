@@ -11,7 +11,9 @@ add_view(
   column = NULL,
   n = NULL,
   palette = viridisLite::viridis,
-  layer_id = NULL
+  layer_id = NULL,
+  legend = FALSE,
+  legend_position = "bottom-left"
 )
 }
 \arguments{
@@ -28,6 +30,10 @@ add_view(
 \item{palette}{Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.}
 
 \item{layer_id}{The layer ID to use for the visualization. If NULL, a unique ID will be auto-generated.}
+
+\item{legend}{Logical, whether to add a legend when a column is specified. Defaults to FALSE for subsequent layers to avoid overwriting existing legends.}
+
+\item{legend_position}{The position of the legend on the map. Defaults to "bottom-left".}
 }
 \value{
 The map object with the new layer added
