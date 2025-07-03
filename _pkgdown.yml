@@ -48,6 +48,7 @@ reference:
       - mapboxgl_view
       - maplibre_view
 
+
   - title: "Adding Layers"
     desc: "Functions to add various types of visualization layers to your map"
     contents:
@@ -59,6 +60,7 @@ reference:
       - add_fill_extrusion_layer
       - add_raster_layer
       - add_symbol_layer
+      - add_view
 
   - title: "Data Sources"
     desc: "Functions to add different types of data sources"
