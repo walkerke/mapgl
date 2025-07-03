@@ -134,14 +134,15 @@ mapboxgl_view <- function(
       # Use same approach as vector continuous legends with 5 equal-interval breaks
       breaks <- seq(min_val, max_val, length.out = 5)
       legend_colors <- palette(5)
-      
+
       map <- map |>
         add_legend(
           legend_title = if (!is.null(column)) column else "Values",
           values = c(round(min_val, 2), round(max_val, 2)),
           colors = legend_colors,
           type = "continuous",
-          position = legend_position
+          position = legend_position,
+          layer_id = layer_id
         )
     }
 
@@ -221,7 +222,7 @@ mapboxgl_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -230,7 +231,11 @@ mapboxgl_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
@@ -238,7 +243,7 @@ mapboxgl_view <- function(
                 type = "categorical",
                 circular_patches = TRUE,
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         } else {
@@ -261,7 +266,7 @@ mapboxgl_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -270,7 +275,7 @@ mapboxgl_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         }
@@ -294,7 +299,7 @@ mapboxgl_view <- function(
             circle_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -303,7 +308,8 @@ mapboxgl_view <- function(
               colors = colors,
               type = "categorical",
               circular_patches = TRUE,
-              position = legend_position
+              position = legend_position,
+              layer_id = layer_id
             )
         }
       }
@@ -364,7 +370,7 @@ mapboxgl_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -373,14 +379,18 @@ mapboxgl_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
                 colors = colors,
                 type = "categorical",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         } else {
@@ -403,7 +413,7 @@ mapboxgl_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -412,7 +422,7 @@ mapboxgl_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         }
@@ -436,7 +446,7 @@ mapboxgl_view <- function(
             line_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -444,7 +454,8 @@ mapboxgl_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              position = legend_position
+              position = legend_position,
+              layer_id = layer_id
             )
         }
       }
@@ -505,7 +516,7 @@ mapboxgl_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -514,14 +525,18 @@ mapboxgl_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
                 colors = colors,
                 type = "categorical",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         } else {
@@ -544,7 +559,7 @@ mapboxgl_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -553,7 +568,7 @@ mapboxgl_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         }
@@ -577,7 +592,7 @@ mapboxgl_view <- function(
             fill_outline_color = "white",
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -585,7 +600,8 @@ mapboxgl_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              position = legend_position
+              position = legend_position,
+              layer_id = layer_id
             )
         }
       }
@@ -730,13 +746,14 @@ maplibre_view <- function(
       # Use same approach as vector continuous legends with 5 equal-interval breaks
       breaks <- seq(min_val, max_val, length.out = 5)
       legend_colors <- palette(5)
-      
+
       map <- map |>
         add_legend(
           legend_title = if (!is.null(column)) column else "Values",
           values = c(round(min_val, 2), round(max_val, 2)),
           colors = legend_colors,
-          type = "continuous"
+          type = "continuous",
+          layer_id = layer_id
         )
     }
 
@@ -816,7 +833,7 @@ maplibre_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -825,7 +842,11 @@ maplibre_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
@@ -833,7 +854,7 @@ maplibre_view <- function(
                 type = "categorical",
                 circular_patches = TRUE,
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         } else {
@@ -856,7 +877,7 @@ maplibre_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -865,7 +886,7 @@ maplibre_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         }
@@ -889,7 +910,7 @@ maplibre_view <- function(
             circle_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -898,7 +919,8 @@ maplibre_view <- function(
               colors = colors,
               type = "categorical",
               circular_patches = TRUE,
-              position = legend_position
+              position = legend_position,
+              layer_id = layer_id
             )
         }
       }
@@ -959,7 +981,7 @@ maplibre_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -968,14 +990,18 @@ maplibre_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
                 colors = colors,
                 type = "categorical",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         } else {
@@ -998,7 +1024,7 @@ maplibre_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1007,7 +1033,7 @@ maplibre_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         }
@@ -1031,7 +1057,7 @@ maplibre_view <- function(
             line_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -1039,7 +1065,8 @@ maplibre_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              position = legend_position
+              position = legend_position,
+              layer_id = layer_id
             )
         }
       }
@@ -1100,7 +1127,7 @@ maplibre_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1109,14 +1136,18 @@ maplibre_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
                 colors = colors,
                 type = "categorical",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         } else {
@@ -1139,7 +1170,7 @@ maplibre_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1148,7 +1179,7 @@ maplibre_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                layer_id = layer_id
               )
           }
         }
@@ -1172,7 +1203,7 @@ maplibre_view <- function(
             fill_outline_color = "white",
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -1180,7 +1211,8 @@ maplibre_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              position = legend_position
+              position = legend_position,
+              layer_id = layer_id
             )
         }
       }
@@ -1325,7 +1357,7 @@ add_view <- function(
       # Use same approach as vector continuous legends with 5 equal-interval breaks
       breaks <- seq(min_val, max_val, length.out = 5)
       legend_colors <- palette(5)
-      
+
       map <- map |>
         add_legend(
           legend_title = if (!is.null(column)) column else "Values",
@@ -1333,7 +1365,8 @@ add_view <- function(
           colors = legend_colors,
           type = "continuous",
           position = legend_position,
-          add = TRUE
+          add = TRUE,
+          layer_id = layer_id
         )
     }
 
@@ -1419,7 +1452,7 @@ add_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1428,7 +1461,11 @@ add_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
@@ -1436,7 +1473,8 @@ add_view <- function(
                 type = "categorical",
                 circular_patches = TRUE,
                 position = legend_position,
-                add = TRUE
+                add = TRUE,
+                layer_id = layer_id
               )
           }
         } else {
@@ -1459,7 +1497,7 @@ add_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1468,7 +1506,8 @@ add_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                add = TRUE,
+                layer_id = layer_id
               )
           }
         }
@@ -1492,7 +1531,7 @@ add_view <- function(
             circle_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -1501,7 +1540,9 @@ add_view <- function(
               colors = colors,
               type = "categorical",
               circular_patches = TRUE,
-              position = legend_position
+              position = legend_position,
+              add = TRUE,
+              layer_id = layer_id
             )
         }
       }
@@ -1562,7 +1603,7 @@ add_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1571,14 +1612,19 @@ add_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
                 colors = colors,
                 type = "categorical",
                 position = legend_position,
-                add = TRUE
+                add = TRUE,
+                layer_id = layer_id
               )
           }
         } else {
@@ -1601,7 +1647,7 @@ add_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1610,7 +1656,8 @@ add_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                add = TRUE,
+                layer_id = layer_id
               )
           }
         }
@@ -1634,7 +1681,7 @@ add_view <- function(
             line_opacity = 0.8,
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
@@ -1642,7 +1689,9 @@ add_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              position = legend_position
+              position = legend_position,
+              add = TRUE,
+              layer_id = layer_id
             )
         }
       }
@@ -1703,7 +1752,7 @@ add_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1712,14 +1761,19 @@ add_view <- function(
                   paste0("< ", round(breaks[2], 2)),
                   if (n_breaks > 1) {
                     sapply(2:n_breaks, function(i) {
-                      paste0(round(breaks[i], 2), " - ", round(breaks[i + 1], 2))
+                      paste0(
+                        round(breaks[i], 2),
+                        " - ",
+                        round(breaks[i + 1], 2)
+                      )
                     })
                   } else NULL
                 ),
                 colors = colors,
                 type = "categorical",
                 position = legend_position,
-                add = TRUE
+                add = TRUE,
+                layer_id = layer_id
               )
           }
         } else {
@@ -1742,7 +1796,7 @@ add_view <- function(
               popup = if (exists("popup_content", data)) "popup_content" else
                 NULL
             )
-          
+
           if (legend) {
             map <- map |>
               add_legend(
@@ -1751,7 +1805,8 @@ add_view <- function(
                 colors = colors,
                 type = "continuous",
                 position = legend_position,
-                add = TRUE
+                add = TRUE,
+                layer_id = layer_id
               )
           }
         }
@@ -1775,7 +1830,7 @@ add_view <- function(
             fill_outline_color = "white",
             popup = if (exists("popup_content", data)) "popup_content" else NULL
           )
-        
+
         if (legend) {
           map <- map |>
             add_legend(
