@@ -206,8 +206,7 @@ add_navigation_control <- function(
 #'     add_navigation_control(position = "top-right") |>
 #'     add_layers_control(
 #'         position = "top-right",
-#'         margin_top = 50,  # Add space below navigation control
-#'         margin_right = 10
+#'         margin_top = 110
 #'     )
 #' }
 add_layers_control <- function(
@@ -939,8 +938,8 @@ clear_drawn_features <- function(map) {
     )
   } else {
     # For regular proxies
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy" else "maplibre-proxy"
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+      "maplibre-proxy"
     map$session$sendCustomMessage(
       proxy_class,
       list(
