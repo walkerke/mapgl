@@ -132,7 +132,8 @@
 #'     legend_title = "Ratings",
 #'     values = c("5 Star", "4 Star", "3 Star"),
 #'     colors = c("#FFD700", "#FFA500", "#FF6347"),
-#'     patch_shape = '<path d="M50,5 L61,35 L95,35 L68,57 L79,91 L50,70 L21,91 L32,57 L5,35 L39,35 Z" />'
+#'     patch_shape = paste0('<path d="M50,5 L61,35 L95,35 L68,57 L79,91 L50,70 ',
+#'                          'L21,91 L32,57 L5,35 L39,35 Z" />')
 #' )
 #'
 #' # Custom SVG with complete SVG string
@@ -141,7 +142,8 @@
 #'     legend_title = "Custom Icons",
 #'     values = c("Location A", "Location B"),
 #'     colors = c("#FF0000", "#0000FF"),
-#'     patch_shape = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" /></svg>'
+#'     patch_shape = paste0('<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" ',
+#'                          'stroke="black" stroke-width="3" /></svg>')
 #' )
 #'
 #' # Using sf objects directly as patch shapes
@@ -158,7 +160,8 @@
 #' )
 #'
 #' # For advanced users needing custom conversion options
-#' custom_svg <- mapgl:::.sf_to_svg(county_shape, simplify = TRUE, tolerance = 0.001, fit_viewbox = TRUE)
+#' custom_svg <- mapgl:::.sf_to_svg(county_shape, simplify = TRUE,
+#'                                   tolerance = 0.001, fit_viewbox = TRUE)
 #' add_categorical_legend(
 #'     map = map,
 #'     legend_title = "Custom Converted Shape",

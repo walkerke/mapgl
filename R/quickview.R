@@ -241,7 +241,7 @@ mapboxgl_view <- function(
                 ),
                 colors = colors,
                 type = "categorical",
-                circular_patches = TRUE,
+                patch_shape = "circle",
                 position = legend_position,
                 layer_id = layer_id
               )
@@ -307,7 +307,7 @@ mapboxgl_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              circular_patches = TRUE,
+              patch_shape = "circle",
               position = legend_position,
               layer_id = layer_id
             )
@@ -389,6 +389,7 @@ mapboxgl_view <- function(
                 ),
                 colors = colors,
                 type = "categorical",
+                patch_shape = "line",
                 position = legend_position,
                 layer_id = layer_id
               )
@@ -454,6 +455,7 @@ mapboxgl_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
+              patch_shape = "line",
               position = legend_position,
               layer_id = layer_id
             )
@@ -852,7 +854,7 @@ maplibre_view <- function(
                 ),
                 colors = colors,
                 type = "categorical",
-                circular_patches = TRUE,
+                patch_shape = "circle",
                 position = legend_position,
                 layer_id = layer_id
               )
@@ -918,7 +920,7 @@ maplibre_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              circular_patches = TRUE,
+              patch_shape = "circle",
               position = legend_position,
               layer_id = layer_id
             )
@@ -1000,6 +1002,7 @@ maplibre_view <- function(
                 ),
                 colors = colors,
                 type = "categorical",
+                patch_shape = "line",
                 position = legend_position,
                 layer_id = layer_id
               )
@@ -1065,6 +1068,7 @@ maplibre_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
+              patch_shape = "line",
               position = legend_position,
               layer_id = layer_id
             )
@@ -1471,7 +1475,7 @@ add_view <- function(
                 ),
                 colors = colors,
                 type = "categorical",
-                circular_patches = TRUE,
+                patch_shape = "circle",
                 position = legend_position,
                 add = TRUE,
                 layer_id = layer_id
@@ -1539,7 +1543,7 @@ add_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
-              circular_patches = TRUE,
+              patch_shape = "circle",
               position = legend_position,
               add = TRUE,
               layer_id = layer_id
@@ -1622,6 +1626,7 @@ add_view <- function(
                 ),
                 colors = colors,
                 type = "categorical",
+                patch_shape = "line",
                 position = legend_position,
                 add = TRUE,
                 layer_id = layer_id
@@ -1689,6 +1694,7 @@ add_view <- function(
               values = as.character(unique_vals),
               colors = colors,
               type = "categorical",
+              patch_shape = "line",
               position = legend_position,
               add = TRUE,
               layer_id = layer_id
