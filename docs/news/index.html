@@ -41,6 +41,13 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1" id="mapgl-031">mapgl 0.3.1<a class="anchor" aria-label="anchor" href="#mapgl-031"></a></h2>
+<ul><li>Added PMTiles support for Mapbox maps and streamlined PMTiles integration with <code><a href="../reference/add_pmtiles_source.html">add_pmtiles_source()</a></code> function.</li>
+<li>New functions <code><a href="../reference/query_rendered_features.html">query_rendered_features()</a></code> and <code><a href="../reference/get_queried_features.html">get_queried_features()</a></code> allow users to directly invoke the <code>map.queryRenderedFeatures()</code> method from the parent libraries in Shiny apps, with guidance for users to avoid race conditions and ensure proper synchronization. Functions query visible features in the map’s viewport and which can be extracted as sf objects.</li>
+<li>
+<code><a href="../reference/mapboxgl_view.html">mapboxgl_view()</a></code> and <code><a href="../reference/maplibre_view.html">maplibre_view()</a></code> now support quick view of terra rasters. A new function, <code><a href="../reference/add_view.html">add_view()</a></code>, is designed to help users quickly stack layers on top of the core view functions.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3" id="mapgl-03">mapgl 0.3<a class="anchor" aria-label="anchor" href="#mapgl-03"></a></h2><p class="text-muted">CRAN release: 2025-06-16</p>
 <ul><li>Added <code><a href="../reference/enable_shiny_hover.html">enable_shiny_hover()</a></code> function for optional hover events in Shiny applications:
 <ul><li>Provides <code>_hover</code> input for mouse coordinates and <code>_feature_hover</code> input for feature information</li>

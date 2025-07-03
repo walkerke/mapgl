@@ -1,3 +1,9 @@
+# mapgl 0.3.1
+
+* Added PMTiles support for Mapbox maps and streamlined PMTiles integration with `add_pmtiles_source()` function.
+* New functions `query_rendered_features()` and `get_queried_features()` allow users to directly invoke the `map.queryRenderedFeatures()` method from the parent libraries in Shiny apps, with guidance for users to avoid race conditions and ensure proper synchronization.  Functions query visible features in the map's viewport and which can be extracted as sf objects.
+* `mapboxgl_view()` and `maplibre_view()` now support quick view of terra rasters.  A new function, `add_view()`, is designed to help users quickly stack layers on top of the core view functions.
+
 # mapgl 0.3
 
 * Added `enable_shiny_hover()` function for optional hover events in Shiny applications:

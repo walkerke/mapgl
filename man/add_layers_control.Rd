@@ -89,8 +89,7 @@ maplibre() |>
     add_navigation_control(position = "top-right") |>
     add_layers_control(
         position = "top-right",
-        margin_top = 50,  # Add space below navigation control
-        margin_right = 10
+        margin_top = 110
     )
 }
 }
