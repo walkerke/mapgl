@@ -1388,17 +1388,17 @@ HTMLWidgets.widget({
                 // Set the position correctly
                 const position = message.position || "top-left";
                 if (position === "top-left") {
-                  layersControl.style.top = "10px";
-                  layersControl.style.left = "10px";
+                  layersControl.style.top = (message.margin_top || 10) + "px";
+                  layersControl.style.left = (message.margin_left || 10) + "px";
                 } else if (position === "top-right") {
-                  layersControl.style.top = "10px";
-                  layersControl.style.right = "10px";
+                  layersControl.style.top = (message.margin_top || 10) + "px";
+                  layersControl.style.right = (message.margin_right || 10) + "px";
                 } else if (position === "bottom-left") {
-                  layersControl.style.bottom = "30px";
-                  layersControl.style.left = "10px";
+                  layersControl.style.bottom = (message.margin_bottom || 30) + "px";
+                  layersControl.style.left = (message.margin_left || 10) + "px";
                 } else if (position === "bottom-right") {
-                  layersControl.style.bottom = "40px";
-                  layersControl.style.right = "10px";
+                  layersControl.style.bottom = (message.margin_bottom || 40) + "px";
+                  layersControl.style.right = (message.margin_right || 10) + "px";
                 }
 
                 // Apply custom colors if provided
@@ -2562,17 +2562,17 @@ HTMLWidgets.widget({
             // Set the position correctly - fix position bug by using correct CSS positioning
             const position = mapData.layers_control.position || "top-left";
             if (position === "top-left") {
-              layersControl.style.top = "10px";
-              layersControl.style.left = "10px";
+              layersControl.style.top = (mapData.layers_control.margin_top || 10) + "px";
+              layersControl.style.left = (mapData.layers_control.margin_left || 10) + "px";
             } else if (position === "top-right") {
-              layersControl.style.top = "10px";
-              layersControl.style.right = "10px";
+              layersControl.style.top = (mapData.layers_control.margin_top || 10) + "px";
+              layersControl.style.right = (mapData.layers_control.margin_right || 10) + "px";
             } else if (position === "bottom-left") {
-              layersControl.style.bottom = "30px";
-              layersControl.style.left = "10px";
+              layersControl.style.bottom = (mapData.layers_control.margin_bottom || 30) + "px";
+              layersControl.style.left = (mapData.layers_control.margin_left || 10) + "px";
             } else if (position === "bottom-right") {
-              layersControl.style.bottom = "40px";
-              layersControl.style.right = "10px";
+              layersControl.style.bottom = (mapData.layers_control.margin_bottom || 40) + "px";
+              layersControl.style.right = (mapData.layers_control.margin_right || 10) + "px";
             }
 
             el.appendChild(layersControl);

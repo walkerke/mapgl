@@ -11,6 +11,7 @@ maplibre_view(
   n = NULL,
   palette = viridisLite::viridis,
   style = carto_style("positron"),
+  layer_id = "quickview",
   ...
 )
 }
@@ -26,6 +27,8 @@ maplibre_view(
 \item{palette}{Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.}
 
 \item{style}{The MapLibre style to use. Defaults to carto_style("positron").}
+
+\item{layer_id}{The layer ID to use for the visualization. Defaults to "quickview".}
 
 \item{...}{Additional arguments passed to maplibre()}
 }

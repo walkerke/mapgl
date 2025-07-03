@@ -9,6 +9,7 @@
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
 #' @param palette Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.
 #' @param style The Mapbox style to use. Defaults to mapbox_style("light").
+#' @param layer_id The layer ID to use for the visualization. Defaults to "quickview".
 #' @param ... Additional arguments passed to mapboxgl()
 #'
 #' @return A Mapbox GL map object
@@ -40,6 +41,7 @@ mapboxgl_view <- function(
   n = NULL,
   palette = viridisLite::viridis,
   style = mapbox_style("light"),
+  layer_id = "quickview",
   ...
 ) {
   if (!inherits(data, "sf")) {
@@ -77,7 +79,7 @@ mapboxgl_view <- function(
     if (is.null(column)) {
       map <- map |>
         add_circle_layer(
-          id = "quickview",
+          id = layer_id,
           source = data,
           circle_color = default_color,
           circle_radius = 5,
@@ -114,7 +116,7 @@ mapboxgl_view <- function(
           # values are the thresholds (excluding min)
           map <- map |>
             add_circle_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               circle_color = step_expr(
                 column = column,
@@ -149,7 +151,7 @@ mapboxgl_view <- function(
 
           map <- map |>
             add_circle_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               circle_color = interpolate(
                 column = column,
@@ -177,7 +179,7 @@ mapboxgl_view <- function(
 
         map <- map |>
           add_circle_layer(
-            id = "quickview",
+            id = layer_id,
             source = data,
             circle_color = match_expr(
               column = column,
@@ -203,7 +205,7 @@ mapboxgl_view <- function(
     if (is.null(column)) {
       map <- map |>
         add_line_layer(
-          id = "quickview",
+          id = layer_id,
           source = data,
           line_color = default_color,
           line_width = 2,
@@ -240,7 +242,7 @@ mapboxgl_view <- function(
           # values are the thresholds (excluding min)
           map <- map |>
             add_line_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               line_color = step_expr(
                 column = column,
@@ -274,7 +276,7 @@ mapboxgl_view <- function(
 
           map <- map |>
             add_line_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               line_color = interpolate(
                 column = column,
@@ -302,7 +304,7 @@ mapboxgl_view <- function(
 
         map <- map |>
           add_line_layer(
-            id = "quickview",
+            id = layer_id,
             source = data,
             line_color = match_expr(
               column = column,
@@ -327,7 +329,7 @@ mapboxgl_view <- function(
     if (is.null(column)) {
       map <- map |>
         add_fill_layer(
-          id = "quickview",
+          id = layer_id,
           source = data,
           fill_color = default_color,
           fill_opacity = 0.6,
@@ -364,7 +366,7 @@ mapboxgl_view <- function(
           # values are the thresholds (excluding min)
           map <- map |>
             add_fill_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               fill_color = step_expr(
                 column = column,
@@ -398,7 +400,7 @@ mapboxgl_view <- function(
 
           map <- map |>
             add_fill_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               fill_color = interpolate(
                 column = column,
@@ -426,7 +428,7 @@ mapboxgl_view <- function(
 
         map <- map |>
           add_fill_layer(
-            id = "quickview",
+            id = layer_id,
             source = data,
             fill_color = match_expr(
               column = column,
@@ -462,6 +464,7 @@ mapboxgl_view <- function(
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
 #' @param palette Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.
 #' @param style The MapLibre style to use. Defaults to carto_style("positron").
+#' @param layer_id The layer ID to use for the visualization. Defaults to "quickview".
 #' @param ... Additional arguments passed to maplibre()
 #'
 #' @return A MapLibre GL map object
@@ -493,6 +496,7 @@ maplibre_view <- function(
   n = NULL,
   palette = viridisLite::viridis,
   style = carto_style("positron"),
+  layer_id = "quickview",
   ...
 ) {
   if (!inherits(data, "sf")) {
@@ -530,7 +534,7 @@ maplibre_view <- function(
     if (is.null(column)) {
       map <- map |>
         add_circle_layer(
-          id = "quickview",
+          id = layer_id,
           source = data,
           circle_color = default_color,
           circle_radius = 5,
@@ -567,7 +571,7 @@ maplibre_view <- function(
           # values are the thresholds (excluding min)
           map <- map |>
             add_circle_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               circle_color = step_expr(
                 column = column,
@@ -602,7 +606,7 @@ maplibre_view <- function(
 
           map <- map |>
             add_circle_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               circle_color = interpolate(
                 column = column,
@@ -630,7 +634,7 @@ maplibre_view <- function(
 
         map <- map |>
           add_circle_layer(
-            id = "quickview",
+            id = layer_id,
             source = data,
             circle_color = match_expr(
               column = column,
@@ -656,7 +660,7 @@ maplibre_view <- function(
     if (is.null(column)) {
       map <- map |>
         add_line_layer(
-          id = "quickview",
+          id = layer_id,
           source = data,
           line_color = default_color,
           line_width = 2,
@@ -693,7 +697,7 @@ maplibre_view <- function(
           # values are the thresholds (excluding min)
           map <- map |>
             add_line_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               line_color = step_expr(
                 column = column,
@@ -727,7 +731,7 @@ maplibre_view <- function(
 
           map <- map |>
             add_line_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               line_color = interpolate(
                 column = column,
@@ -755,7 +759,7 @@ maplibre_view <- function(
 
         map <- map |>
           add_line_layer(
-            id = "quickview",
+            id = layer_id,
             source = data,
             line_color = match_expr(
               column = column,
@@ -780,7 +784,7 @@ maplibre_view <- function(
     if (is.null(column)) {
       map <- map |>
         add_fill_layer(
-          id = "quickview",
+          id = layer_id,
           source = data,
           fill_color = default_color,
           fill_opacity = 0.6,
@@ -817,7 +821,7 @@ maplibre_view <- function(
           # values are the thresholds (excluding min)
           map <- map |>
             add_fill_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               fill_color = step_expr(
                 column = column,
@@ -851,7 +855,7 @@ maplibre_view <- function(
 
           map <- map |>
             add_fill_layer(
-              id = "quickview",
+              id = layer_id,
               source = data,
               fill_color = interpolate(
                 column = column,
@@ -879,7 +883,7 @@ maplibre_view <- function(
 
         map <- map |>
           add_fill_layer(
-            id = "quickview",
+            id = layer_id,
             source = data,
             fill_color = match_expr(
               column = column,

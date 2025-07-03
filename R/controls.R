@@ -168,6 +168,10 @@ add_navigation_control <- function(
 #' @param hover_color The background color for layer items when hovered.
 #' @param active_text_color The text color for active layer items.
 #' @param inactive_text_color The text color for inactive layer items.
+#' @param margin_top Custom top margin in pixels, allowing for fine control over control positioning to avoid overlaps. Default is NULL (uses standard positioning).
+#' @param margin_right Custom right margin in pixels. Default is NULL.
+#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
+#' @param margin_left Custom left margin in pixels. Default is NULL.
 #'
 #' @return The modified map object with the layers control added.
 #' @export
@@ -196,6 +200,15 @@ add_navigation_control <- function(
 #'         background_color = "#ffffff",
 #'         active_color = "#4a90e2"
 #'     )
+#'
+#' # Avoid collision with other controls using margin parameters
+#' maplibre() |>
+#'     add_navigation_control(position = "top-right") |>
+#'     add_layers_control(
+#'         position = "top-right",
+#'         margin_top = 50,  # Add space below navigation control
+#'         margin_right = 10
+#'     )
 #' }
 add_layers_control <- function(
   map,
@@ -207,7 +220,11 @@ add_layers_control <- function(
   active_color = NULL,
   hover_color = NULL,
   active_text_color = NULL,
-  inactive_text_color = NULL
+  inactive_text_color = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL
 ) {
   control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
 
@@ -260,6 +277,10 @@ add_layers_control <- function(
             collapsible = collapsible,
             use_icon = use_icon,
             custom_colors = custom_colors,
+            margin_top = margin_top,
+            margin_right = margin_right,
+            margin_bottom = margin_bottom,
+            margin_left = margin_left,
             map = map$map_side
           )
         )
@@ -282,7 +303,11 @@ add_layers_control <- function(
             layers = layers,
             collapsible = collapsible,
             use_icon = use_icon,
-            custom_colors = custom_colors
+            custom_colors = custom_colors,
+            margin_top = margin_top,
+            margin_right = margin_right,
+            margin_bottom = margin_bottom,
+            margin_left = margin_left
           )
         )
       )
@@ -294,7 +319,11 @@ add_layers_control <- function(
       layers = layers,
       collapsible = collapsible,
       use_icon = use_icon,
-      custom_colors = custom_colors
+      custom_colors = custom_colors,
+      margin_top = margin_top,
+      margin_right = margin_right,
+      margin_bottom = margin_bottom,
+      margin_left = margin_left
     )
   }
 

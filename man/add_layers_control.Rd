@@ -14,7 +14,11 @@ add_layers_control(
   active_color = NULL,
   hover_color = NULL,
   active_text_color = NULL,
-  inactive_text_color = NULL
+  inactive_text_color = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL
 )
 }
 \arguments{
@@ -38,6 +42,14 @@ color used for inactive layer items.}
 \item{active_text_color}{The text color for active layer items.}
 
 \item{inactive_text_color}{The text color for inactive layer items.}
+
+\item{margin_top}{Custom top margin in pixels, allowing for fine control over control positioning to avoid overlaps. Default is NULL (uses standard positioning).}
+
+\item{margin_right}{Custom right margin in pixels. Default is NULL.}
+
+\item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
+
+\item{margin_left}{Custom left margin in pixels. Default is NULL.}
 }
 \value{
 The modified map object with the layers control added.
@@ -70,6 +82,15 @@ maplibre() |>
         position = "top-left",
         background_color = "#ffffff",
         active_color = "#4a90e2"
+    )
+
+# Avoid collision with other controls using margin parameters
+maplibre() |>
+    add_navigation_control(position = "top-right") |>
+    add_layers_control(
+        position = "top-right",
+        margin_top = 50,  # Add space below navigation control
+        margin_right = 10
     )
 }
 }

@@ -11,6 +11,7 @@ mapboxgl_view(
   n = NULL,
   palette = viridisLite::viridis,
   style = mapbox_style("light"),
+  layer_id = "quickview",
   ...
 )
 }
@@ -26,6 +27,8 @@ mapboxgl_view(
 \item{palette}{Color palette function that takes n and returns a character vector of colors. Defaults to viridisLite::viridis.}
 
 \item{style}{The Mapbox style to use. Defaults to mapbox_style("light").}
+
+\item{layer_id}{The layer ID to use for the visualization. Defaults to "quickview".}
 
 \item{...}{Additional arguments passed to mapboxgl()}
 }
