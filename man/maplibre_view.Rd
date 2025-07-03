@@ -16,7 +16,7 @@ maplibre_view(
 )
 }
 \arguments{
-\item{data}{An sf object to visualize}
+\item{data}{An sf object, SpatRaster, or RasterLayer to visualize}
 
 \item{color}{The color used to visualize points, lines, or polygons if \code{column} is NULL.  Defaults to \code{"navy"}.}
 
@@ -36,7 +36,7 @@ maplibre_view(
 A MapLibre GL map object
 }
 \description{
-This function provides a quick way to visualize sf geometries using MapLibre GL JS.
+This function provides a quick way to visualize sf geometries and raster data using MapLibre GL JS.
 It automatically detects the geometry type and applies appropriate styling.
 }
 \examples{

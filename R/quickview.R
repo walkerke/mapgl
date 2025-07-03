@@ -1,9 +1,9 @@
 #' Quick visualization of geometries with Mapbox GL
 #'
-#' This function provides a quick way to visualize sf geometries using Mapbox GL JS.
+#' This function provides a quick way to visualize sf geometries and raster data using Mapbox GL JS.
 #' It automatically detects the geometry type and applies appropriate styling.
 #'
-#' @param data An sf object to visualize
+#' @param data An sf object, SpatRaster, or RasterLayer to visualize
 #' @param color The color used to visualize points, lines, or polygons if `column` is NULL.  Defaults to `"navy"`.
 #' @param column The name of the column to visualize. If NULL (default), geometries are shown with default styling.
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
@@ -44,20 +44,105 @@ mapboxgl_view <- function(
   layer_id = "quickview",
   ...
 ) {
-  if (!inherits(data, "sf")) {
-    stop("data must be an sf object")
+  if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
+    stop("data must be an sf object, SpatRaster, or RasterLayer")
   }
 
-  # Get geometry type
-  geom_type <- sf::st_geometry_type(data, by_geometry = FALSE)
+  # Check if data is a raster
+  is_raster <- inherits(data, c("SpatRaster", "RasterLayer"))
 
   # Initialize map with bounds
-  map <- mapboxgl(style = style, bounds = data, ...)
+  if (is_raster) {
+    # For rasters, don't use bounds parameter with data
+    map <- mapboxgl(style = style, ...)
+  } else {
+    # Get geometry type for sf objects
+    geom_type <- sf::st_geometry_type(data, by_geometry = FALSE)
+    map <- mapboxgl(style = style, bounds = data, ...)
+  }
 
   # Default navy color
   default_color <- color
 
-  # Create popup column with all data
+  # Handle raster data
+  if (is_raster) {
+    # Convert RasterLayer to SpatRaster if needed
+    if (inherits(data, "RasterLayer")) {
+      data <- terra::rast(data)
+    }
+
+    # Calculate bbox and fit bounds
+    # Project to WGS84 to get bounds in the right coordinate system
+    data_wgs84 <- terra::project(data, "EPSG:4326")
+    bounds <- unname(sf::st_bbox(data_wgs84))
+
+    # Generate source and layer IDs for raster
+    source_id <- paste0(layer_id, "-source")
+
+    # Get raster values for legend (single-band rasters only)
+    is_single_band <- terra::nlyr(data) == 1
+    raster_values <- NULL
+    if (is_single_band) {
+      raster_values <- terra::values(data, na.rm = TRUE)
+      if (length(raster_values) > 0) {
+        min_val <- min(raster_values, na.rm = TRUE)
+        max_val <- max(raster_values, na.rm = TRUE)
+      }
+    }
+
+    # Convert colors parameter for raster
+    raster_colors <- if (!is.null(column)) {
+      # If column specified, it should refer to color values
+      NULL
+    } else {
+      # Use palette to generate colors for raster visualization
+      if (
+        is_single_band && !is.null(raster_values) && length(raster_values) > 0
+      ) {
+        palette(255)
+      } else {
+        NULL # Let add_image_source handle RGB rasters
+      }
+    }
+
+    # Add raster source and layer
+    map <- map |>
+      add_image_source(
+        id = source_id,
+        data = data,
+        colors = raster_colors
+      ) |>
+      add_raster_layer(
+        id = layer_id,
+        source = source_id,
+        raster_opacity = 0.8
+      ) |>
+      fit_bounds(bounds)
+
+    # Add legend for single-band rasters
+    if (
+      is_single_band &&
+        !is.null(raster_values) &&
+        length(raster_values) > 0 &&
+        min_val != max_val
+    ) {
+      # Use same approach as vector continuous legends with 5 equal-interval breaks
+      breaks <- seq(min_val, max_val, length.out = 5)
+      legend_colors <- palette(5)
+      
+      map <- map |>
+        add_legend(
+          legend_title = if (!is.null(column)) column else "Values",
+          values = c(round(min_val, 2), round(max_val, 2)),
+          colors = legend_colors,
+          type = "continuous"
+        )
+    }
+
+    return(map)
+  }
+
+  # Create popup column with all data (sf objects only)
   data_cols <- names(data)[
     !names(data) %in% c("geometry", attr(data, "sf_column"))
   ]
@@ -455,10 +540,10 @@ mapboxgl_view <- function(
 
 #' Quick visualization of geometries with MapLibre GL
 #'
-#' This function provides a quick way to visualize sf geometries using MapLibre GL JS.
+#' This function provides a quick way to visualize sf geometries and raster data using MapLibre GL JS.
 #' It automatically detects the geometry type and applies appropriate styling.
 #'
-#' @param data An sf object to visualize
+#' @param data An sf object, SpatRaster, or RasterLayer to visualize
 #' @param color The color used to visualize points, lines, or polygons if `column` is NULL.  Defaults to `"navy"`.
 #' @param column The name of the column to visualize. If NULL (default), geometries are shown with default styling.
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
@@ -499,20 +584,105 @@ maplibre_view <- function(
   layer_id = "quickview",
   ...
 ) {
-  if (!inherits(data, "sf")) {
-    stop("data must be an sf object")
+  if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
+    stop("data must be an sf object, SpatRaster, or RasterLayer")
   }
 
-  # Get geometry type
-  geom_type <- sf::st_geometry_type(data, by_geometry = FALSE)
+  # Check if data is a raster
+  is_raster <- inherits(data, c("SpatRaster", "RasterLayer"))
 
   # Initialize map with bounds
-  map <- maplibre(style = style, bounds = data, ...)
+  if (is_raster) {
+    # For rasters, don't use bounds parameter with data
+    map <- maplibre(style = style, ...)
+  } else {
+    # Get geometry type for sf objects
+    geom_type <- sf::st_geometry_type(data, by_geometry = FALSE)
+    map <- maplibre(style = style, bounds = data, ...)
+  }
 
   # Default navy color
   default_color <- color
 
-  # Create popup column with all data
+  # Handle raster data
+  if (is_raster) {
+    # Convert RasterLayer to SpatRaster if needed
+    if (inherits(data, "RasterLayer")) {
+      data <- terra::rast(data)
+    }
+
+    # Calculate bbox and fit bounds
+    # Project to WGS84 to get bounds in the right coordinate system
+    data_wgs84 <- terra::project(data, "EPSG:4326")
+    bounds <- unname(sf::st_bbox(data_wgs84))
+
+    # Generate source and layer IDs for raster
+    source_id <- paste0(layer_id, "-source")
+
+    # Get raster values for legend (single-band rasters only)
+    is_single_band <- terra::nlyr(data) == 1
+    raster_values <- NULL
+    if (is_single_band) {
+      raster_values <- terra::values(data, na.rm = TRUE)
+      if (length(raster_values) > 0) {
+        min_val <- min(raster_values, na.rm = TRUE)
+        max_val <- max(raster_values, na.rm = TRUE)
+      }
+    }
+
+    # Convert colors parameter for raster
+    raster_colors <- if (!is.null(column)) {
+      # If column specified, it should refer to color values
+      NULL
+    } else {
+      # Use palette to generate colors for raster visualization
+      if (
+        is_single_band && !is.null(raster_values) && length(raster_values) > 0
+      ) {
+        palette(255)
+      } else {
+        NULL # Let add_image_source handle RGB rasters
+      }
+    }
+
+    # Add raster source and layer
+    map <- map |>
+      add_image_source(
+        id = source_id,
+        data = data,
+        colors = raster_colors
+      ) |>
+      add_raster_layer(
+        id = layer_id,
+        source = source_id,
+        raster_opacity = 0.8
+      ) |>
+      fit_bounds(bounds)
+
+    # Add legend for single-band rasters
+    if (
+      is_single_band &&
+        !is.null(raster_values) &&
+        length(raster_values) > 0 &&
+        min_val != max_val
+    ) {
+      # Use same approach as vector continuous legends with 5 equal-interval breaks
+      breaks <- seq(min_val, max_val, length.out = 5)
+      legend_colors <- palette(5)
+      
+      map <- map |>
+        add_legend(
+          legend_title = if (!is.null(column)) column else "Values",
+          values = c(round(min_val, 2), round(max_val, 2)),
+          colors = legend_colors,
+          type = "continuous"
+        )
+    }
+
+    return(map)
+  }
+
+  # Create popup column with all data (sf objects only)
   data_cols <- names(data)[
     !names(data) %in% c("geometry", attr(data, "sf_column"))
   ]
@@ -915,7 +1085,7 @@ maplibre_view <- function(
 #' of multiple datasets on a single map.
 #'
 #' @param map A map object created by mapboxgl_view(), maplibre_view(), mapboxgl(), or maplibre()
-#' @param data An sf object to visualize
+#' @param data An sf object, SpatRaster, or RasterLayer to visualize
 #' @param color The color used to visualize points, lines, or polygons if `column` is NULL. Defaults to "navy".
 #' @param column The name of the column to visualize. If NULL (default), geometries are shown with default styling.
 #' @param n Number of quantile breaks for numeric columns. If specified, uses step_expr() instead of interpolate().
@@ -938,6 +1108,10 @@ maplibre_view <- function(
 #' mapboxgl_view(polygons) |>
 #'   add_view(points, color = "blue") |>
 #'   add_view(lines, color = "green")
+#'
+#' # Add raster data
+#' mapboxgl_view(boundaries) |>
+#'   add_view(elevation_raster, layer_id = "elevation")
 #' }
 add_view <- function(
   map,
@@ -958,8 +1132,8 @@ add_view <- function(
     stop("map must be a mapboxgl or maplibregl map object")
   }
 
-  if (!inherits(data, "sf")) {
-    stop("data must be an sf object")
+  if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
+    stop("data must be an sf object, SpatRaster, or RasterLayer")
   }
 
   # Auto-generate layer ID if not provided
@@ -972,13 +1146,88 @@ add_view <- function(
     )
   }
 
-  # Get geometry type
+  # Check if data is a raster
+  is_raster <- inherits(data, c("SpatRaster", "RasterLayer"))
+
+  # Handle raster data
+  if (is_raster) {
+    # Convert RasterLayer to SpatRaster if needed
+    if (inherits(data, "RasterLayer")) {
+      data <- terra::rast(data)
+    }
+
+    # Generate source and layer IDs for raster
+    source_id <- paste0(layer_id, "-source")
+
+    # Get raster values for legend (single-band rasters only)
+    is_single_band <- terra::nlyr(data) == 1
+    raster_values <- NULL
+    if (is_single_band) {
+      raster_values <- terra::values(data, na.rm = TRUE)
+      if (length(raster_values) > 0) {
+        min_val <- min(raster_values, na.rm = TRUE)
+        max_val <- max(raster_values, na.rm = TRUE)
+      }
+    }
+
+    # Convert colors parameter for raster
+    raster_colors <- if (!is.null(column)) {
+      # If column specified, it should refer to color values
+      NULL
+    } else {
+      # Use palette to generate colors for raster visualization
+      if (
+        is_single_band && !is.null(raster_values) && length(raster_values) > 0
+      ) {
+        palette(255)
+      } else {
+        NULL # Let add_image_source handle RGB rasters
+      }
+    }
+
+    # Add raster source and layer
+    map <- map |>
+      add_image_source(
+        id = source_id,
+        data = data,
+        colors = raster_colors
+      ) |>
+      add_raster_layer(
+        id = layer_id,
+        source = source_id,
+        raster_opacity = 0.8
+      )
+
+    # Add legend for single-band rasters
+    if (
+      is_single_band &&
+        !is.null(raster_values) &&
+        length(raster_values) > 0 &&
+        min_val != max_val
+    ) {
+      # Use same approach as vector continuous legends with 5 equal-interval breaks
+      breaks <- seq(min_val, max_val, length.out = 5)
+      legend_colors <- palette(5)
+      
+      map <- map |>
+        add_legend(
+          legend_title = if (!is.null(column)) column else "Values",
+          values = c(round(min_val, 2), round(max_val, 2)),
+          colors = legend_colors,
+          type = "continuous"
+        )
+    }
+
+    return(map)
+  }
+
+  # Get geometry type for sf objects
   geom_type <- sf::st_geometry_type(data, by_geometry = FALSE)
 
   # Default color
   default_color <- color
 
-  # Create popup column with all data
+  # Create popup column with all data (sf objects only)
   data_cols <- names(data)[
     !names(data) %in% c("geometry", attr(data, "sf_column"))
   ]

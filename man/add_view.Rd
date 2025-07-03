@@ -17,7 +17,7 @@ add_view(
 \arguments{
 \item{map}{A map object created by mapboxgl_view(), maplibre_view(), mapboxgl(), or maplibre()}
 
-\item{data}{An sf object to visualize}
+\item{data}{An sf object, SpatRaster, or RasterLayer to visualize}
 
 \item{color}{The color used to visualize points, lines, or polygons if \code{column} is NULL. Defaults to "navy".}
 
@@ -50,5 +50,9 @@ mapboxgl_view(nc) |>
 mapboxgl_view(polygons) |>
   add_view(points, color = "blue") |>
   add_view(lines, color = "green")
+
+# Add raster data
+mapboxgl_view(boundaries) |>
+  add_view(elevation_raster, layer_id = "elevation")
 }
 }
