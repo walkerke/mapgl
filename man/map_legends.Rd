@@ -78,7 +78,7 @@ add_continuous_legend(
 
 \item{circular_patches}{(Deprecated) Logical, whether to use circular patches in the legend. Use \code{patch_shape = "circle"} instead.}
 
-\item{patch_shape}{Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string (e.g., '\if{html}{\out{<polygon points="50,10 90,90 10,90" />}}'), or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".}
+\item{patch_shape}{Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".}
 
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 
@@ -197,15 +197,6 @@ add_categorical_legend(
     sizes = 25
 )
 
-# Custom SVG shapes - triangle
-add_categorical_legend(
-    map = map,
-    legend_title = "Mountain Peaks",
-    values = c("High", "Medium", "Low"),
-    colors = c("#8B4513", "#CD853F", "#F4A460"),
-    patch_shape = '<polygon points="50,10 90,90 10,90" />'
-)
-
 # Custom SVG shapes - star
 add_categorical_legend(
     map = map,
@@ -214,16 +205,6 @@ add_categorical_legend(
     colors = c("#FFD700", "#FFA500", "#FF6347"),
     patch_shape = paste0('<path d="M50,5 L61,35 L95,35 L68,57 L79,91 L50,70 ',
                          'L21,91 L32,57 L5,35 L39,35 Z" />')
-)
-
-# Custom SVG with complete SVG string
-add_categorical_legend(
-    map = map,
-    legend_title = "Custom Icons",
-    values = c("Location A", "Location B"),
-    colors = c("#FF0000", "#0000FF"),
-    patch_shape = paste0('<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" ',
-                         'stroke="black" stroke-width="3" /></svg>')
 )
 
 # Using sf objects directly as patch shapes
