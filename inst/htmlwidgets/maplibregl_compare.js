@@ -1756,90 +1756,128 @@ HTMLWidgets.widget({
                             } else if (
                                 message.type === "add_geocoder_control"
                             ) {
-                                const geocoderApi = {
-                                    forwardGeocode: async (config) => {
-                                        const features = [];
-                                        try {
-                                            const request = `https://nominatim.openstreetmap.org/search?q=${
-                                                config.query
-                                            }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                                            const response =
-                                                await fetch(request);
-                                            const geojson =
-                                                await response.json();
-                                            for (const feature of geojson.features) {
-                                                const center = [
-                                                    feature.bbox[0] +
-                                                        (feature.bbox[2] -
-                                                            feature.bbox[0]) /
-                                                            2,
-                                                    feature.bbox[1] +
-                                                        (feature.bbox[3] -
-                                                            feature.bbox[1]) /
-                                                            2,
-                                                ];
-                                                const point = {
-                                                    type: "Feature",
-                                                    geometry: {
-                                                        type: "Point",
-                                                        coordinates: center,
-                                                    },
-                                                    place_name:
-                                                        feature.properties
+                                const provider = message.options.provider || "osm";
+                                let geocoder;
+
+                                if (provider === "maptiler") {
+                                    // MapTiler geocoder
+                                    const maptilerOptions = {
+                                        apiKey: message.options.api_key,
+                                        maplibregl: maplibregl,
+                                        ...message.options,
+                                    };
+
+                                    // Create MapTiler geocoder
+                                    geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+                                } else {
+                                    // OSM/Nominatim geocoder (default)
+                                    const geocoderApi = {
+                                        forwardGeocode: async (config) => {
+                                            const features = [];
+                                            try {
+                                                const request = `https://nominatim.openstreetmap.org/search?q=${
+                                                    config.query
+                                                }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                                                const response =
+                                                    await fetch(request);
+                                                const geojson =
+                                                    await response.json();
+                                                for (const feature of geojson.features) {
+                                                    const center = [
+                                                        feature.bbox[0] +
+                                                            (feature.bbox[2] -
+                                                                feature.bbox[0]) /
+                                                                2,
+                                                        feature.bbox[1] +
+                                                            (feature.bbox[3] -
+                                                                feature.bbox[1]) /
+                                                                2,
+                                                    ];
+                                                    const point = {
+                                                        type: "Feature",
+                                                        geometry: {
+                                                            type: "Point",
+                                                            coordinates: center,
+                                                        },
+                                                        place_name:
+                                                            feature.properties
+                                                                .display_name,
+                                                        properties:
+                                                            feature.properties,
+                                                        text: feature.properties
                                                             .display_name,
-                                                    properties:
-                                                        feature.properties,
-                                                    text: feature.properties
-                                                        .display_name,
-                                                    place_type: ["place"],
-                                                    center,
-                                                };
-                                                features.push(point);
+                                                        place_type: ["place"],
+                                                        center,
+                                                    };
+                                                    features.push(point);
+                                                }
+                                            } catch (e) {
+                                                console.error(
+                                                    `Failed to forwardGeocode with error: ${e}`,
+                                                );
                                             }
-                                        } catch (e) {
-                                            console.error(
-                                                `Failed to forwardGeocode with error: ${e}`,
-                                            );
-                                        }
 
-                                        return {
-                                            features,
-                                        };
-                                    },
-                                };
+                                            return {
+                                                features,
+                                            };
+                                        },
+                                    };
 
-                                const geocoderOptions = {
-                                    maplibregl: maplibregl,
-                                    ...message.options,
-                                };
+                                    const geocoderOptions = {
+                                        maplibregl: maplibregl,
+                                        ...message.options,
+                                    };
 
-                                // Set default values if not provided
-                                if (!geocoderOptions.placeholder)
-                                    geocoderOptions.placeholder = "Search";
-                                if (
-                                    typeof geocoderOptions.collapsed ===
-                                    "undefined"
-                                )
-                                    geocoderOptions.collapsed = false;
+                                    // Set default values if not provided
+                                    if (!geocoderOptions.placeholder)
+                                        geocoderOptions.placeholder = "Search";
+                                    if (
+                                        typeof geocoderOptions.collapsed ===
+                                        "undefined"
+                                    )
+                                        geocoderOptions.collapsed = false;
 
-                                const geocoder = new MaplibreGeocoder(
-                                    geocoderApi,
-                                    geocoderOptions,
-                                );
+                                    geocoder = new MaplibreGeocoder(
+                                        geocoderApi,
+                                        geocoderOptions,
+                                    );
+                                }
 
                                 map.addControl(
                                     geocoder,
-                                    message.position || "top-right",
+                                    message.options.position || "top-right",
                                 );
                                 map.controls.push(geocoder);
+                                
+                                // Apply CSS fix for MapTiler geocoder to prevent cutoff
+                                if (provider === "maptiler") {
+                                    setTimeout(() => {
+                                        const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+                                        if (controlContainer) {
+                                            controlContainer.style.maxWidth = '300px';
+                                            controlContainer.style.width = 'auto';
+                                        }
+                                    }, 100);
+                                }
 
                                 // Handle geocoder results in Shiny mode
-                                geocoder.on("results", function (e) {
-                                    Shiny.setInputValue(data.id + "_geocoder", {
-                                        result: e,
-                                        time: new Date(),
+                                if (provider === "maptiler") {
+                                    // MapTiler uses different event names
+                                    geocoder.on("pick", function (e) {
+                                        Shiny.setInputValue(data.id + "_geocoder", {
+                                            result: e,
+                                            time: new Date(),
+                                        });
                                     });
-                                });
+                                } else {
+                                    // OSM geocoder
+                                    geocoder.on("results", function (e) {
+                                        Shiny.setInputValue(data.id + "_geocoder", {
+                                            result: e,
+                                            time: new Date(),
+                                        });
+                                    });
+                                }
                             } else if (message.type === "add_layers_control") {
                                 const layersControl =
                                     document.createElement("div");
@@ -3239,82 +3277,120 @@ HTMLWidgets.widget({
 
                     // Add geocoder control if enabled
                     if (mapData.geocoder_control) {
-                        const geocoderApi = {
-                            forwardGeocode: async (config) => {
-                                const features = [];
-                                try {
-                                    const request = `https://nominatim.openstreetmap.org/search?q=${
-                                        config.query
-                                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                                    const response = await fetch(request);
-                                    const geojson = await response.json();
-                                    for (const feature of geojson.features) {
-                                        const center = [
-                                            feature.bbox[0] +
-                                                (feature.bbox[2] -
-                                                    feature.bbox[0]) /
-                                                    2,
-                                            feature.bbox[1] +
-                                                (feature.bbox[3] -
-                                                    feature.bbox[1]) /
-                                                    2,
-                                        ];
-                                        const point = {
-                                            type: "Feature",
-                                            geometry: {
-                                                type: "Point",
-                                                coordinates: center,
-                                            },
-                                            place_name:
-                                                feature.properties.display_name,
-                                            properties: feature.properties,
-                                            text: feature.properties
-                                                .display_name,
-                                            place_type: ["place"],
-                                            center,
-                                        };
-                                        features.push(point);
+                        const provider = mapData.geocoder_control.provider || "osm";
+                        let geocoder;
+
+                        if (provider === "maptiler") {
+                            // MapTiler geocoder
+                            const maptilerOptions = {
+                                apiKey: mapData.geocoder_control.api_key,
+                                maplibregl: maplibregl,
+                                ...mapData.geocoder_control,
+                            };
+
+                            // Create MapTiler geocoder
+                            geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+                        } else {
+                            // OSM/Nominatim geocoder (default)
+                            const geocoderApi = {
+                                forwardGeocode: async (config) => {
+                                    const features = [];
+                                    try {
+                                        const request = `https://nominatim.openstreetmap.org/search?q=${
+                                            config.query
+                                        }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                                        const response = await fetch(request);
+                                        const geojson = await response.json();
+                                        for (const feature of geojson.features) {
+                                            const center = [
+                                                feature.bbox[0] +
+                                                    (feature.bbox[2] -
+                                                        feature.bbox[0]) /
+                                                        2,
+                                                feature.bbox[1] +
+                                                    (feature.bbox[3] -
+                                                        feature.bbox[1]) /
+                                                        2,
+                                            ];
+                                            const point = {
+                                                type: "Feature",
+                                                geometry: {
+                                                    type: "Point",
+                                                    coordinates: center,
+                                                },
+                                                place_name:
+                                                    feature.properties.display_name,
+                                                properties: feature.properties,
+                                                text: feature.properties
+                                                    .display_name,
+                                                place_type: ["place"],
+                                                center,
+                                            };
+                                            features.push(point);
+                                        }
+                                    } catch (e) {
+                                        console.error(
+                                            `Failed to forwardGeocode with error: ${e}`,
+                                        );
                                     }
-                                } catch (e) {
-                                    console.error(
-                                        `Failed to forwardGeocode with error: ${e}`,
-                                    );
-                                }
 
-                                return {
-                                    features,
-                                };
-                            },
-                        };
-                        const geocoderOptions = {
-                            maplibregl: maplibregl,
-                            ...mapData.geocoder_control,
-                        };
+                                    return {
+                                        features,
+                                    };
+                                },
+                            };
+                            const geocoderOptions = {
+                                maplibregl: maplibregl,
+                                ...mapData.geocoder_control,
+                            };
 
-                        // Set default values if not provided
-                        if (!geocoderOptions.placeholder)
-                            geocoderOptions.placeholder = "Search";
-                        if (typeof geocoderOptions.collapsed === "undefined")
-                            geocoderOptions.collapsed = false;
+                            // Set default values if not provided
+                            if (!geocoderOptions.placeholder)
+                                geocoderOptions.placeholder = "Search";
+                            if (typeof geocoderOptions.collapsed === "undefined")
+                                geocoderOptions.collapsed = false;
 
-                        const geocoder = new MaplibreGeocoder(
-                            geocoderApi,
-                            geocoderOptions,
-                        );
+                            geocoder = new MaplibreGeocoder(
+                                geocoderApi,
+                                geocoderOptions,
+                            );
+                        }
 
                         map.addControl(
                             geocoder,
                             mapData.geocoder_control.position || "top-right",
                         );
+                        
+                        // Apply CSS fix for MapTiler geocoder to prevent cutoff
+                        if (provider === "maptiler") {
+                            setTimeout(() => {
+                                const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+                                if (controlContainer) {
+                                    controlContainer.style.maxWidth = '300px';
+                                    controlContainer.style.width = 'auto';
+                                }
+                            }, 100);
+                        }
 
                         // Handle geocoder results in Shiny mode
                         if (HTMLWidgets.shinyMode) {
-                            geocoder.on("results", function (e) {
-                                Shiny.setInputValue(el.id + "_geocoder", {
-                                    result: e,
-                                    time: new Date(),
+                            if (provider === "maptiler") {
+                                // MapTiler uses different event names
+                                geocoder.on("pick", function (e) {
+                                    Shiny.setInputValue(el.id + "_geocoder", {
+                                        result: e,
+                                        time: new Date(),
+                                    });
                                 });
-                            });
+                            } else {
+                                // OSM geocoder
+                                geocoder.on("results", function (e) {
+                                    Shiny.setInputValue(el.id + "_geocoder", {
+                                        result: e,
+                                        time: new Date(),
+                                    });
+                                });
+                            }
                         }
                     }
 
@@ -3567,6 +3643,23 @@ HTMLWidgets.widget({
                                 layersList,
                             );
                         }
+                    }
+                    
+                    // Set projection if provided (after all other setup is complete)
+                    if (mapData.setProjection && mapData.setProjection.length > 0) {
+                        mapData.setProjection.forEach(function (projectionConfig) {
+                            if (projectionConfig.projection) {
+                                const projection =
+                                    typeof projectionConfig.projection === "string"
+                                        ? { type: projectionConfig.projection }
+                                        : projectionConfig.projection;
+                                try {
+                                    map.setProjection(projection);
+                                } catch (e) {
+                                    console.error("Failed to set projection in compare view:", e);
+                                }
+                            }
+                        });
                     }
                 }
             },
