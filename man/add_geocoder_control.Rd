@@ -9,6 +9,8 @@ add_geocoder_control(
   position = "top-right",
   placeholder = "Search",
   collapsed = FALSE,
+  provider = "osm",
+  api_key = NULL,
   ...
 )
 }
@@ -20,6 +22,10 @@ add_geocoder_control(
 \item{placeholder}{A string to use as placeholder text for the search bar. Default is "Search".}
 
 \item{collapsed}{Whether the control should be collapsed until hovered or clicked. Default is FALSE.}
+
+\item{provider}{The geocoding provider to use. Either "osm" (default) for OpenStreetMap/Nominatim or "maptiler" for MapTiler geocoding. Only available for MapLibre GL maps.  The provider will always be Mapbox for Mapbox maps, and this argument is ignored.}
+
+\item{api_key}{Your MapTiler API key (required when provider is "maptiler"). Can also be set with \code{MAPTILER_API_KEY} environment variable.}
 
 \item{...}{Additional parameters to pass to the Geocoder.}
 }
@@ -41,5 +47,9 @@ mapboxgl() |>
 
 maplibre() |>
     add_geocoder_control(position = "top-right", placeholder = "Search location")
+
+# Using MapTiler geocoder
+maplibre() |>
+    add_geocoder_control(provider = "maptiler", api_key = "YOUR_API_KEY")
 }
 }

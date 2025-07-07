@@ -811,69 +811,115 @@ HTMLWidgets.widget({
 
           // Add geocoder control if enabled
           if (x.geocoder_control) {
-            const geocoderApi = {
-              forwardGeocode: async (config) => {
-                const features = [];
-                try {
-                  const request = `https://nominatim.openstreetmap.org/search?q=${
-                    config.query
-                  }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                  const response = await fetch(request);
-                  const geojson = await response.json();
-                  for (const feature of geojson.features) {
-                    const center = [
-                      feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                      feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
-                    ];
-                    const point = {
-                      type: "Feature",
-                      geometry: {
-                        type: "Point",
-                        coordinates: center,
-                      },
-                      place_name: feature.properties.display_name,
-                      properties: feature.properties,
-                      text: feature.properties.display_name,
-                      place_type: ["place"],
-                      center,
-                    };
-                    features.push(point);
+            const provider = x.geocoder_control.provider || "osm";
+            let geocoder;
+
+            if (provider === "maptiler") {
+              // MapTiler geocoder
+              const maptilerOptions = {
+                apiKey: x.geocoder_control.api_key,
+                maplibregl: maplibregl,
+              };
+
+              // Apply additional options
+              if (x.geocoder_control.placeholder) {
+                maptilerOptions.placeholder = x.geocoder_control.placeholder;
+              }
+              if (typeof x.geocoder_control.collapsed !== "undefined") {
+                maptilerOptions.collapsed = x.geocoder_control.collapsed;
+              }
+
+              // Create MapTiler geocoder
+              geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+            } else {
+              // OSM/Nominatim geocoder (default)
+              const geocoderApi = {
+                forwardGeocode: async (config) => {
+                  const features = [];
+                  try {
+                    const request = `https://nominatim.openstreetmap.org/search?q=${
+                      config.query
+                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                    const response = await fetch(request);
+                    const geojson = await response.json();
+                    for (const feature of geojson.features) {
+                      const center = [
+                        feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
+                        feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
+                      ];
+                      const point = {
+                        type: "Feature",
+                        geometry: {
+                          type: "Point",
+                          coordinates: center,
+                        },
+                        place_name: feature.properties.display_name,
+                        properties: feature.properties,
+                        text: feature.properties.display_name,
+                        place_type: ["place"],
+                        center,
+                      };
+                      features.push(point);
+                    }
+                  } catch (e) {
+                    console.error(`Failed to forwardGeocode with error: ${e}`);
                   }
-                } catch (e) {
-                  console.error(`Failed to forwardGeocode with error: ${e}`);
-                }
 
-                return {
-                  features,
-                };
-              },
-            };
-            const geocoderOptions = {
-              maplibregl: maplibregl,
-              ...x.geocoder_control,
-            };
+                  return {
+                    features,
+                  };
+                },
+              };
+              const geocoderOptions = {
+                maplibregl: maplibregl,
+                ...x.geocoder_control,
+              };
 
-            // Set default values if not provided
-            if (!geocoderOptions.placeholder)
-              geocoderOptions.placeholder = "Search";
-            if (typeof geocoderOptions.collapsed === "undefined")
-              geocoderOptions.collapsed = false;
+              // Set default values if not provided
+              if (!geocoderOptions.placeholder)
+                geocoderOptions.placeholder = "Search";
+              if (typeof geocoderOptions.collapsed === "undefined")
+                geocoderOptions.collapsed = false;
 
-            const geocoder = new MaplibreGeocoder(geocoderApi, geocoderOptions);
+              geocoder = new MaplibreGeocoder(geocoderApi, geocoderOptions);
+            }
 
             map.addControl(
               geocoder,
               x.geocoder_control.position || "top-right",
             );
             map.controls.push(geocoder);
+            
+            // Apply CSS fix for MapTiler geocoder to prevent cutoff
+            if (provider === "maptiler") {
+              setTimeout(() => {
+                const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+                if (controlContainer) {
+                  controlContainer.style.maxWidth = '300px';
+                  controlContainer.style.width = 'auto';
+                }
+              }, 100);
+            }
+            
             // Handle geocoder results in Shiny mode
             if (HTMLWidgets.shinyMode) {
-              geocoder.on("results", function (e) {
-                Shiny.setInputValue(el.id + "_geocoder", {
-                  result: e,
-                  time: new Date(),
+              if (provider === "maptiler") {
+                // MapTiler uses different event names
+                geocoder.on("pick", function (e) {
+                  Shiny.setInputValue(el.id + "_geocoder", {
+                    result: e,
+                    time: new Date(),
+                  });
                 });
-              });
+              } else {
+                // OSM geocoder
+                geocoder.on("results", function (e) {
+                  Shiny.setInputValue(el.id + "_geocoder", {
+                    result: e,
+                    time: new Date(),
+                  });
+                });
+              }
             }
           }
 
@@ -3556,59 +3602,105 @@ if (HTMLWidgets.shinyMode) {
           });
         }
       } else if (message.type === "add_geocoder_control") {
-        const geocoderApi = {
-          forwardGeocode: async (config) => {
-            const features = [];
-            try {
-              const request = `https://nominatim.openstreetmap.org/search?q=${
-                config.query
-              }&format=geojson&polygon_geojson=1&addressdetails=1`;
-              const response = await fetch(request);
-              const geojson = await response.json();
-              for (const feature of geojson.features) {
-                const center = [
-                  feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                  feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
-                ];
-                const point = {
-                  type: "Feature",
-                  geometry: {
-                    type: "Point",
-                    coordinates: center,
-                  },
-                  place_name: feature.properties.display_name,
-                  properties: feature.properties,
-                  text: feature.properties.display_name,
-                  place_type: ["place"],
-                  center,
-                };
-                features.push(point);
-              }
-            } catch (e) {
-              console.error(`Failed to forwardGeocode with error: ${e}`);
-            }
+        const provider = message.options.provider || "osm";
+        let geocoder;
 
-            return {
-              features,
-            };
-          },
-        };
-        const geocoder = new MaplibreGeocoder(geocoderApi, {
-          maplibregl: maplibregl,
-          placeholder: message.options.placeholder,
-          collapsed: message.options.collapsed,
-        });
+        if (provider === "maptiler") {
+          // MapTiler geocoder
+          const maptilerOptions = {
+            apiKey: message.options.api_key,
+            maplibregl: maplibregl,
+          };
+
+          // Apply additional options
+          if (message.options.placeholder) {
+            maptilerOptions.placeholder = message.options.placeholder;
+          }
+          if (typeof message.options.collapsed !== "undefined") {
+            maptilerOptions.collapsed = message.options.collapsed;
+          }
+
+          // Create MapTiler geocoder
+          geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+        } else {
+          // OSM/Nominatim geocoder (default)
+          const geocoderApi = {
+            forwardGeocode: async (config) => {
+              const features = [];
+              try {
+                const request = `https://nominatim.openstreetmap.org/search?q=${
+                  config.query
+                }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                const response = await fetch(request);
+                const geojson = await response.json();
+                for (const feature of geojson.features) {
+                  const center = [
+                    feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
+                    feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
+                  ];
+                  const point = {
+                    type: "Feature",
+                    geometry: {
+                      type: "Point",
+                      coordinates: center,
+                    },
+                    place_name: feature.properties.display_name,
+                    properties: feature.properties,
+                    text: feature.properties.display_name,
+                    place_type: ["place"],
+                    center,
+                  };
+                  features.push(point);
+                }
+              } catch (e) {
+                console.error(`Failed to forwardGeocode with error: ${e}`);
+              }
+
+              return {
+                features,
+              };
+            },
+          };
+          geocoder = new MaplibreGeocoder(geocoderApi, {
+            maplibregl: maplibregl,
+            placeholder: message.options.placeholder,
+            collapsed: message.options.collapsed,
+          });
+        }
+
         map.addControl(geocoder, message.options.position);
         map.controls.push(geocoder);
+        
+        // Apply CSS fix for MapTiler geocoder to prevent cutoff
+        if (provider === "maptiler") {
+          setTimeout(() => {
+            const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+            if (controlContainer) {
+              controlContainer.style.maxWidth = '300px';
+              controlContainer.style.width = 'auto';
+            }
+          }, 100);
+        }
 
         // Handle geocoder results in Shiny mode
         if (HTMLWidgets.shinyMode) {
-          geocoder.on("result", function (e) {
-            Shiny.setInputValue(data.id + "_geocoder", {
-              result: e,
-              time: new Date(),
+          if (provider === "maptiler") {
+            // MapTiler uses different event names
+            geocoder.on("pick", function (e) {
+              Shiny.setInputValue(data.id + "_geocoder", {
+                result: e,
+                time: new Date(),
+              });
             });
-          });
+          } else {
+            // OSM geocoder
+            geocoder.on("result", function (e) {
+              Shiny.setInputValue(data.id + "_geocoder", {
+                result: e,
+                time: new Date(),
+              });
+            });
+          }
         }
       } else if (message.type === "add_layers_control") {
         const layersControl = document.createElement("div");

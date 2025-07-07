@@ -40,3 +40,11 @@ dependencies:
     src: "htmlwidgets/lib/h3j-h3t"
     script:
       - "h3j_h3t.js"
+  - name: maptiler-geocoding-control
+    version: 2.1.7
+    src:
+      href: "https://cdn.maptiler.com/maptiler-geocoding-control/v2.1.7/"
+    script:
+      - "maplibregl.umd.js"
+    stylesheet:
+      - "style.css"
