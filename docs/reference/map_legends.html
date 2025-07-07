@@ -9,7 +9,7 @@ to customize appearance and clear_legend() to remove legends."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,7 +138,7 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 
 
 <dt id="arg-patch-shape">patch_shape<a class="anchor" aria-label="anchor" href="#arg-patch-shape"></a></dt>
-<dd><p>Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string (e.g., '<polygon points="50,10 90,90 10,90"></polygon>'), or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".</p></dd>
+<dd><p>Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".</p></dd>
 
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>
@@ -279,31 +279,14 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span class="r-in"><span>    sizes <span class="op">=</span> <span class="fl">25</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Custom SVG shapes - triangle</span></span></span>
-<span class="r-in"><span><span class="fu">add_categorical_legend</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    map <span class="op">=</span> <span class="va">map</span>,</span></span>
-<span class="r-in"><span>    legend_title <span class="op">=</span> <span class="st">"Mountain Peaks"</span>,</span></span>
-<span class="r-in"><span>    values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"High"</span>, <span class="st">"Medium"</span>, <span class="st">"Low"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#8B4513"</span>, <span class="st">"#CD853F"</span>, <span class="st">"#F4A460"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    patch_shape <span class="op">=</span> <span class="st">'&lt;polygon points="50,10 90,90 10,90" /&gt;'</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom SVG shapes - star</span></span></span>
 <span class="r-in"><span><span class="fu">add_categorical_legend</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    map <span class="op">=</span> <span class="va">map</span>,</span></span>
 <span class="r-in"><span>    legend_title <span class="op">=</span> <span class="st">"Ratings"</span>,</span></span>
 <span class="r-in"><span>    values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"5 Star"</span>, <span class="st">"4 Star"</span>, <span class="st">"3 Star"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#FFD700"</span>, <span class="st">"#FFA500"</span>, <span class="st">"#FF6347"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    patch_shape <span class="op">=</span> <span class="st">'&lt;path d="M50,5 L61,35 L95,35 L68,57 L79,91 L50,70 L21,91 L32,57 L5,35 L39,35 Z" /&gt;'</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Custom SVG with complete SVG string</span></span></span>
-<span class="r-in"><span><span class="fu">add_categorical_legend</span><span class="op">(</span></span></span>
-<span class="r-in"><span>    map <span class="op">=</span> <span class="va">map</span>,</span></span>
-<span class="r-in"><span>    legend_title <span class="op">=</span> <span class="st">"Custom Icons"</span>,</span></span>
-<span class="r-in"><span>    values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Location A"</span>, <span class="st">"Location B"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#FF0000"</span>, <span class="st">"#0000FF"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    patch_shape <span class="op">=</span> <span class="st">'&lt;svg viewBox="0 0 100 100"&gt;&lt;circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" /&gt;&lt;/svg&gt;'</span></span></span>
+<span class="r-in"><span>    patch_shape <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">'&lt;path d="M50,5 L61,35 L95,35 L68,57 L79,91 L50,70 '</span>,</span></span>
+<span class="r-in"><span>                         <span class="st">'L21,91 L32,57 L5,35 L39,35 Z" /&gt;'</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Using sf objects directly as patch shapes</span></span></span>
@@ -320,7 +303,8 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># For advanced users needing custom conversion options</span></span></span>
-<span class="r-in"><span><span class="va">custom_svg</span> <span class="op">&lt;-</span> <span class="fu">mapgl</span><span class="fu">:::</span><span class="fu">.sf_to_svg</span><span class="op">(</span><span class="va">county_shape</span>, simplify <span class="op">=</span> <span class="cn">TRUE</span>, tolerance <span class="op">=</span> <span class="fl">0.001</span>, fit_viewbox <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">custom_svg</span> <span class="op">&lt;-</span> <span class="fu">mapgl</span><span class="fu">:::</span><span class="fu">.sf_to_svg</span><span class="op">(</span><span class="va">county_shape</span>, simplify <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>                                  tolerance <span class="op">=</span> <span class="fl">0.001</span>, fit_viewbox <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">add_categorical_legend</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    map <span class="op">=</span> <span class="va">map</span>,</span></span>
 <span class="r-in"><span>    legend_title <span class="op">=</span> <span class="st">"Custom Converted Shape"</span>,</span></span>
