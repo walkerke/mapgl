@@ -121,7 +121,7 @@ function onClickPopup(e, map, popupProperty, layerId) {
   }
 
   // Create and show the popup
-  const popup = new maplibregl.Popup()
+  const popup = new mapboxgl.Popup()
     .setLngLat(e.lngLat)
     .setHTML(description)
     .addTo(map);
@@ -277,7 +277,7 @@ function generateDrawStyles(styling) {
 }
 
 HTMLWidgets.widget({
-  name: "maplibregl",
+  name: "mapboxgl",
 
   type: "output",
 
@@ -287,21 +287,38 @@ HTMLWidgets.widget({
 
     return {
       renderValue: function (x) {
-        if (typeof maplibregl === "undefined") {
-          console.error("Maplibre GL JS is not loaded.");
+        if (typeof mapboxgl === "undefined") {
+          console.error("Mapbox GL JS is not loaded.");
           return;
         }
 
-        let protocol = new pmtiles.Protocol({ metadata: true });
-        maplibregl.addProtocol("pmtiles", protocol.tile);
+        // Register PMTiles source type if available
+        if (
+          typeof MapboxPmTilesSource !== "undefined" &&
+          typeof pmtiles !== "undefined"
+        ) {
+          try {
+            mapboxgl.Style.setSourceType(
+              PMTILES_SOURCE_TYPE,
+              MapboxPmTilesSource,
+            );
+            console.log("PMTiles support enabled for Mapbox GL JS");
+          } catch (e) {
+            console.warn("Failed to register PMTiles source type:", e);
+          }
+        }
 
-        map = new maplibregl.Map({
+        mapboxgl.accessToken = x.access_token;
+
+        map = new mapboxgl.Map({
           container: el.id,
           style: x.style,
           center: x.center,
           zoom: x.zoom,
           bearing: x.bearing,
           pitch: x.pitch,
+          projection: x.projection,
+          parallels: x.parallels,
           ...x.additional_params,
         });
 
@@ -361,8 +378,8 @@ HTMLWidgets.widget({
           }
 
           if (x.markers) {
-            if (!window.maplibreglMarkers) {
-              window.maplibreglMarkers = [];
+            if (!window.mapboxglMarkers) {
+              window.mapboxglMarkers = [];
             }
             x.markers.forEach(function (marker) {
               const markerOptions = {
@@ -371,15 +388,13 @@ HTMLWidgets.widget({
                 draggable: marker.options.draggable || false,
                 ...marker.options,
               };
-              const mapMarker = new maplibregl.Marker(markerOptions)
+              const mapMarker = new mapboxgl.Marker(markerOptions)
                 .setLngLat([marker.lng, marker.lat])
                 .addTo(map);
 
               if (marker.popup) {
                 mapMarker.setPopup(
-                  new maplibregl.Popup({
-                    offset: 25,
-                  }).setHTML(marker.popup),
+                  new mapboxgl.Popup({ offset: 25 }).setHTML(marker.popup),
                 );
               }
 
@@ -404,7 +419,7 @@ HTMLWidgets.widget({
                 }
               }
 
-              window.maplibreglMarkers.push(mapMarker);
+              window.mapboxglMarkers.push(mapMarker);
             });
           }
 
@@ -478,140 +493,148 @@ HTMLWidgets.widget({
                   urls: source.urls,
                   coordinates: source.coordinates,
                 });
+              } else {
+                // Handle custom source types (like pmtile-source)
+                const sourceOptions = { type: source.type };
+
+                // Copy all properties except id
+                for (const [key, value] of Object.entries(source)) {
+                  if (key !== "id") {
+                    sourceOptions[key] = value;
+                  }
+                }
+
+                map.addSource(source.id, sourceOptions);
               }
             });
           }
 
-          function add_my_layers(layer) {
-            try {
-              const layerConfig = {
-                id: layer.id,
-                type: layer.type,
-                source: layer.source,
-                layout: layer.layout || {},
-                paint: layer.paint || {},
-              };
-
-              // Check if source is an object and set generateId if source type is 'geojson'
-              if (
-                typeof layer.source === "object" &&
-                layer.source.type === "geojson"
-              ) {
-                layerConfig.source.generateId = true;
-              } else if (typeof layer.source === "string") {
-                // Handle string source if needed
-                layerConfig.source = layer.source;
-              }
-
-              if (layer.source_layer) {
-                layerConfig["source-layer"] = layer.source_layer;
-              }
-
-              if (layer.slot) {
-                layerConfig["slot"] = layer.slot;
-              }
-
-              if (layer.minzoom) {
-                layerConfig["minzoom"] = layer.minzoom;
-              }
-
-              if (layer.maxzoom) {
-                layerConfig["maxzoom"] = layer.maxzoom;
-              }
-
-              if (layer.filter) {
-                layerConfig["filter"] = layer.filter;
-              }
-
-              if (layer.before_id) {
-                map.addLayer(layerConfig, layer.before_id);
-              } else {
-                map.addLayer(layerConfig);
-              }
-
-              // Add popups or tooltips if provided
-              if (layer.popup) {
-                // Initialize popup tracking if it doesn't exist
-                if (!window._mapboxPopups) {
-                  window._mapboxPopups = {};
-                }
-
-                // Create click handler for this layer
-                const clickHandler = function (e) {
-                  onClickPopup(e, map, layer.popup, layer.id);
+          // Add layers if provided
+          if (x.layers) {
+            x.layers.forEach(function (layer) {
+              try {
+                const layerConfig = {
+                  id: layer.id,
+                  type: layer.type,
+                  source: layer.source,
+                  layout: layer.layout || {},
+                  paint: layer.paint || {},
                 };
 
-                // Store these handler references so we can remove them later if needed
-                if (!window._mapboxClickHandlers) {
-                  window._mapboxClickHandlers = {};
-                }
-                window._mapboxClickHandlers[layer.id] = clickHandler;
-
-                // Add the click handler
-                map.on("click", layer.id, clickHandler);
-
-                // Change cursor to pointer when hovering over the layer
-                map.on("mouseenter", layer.id, function () {
-                  map.getCanvas().style.cursor = "pointer";
-                });
-
-                // Change cursor back to default when leaving the layer
-                map.on("mouseleave", layer.id, function () {
-                  map.getCanvas().style.cursor = "";
-                });
-              }
-
-              if (layer.tooltip) {
-                const tooltip = new maplibregl.Popup({
-                  closeButton: false,
-                  closeOnClick: false,
-                });
-
-                // Create a reference to the mousemove handler function.
-                // We need to pass 'e', 'map', 'tooltip', and 'layer.tooltip' to onMouseMoveTooltip.
-                const mouseMoveHandler = function (e) {
-                  onMouseMoveTooltip(e, map, tooltip, layer.tooltip);
-                };
-
-                // Create a reference to the mouseleave handler function.
-                // We need to pass 'map' and 'tooltip' to onMouseLeaveTooltip.
-                const mouseLeaveHandler = function () {
-                  onMouseLeaveTooltip(map, tooltip);
-                };
-
-                // Attach the named handler references, not anonymous functions.
-                map.on("mousemove", layer.id, mouseMoveHandler);
-                map.on("mouseleave", layer.id, mouseLeaveHandler);
-
-                // Store these handler references so you can remove them later if needed
-                if (!window._mapboxHandlers) {
-                  window._mapboxHandlers = {};
-                }
-                window._mapboxHandlers[layer.id] = {
-                  mousemove: mouseMoveHandler,
-                  mouseleave: mouseLeaveHandler,
-                };
-              }
-
-              // Add hover effect if provided
-              if (layer.hover_options) {
-                const jsHoverOptions = {};
-                for (const [key, value] of Object.entries(
-                  layer.hover_options,
-                )) {
-                  const jsKey = key.replace(/_/g, "-");
-                  jsHoverOptions[jsKey] = value;
+                // Check if source is an object and set generateId if source type is 'geojson'
+                if (
+                  typeof layer.source === "object" &&
+                  layer.source.type === "geojson"
+                ) {
+                  layerConfig.source.generateId = true;
+                } else if (typeof layer.source === "string") {
+                  // Handle string source if needed
+                  layerConfig.source = layer.source;
                 }
 
-                let hoveredFeatureId = null;
+                if (layer.source_layer) {
+                  layerConfig["source-layer"] = layer.source_layer;
+                }
 
-                map.on("mousemove", layer.id, function (e) {
-                  if (e.features.length > 0) {
-                    // Check if the feature has an id
-                    const featureId = e.features[0].id;
+                if (layer.slot) {
+                  layerConfig["slot"] = layer.slot;
+                }
 
-                    // Only proceed if the feature has an id
-                    if (featureId !== undefined && featureId !== null) {
+                if (layer.minzoom) {
+                  layerConfig["minzoom"] = layer.minzoom;
+                }
+                if (layer.maxzoom) {
+                  layerConfig["maxzoom"] = layer.maxzoom;
+                }
+
+                if (layer.filter) {
+                  layerConfig["filter"] = layer.filter;
+                }
+
+                if (layer.before_id) {
+                  map.addLayer(layerConfig, layer.before_id);
+                } else {
+                  map.addLayer(layerConfig);
+                }
+
+                // Add popups or tooltips if provided
+                if (layer.popup) {
+                  // Initialize popup tracking if it doesn't exist
+                  if (!window._mapboxPopups) {
+                    window._mapboxPopups = {};
+                  }
+
+                  // Create click handler for this layer
+                  const clickHandler = function (e) {
+                    onClickPopup(e, map, layer.popup, layer.id);
+                  };
+
+                  // Store these handler references so we can remove them later if needed
+                  if (!window._mapboxClickHandlers) {
+                    window._mapboxClickHandlers = {};
+                  }
+                  window._mapboxClickHandlers[layer.id] = clickHandler;
+
+                  // Add the click handler
+                  map.on("click", layer.id, clickHandler);
+
+                  // Change cursor to pointer when hovering over the layer
+                  map.on("mouseenter", layer.id, function () {
+                    map.getCanvas().style.cursor = "pointer";
+                  });
+
+                  // Change cursor back to default when leaving the layer
+                  map.on("mouseleave", layer.id, function () {
+                    map.getCanvas().style.cursor = "";
+                  });
+                }
+
+                if (layer.tooltip) {
+                  const tooltip = new mapboxgl.Popup({
+                    closeButton: false,
+                    closeOnClick: false,
+                  });
+
+                  // Create a reference to the mousemove handler function.
+                  // We need to pass 'e', 'map', 'tooltip', and 'layer.tooltip' to onMouseMoveTooltip.
+                  const mouseMoveHandler = function (e) {
+                    onMouseMoveTooltip(e, map, tooltip, layer.tooltip);
+                  };
+
+                  // Create a reference to the mouseleave handler function.
+                  // We need to pass 'map' and 'tooltip' to onMouseLeaveTooltip.
+                  const mouseLeaveHandler = function () {
+                    onMouseLeaveTooltip(map, tooltip);
+                  };
+
+                  // Attach the named handler references, not anonymous functions.
+                  map.on("mousemove", layer.id, mouseMoveHandler);
+                  map.on("mouseleave", layer.id, mouseLeaveHandler);
+
+                  // Store these handler references so you can remove them later if needed
+                  if (!window._mapboxHandlers) {
+                    window._mapboxHandlers = {};
+                  }
+                  window._mapboxHandlers[layer.id] = {
+                    mousemove: mouseMoveHandler,
+                    mouseleave: mouseLeaveHandler,
+                  };
+                }
+
+                // Add hover effect if provided
+                if (layer.hover_options) {
+                  const jsHoverOptions = {};
+                  for (const [key, value] of Object.entries(
+                    layer.hover_options,
+                  )) {
+                    const jsKey = key.replace(/_/g, "-");
+                    jsHoverOptions[jsKey] = value;
+                  }
+
+                  let hoveredFeatureId = null;
+
+                  map.on("mousemove", layer.id, function (e) {
+                    if (e.features.length > 0) {
                       if (hoveredFeatureId !== null) {
                         const featureState = {
                           source:
@@ -625,7 +648,7 @@ HTMLWidgets.widget({
                         }
                         map.setFeatureState(featureState, { hover: false });
                       }
-                      hoveredFeatureId = featureId;
+                      hoveredFeatureId = e.features[0].id;
                       const featureState = {
                         source:
                           typeof layer.source === "string"
@@ -636,59 +659,46 @@ HTMLWidgets.widget({
                       if (layer.source_layer) {
                         featureState.sourceLayer = layer.source_layer;
                       }
-                      map.setFeatureState(featureState, { hover: true });
+                      map.setFeatureState(featureState, {
+                        hover: true,
+                      });
                     }
-                  }
-                });
+                  });
 
-                map.on("mouseleave", layer.id, function () {
-                  if (hoveredFeatureId !== null) {
-                    const featureState = {
-                      source:
-                        typeof layer.source === "string"
-                          ? layer.source
-                          : layer.id,
-                      id: hoveredFeatureId,
-                    };
-                    if (layer.source_layer) {
-                      featureState.sourceLayer = layer.source_layer;
+                  map.on("mouseleave", layer.id, function () {
+                    if (hoveredFeatureId !== null) {
+                      const featureState = {
+                        source:
+                          typeof layer.source === "string"
+                            ? layer.source
+                            : layer.id,
+                        id: hoveredFeatureId,
+                      };
+                      if (layer.source_layer) {
+                        featureState.sourceLayer = layer.source_layer;
+                      }
+                      map.setFeatureState(featureState, {
+                        hover: false,
+                      });
                     }
-                    map.setFeatureState(featureState, { hover: false });
-                  }
-                  hoveredFeatureId = null;
-                });
+                    hoveredFeatureId = null;
+                  });
 
-                Object.keys(jsHoverOptions).forEach(function (key) {
-                  const originalPaint =
-                    map.getPaintProperty(layer.id, key) || layer.paint[key];
-                  map.setPaintProperty(layer.id, key, [
-                    "case",
-                    ["boolean", ["feature-state", "hover"], false],
-                    jsHoverOptions[key],
-                    originalPaint,
-                  ]);
-                });
-              }
-            } catch (e) {
-              console.error("Failed to add layer: ", layer, e);
-            }
-          }
-          if (x.h3j_sources) {
-            x.h3j_sources.forEach(async function (source) {
-              await map.addH3JSource(source.id, {
-                data: source.url,
-              });
-
-              // A bit hacky?
-              if (x.layers) {
-                x.layers.forEach((layer) => add_my_layers(layer));
+                  Object.keys(jsHoverOptions).forEach(function (key) {
+                    const originalPaint =
+                      map.getPaintProperty(layer.id, key) || layer.paint[key];
+                    map.setPaintProperty(layer.id, key, [
+                      "case",
+                      ["boolean", ["feature-state", "hover"], false],
+                      jsHoverOptions[key],
+                      originalPaint,
+                    ]);
+                  });
+                }
+              } catch (e) {
+                console.error("Failed to add layer: ", layer, e);
               }
             });
-          }
-
-          // Add layers if provided
-          if (x.layers) {
-            x.layers.forEach((layer) => add_my_layers(layer));
           }
 
           // Apply setFilter if provided
@@ -709,6 +719,16 @@ HTMLWidgets.widget({
           // Set fog
           if (x.fog) {
             map.setFog(x.fog);
+          }
+
+          // Set rain effect if provided
+          if (x.rain) {
+            map.setRain(x.rain);
+          }
+
+          // Set snow effect if provided
+          if (x.snow) {
+            map.setSnow(x.snow);
           }
 
           if (x.fitBounds) {
@@ -732,7 +752,7 @@ HTMLWidgets.widget({
 
           // Add scale control if enabled
           if (x.scale_control) {
-            const scaleControl = new maplibregl.ScaleControl({
+            const scaleControl = new mapboxgl.ScaleControl({
               maxWidth: x.scale_control.maxWidth,
               unit: x.scale_control.unit,
             });
@@ -740,11 +760,18 @@ HTMLWidgets.widget({
             map.controls.push(scaleControl);
           }
 
-          // Add globe control if enabled
-          if (x.globe_control) {
-            const globeControl = new maplibregl.GlobeControl();
-            map.addControl(globeControl, x.globe_control.position);
-            map.controls.push(globeControl);
+          // Add globe minimap if enabled
+          if (x.globe_minimap && x.globe_minimap.enabled) {
+            const globeMinimapOptions = {
+              globeSize: x.globe_minimap.globe_size,
+              landColor: x.globe_minimap.land_color,
+              waterColor: x.globe_minimap.water_color,
+              markerColor: x.globe_minimap.marker_color,
+              markerSize: x.globe_minimap.marker_size,
+            };
+            const globeMinimap = new GlobeMinimap(globeMinimapOptions);
+            map.addControl(globeMinimap, x.globe_minimap.position);
+            map.controls.push(globeMinimap);
           }
 
           // Add custom controls if any are defined
@@ -757,7 +784,7 @@ HTMLWidgets.widget({
                 customControlContainer.className = controlOptions.className;
               } else {
                 customControlContainer.className =
-                  "maplibregl-ctrl maplibregl-ctrl-group";
+                  "mapboxgl-ctrl mapboxgl-ctrl-group";
               }
 
               customControlContainer.innerHTML = controlOptions.html;
@@ -783,152 +810,40 @@ HTMLWidgets.widget({
             });
           }
 
-          // Add globe minimap if enabled
-          if (x.globe_minimap && x.globe_minimap.enabled) {
-            const globeMinimapOptions = {
-              globeSize: x.globe_minimap.globe_size,
-              landColor: x.globe_minimap.land_color,
-              waterColor: x.globe_minimap.water_color,
-              markerColor: x.globe_minimap.marker_color,
-              markerSize: x.globe_minimap.marker_size,
-            };
-            const globeMinimap = new GlobeMinimap(globeMinimapOptions);
-            map.addControl(globeMinimap, x.globe_minimap.position);
-            map.controls.push(globeMinimap);
-          }
-
-          if (x.setProjection) {
-            x.setProjection.forEach(function (projectionConfig) {
-              if (projectionConfig.projection) {
-                const projection =
-                  typeof projectionConfig.projection === "string"
-                    ? { type: projectionConfig.projection }
-                    : projectionConfig.projection;
-                map.setProjection(projection);
-              }
-            });
-          }
-
           // Add geocoder control if enabled
           if (x.geocoder_control) {
-            const provider = x.geocoder_control.provider || "osm";
-            let geocoder;
+            const geocoderOptions = {
+              accessToken: mapboxgl.accessToken,
+              mapboxgl: mapboxgl,
+              ...x.geocoder_control,
+            };
 
-            if (provider === "maptiler") {
-              // MapTiler geocoder
-              const maptilerOptions = {
-                apiKey: x.geocoder_control.api_key,
-                maplibregl: maplibregl,
-              };
+            // Set default values if not provided
+            if (!geocoderOptions.placeholder)
+              geocoderOptions.placeholder = "Search";
+            if (typeof geocoderOptions.collapsed === "undefined")
+              geocoderOptions.collapsed = false;
 
-              // Apply additional options
-              if (x.geocoder_control.placeholder) {
-                maptilerOptions.placeholder = x.geocoder_control.placeholder;
-              }
-              if (typeof x.geocoder_control.collapsed !== "undefined") {
-                maptilerOptions.collapsed = x.geocoder_control.collapsed;
-              }
-
-              // Create MapTiler geocoder
-              geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
-            } else {
-              // OSM/Nominatim geocoder (default)
-              const geocoderApi = {
-                forwardGeocode: async (config) => {
-                  const features = [];
-                  try {
-                    const request = `https://nominatim.openstreetmap.org/search?q=${
-                      config.query
-                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                    const response = await fetch(request);
-                    const geojson = await response.json();
-                    for (const feature of geojson.features) {
-                      const center = [
-                        feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                        feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
-                      ];
-                      const point = {
-                        type: "Feature",
-                        geometry: {
-                          type: "Point",
-                          coordinates: center,
-                        },
-                        place_name: feature.properties.display_name,
-                        properties: feature.properties,
-                        text: feature.properties.display_name,
-                        place_type: ["place"],
-                        center,
-                      };
-                      features.push(point);
-                    }
-                  } catch (e) {
-                    console.error(`Failed to forwardGeocode with error: ${e}`);
-                  }
-
-                  return {
-                    features,
-                  };
-                },
-              };
-              const geocoderOptions = {
-                maplibregl: maplibregl,
-                ...x.geocoder_control,
-              };
-
-              // Set default values if not provided
-              if (!geocoderOptions.placeholder)
-                geocoderOptions.placeholder = "Search";
-              if (typeof geocoderOptions.collapsed === "undefined")
-                geocoderOptions.collapsed = false;
-
-              geocoder = new MaplibreGeocoder(geocoderApi, geocoderOptions);
-            }
+            const geocoder = new MapboxGeocoder(geocoderOptions);
 
             map.addControl(
               geocoder,
               x.geocoder_control.position || "top-right",
             );
             map.controls.push(geocoder);
-            
-            // Apply CSS fix for MapTiler geocoder to prevent cutoff
-            if (provider === "maptiler") {
-              setTimeout(() => {
-                const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
-                if (controlContainer) {
-                  controlContainer.style.maxWidth = '300px';
-                  controlContainer.style.width = 'auto';
-                }
-              }, 100);
-            }
-            
+
             // Handle geocoder results in Shiny mode
             if (HTMLWidgets.shinyMode) {
-              if (provider === "maptiler") {
-                // MapTiler uses different event names
-                geocoder.on("pick", function (e) {
-                  Shiny.setInputValue(el.id + "_geocoder", {
-                    result: e,
-                    time: new Date(),
-                  });
+              geocoder.on("result", function (e) {
+                Shiny.setInputValue(el.id + "_geocoder", {
+                  result: e.result,
+                  time: new Date(),
                 });
-              } else {
-                // OSM geocoder
-                geocoder.on("results", function (e) {
-                  Shiny.setInputValue(el.id + "_geocoder", {
-                    result: e,
-                    time: new Date(),
-                  });
-                });
-              }
+              });
             }
           }
 
           if (x.draw_control && x.draw_control.enabled) {
-            MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
-            MapboxDraw.constants.classes.CONTROL_PREFIX = "maplibregl-ctrl-";
-            MapboxDraw.constants.classes.CONTROL_GROUP =
-              "maplibregl-ctrl-group";
-
             let drawOptions = x.draw_control.options || {};
 
             // Generate styles if styling parameters provided
@@ -966,19 +881,6 @@ HTMLWidgets.widget({
               });
             }
 
-            // Fix MapLibre compatibility - ensure we always have custom styles
-            if (!drawOptions.styles) {
-              drawOptions.styles = generateDrawStyles({
-                vertex_radius: 5,
-                active_color: "#fbb03b",
-                point_color: "#3bb2d0",
-                line_color: "#3bb2d0",
-                fill_color: "#3bb2d0",
-                fill_opacity: 0.1,
-                line_width: 2,
-              });
-            }
-
             draw = new MapboxDraw(drawOptions);
             map.addControl(draw, x.draw_control.position);
             map.controls.push(draw);
@@ -1007,7 +909,7 @@ HTMLWidgets.widget({
             if (x.draw_control.orientation === "horizontal") {
               const drawBar = map
                 .getContainer()
-                .querySelector(".maplibregl-ctrl-group");
+                .querySelector(".mapboxgl-ctrl-group");
               if (drawBar) {
                 drawBar.style.display = "flex";
                 drawBar.style.flexDirection = "row";
@@ -1063,14 +965,14 @@ HTMLWidgets.widget({
           // Add fullscreen control if enabled
           if (x.fullscreen_control && x.fullscreen_control.enabled) {
             const position = x.fullscreen_control.position || "top-right";
-            const fullscreen = new maplibregl.FullscreenControl();
+            const fullscreen = new mapboxgl.FullscreenControl();
             map.addControl(fullscreen, position);
             map.controls.push(fullscreen);
           }
 
           // Add geolocate control if enabled
           if (x.geolocate_control) {
-            const geolocate = new maplibregl.GeolocateControl({
+            const geolocate = new mapboxgl.GeolocateControl({
               positionOptions: x.geolocate_control.positionOptions,
               trackUserLocation: x.geolocate_control.trackUserLocation,
               showAccuracyCircle: x.geolocate_control.showAccuracyCircle,
@@ -1083,6 +985,10 @@ HTMLWidgets.widget({
 
             if (HTMLWidgets.shinyMode) {
               geolocate.on("geolocate", function (event) {
+                console.log("Geolocate event triggered");
+                console.log("Element ID:", el.id);
+                console.log("Event coords:", event.coords);
+
                 Shiny.setInputValue(el.id + "_geolocate", {
                   coords: event.coords,
                   time: new Date(),
@@ -1116,7 +1022,7 @@ HTMLWidgets.widget({
 
           // Add navigation control if enabled
           if (x.navigation_control) {
-            const nav = new maplibregl.NavigationControl({
+            const nav = new mapboxgl.NavigationControl({
               showCompass: x.navigation_control.show_compass,
               showZoom: x.navigation_control.show_zoom,
               visualizePitch: x.navigation_control.visualize_pitch,
@@ -1128,7 +1034,7 @@ HTMLWidgets.widget({
               const navBar = map
                 .getContainer()
                 .querySelector(
-                  ".maplibregl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
+                  ".mapboxgl-ctrl.mapboxgl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
                 );
               if (navBar) {
                 navBar.style.display = "flex";
@@ -1140,8 +1046,7 @@ HTMLWidgets.widget({
           // Add reset control if enabled
           if (x.reset_control) {
             const resetControl = document.createElement("button");
-            resetControl.className =
-              "maplibregl-ctrl-icon maplibregl-ctrl-reset";
+            resetControl.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-reset";
             resetControl.type = "button";
             resetControl.setAttribute("aria-label", "Reset");
             resetControl.innerHTML = "⟲";
@@ -1165,7 +1070,7 @@ HTMLWidgets.widget({
             });
 
             const resetContainer = document.createElement("div");
-            resetContainer.className = "maplibregl-ctrl maplibregl-ctrl-group";
+            resetContainer.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
             resetContainer.appendChild(resetControl);
 
             // Initialize with empty object, will be populated after map loads
@@ -1215,16 +1120,25 @@ HTMLWidgets.widget({
             });
           }
 
-          if (x.images && Array.isArray(x.images)) {
-            x.images.forEach(async function (imageInfo) {
-              try {
-                const image = await map.loadImage(imageInfo.url);
-                if (!map.hasImage(imageInfo.id)) {
-                  map.addImage(imageInfo.id, image.data, imageInfo.options);
-                }
-              } catch (error) {
-                console.error("Error loading image:", error);
+          if (x.setProjection) {
+            x.setProjection.forEach(function (projectionConfig) {
+              if (projectionConfig.projection) {
+                map.setProjection(projectionConfig.projection);
               }
+            });
+          }
+
+          if (x.images && Array.isArray(x.images)) {
+            x.images.forEach(function (imageInfo) {
+              map.loadImage(imageInfo.url, function (error, image) {
+                if (error) {
+                  console.error("Error loading image:", error);
+                  return;
+                }
+                if (!map.hasImage(imageInfo.id)) {
+                  map.addImage(imageInfo.id, image, imageInfo.options);
+                }
+              });
             });
           } else if (x.images) {
             console.error("x.images is not an array:", x.images);
@@ -1248,7 +1162,7 @@ HTMLWidgets.widget({
               layersControl.style.top = (x.layers_control.margin_top || 10) + "px";
               layersControl.style.right = (x.layers_control.margin_right || 10) + "px";
             } else if (position === "bottom-left") {
-              layersControl.style.bottom = (x.layers_control.margin_bottom || 10) + "px";
+              layersControl.style.bottom = (x.layers_control.margin_bottom || 30) + "px";
               layersControl.style.left = (x.layers_control.margin_left || 10) + "px";
             } else if (position === "bottom-right") {
               layersControl.style.bottom = (x.layers_control.margin_bottom || 40) + "px";
@@ -1402,18 +1316,21 @@ HTMLWidgets.widget({
           // If clusters are present, add event handling
           map.getStyle().layers.forEach((layer) => {
             if (layer.id.includes("-clusters")) {
-              map.on("click", layer.id, async (e) => {
+              map.on("click", layer.id, (e) => {
                 const features = map.queryRenderedFeatures(e.point, {
                   layers: [layer.id],
                 });
                 const clusterId = features[0].properties.cluster_id;
-                const zoom = await map
+                map
                   .getSource(layer.source)
-                  .getClusterExpansionZoom(clusterId);
-                map.easeTo({
-                  center: features[0].geometry.coordinates,
-                  zoom,
-                });
+                  .getClusterExpansionZoom(clusterId, (err, zoom) => {
+                    if (err) return;
+
+                    map.easeTo({
+                      center: features[0].geometry.coordinates,
+                      zoom: zoom,
+                    });
+                  });
               });
 
               map.on("mouseenter", layer.id, () => {
@@ -1497,6 +1414,7 @@ HTMLWidgets.widget({
 
           el.map = map;
         });
+
         el.map = map;
       },
 
@@ -1527,7 +1445,7 @@ HTMLWidgets.widget({
 });
 
 if (HTMLWidgets.shinyMode) {
-  Shiny.addCustomMessageHandler("maplibre-proxy", function (data) {
+  Shiny.addCustomMessageHandler("mapboxgl-proxy", function (data) {
     var widget = HTMLWidgets.find("#" + data.id);
     if (!widget) return;
     var map = widget.getMap();
@@ -1573,7 +1491,143 @@ if (HTMLWidgets.shinyMode) {
         // Track filter state for layer restoration
         layerState.filters[message.layer] = message.filter;
       } else if (message.type === "add_source") {
-        map.addSource(message.source);
+        if (message.source.type === "vector") {
+          const sourceConfig = {
+            type: "vector",
+            url: message.source.url,
+          };
+          // Add promoteId if provided
+          if (message.source.promoteId) {
+            sourceConfig.promoteId = message.source.promoteId;
+          }
+          // Add any other properties from the source object
+          Object.keys(message.source).forEach(function (key) {
+            if (
+              key !== "id" &&
+              key !== "type" &&
+              key !== "url" &&
+              key !== "promoteId"
+            ) {
+              sourceConfig[key] = message.source[key];
+            }
+          });
+          map.addSource(message.source.id, sourceConfig);
+        } else if (message.source.type === "geojson") {
+          const sourceConfig = {
+            type: "geojson",
+            data: message.source.data,
+            generateId: message.source.generateId,
+          };
+          // Add any other properties from the source object
+          Object.keys(message.source).forEach(function (key) {
+            if (
+              key !== "id" &&
+              key !== "type" &&
+              key !== "data" &&
+              key !== "generateId"
+            ) {
+              sourceConfig[key] = message.source[key];
+            }
+          });
+          map.addSource(message.source.id, sourceConfig);
+        } else if (message.source.type === "raster") {
+          const sourceConfig = {
+            type: "raster",
+            tileSize: message.source.tileSize,
+          };
+          if (message.source.url) {
+            sourceConfig.url = message.source.url;
+          } else if (message.source.tiles) {
+            sourceConfig.tiles = message.source.tiles;
+          }
+          if (message.source.maxzoom) {
+            sourceConfig.maxzoom = message.source.maxzoom;
+          }
+          // Add any other properties from the source object
+          Object.keys(message.source).forEach(function (key) {
+            if (
+              key !== "id" &&
+              key !== "type" &&
+              key !== "url" &&
+              key !== "tiles" &&
+              key !== "tileSize" &&
+              key !== "maxzoom"
+            ) {
+              sourceConfig[key] = message.source[key];
+            }
+          });
+          map.addSource(message.source.id, sourceConfig);
+        } else if (message.source.type === "raster-dem") {
+          const sourceConfig = {
+            type: "raster-dem",
+            url: message.source.url,
+            tileSize: message.source.tileSize,
+          };
+          if (message.source.maxzoom) {
+            sourceConfig.maxzoom = message.source.maxzoom;
+          }
+          // Add any other properties from the source object
+          Object.keys(message.source).forEach(function (key) {
+            if (
+              key !== "id" &&
+              key !== "type" &&
+              key !== "url" &&
+              key !== "tileSize" &&
+              key !== "maxzoom"
+            ) {
+              sourceConfig[key] = message.source[key];
+            }
+          });
+          map.addSource(message.source.id, sourceConfig);
+        } else if (message.source.type === "image") {
+          const sourceConfig = {
+            type: "image",
+            url: message.source.url,
+            coordinates: message.source.coordinates,
+          };
+          // Add any other properties from the source object
+          Object.keys(message.source).forEach(function (key) {
+            if (
+              key !== "id" &&
+              key !== "type" &&
+              key !== "url" &&
+              key !== "coordinates"
+            ) {
+              sourceConfig[key] = message.source[key];
+            }
+          });
+          map.addSource(message.source.id, sourceConfig);
+        } else if (message.source.type === "video") {
+          const sourceConfig = {
+            type: "video",
+            urls: message.source.urls,
+            coordinates: message.source.coordinates,
+          };
+          // Add any other properties from the source object
+          Object.keys(message.source).forEach(function (key) {
+            if (
+              key !== "id" &&
+              key !== "type" &&
+              key !== "urls" &&
+              key !== "coordinates"
+            ) {
+              sourceConfig[key] = message.source[key];
+            }
+          });
+          map.addSource(message.source.id, sourceConfig);
+        } else {
+          // Handle custom source types (like pmtile-source)
+          const sourceConfig = { type: message.source.type };
+
+          // Copy all properties except id
+          Object.keys(message.source).forEach(function (key) {
+            if (key !== "id") {
+              sourceConfig[key] = message.source[key];
+            }
+          });
+
+          map.addSource(message.source.id, sourceConfig);
+        }
       } else if (message.type === "add_layer") {
         try {
           if (message.layer.before_id) {
@@ -1615,7 +1669,7 @@ if (HTMLWidgets.shinyMode) {
           }
 
           if (message.layer.tooltip) {
-            const tooltip = new maplibregl.Popup({
+            const tooltip = new mapboxgl.Popup({
               closeButton: false,
               closeOnClick: false,
             });
@@ -1657,25 +1711,7 @@ if (HTMLWidgets.shinyMode) {
 
             map.on("mousemove", message.layer.id, function (e) {
               if (e.features.length > 0) {
-                // Check if the feature has an id
-                const featureId = e.features[0].id;
-
-                // Only proceed if the feature has an id
-                if (featureId !== undefined && featureId !== null) {
-                  if (hoveredFeatureId !== null) {
-                    const featureState = {
-                      source:
-                        typeof message.layer.source === "string"
-                          ? message.layer.source
-                          : message.layer.id,
-                      id: hoveredFeatureId,
-                    };
-                    if (message.layer.source_layer) {
-                      featureState.sourceLayer = message.layer.source_layer;
-                    }
-                    map.setFeatureState(featureState, { hover: false });
-                  }
-                  hoveredFeatureId = featureId;
+                if (hoveredFeatureId !== null) {
                   const featureState = {
                     source:
                       typeof message.layer.source === "string"
@@ -1686,8 +1722,24 @@ if (HTMLWidgets.shinyMode) {
                   if (message.layer.source_layer) {
                     featureState.sourceLayer = message.layer.source_layer;
                   }
-                  map.setFeatureState(featureState, { hover: true });
+                  map.setFeatureState(featureState, {
+                    hover: false,
+                  });
                 }
+                hoveredFeatureId = e.features[0].id;
+                const featureState = {
+                  source:
+                    typeof message.layer.source === "string"
+                      ? message.layer.source
+                      : message.layer.id,
+                  id: hoveredFeatureId,
+                };
+                if (message.layer.source_layer) {
+                  featureState.sourceLayer = message.layer.source_layer;
+                }
+                map.setFeatureState(featureState, {
+                  hover: true,
+                });
               }
             });
 
@@ -1703,7 +1755,9 @@ if (HTMLWidgets.shinyMode) {
                 if (message.layer.source_layer) {
                   featureState.sourceLayer = message.layer.source_layer;
                 }
-                map.setFeatureState(featureState, { hover: false });
+                map.setFeatureState(featureState, {
+                  hover: false,
+                });
               }
               hoveredFeatureId = null;
             });
@@ -1731,23 +1785,9 @@ if (HTMLWidgets.shinyMode) {
         }
 
         // If there's an active popup for this layer, remove it
-        // Check both message.layer and message.layer.id as keys due to different message formats
-        if (window._mapboxPopups) {
-          // First check if we have a popup stored with message.layer key
-          if (window._mapboxPopups[message.layer]) {
-            window._mapboxPopups[message.layer].remove();
-            delete window._mapboxPopups[message.layer];
-          }
-
-          // Also check if we have a popup stored with message.layer.id key, which happens when added via add_layer
-          if (
-            message.layer &&
-            message.layer.id &&
-            window._mapboxPopups[message.layer.id]
-          ) {
-            window._mapboxPopups[message.layer.id].remove();
-            delete window._mapboxPopups[message.layer.id];
-          }
+        if (window._mapboxPopups && window._mapboxPopups[message.layer]) {
+          window._mapboxPopups[message.layer].remove();
+          delete window._mapboxPopups[message.layer];
         }
 
         if (map.getLayer(message.layer)) {
@@ -1765,30 +1805,16 @@ if (HTMLWidgets.shinyMode) {
           }
 
           // Remove click handlers for popups
-          if (window._mapboxClickHandlers) {
-            // First check for handlers stored with message.layer key
-            if (window._mapboxClickHandlers[message.layer]) {
-              map.off(
-                "click",
-                message.layer,
-                window._mapboxClickHandlers[message.layer],
-              );
-              delete window._mapboxClickHandlers[message.layer];
-            }
-
-            // Also check for handlers stored with message.layer.id key from add_layer
-            if (
-              message.layer &&
-              message.layer.id &&
-              window._mapboxClickHandlers[message.layer.id]
-            ) {
-              map.off(
-                "click",
-                message.layer,
-                window._mapboxClickHandlers[message.layer.id],
-              );
-              delete window._mapboxClickHandlers[message.layer.id];
-            }
+          if (
+            window._mapboxClickHandlers &&
+            window._mapboxClickHandlers[message.layer]
+          ) {
+            map.off(
+              "click",
+              message.layer,
+              window._mapboxClickHandlers[message.layer],
+            );
+            delete window._mapboxClickHandlers[message.layer];
           }
 
           // Remove the layer
@@ -1925,7 +1951,7 @@ if (HTMLWidgets.shinyMode) {
 
           // Clean up any existing legend styles that might have been added
           const legendStyles = document.querySelectorAll(
-            `style[data-mapgl-legend-css="${data.id}"]`,
+            "style[data-mapgl-legend-css]",
           );
           legendStyles.forEach((style) => style.remove());
 
@@ -1960,15 +1986,6 @@ if (HTMLWidgets.shinyMode) {
         // Default preserve_layers to true if not specified
         const preserveLayers = message.preserve_layers !== false;
 
-        console.log(
-          "[MapGL Debug] set_style called with preserve_layers:",
-          preserveLayers,
-        );
-        console.log(
-          "[MapGL Debug] message.preserve_layers:",
-          message.preserve_layers,
-        );
-
         // If we should preserve layers and sources
         if (preserveLayers) {
           // Store the current style before changing it
@@ -1976,356 +1993,86 @@ if (HTMLWidgets.shinyMode) {
           const userSourceIds = [];
           const userLayers = [];
 
-          console.log(
-            "[MapGL Debug] Current style sources:",
-            Object.keys(currentStyle.sources),
-          );
-          console.log(
-            "[MapGL Debug] Current style layers:",
-            currentStyle.layers.map((l) => l.id),
-          );
-
-          // Store layer IDs we know were added by the user via R code
-          // This is the most reliable way to identify user-added layers
-          const knownUserLayerIds = [];
-
-          // For each layer in the current style, determine if it's a user-added layer
-          currentStyle.layers.forEach(function (layer) {
-            const layerId = layer.id;
-
-            // Critical: Check for nc_counties specifically since we know that's used in the test app
-            if (layerId === "nc_counties") {
-              console.log("[MapGL Debug] Found explicit test layer:", layerId);
-              knownUserLayerIds.push(layerId);
-              if (layer.source && !userSourceIds.includes(layer.source)) {
-                console.log(
-                  "[MapGL Debug] Found source from test layer:",
-                  layer.source,
-                );
-                userSourceIds.push(layer.source);
-              }
-              return; // Skip other checks for this layer
-            }
-
-            // These are common patterns for user-added layers from R code
-            if (
-              // Specific layer IDs from the R package
-              layerId.endsWith("_counties") ||
-              layerId.endsWith("_label") ||
-              layerId.endsWith("_layer") ||
-              // Look for hover handlers - only user-added layers have these
-              (window._mapboxHandlers && window._mapboxHandlers[layerId]) ||
-              // If the layer ID contains these strings, it's likely user-added
-              layerId.includes("user") ||
-              layerId.includes("custom") ||
-              // If the paint property has a hover case, it's user-added
-              (layer.paint &&
-                Object.values(layer.paint).some(
-                  (value) =>
-                    Array.isArray(value) &&
-                    value[0] === "case" &&
-                    Array.isArray(value[1]) &&
-                    value[1][1] &&
-                    Array.isArray(value[1][1]) &&
-                    value[1][1][0] === "feature-state" &&
-                    value[1][1][1] === "hover",
-                ))
-            ) {
-              console.log("[MapGL Debug] Found user layer:", layerId);
-              knownUserLayerIds.push(layerId);
-              // Only include its source if it's not a base map source
-              if (layer.source && !userSourceIds.includes(layer.source)) {
-                const layerSource = currentStyle.sources[layer.source];
-                const isBaseMapSource =
-                  layerSource &&
-                  layerSource.type === "vector" &&
-                  (layer.source === "composite" ||
-                    layer.source === "mapbox" ||
-                    layer.source.startsWith("mapbox-") ||
-                    layer.source === "openmaptiles" ||
-                    layer.source.startsWith("carto") ||
-                    layer.source.startsWith("maptiler"));
-
-                if (!isBaseMapSource) {
-                  console.log(
-                    "[MapGL Debug] Found user source from layer:",
-                    layer.source,
-                  );
-                  userSourceIds.push(layer.source);
-                } else {
-                  console.log(
-                    "[MapGL Debug] Not adding base map source from layer:",
-                    layer.source,
-                  );
-                }
-              }
-            }
-          });
-
-          // For each source, determine if it's a user-added source
+          // Identify user-added sources (those not in the original style)
+          // We'll assume any source that's not "composite", "mapbox", or starts with "mapbox-" is user-added
           for (const sourceId in currentStyle.sources) {
-            const source = currentStyle.sources[sourceId];
-
-            console.log(
-              "[MapGL Debug] Examining source:",
-              sourceId,
-              "type:",
-              source.type,
-            );
-
-            // Strategy 1: All GeoJSON sources are likely user-added
-            if (source.type === "geojson") {
-              console.log("[MapGL Debug] Found user GeoJSON source:", sourceId);
-              if (!userSourceIds.includes(sourceId)) {
-                userSourceIds.push(sourceId);
-              }
-            }
-            // Strategy 2: Check for source data URL patterns typical of R-generated data
-            else if (
-              source.url &&
-              typeof source.url === "string" &&
-              (source.url.includes("data:application/json") ||
-                source.url.includes("blob:"))
-            ) {
-              console.log(
-                "[MapGL Debug] Found user source with data URL:",
-                sourceId,
-              );
-              if (!userSourceIds.includes(sourceId)) {
-                userSourceIds.push(sourceId);
-              }
-            }
-            // Strategy 3: Standard filtering - exclude common base map sources
-            else if (
+            if (
               sourceId !== "composite" &&
               sourceId !== "mapbox" &&
-              !sourceId.startsWith("mapbox-") &&
-              sourceId !== "openmaptiles" && // Common in MapLibre styles
-              !(sourceId.startsWith("carto") && sourceId !== "carto-source") && // Filter CARTO base sources but keep user ones
-              !(
-                sourceId.startsWith("maptiler") && !sourceId.includes("user")
-              ) && // Filter MapTiler sources but keep user ones
-              !sourceId.includes("terrain") && // Common terrain sources
-              !sourceId.includes("hillshade") && // Common hillshade sources
-              !(sourceId.includes("basemap") && !sourceId.includes("user")) && // Filter basemap sources but keep user ones
-              sourceId !== "satellite" && // Filter MapTiler satellite source specifically
-              sourceId !== "aerial" // Filter aerial imagery sources
+              !sourceId.startsWith("mapbox-")
             ) {
-              console.log(
-                "[MapGL Debug] Found user source via filtering:",
-                sourceId,
-              );
-              if (!userSourceIds.includes(sourceId)) {
-                userSourceIds.push(sourceId);
-              }
-            } else {
-              console.log(
-                "[MapGL Debug] Filtered out base map source:",
-                sourceId,
-              );
-            }
-
-            // Store layer-specific handler references
-            if (window._mapboxHandlers) {
-              const handlers = window._mapboxHandlers;
-              for (const layerId in handlers) {
-                // Find layers associated with this source
-                const layer = currentStyle.layers.find((l) => l.id === layerId);
-                if (layer && layer.source === sourceId) {
-                  layer._handlers = handlers[layerId];
+              userSourceIds.push(sourceId);
+              const source = currentStyle.sources[sourceId];
+              // Store layer-specific handler references
+              if (window._mapboxHandlers) {
+                const handlers = window._mapboxHandlers;
+                for (const layerId in handlers) {
+                  // Find layers associated with this source
+                  const layer = currentStyle.layers.find(
+                    (l) => l.id === layerId,
+                  );
+                  if (layer && layer.source === sourceId) {
+                    layer._handlers = handlers[layerId];
+                  }
                 }
               }
             }
           }
 
-          // Identify layers using user-added sources or known user layer IDs
-          // ONLY include layers that use genuinely user-added sources (not base map sources)
+          // Identify layers using user-added sources
           currentStyle.layers.forEach(function (layer) {
-            // Check if this layer uses a genuine user source (not filtered out base map sources)
-            const usesUserSource = userSourceIds.includes(layer.source);
-            const isKnownUserLayer = knownUserLayerIds.includes(layer.id);
-
-            // Additional check: exclude layers that use base map sources even if they were temporarily added to userSourceIds
-            const layerSource = currentStyle.sources[layer.source];
-            const isBaseMapSource =
-              layerSource &&
-              layerSource.type === "vector" &&
-              (layer.source === "composite" ||
-                layer.source === "mapbox" ||
-                layer.source.startsWith("mapbox-") ||
-                layer.source === "openmaptiles" ||
-                layer.source.startsWith("carto") ||
-                layer.source.startsWith("maptiler"));
-
-            if ((usesUserSource || isKnownUserLayer) && !isBaseMapSource) {
+            if (userSourceIds.includes(layer.source)) {
               userLayers.push(layer);
-              console.log(
-                "[MapGL Debug] Including user layer:",
-                layer.id,
-                "source:",
-                layer.source,
-              );
-            } else if (isBaseMapSource) {
-              console.log(
-                "[MapGL Debug] Excluding base map layer:",
-                layer.id,
-                "source:",
-                layer.source,
-              );
             }
           });
-
-          // Log detected user sources and layers
-          console.log("[MapGL Debug] Detected user sources:", userSourceIds);
-          console.log(
-            "[MapGL Debug] Detected user layers:",
-            userLayers.map((l) => l.id),
-          );
-          console.log(
-            "[MapGL Debug] Will preserve",
-            userLayers.length,
-            "user layers",
-          );
-
-          // Store them for potential use outside the onStyleLoad event
-          // This helps in case the event timing is different in MapLibre
-          if (!window._mapglPreservedData) {
-            window._mapglPreservedData = {};
-          }
-          window._mapglPreservedData[map.getContainer().id] = {
-            sources: userSourceIds.map((id) => ({
-              id,
-              source: currentStyle.sources[id],
-            })),
-            layers: userLayers,
-          };
 
           // Set up event listener to re-add sources and layers after style loads
           const onStyleLoad = function () {
-            console.log("[MapGL Debug] style.load event fired");
+            // Re-add user sources
+            userSourceIds.forEach(function (sourceId) {
+              if (!map.getSource(sourceId)) {
+                const source = currentStyle.sources[sourceId];
+                map.addSource(sourceId, source);
+              }
+            });
 
-            try {
-              // Re-add user sources
-              userSourceIds.forEach(function (sourceId) {
-                try {
-                  if (!map.getSource(sourceId)) {
-                    const source = currentStyle.sources[sourceId];
-                    console.log("[MapGL Debug] Re-adding source:", sourceId);
-                    map.addSource(sourceId, source);
+            // Re-add user layers
+            userLayers.forEach(function (layer) {
+              if (!map.getLayer(layer.id)) {
+                map.addLayer(layer);
+
+                // Re-add event handlers for tooltips and hover effects
+                if (layer._handlers) {
+                  const handlers = layer._handlers;
+
+                  if (handlers.mousemove) {
+                    map.on("mousemove", layer.id, handlers.mousemove);
                   }
-                } catch (err) {
-                  console.error(
-                    "[MapGL Debug] Error re-adding source:",
-                    sourceId,
-                    err,
-                  );
+
+                  if (handlers.mouseleave) {
+                    map.on("mouseleave", layer.id, handlers.mouseleave);
+                  }
                 }
-              });
 
-              // Re-add user layers
-              userLayers.forEach(function (layer) {
-                try {
-                  if (!map.getLayer(layer.id)) {
-                    console.log("[MapGL Debug] Re-adding layer:", layer.id);
-                    map.addLayer(layer);
-
-                    // Re-add event handlers for tooltips and hover effects
-                    if (layer._handlers) {
-                      const handlers = layer._handlers;
-
-                      if (handlers.mousemove) {
-                        console.log(
-                          "[MapGL Debug] Re-adding mousemove handler for:",
-                          layer.id,
-                        );
-                        map.on("mousemove", layer.id, handlers.mousemove);
-                      }
-
-                      if (handlers.mouseleave) {
-                        console.log(
-                          "[MapGL Debug] Re-adding mouseleave handler for:",
-                          layer.id,
-                        );
-                        map.on("mouseleave", layer.id, handlers.mouseleave);
-                      }
-                    }
-
-                    // Check if we need to restore tooltip handlers
-                    const layerId = layer.id;
-                    if (layerId === "nc_counties" || layer.tooltip) {
-                      console.log(
-                        "[MapGL Debug] Restoring tooltip for:",
-                        layerId,
-                      );
-
-                      // Create a new tooltip popup
-                      const tooltip = new maplibregl.Popup({
-                        closeButton: false,
-                        closeOnClick: false,
-                      });
-
-                      // Re-add tooltip handlers
-                      const tooltipProperty = layer.tooltip || "NAME";
-
-                      const mouseMoveHandler = function (e) {
-                        map.getCanvas().style.cursor = "pointer";
-                        if (e.features.length > 0) {
-                          const description =
-                            e.features[0].properties[tooltipProperty];
-                          tooltip
-                            .setLngLat(e.lngLat)
-                            .setHTML(description)
-                            .addTo(map);
-                        }
-                      };
-
-                      const mouseLeaveHandler = function () {
-                        map.getCanvas().style.cursor = "";
-                        tooltip.remove();
-                      };
-
-                      map.on("mousemove", layerId, mouseMoveHandler);
-                      map.on("mouseleave", layerId, mouseLeaveHandler);
-
-                      // Store these handlers
-                      if (!window._mapboxHandlers) {
-                        window._mapboxHandlers = {};
-                      }
-                      window._mapboxHandlers[layerId] = {
-                        mousemove: mouseMoveHandler,
-                        mouseleave: mouseLeaveHandler,
-                      };
-                    }
-
-                    // Recreate hover states if needed
-                    if (layer.paint) {
-                      for (const key in layer.paint) {
-                        const value = layer.paint[key];
-                        if (
-                          Array.isArray(value) &&
-                          value[0] === "case" &&
-                          Array.isArray(value[1]) &&
-                          value[1][0] === "boolean" &&
-                          value[1][1][0] === "feature-state" &&
-                          value[1][1][1] === "hover"
-                        ) {
-                          // This is a hover-enabled paint property
-                          map.setPaintProperty(layer.id, key, value);
-                        }
-                      }
+                // Recreate hover states if needed
+                if (layer.paint) {
+                  for (const key in layer.paint) {
+                    const value = layer.paint[key];
+                    if (
+                      Array.isArray(value) &&
+                      value[0] === "case" &&
+                      Array.isArray(value[1]) &&
+                      value[1][0] === "boolean" &&
+                      value[1][1][0] === "feature-state" &&
+                      value[1][1][1] === "hover"
+                    ) {
+                      // This is a hover-enabled paint property
+                      map.setPaintProperty(layer.id, key, value);
                     }
                   }
-                } catch (err) {
-                  console.error(
-                    "[MapGL Debug] Error re-adding layer:",
-                    layer.id,
-                    err,
-                  );
                 }
-              });
-            } catch (err) {
-              console.error("[MapGL Debug] Error in style.load handler:", err);
-            }
+              }
+            });
 
             // Clear any active tooltips before restoration to prevent stacking
             if (window._activeTooltip) {
@@ -2338,17 +2085,9 @@ if (HTMLWidgets.shinyMode) {
             const savedLayerState =
               window._mapglLayerState && window._mapglLayerState[mapId];
             if (savedLayerState) {
-              console.log(
-                "[MapGL Debug] Restoring tracked layer modifications",
-              );
-
               // Restore filters
               for (const layerId in savedLayerState.filters) {
                 if (map.getLayer(layerId)) {
-                  console.log(
-                    "[MapGL Debug] Restoring filter for layer:",
-                    layerId,
-                  );
                   map.setFilter(layerId, savedLayerState.filters[layerId]);
                 }
               }
@@ -2359,13 +2098,6 @@ if (HTMLWidgets.shinyMode) {
                   const properties = savedLayerState.paintProperties[layerId];
                   for (const propertyName in properties) {
                     const savedValue = properties[propertyName];
-
-                    console.log(
-                      "[MapGL Debug] Restoring paint property:",
-                      layerId,
-                      propertyName,
-                      savedValue,
-                    );
 
                     // Check if layer has hover effects that need to be preserved
                     const currentValue = map.getPaintProperty(
@@ -2402,12 +2134,6 @@ if (HTMLWidgets.shinyMode) {
                 if (map.getLayer(layerId)) {
                   const properties = savedLayerState.layoutProperties[layerId];
                   for (const propertyName in properties) {
-                    console.log(
-                      "[MapGL Debug] Restoring layout property:",
-                      layerId,
-                      propertyName,
-                      properties[propertyName],
-                    );
                     map.setLayoutProperty(
                       layerId,
                       propertyName,
@@ -2421,11 +2147,6 @@ if (HTMLWidgets.shinyMode) {
               for (const layerId in savedLayerState.tooltips) {
                 if (map.getLayer(layerId)) {
                   const tooltipProperty = savedLayerState.tooltips[layerId];
-                  console.log(
-                    "[MapGL Debug] Restoring tooltip:",
-                    layerId,
-                    tooltipProperty,
-                  );
 
                   // Remove existing tooltip handlers first
                   if (
@@ -2449,7 +2170,7 @@ if (HTMLWidgets.shinyMode) {
                   }
 
                   // Create new tooltip
-                  const tooltip = new maplibregl.Popup({
+                  const tooltip = new mapboxgl.Popup({
                     closeButton: false,
                     closeOnClick: false,
                   });
@@ -2480,21 +2201,17 @@ if (HTMLWidgets.shinyMode) {
               for (const layerId in savedLayerState.popups) {
                 if (map.getLayer(layerId)) {
                   const popupProperty = savedLayerState.popups[layerId];
-                  console.log(
-                    "[MapGL Debug] Restoring popup:",
-                    layerId,
-                    popupProperty,
-                  );
 
                   // Remove existing popup handlers first
                   if (
-                    window._mapboxClickHandlers &&
-                    window._mapboxClickHandlers[layerId]
+                    window._mapboxHandlers &&
+                    window._mapboxHandlers[layerId] &&
+                    window._mapboxHandlers[layerId].click
                   ) {
                     map.off(
                       "click",
                       layerId,
-                      window._mapboxClickHandlers[layerId],
+                      window._mapboxHandlers[layerId].click,
                     );
                   }
 
@@ -2505,19 +2222,14 @@ if (HTMLWidgets.shinyMode) {
 
                   map.on("click", layerId, clickHandler);
 
-                  // Add hover effects for cursor
-                  map.on("mouseenter", layerId, function () {
-                    map.getCanvas().style.cursor = "pointer";
-                  });
-                  map.on("mouseleave", layerId, function () {
-                    map.getCanvas().style.cursor = "";
-                  });
-
                   // Store handler reference
-                  if (!window._mapboxClickHandlers) {
-                    window._mapboxClickHandlers = {};
+                  if (!window._mapboxHandlers) {
+                    window._mapboxHandlers = {};
                   }
-                  window._mapboxClickHandlers[layerId] = clickHandler;
+                  if (!window._mapboxHandlers[layerId]) {
+                    window._mapboxHandlers[layerId] = {};
+                  }
+                  window._mapboxHandlers[layerId].click = clickHandler;
                 }
               }
 
@@ -2538,7 +2250,6 @@ if (HTMLWidgets.shinyMode) {
                 // Restore each legend
                 for (const legendId in savedLayerState.legends) {
                   const legendData = savedLayerState.legends[legendId];
-                  console.log("[MapGL Debug] Restoring legend:", legendId);
 
                   // Add legend CSS
                   const legendCss = document.createElement("style");
@@ -2563,772 +2274,15 @@ if (HTMLWidgets.shinyMode) {
           };
 
           map.on("style.load", onStyleLoad);
-
-          // Add a backup mechanism specific to MapLibre
-          // Some MapLibre styles or versions may have different event timing
-          if (userLayers.length > 0) {
-            // Set a timeout to check if layers were added after a reasonable delay
-            setTimeout(function () {
-              try {
-                console.log("[MapGL Debug] Running backup layer check");
-                const mapId = map.getContainer().id;
-                const preserved =
-                  window._mapglPreservedData &&
-                  window._mapglPreservedData[mapId];
-
-                if (preserved) {
-                  // Check if user layers were successfully restored
-                  const firstLayerId = preserved.layers[0]?.id;
-                  if (firstLayerId && !map.getLayer(firstLayerId)) {
-                    console.log(
-                      "[MapGL Debug] Backup restoration needed for layers",
-                    );
-
-                    // Re-add sources first
-                    preserved.sources.forEach(function (src) {
-                      try {
-                        if (!map.getSource(src.id)) {
-                          console.log(
-                            "[MapGL Debug] Backup: adding source",
-                            src.id,
-                          );
-                          map.addSource(src.id, src.source);
-                        }
-                      } catch (err) {
-                        console.error(
-                          "[MapGL Debug] Backup: error adding source",
-                          src.id,
-                          err,
-                        );
-                      }
-                    });
-
-                    // Then re-add layers
-                    preserved.layers.forEach(function (layer) {
-                      try {
-                        if (!map.getLayer(layer.id)) {
-                          console.log(
-                            "[MapGL Debug] Backup: adding layer",
-                            layer.id,
-                          );
-                          map.addLayer(layer);
-
-                          // Check for nc_counties layer to restore tooltip
-                          if (layer.id === "nc_counties") {
-                            console.log(
-                              "[MapGL Debug] Backup: restoring tooltip for",
-                              layer.id,
-                            );
-
-                            // Create a new tooltip popup
-                            const tooltip = new maplibregl.Popup({
-                              closeButton: false,
-                              closeOnClick: false,
-                            });
-
-                            // Re-add tooltip handlers
-                            const tooltipProperty = "NAME";
-
-                            const mouseMoveHandler = function (e) {
-                              map.getCanvas().style.cursor = "pointer";
-                              if (e.features.length > 0) {
-                                const description =
-                                  e.features[0].properties[tooltipProperty];
-                                tooltip
-                                  .setLngLat(e.lngLat)
-                                  .setHTML(description)
-                                  .addTo(map);
-                              }
-                            };
-
-                            const mouseLeaveHandler = function () {
-                              map.getCanvas().style.cursor = "";
-                              tooltip.remove();
-                            };
-
-                            map.on("mousemove", layer.id, mouseMoveHandler);
-                            map.on("mouseleave", layer.id, mouseLeaveHandler);
-
-                            // Store these handlers
-                            if (!window._mapboxHandlers) {
-                              window._mapboxHandlers = {};
-                            }
-                            window._mapboxHandlers[layer.id] = {
-                              mousemove: mouseMoveHandler,
-                              mouseleave: mouseLeaveHandler,
-                            };
-                          }
-
-                          // Restore hover states
-                          if (layer.paint) {
-                            for (const key in layer.paint) {
-                              const value = layer.paint[key];
-                              if (
-                                Array.isArray(value) &&
-                                value[0] === "case" &&
-                                Array.isArray(value[1]) &&
-                                value[1][0] === "boolean" &&
-                                value[1][1] &&
-                                Array.isArray(value[1][1]) &&
-                                value[1][1][0] === "feature-state" &&
-                                value[1][1][1] === "hover"
-                              ) {
-                                // This is a hover-enabled paint property
-                                console.log(
-                                  "[MapGL Debug] Backup: restoring hover style for",
-                                  layer.id,
-                                  key,
-                                );
-                                map.setPaintProperty(layer.id, key, value);
-                              }
-                            }
-                          }
-                        }
-                      } catch (err) {
-                        console.error(
-                          "[MapGL Debug] Backup: error adding layer",
-                          layer.id,
-                          err,
-                        );
-                      }
-                    });
-
-                    // Restore tracked layer modifications in backup
-                    const mapId = map.getContainer().id;
-                    const savedLayerState =
-                      window._mapglLayerState && window._mapglLayerState[mapId];
-                    if (savedLayerState) {
-                      console.log(
-                        "[MapGL Debug] Backup: restoring tracked layer modifications",
-                      );
-
-                      // Restore filters
-                      for (const layerId in savedLayerState.filters) {
-                        if (map.getLayer(layerId)) {
-                          console.log(
-                            "[MapGL Debug] Backup: restoring filter for layer:",
-                            layerId,
-                          );
-                          map.setFilter(
-                            layerId,
-                            savedLayerState.filters[layerId],
-                          );
-                        }
-                      }
-
-                      // Restore paint properties
-                      for (const layerId in savedLayerState.paintProperties) {
-                        if (map.getLayer(layerId)) {
-                          const properties =
-                            savedLayerState.paintProperties[layerId];
-                          for (const propertyName in properties) {
-                            const savedValue = properties[propertyName];
-                            console.log(
-                              "[MapGL Debug] Backup: restoring paint property:",
-                              layerId,
-                              propertyName,
-                              savedValue,
-                            );
-
-                            // Check if layer has hover effects that need to be preserved
-                            const currentValue = map.getPaintProperty(
-                              layerId,
-                              propertyName,
-                            );
-                            if (
-                              currentValue &&
-                              Array.isArray(currentValue) &&
-                              currentValue[0] === "case"
-                            ) {
-                              // Preserve hover effects while updating base value
-                              const hoverValue = currentValue[2];
-                              const newPaintProperty = [
-                                "case",
-                                ["boolean", ["feature-state", "hover"], false],
-                                hoverValue,
-                                savedValue,
-                              ];
-                              map.setPaintProperty(
-                                layerId,
-                                propertyName,
-                                newPaintProperty,
-                              );
-                            } else {
-                              map.setPaintProperty(
-                                layerId,
-                                propertyName,
-                                savedValue,
-                              );
-                            }
-                          }
-                        }
-                      }
-
-                      // Restore layout properties
-                      for (const layerId in savedLayerState.layoutProperties) {
-                        if (map.getLayer(layerId)) {
-                          const properties =
-                            savedLayerState.layoutProperties[layerId];
-                          for (const propertyName in properties) {
-                            console.log(
-                              "[MapGL Debug] Backup: restoring layout property:",
-                              layerId,
-                              propertyName,
-                              properties[propertyName],
-                            );
-                            map.setLayoutProperty(
-                              layerId,
-                              propertyName,
-                              properties[propertyName],
-                            );
-                          }
-                        }
-                      }
-
-                      // Restore tooltips
-                      for (const layerId in savedLayerState.tooltips) {
-                        if (map.getLayer(layerId)) {
-                          const tooltipProperty =
-                            savedLayerState.tooltips[layerId];
-                          console.log(
-                            "[MapGL Debug] Backup: restoring tooltip:",
-                            layerId,
-                            tooltipProperty,
-                          );
-
-                          if (
-                            window._mapboxHandlers &&
-                            window._mapboxHandlers[layerId]
-                          ) {
-                            if (window._mapboxHandlers[layerId].mousemove) {
-                              map.off(
-                                "mousemove",
-                                layerId,
-                                window._mapboxHandlers[layerId].mousemove,
-                              );
-                            }
-                            if (window._mapboxHandlers[layerId].mouseleave) {
-                              map.off(
-                                "mouseleave",
-                                layerId,
-                                window._mapboxHandlers[layerId].mouseleave,
-                              );
-                            }
-                          }
-
-                          const tooltip = new maplibregl.Popup({
-                            closeButton: false,
-                            closeOnClick: false,
-                          });
-
-                          const mouseMoveHandler = function (e) {
-                            onMouseMoveTooltip(
-                              e,
-                              map,
-                              tooltip,
-                              tooltipProperty,
-                            );
-                          };
-
-                          const mouseLeaveHandler = function () {
-                            onMouseLeaveTooltip(map, tooltip);
-                          };
-
-                          map.on("mousemove", layerId, mouseMoveHandler);
-                          map.on("mouseleave", layerId, mouseLeaveHandler);
-
-                          if (!window._mapboxHandlers) {
-                            window._mapboxHandlers = {};
-                          }
-                          window._mapboxHandlers[layerId] = {
-                            mousemove: mouseMoveHandler,
-                            mouseleave: mouseLeaveHandler,
-                          };
-                        }
-                      }
-
-                      // Restore popups
-                      for (const layerId in savedLayerState.popups) {
-                        if (map.getLayer(layerId)) {
-                          const popupProperty = savedLayerState.popups[layerId];
-                          console.log(
-                            "[MapGL Debug] Backup: restoring popup:",
-                            layerId,
-                            popupProperty,
-                          );
-
-                          if (
-                            window._mapboxClickHandlers &&
-                            window._mapboxClickHandlers[layerId]
-                          ) {
-                            map.off(
-                              "click",
-                              layerId,
-                              window._mapboxClickHandlers[layerId],
-                            );
-                          }
-
-                          const clickHandler = function (e) {
-                            onClickPopup(e, map, popupProperty, layerId);
-                          };
-
-                          map.on("click", layerId, clickHandler);
-                          map.on("mouseenter", layerId, function () {
-                            map.getCanvas().style.cursor = "pointer";
-                          });
-                          map.on("mouseleave", layerId, function () {
-                            map.getCanvas().style.cursor = "";
-                          });
-
-                          if (!window._mapboxClickHandlers) {
-                            window._mapboxClickHandlers = {};
-                          }
-                          window._mapboxClickHandlers[layerId] = clickHandler;
-                        }
-                      }
-
-                      // Restore legends
-                      if (Object.keys(savedLayerState.legends).length > 0) {
-                        // Clear any existing legends first to prevent stacking
-                        const existingLegends = document.querySelectorAll(
-                          `#${mapId} .mapboxgl-legend`,
-                        );
-                        existingLegends.forEach((legend) => legend.remove());
-
-                        // Clear existing legend styles
-                        const legendStyles = document.querySelectorAll(
-                          `style[data-mapgl-legend-css="${mapId}"]`,
-                        );
-                        legendStyles.forEach((style) => style.remove());
-
-                        // Restore each legend
-                        for (const legendId in savedLayerState.legends) {
-                          const legendData = savedLayerState.legends[legendId];
-                          console.log(
-                            "[MapGL Debug] Backup: restoring legend:",
-                            legendId,
-                          );
-
-                          // Add legend CSS
-                          const legendCss = document.createElement("style");
-                          legendCss.innerHTML = legendData.css;
-                          legendCss.setAttribute(
-                            "data-mapgl-legend-css",
-                            mapId,
-                          );
-                          document.head.appendChild(legendCss);
-
-                          // Add legend HTML
-                          const legend = document.createElement("div");
-                          legend.innerHTML = legendData.html;
-                          legend.classList.add("mapboxgl-legend");
-                          const mapContainer = document.getElementById(mapId);
-                          if (mapContainer) {
-                            mapContainer.appendChild(legend);
-                          }
-                        }
-                      }
-                    }
-                  } else {
-                    console.log(
-                      "[MapGL Debug] Backup check: layers already restored properly",
-                    );
-                  }
-                }
-              } catch (err) {
-                console.error(
-                  "[MapGL Debug] Error in backup restoration:",
-                  err,
-                );
-              }
-            }, 500); // 500ms delay - faster recovery
-
-            // Add a second backup with a bit more delay in case the first one fails
-            setTimeout(function () {
-              try {
-                console.log("[MapGL Debug] Running second backup layer check");
-                const mapId = map.getContainer().id;
-                const preserved =
-                  window._mapglPreservedData &&
-                  window._mapglPreservedData[mapId];
-
-                if (preserved) {
-                  // Check if user layers were successfully restored
-                  const firstLayerId = preserved.layers[0]?.id;
-                  if (firstLayerId && !map.getLayer(firstLayerId)) {
-                    console.log(
-                      "[MapGL Debug] Second backup restoration needed",
-                    );
-
-                    // Re-add sources first
-                    preserved.sources.forEach(function (src) {
-                      try {
-                        if (!map.getSource(src.id)) {
-                          console.log(
-                            "[MapGL Debug] Second backup: adding source",
-                            src.id,
-                          );
-                          map.addSource(src.id, src.source);
-                        }
-                      } catch (err) {
-                        console.error(
-                          "[MapGL Debug] Second backup: error adding source",
-                          src.id,
-                          err,
-                        );
-                      }
-                    });
-
-                    // Then re-add layers
-                    preserved.layers.forEach(function (layer) {
-                      try {
-                        if (!map.getLayer(layer.id)) {
-                          console.log(
-                            "[MapGL Debug] Second backup: adding layer",
-                            layer.id,
-                          );
-                          map.addLayer(layer);
-
-                          // Check for nc_counties layer to restore tooltip
-                          if (layer.id === "nc_counties") {
-                            console.log(
-                              "[MapGL Debug] Second backup: restoring tooltip for",
-                              layer.id,
-                            );
-
-                            // Create a new tooltip popup
-                            const tooltip = new maplibregl.Popup({
-                              closeButton: false,
-                              closeOnClick: false,
-                            });
-
-                            // Re-add tooltip handlers
-                            const tooltipProperty = "NAME";
-
-                            const mouseMoveHandler = function (e) {
-                              map.getCanvas().style.cursor = "pointer";
-                              if (e.features.length > 0) {
-                                const description =
-                                  e.features[0].properties[tooltipProperty];
-                                tooltip
-                                  .setLngLat(e.lngLat)
-                                  .setHTML(description)
-                                  .addTo(map);
-                              }
-                            };
-
-                            const mouseLeaveHandler = function () {
-                              map.getCanvas().style.cursor = "";
-                              tooltip.remove();
-                            };
-
-                            map.on("mousemove", layer.id, mouseMoveHandler);
-                            map.on("mouseleave", layer.id, mouseLeaveHandler);
-
-                            // Store these handlers
-                            if (!window._mapboxHandlers) {
-                              window._mapboxHandlers = {};
-                            }
-                            window._mapboxHandlers[layer.id] = {
-                              mousemove: mouseMoveHandler,
-                              mouseleave: mouseLeaveHandler,
-                            };
-                          }
-
-                          // Restore hover states
-                          if (layer.paint) {
-                            for (const key in layer.paint) {
-                              const value = layer.paint[key];
-                              if (
-                                Array.isArray(value) &&
-                                value[0] === "case" &&
-                                Array.isArray(value[1]) &&
-                                value[1][0] === "boolean" &&
-                                value[1][1] &&
-                                Array.isArray(value[1][1]) &&
-                                value[1][1][0] === "feature-state" &&
-                                value[1][1][1] === "hover"
-                              ) {
-                                // This is a hover-enabled paint property
-                                console.log(
-                                  "[MapGL Debug] Second backup: restoring hover style for",
-                                  layer.id,
-                                  key,
-                                );
-                                map.setPaintProperty(layer.id, key, value);
-                              }
-                            }
-                          }
-                        }
-                      } catch (err) {
-                        console.error(
-                          "[MapGL Debug] Second backup: error adding layer",
-                          layer.id,
-                          err,
-                        );
-                      }
-                    });
-
-                    // Restore tracked layer modifications in second backup
-                    const mapId = map.getContainer().id;
-                    const savedLayerState =
-                      window._mapglLayerState && window._mapglLayerState[mapId];
-                    if (savedLayerState) {
-                      console.log(
-                        "[MapGL Debug] Second backup: restoring tracked layer modifications",
-                      );
-
-                      // Restore filters
-                      for (const layerId in savedLayerState.filters) {
-                        if (map.getLayer(layerId)) {
-                          console.log(
-                            "[MapGL Debug] Second backup: restoring filter for layer:",
-                            layerId,
-                          );
-                          map.setFilter(
-                            layerId,
-                            savedLayerState.filters[layerId],
-                          );
-                        }
-                      }
-
-                      // Restore paint properties
-                      for (const layerId in savedLayerState.paintProperties) {
-                        if (map.getLayer(layerId)) {
-                          const properties =
-                            savedLayerState.paintProperties[layerId];
-                          for (const propertyName in properties) {
-                            const savedValue = properties[propertyName];
-                            console.log(
-                              "[MapGL Debug] Second backup: restoring paint property:",
-                              layerId,
-                              propertyName,
-                              savedValue,
-                            );
-
-                            // Check if layer has hover effects that need to be preserved
-                            const currentValue = map.getPaintProperty(
-                              layerId,
-                              propertyName,
-                            );
-                            if (
-                              currentValue &&
-                              Array.isArray(currentValue) &&
-                              currentValue[0] === "case"
-                            ) {
-                              // Preserve hover effects while updating base value
-                              const hoverValue = currentValue[2];
-                              const newPaintProperty = [
-                                "case",
-                                ["boolean", ["feature-state", "hover"], false],
-                                hoverValue,
-                                savedValue,
-                              ];
-                              map.setPaintProperty(
-                                layerId,
-                                propertyName,
-                                newPaintProperty,
-                              );
-                            } else {
-                              map.setPaintProperty(
-                                layerId,
-                                propertyName,
-                                savedValue,
-                              );
-                            }
-                          }
-                        }
-                      }
-
-                      // Restore layout properties
-                      for (const layerId in savedLayerState.layoutProperties) {
-                        if (map.getLayer(layerId)) {
-                          const properties =
-                            savedLayerState.layoutProperties[layerId];
-                          for (const propertyName in properties) {
-                            console.log(
-                              "[MapGL Debug] Second backup: restoring layout property:",
-                              layerId,
-                              propertyName,
-                              properties[propertyName],
-                            );
-                            map.setLayoutProperty(
-                              layerId,
-                              propertyName,
-                              properties[propertyName],
-                            );
-                          }
-                        }
-                      }
-
-                      // Restore tooltips
-                      for (const layerId in savedLayerState.tooltips) {
-                        if (map.getLayer(layerId)) {
-                          const tooltipProperty =
-                            savedLayerState.tooltips[layerId];
-                          console.log(
-                            "[MapGL Debug] Second backup: restoring tooltip:",
-                            layerId,
-                            tooltipProperty,
-                          );
-
-                          if (
-                            window._mapboxHandlers &&
-                            window._mapboxHandlers[layerId]
-                          ) {
-                            if (window._mapboxHandlers[layerId].mousemove) {
-                              map.off(
-                                "mousemove",
-                                layerId,
-                                window._mapboxHandlers[layerId].mousemove,
-                              );
-                            }
-                            if (window._mapboxHandlers[layerId].mouseleave) {
-                              map.off(
-                                "mouseleave",
-                                layerId,
-                                window._mapboxHandlers[layerId].mouseleave,
-                              );
-                            }
-                          }
-
-                          const tooltip = new maplibregl.Popup({
-                            closeButton: false,
-                            closeOnClick: false,
-                          });
-
-                          const mouseMoveHandler = function (e) {
-                            onMouseMoveTooltip(
-                              e,
-                              map,
-                              tooltip,
-                              tooltipProperty,
-                            );
-                          };
-
-                          const mouseLeaveHandler = function () {
-                            onMouseLeaveTooltip(map, tooltip);
-                          };
-
-                          map.on("mousemove", layerId, mouseMoveHandler);
-                          map.on("mouseleave", layerId, mouseLeaveHandler);
-
-                          if (!window._mapboxHandlers) {
-                            window._mapboxHandlers = {};
-                          }
-                          window._mapboxHandlers[layerId] = {
-                            mousemove: mouseMoveHandler,
-                            mouseleave: mouseLeaveHandler,
-                          };
-                        }
-                      }
-
-                      // Restore popups
-                      for (const layerId in savedLayerState.popups) {
-                        if (map.getLayer(layerId)) {
-                          const popupProperty = savedLayerState.popups[layerId];
-                          console.log(
-                            "[MapGL Debug] Second backup: restoring popup:",
-                            layerId,
-                            popupProperty,
-                          );
-
-                          if (
-                            window._mapboxClickHandlers &&
-                            window._mapboxClickHandlers[layerId]
-                          ) {
-                            map.off(
-                              "click",
-                              layerId,
-                              window._mapboxClickHandlers[layerId],
-                            );
-                          }
-
-                          const clickHandler = function (e) {
-                            onClickPopup(e, map, popupProperty, layerId);
-                          };
-
-                          map.on("click", layerId, clickHandler);
-                          map.on("mouseenter", layerId, function () {
-                            map.getCanvas().style.cursor = "pointer";
-                          });
-                          map.on("mouseleave", layerId, function () {
-                            map.getCanvas().style.cursor = "";
-                          });
-
-                          if (!window._mapboxClickHandlers) {
-                            window._mapboxClickHandlers = {};
-                          }
-                          window._mapboxClickHandlers[layerId] = clickHandler;
-                        }
-                      }
-
-                      // Restore legends
-                      if (Object.keys(savedLayerState.legends).length > 0) {
-                        // Clear any existing legends first to prevent stacking
-                        const existingLegends = document.querySelectorAll(
-                          `#${mapId} .mapboxgl-legend`,
-                        );
-                        existingLegends.forEach((legend) => legend.remove());
-
-                        // Clear existing legend styles
-                        const legendStyles = document.querySelectorAll(
-                          `style[data-mapgl-legend-css="${mapId}"]`,
-                        );
-                        legendStyles.forEach((style) => style.remove());
-
-                        // Restore each legend
-                        for (const legendId in savedLayerState.legends) {
-                          const legendData = savedLayerState.legends[legendId];
-                          console.log(
-                            "[MapGL Debug] Second backup: restoring legend:",
-                            legendId,
-                          );
-
-                          // Add legend CSS
-                          const legendCss = document.createElement("style");
-                          legendCss.innerHTML = legendData.css;
-                          legendCss.setAttribute(
-                            "data-mapgl-legend-css",
-                            mapId,
-                          );
-                          document.head.appendChild(legendCss);
-
-                          // Add legend HTML
-                          const legend = document.createElement("div");
-                          legend.innerHTML = legendData.html;
-                          legend.classList.add("mapboxgl-legend");
-                          const mapContainer = document.getElementById(mapId);
-                          if (mapContainer) {
-                            mapContainer.appendChild(legend);
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              } catch (err) {
-                console.error("[MapGL Debug] Error in second backup:", err);
-              }
-            }, 1000); // 1 second delay for second backup
-          }
         }
 
         // Change the style
-        console.log(
-          "[MapGL Debug] About to call setStyle with:",
-          message.style,
-        );
-        console.log("[MapGL Debug] setStyle diff option:", message.diff);
-        map.setStyle(message.style, { diff: message.diff });
-
-        if (message.config) {
-          Object.keys(message.config).forEach(function (key) {
-            map.setConfigProperty("basemap", key, message.config[key]);
-          });
-        }
+        map.setStyle(message.style, {
+          config: message.config,
+          diff: message.diff,
+        });
       } else if (message.type === "add_navigation_control") {
-        const nav = new maplibregl.NavigationControl({
+        const nav = new mapboxgl.NavigationControl({
           showCompass: message.options.show_compass,
           showZoom: message.options.show_zoom,
           visualizePitch: message.options.visualize_pitch,
@@ -3340,18 +2294,79 @@ if (HTMLWidgets.shinyMode) {
           const navBar = map
             .getContainer()
             .querySelector(
-              ".maplibregl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
+              ".mapboxgl-ctrl.mapboxgl-ctrl-group:not(.mapbox-gl-draw_ctrl-draw-btn)",
             );
           if (navBar) {
             navBar.style.display = "flex";
             navBar.style.flexDirection = "row";
           }
         }
-      } else if (message.type === "add_draw_control") {
-        MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
-        MapboxDraw.constants.classes.CONTROL_PREFIX = "maplibregl-ctrl-";
-        MapboxDraw.constants.classes.CONTROL_GROUP = "maplibregl-ctrl-group";
+      } else if (message.type === "add_reset_control") {
+        const resetControl = document.createElement("button");
+        resetControl.className = "mapboxgl-ctrl-icon mapboxgl-ctrl-reset";
+        resetControl.type = "button";
+        resetControl.setAttribute("aria-label", "Reset");
+        resetControl.innerHTML = "⟲";
+        resetControl.style.fontSize = "30px";
+        resetControl.style.fontWeight = "bold";
+        resetControl.style.backgroundColor = "white";
+        resetControl.style.border = "none";
+        resetControl.style.cursor = "pointer";
+        resetControl.style.padding = "0";
+        resetControl.style.width = "30px";
+        resetControl.style.height = "30px";
+        resetControl.style.display = "flex";
+        resetControl.style.justifyContent = "center";
+        resetControl.style.alignItems = "center";
+        resetControl.style.transition = "background-color 0.2s";
+        resetControl.addEventListener("mouseover", function () {
+          this.style.backgroundColor = "#f0f0f0";
+        });
+        resetControl.addEventListener("mouseout", function () {
+          this.style.backgroundColor = "white";
+        });
 
+        const resetContainer = document.createElement("div");
+        resetContainer.className = "mapboxgl-ctrl mapboxgl-ctrl-group";
+        resetContainer.appendChild(resetControl);
+
+        const initialView = {
+          center: map.getCenter(),
+          zoom: map.getZoom(),
+          pitch: map.getPitch(),
+          bearing: map.getBearing(),
+          animate: message.animate,
+        };
+
+        if (message.duration) {
+          initialView.duration = message.duration;
+        }
+
+        resetControl.onclick = function () {
+          map.easeTo(initialView);
+        };
+
+        map.addControl(
+          {
+            onAdd: function () {
+              return resetContainer;
+            },
+            onRemove: function () {
+              resetContainer.parentNode.removeChild(resetContainer);
+            },
+          },
+          message.position,
+        );
+
+        map.controls.push({
+          onAdd: function () {
+            return resetContainer;
+          },
+          onRemove: function () {
+            resetContainer.parentNode.removeChild(resetContainer);
+          },
+        });
+      } else if (message.type === "add_draw_control") {
         let drawOptions = message.options || {};
 
         // Generate styles if styling parameters provided
@@ -3389,11 +2404,10 @@ if (HTMLWidgets.shinyMode) {
           addSourceFeaturesToDraw(drawControl, message.source, map);
         }
 
-        // Apply orientation styling
         if (message.orientation === "horizontal") {
           const drawBar = map
             .getContainer()
-            .querySelector(".maplibregl-ctrl-group");
+            .querySelector(".mapboxgl-ctrl-group");
           if (drawBar) {
             drawBar.style.display = "flex";
             drawBar.style.flexDirection = "row";
@@ -3433,8 +2447,8 @@ if (HTMLWidgets.shinyMode) {
           console.warn("Draw control not initialized");
         }
       } else if (message.type === "add_markers") {
-        if (!window.maplibreMarkers) {
-          window.maplibreMarkers = [];
+        if (!window.mapboxglMarkers) {
+          window.mapboxglMarkers = [];
         }
         message.markers.forEach(function (marker) {
           const markerOptions = {
@@ -3443,13 +2457,13 @@ if (HTMLWidgets.shinyMode) {
             draggable: marker.options.draggable || false,
             ...marker.options,
           };
-          const mapMarker = new maplibregl.Marker(markerOptions)
+          const mapMarker = new mapboxgl.Marker(markerOptions)
             .setLngLat([marker.lng, marker.lat])
             .addTo(map);
 
           if (marker.popup) {
             mapMarker.setPopup(
-              new maplibregl.Popup({ offset: 25 }).setHTML(marker.popup),
+              new mapboxgl.Popup({ offset: 25 }).setHTML(marker.popup),
             );
           }
 
@@ -3472,94 +2486,29 @@ if (HTMLWidgets.shinyMode) {
             });
           }
 
-          window.maplibreMarkers.push(mapMarker);
+          window.mapboxglMarkers.push(mapMarker);
         });
       } else if (message.type === "clear_markers") {
-        if (window.maplibreMarkers) {
-          window.maplibreMarkers.forEach(function (marker) {
+        if (window.mapboxglMarkers) {
+          window.mapboxglMarkers.forEach(function (marker) {
             marker.remove();
           });
-          window.maplibreglMarkers = [];
+          window.mapboxglMarkers = [];
         }
       } else if (message.type === "add_fullscreen_control") {
         const position = message.position || "top-right";
-        const fullscreen = new maplibregl.FullscreenControl();
+        const fullscreen = new mapboxgl.FullscreenControl();
         map.addControl(fullscreen, position);
         map.controls.push(fullscreen);
       } else if (message.type === "add_scale_control") {
-        const scaleControl = new maplibregl.ScaleControl({
+        const scaleControl = new mapboxgl.ScaleControl({
           maxWidth: message.options.maxWidth,
           unit: message.options.unit,
         });
         map.addControl(scaleControl, message.options.position);
         map.controls.push(scaleControl);
-      } else if (message.type === "add_reset_control") {
-        const resetControl = document.createElement("button");
-        resetControl.className = "maplibregl-ctrl-icon maplibregl-ctrl-reset";
-        resetControl.type = "button";
-        resetControl.setAttribute("aria-label", "Reset");
-        resetControl.innerHTML = "⟲";
-        resetControl.style.fontSize = "30px";
-        resetControl.style.fontWeight = "bold";
-        resetControl.style.backgroundColor = "white";
-        resetControl.style.border = "none";
-        resetControl.style.cursor = "pointer";
-        resetControl.style.padding = "0";
-        resetControl.style.width = "30px";
-        resetControl.style.height = "30px";
-        resetControl.style.display = "flex";
-        resetControl.style.justifyContent = "center";
-        resetControl.style.alignItems = "center";
-        resetControl.style.transition = "background-color 0.2s";
-        resetControl.addEventListener("mouseover", function () {
-          this.style.backgroundColor = "#f0f0f0";
-        });
-        resetControl.addEventListener("mouseout", function () {
-          this.style.backgroundColor = "white";
-        });
-
-        const resetContainer = document.createElement("div");
-        resetContainer.className = "maplibregl-ctrl maplibregl-ctrl-group";
-        resetContainer.appendChild(resetControl);
-
-        const initialView = {
-          center: map.getCenter(),
-          zoom: map.getZoom(),
-          pitch: map.getPitch(),
-          bearing: map.getBearing(),
-          animate: message.animate,
-        };
-
-        if (message.duration) {
-          initialView.duration = message.duration;
-        }
-
-        resetControl.onclick = function () {
-          map.easeTo(initialView);
-        };
-
-        map.addControl(
-          {
-            onAdd: function () {
-              return resetContainer;
-            },
-            onRemove: function () {
-              resetContainer.parentNode.removeChild(resetContainer);
-            },
-          },
-          message.position,
-        );
-
-        map.controls.push({
-          onAdd: function () {
-            return resetContainer;
-          },
-          onRemove: function () {
-            resetContainer.parentNode.removeChild(resetContainer);
-          },
-        });
       } else if (message.type === "add_geolocate_control") {
-        const geolocate = new maplibregl.GeolocateControl({
+        const geolocate = new mapboxgl.GeolocateControl({
           positionOptions: message.options.positionOptions,
           trackUserLocation: message.options.trackUserLocation,
           showAccuracyCircle: message.options.showAccuracyCircle,
@@ -3602,106 +2551,30 @@ if (HTMLWidgets.shinyMode) {
           });
         }
       } else if (message.type === "add_geocoder_control") {
-        const provider = message.options.provider || "osm";
-        let geocoder;
+        const geocoderOptions = {
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          ...message.options,
+        };
 
-        if (provider === "maptiler") {
-          // MapTiler geocoder
-          const maptilerOptions = {
-            apiKey: message.options.api_key,
-            maplibregl: maplibregl,
-          };
+        // Set default values if not provided
+        if (!geocoderOptions.placeholder)
+          geocoderOptions.placeholder = "Search";
+        if (typeof geocoderOptions.collapsed === "undefined")
+          geocoderOptions.collapsed = false;
 
-          // Apply additional options
-          if (message.options.placeholder) {
-            maptilerOptions.placeholder = message.options.placeholder;
-          }
-          if (typeof message.options.collapsed !== "undefined") {
-            maptilerOptions.collapsed = message.options.collapsed;
-          }
+        const geocoder = new MapboxGeocoder(geocoderOptions);
 
-          // Create MapTiler geocoder
-          geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
-        } else {
-          // OSM/Nominatim geocoder (default)
-          const geocoderApi = {
-            forwardGeocode: async (config) => {
-              const features = [];
-              try {
-                const request = `https://nominatim.openstreetmap.org/search?q=${
-                  config.query
-                }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                const response = await fetch(request);
-                const geojson = await response.json();
-                for (const feature of geojson.features) {
-                  const center = [
-                    feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                    feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
-                  ];
-                  const point = {
-                    type: "Feature",
-                    geometry: {
-                      type: "Point",
-                      coordinates: center,
-                    },
-                    place_name: feature.properties.display_name,
-                    properties: feature.properties,
-                    text: feature.properties.display_name,
-                    place_type: ["place"],
-                    center,
-                  };
-                  features.push(point);
-                }
-              } catch (e) {
-                console.error(`Failed to forwardGeocode with error: ${e}`);
-              }
-
-              return {
-                features,
-              };
-            },
-          };
-          geocoder = new MaplibreGeocoder(geocoderApi, {
-            maplibregl: maplibregl,
-            placeholder: message.options.placeholder,
-            collapsed: message.options.collapsed,
-          });
-        }
-
-        map.addControl(geocoder, message.options.position);
+        map.addControl(geocoder, message.position || "top-right");
         map.controls.push(geocoder);
-        
-        // Apply CSS fix for MapTiler geocoder to prevent cutoff
-        if (provider === "maptiler") {
-          setTimeout(() => {
-            const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
-            if (controlContainer) {
-              controlContainer.style.maxWidth = '300px';
-              controlContainer.style.width = 'auto';
-            }
-          }, 100);
-        }
 
         // Handle geocoder results in Shiny mode
-        if (HTMLWidgets.shinyMode) {
-          if (provider === "maptiler") {
-            // MapTiler uses different event names
-            geocoder.on("pick", function (e) {
-              Shiny.setInputValue(data.id + "_geocoder", {
-                result: e,
-                time: new Date(),
-              });
-            });
-          } else {
-            // OSM geocoder
-            geocoder.on("result", function (e) {
-              Shiny.setInputValue(data.id + "_geocoder", {
-                result: e,
-                time: new Date(),
-              });
-            });
-          }
-        }
+        geocoder.on("result", function (e) {
+          Shiny.setInputValue(data.id + "_geocoder", {
+            result: e.result,
+            time: new Date(),
+          });
+        });
       } else if (message.type === "add_layers_control") {
         const layersControl = document.createElement("div");
         layersControl.id = message.control_id;
@@ -3719,7 +2592,7 @@ if (HTMLWidgets.shinyMode) {
           layersControl.style.top = (message.margin_top || 10) + "px";
           layersControl.style.right = (message.margin_right || 10) + "px";
         } else if (position === "bottom-left") {
-          layersControl.style.bottom = (message.margin_bottom || 10) + "px";
+          layersControl.style.bottom = (message.margin_bottom || 30) + "px";
           layersControl.style.left = (message.margin_left || 10) + "px";
         } else if (position === "bottom-right") {
           layersControl.style.bottom = (message.margin_bottom || 40) + "px";
@@ -3889,6 +2762,7 @@ if (HTMLWidgets.shinyMode) {
           // Remove from legend state
           delete layerState.legends[message.ids];
         } else {
+          // Remove all legend elements
           const existingLegends = document.querySelectorAll(
             `#${data.id} .mapboxgl-legend`,
           );
@@ -3896,9 +2770,45 @@ if (HTMLWidgets.shinyMode) {
             legend.remove();
           });
 
+          // Clean up any legend styles associated with this map
+          const legendStyles = document.querySelectorAll(
+            `style[data-mapgl-legend-css="${data.id}"]`,
+          );
+          legendStyles.forEach((style) => {
+            style.remove();
+          });
+
           // Clear all legend state
           layerState.legends = {};
         }
+      } else if (message.type === "add_custom_control") {
+        const controlOptions = message.options;
+        const customControlContainer = document.createElement("div");
+
+        if (controlOptions.className) {
+          customControlContainer.className = controlOptions.className;
+        } else {
+          customControlContainer.className =
+            "mapboxgl-ctrl mapboxgl-ctrl-group";
+        }
+
+        customControlContainer.innerHTML = controlOptions.html;
+
+        const customControl = {
+          onAdd: function () {
+            return customControlContainer;
+          },
+          onRemove: function () {
+            if (customControlContainer.parentNode) {
+              customControlContainer.parentNode.removeChild(
+                customControlContainer,
+              );
+            }
+          },
+        };
+
+        map.addControl(customControl, controlOptions.position || "top-right");
+        map.controls.push(customControl);
       } else if (message.type === "clear_controls") {
         map.controls.forEach((control) => {
           map.removeControl(control);
@@ -3932,28 +2842,26 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "add_image") {
         if (Array.isArray(message.images)) {
           message.images.forEach(function (imageInfo) {
-            map
-              .loadImage(imageInfo.url)
-              .then((image) => {
-                if (!map.hasImage(imageInfo.id)) {
-                  map.addImage(imageInfo.id, image.data, imageInfo.options);
-                }
-              })
-              .catch((error) => {
+            map.loadImage(imageInfo.url, function (error, image) {
+              if (error) {
                 console.error("Error loading image:", error);
-              });
+                return;
+              }
+              if (!map.hasImage(imageInfo.id)) {
+                map.addImage(imageInfo.id, image, imageInfo.options);
+              }
+            });
           });
         } else if (message.url) {
-          map
-            .loadImage(message.url)
-            .then((image) => {
-              if (!map.hasImage(message.imageId)) {
-                map.addImage(message.imageId, image.data, message.options);
-              }
-            })
-            .catch((error) => {
+          map.loadImage(message.url, function (error, image) {
+            if (error) {
               console.error("Error loading image:", error);
-            });
+              return;
+            }
+            if (!map.hasImage(message.imageId)) {
+              map.addImage(message.imageId, image, message.options);
+            }
+          });
         } else {
           console.error("Invalid image data:", message);
         }
@@ -3983,7 +2891,7 @@ if (HTMLWidgets.shinyMode) {
         }
 
         // Create a new tooltip popup
-        const tooltip = new maplibregl.Popup({
+        const tooltip = new mapboxgl.Popup({
           closeButton: false,
           closeOnClick: false,
         });
@@ -4078,21 +2986,21 @@ if (HTMLWidgets.shinyMode) {
         // Update the geojson data
         sourceObject.setData(newData);
       }
-    } else if (message.type === "set_projection") {
-      if (map.loaded()) {
-        const projection =
-          typeof message.projection === "string"
-            ? { type: message.projection }
-            : message.projection;
-
-        try {
-          map.setProjection(projection);
-        } catch (e) {
-          console.error("Failed to set projection:", e);
-        }
+    } else if (message.type === "set_rain") {
+      if (message.rain) {
+        map.setRain(message.rain);
       } else {
-        console.error("Map not loaded yet");
+        map.setRain(null);
       }
+    } else if (message.type === "set_snow") {
+      if (message.snow) {
+        map.setSnow(message.snow);
+      } else {
+        map.setSnow(null);
+      }
+    } else if (message.type === "set_projection") {
+      const projection = message.projection;
+      map.setProjection(projection);
     } else if (message.type === "add_globe_minimap") {
       const globeMinimapOptions = {
         globeSize: message.options.globe_size || 100,
@@ -4104,38 +3012,6 @@ if (HTMLWidgets.shinyMode) {
       const globeMinimap = new GlobeMinimap(globeMinimapOptions);
       map.addControl(globeMinimap, message.position || "bottom-left");
       map.controls.push(globeMinimap);
-    } else if (message.type === "add_globe_control") {
-      const globeControl = new maplibregl.GlobeControl();
-      map.addControl(globeControl, message.position);
-      map.controls.push(globeControl);
-    } else if (message.type === "add_custom_control") {
-      const controlOptions = message.options;
-      const customControlContainer = document.createElement("div");
-
-      if (controlOptions.className) {
-        customControlContainer.className = controlOptions.className;
-      } else {
-        customControlContainer.className =
-          "maplibregl-ctrl maplibregl-ctrl-group";
-      }
-
-      customControlContainer.innerHTML = controlOptions.html;
-
-      const customControl = {
-        onAdd: function () {
-          return customControlContainer;
-        },
-        onRemove: function () {
-          if (customControlContainer.parentNode) {
-            customControlContainer.parentNode.removeChild(
-              customControlContainer,
-            );
-          }
-        },
-      };
-
-      map.addControl(customControl, controlOptions.position || "top-right");
-      map.controls.push(customControl);
     }
   });
 }
