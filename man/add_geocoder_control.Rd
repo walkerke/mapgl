@@ -9,8 +9,8 @@ add_geocoder_control(
   position = "top-right",
   placeholder = "Search",
   collapsed = FALSE,
-  provider = "osm",
-  api_key = NULL,
+  provider = NULL,
+  maptiler_api_key = NULL,
   ...
 )
 }
@@ -23,9 +23,9 @@ add_geocoder_control(
 
 \item{collapsed}{Whether the control should be collapsed until hovered or clicked. Default is FALSE.}
 
-\item{provider}{The geocoding provider to use. Either "osm" (default) for OpenStreetMap/Nominatim or "maptiler" for MapTiler geocoding. Only available for MapLibre GL maps.  The provider will always be Mapbox for Mapbox maps, and this argument is ignored.}
+\item{provider}{The geocoding provider to use for MapLibre maps. Either "osm" for OpenStreetMap/Nominatim or "maptiler" for MapTiler geocoding. If NULL (default), MapLibre maps will use "osm". Mapbox maps will always use the Mapbox geocoder, regardless of this parameter.}
 
-\item{api_key}{Your MapTiler API key (required when provider is "maptiler"). Can also be set with \code{MAPTILER_API_KEY} environment variable.}
+\item{maptiler_api_key}{Your MapTiler API key (required when provider is "maptiler" for MapLibre maps). Can also be set with \code{MAPTILER_API_KEY} environment variable. Mapbox maps will always use the Mapbox API key set at the map level.}
 
 \item{...}{Additional parameters to pass to the Geocoder.}
 }
@@ -50,6 +50,6 @@ maplibre() |>
 
 # Using MapTiler geocoder
 maplibre() |>
-    add_geocoder_control(provider = "maptiler", api_key = "YOUR_API_KEY")
+    add_geocoder_control(provider = "maptiler", maptiler_api_key = "YOUR_API_KEY")
 }
 }

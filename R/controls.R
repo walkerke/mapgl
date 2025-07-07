@@ -963,8 +963,8 @@ clear_drawn_features <- function(map) {
 #' @param position The position of the control. Can be one of "top-left", "top-right", "bottom-left", or "bottom-right". Default is "top-right".
 #' @param placeholder A string to use as placeholder text for the search bar. Default is "Search".
 #' @param collapsed Whether the control should be collapsed until hovered or clicked. Default is FALSE.
-#' @param provider The geocoding provider to use. Either "osm" (default) for OpenStreetMap/Nominatim or "maptiler" for MapTiler geocoding. Only available for MapLibre GL maps.  The provider will always be Mapbox for Mapbox maps, and this argument is ignored.
-#' @param api_key Your MapTiler API key (required when provider is "maptiler"). Can also be set with `MAPTILER_API_KEY` environment variable.
+#' @param provider The geocoding provider to use for MapLibre maps. Either "osm" for OpenStreetMap/Nominatim or "maptiler" for MapTiler geocoding. If NULL (default), MapLibre maps will use "osm". Mapbox maps will always use the Mapbox geocoder, regardless of this parameter.
+#' @param maptiler_api_key Your MapTiler API key (required when provider is "maptiler" for MapLibre maps). Can also be set with `MAPTILER_API_KEY` environment variable. Mapbox maps will always use the Mapbox API key set at the map level.
 #' @param ... Additional parameters to pass to the Geocoder.
 #'
 #' @return The modified map object with the geocoder control added.
@@ -982,43 +982,50 @@ clear_drawn_features <- function(map) {
 #'
 #' # Using MapTiler geocoder
 #' maplibre() |>
-#'     add_geocoder_control(provider = "maptiler", api_key = "YOUR_API_KEY")
+#'     add_geocoder_control(provider = "maptiler", maptiler_api_key = "YOUR_API_KEY")
 #' }
 add_geocoder_control <- function(
   map,
   position = "top-right",
   placeholder = "Search",
   collapsed = FALSE,
-  provider = "osm",
-  api_key = NULL,
+  provider = NULL,
+  maptiler_api_key = NULL,
   ...
 ) {
-  # Validate provider parameter
-  if (!provider %in% c("osm", "maptiler")) {
+  # Set default provider for MapLibre if NULL
+  if (is.null(provider) && 
+      (inherits(map, "maplibre") || 
+       inherits(map, "maplibre_proxy") || 
+       inherits(map, "maplibre_compare_proxy"))) {
+    provider <- "osm"
+  }
+  
+  # Validate provider parameter for MapLibre
+  if (!is.null(provider) && !provider %in% c("osm", "maptiler")) {
     rlang::abort("Provider must be either 'osm' or 'maptiler'")
   }
-
+  
   # Check that provider parameter is only used with MapLibre
-  if (
-    provider != "osm" &&
+  if (!is.null(provider) &&
       (inherits(map, "mapboxgl") ||
         inherits(map, "mapboxgl_proxy") ||
         inherits(map, "mapboxgl_compare_proxy"))
   ) {
     rlang::abort(
-      "The provider parameter is only available for MapLibre GL maps"
+      "The provider parameter is only available for MapLibre GL maps. Mapbox maps will always use the Mapbox geocoder."
     )
   }
 
   # Handle MapTiler API key
-  if (provider == "maptiler") {
-    if (is.null(api_key)) {
+  if (!is.null(provider) && provider == "maptiler") {
+    if (is.null(maptiler_api_key)) {
       if (Sys.getenv("MAPTILER_API_KEY") == "") {
         rlang::abort(
           "A MapTiler API key is required for the MapTiler geocoder. Get one at https://www.maptiler.com, then supply it here or set it in your .Renviron file with 'MAPTILER_API_KEY'='YOUR_KEY_HERE'."
         )
       }
-      api_key <- Sys.getenv("MAPTILER_API_KEY")
+      maptiler_api_key <- Sys.getenv("MAPTILER_API_KEY")
     }
   }
 
@@ -1027,7 +1034,7 @@ add_geocoder_control <- function(
     placeholder = placeholder,
     collapsed = collapsed,
     provider = provider,
-    api_key = api_key,
+    api_key = maptiler_api_key,
     ...
   )
 
