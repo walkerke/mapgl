@@ -18,6 +18,8 @@ add_draw_control(
   active_color = "#fbb03b",
   vertex_radius = 5,
   line_width = 2,
+  download_button = FALSE,
+  download_filename = "drawn-features",
   ...
 )
 }
@@ -50,6 +52,10 @@ Default is NULL.}
 \item{vertex_radius}{Radius of vertex points in pixels. Default is 5.}
 
 \item{line_width}{Width of lines in pixels. Default is 2.}
+
+\item{download_button}{Logical, whether to add a download button to export drawn features as GeoJSON. Default is FALSE.}
+
+\item{download_filename}{Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".}
 
 \item{...}{Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.}
 }

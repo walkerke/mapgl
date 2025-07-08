@@ -472,6 +472,8 @@ add_scale_control <- function(
 #' @param active_color Color for active (selected) features. Default is "#fbb03b" (orange).
 #' @param vertex_radius Radius of vertex points in pixels. Default is 5.
 #' @param line_width Width of lines in pixels. Default is 2.
+#' @param download_button Logical, whether to add a download button to export drawn features as GeoJSON. Default is FALSE.
+#' @param download_filename Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -521,6 +523,8 @@ add_draw_control <- function(
   active_color = "#fbb03b",
   vertex_radius = 5,
   line_width = 2,
+  download_button = FALSE,
+  download_filename = "drawn-features",
   ...
 ) {
   # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
@@ -548,6 +552,8 @@ add_draw_control <- function(
     orientation = orientation,
     options = options,
     source = draw_source,
+    download_button = download_button,
+    download_filename = download_filename,
     styling = list(
       point_color = point_color,
       line_color = line_color,
@@ -582,6 +588,8 @@ add_draw_control <- function(
             simplify_freehand = simplify_freehand,
             orientation = orientation,
             source = draw_source,
+            download_button = download_button,
+            download_filename = download_filename,
             styling = list(
               point_color = point_color,
               line_color = line_color,
@@ -614,6 +622,8 @@ add_draw_control <- function(
             simplify_freehand = simplify_freehand,
             orientation = orientation,
             source = draw_source,
+            download_button = download_button,
+            download_filename = download_filename,
             styling = list(
               point_color = point_color,
               line_color = line_color,
