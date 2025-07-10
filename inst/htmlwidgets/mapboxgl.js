@@ -919,9 +919,9 @@ HTMLWidgets.widget({
             // Add download button if requested
             if (x.draw_control.download_button) {
               // Add CSS for download button if not already added
-              if (!document.querySelector('#mapgl-draw-download-styles')) {
-                const style = document.createElement('style');
-                style.id = 'mapgl-draw-download-styles';
+              if (!document.querySelector("#mapgl-draw-download-styles")) {
+                const style = document.createElement("style");
+                style.id = "mapgl-draw-download-styles";
                 style.textContent = `
                   .mapbox-gl-draw_download {
                     background: transparent;
@@ -949,38 +949,46 @@ HTMLWidgets.widget({
               // Small delay to ensure Draw control is fully rendered
               setTimeout(() => {
                 // Find the Draw control button group
-                const drawButtons = map.getContainer().querySelector('.mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)');
-                
+                const drawButtons = map
+                  .getContainer()
+                  .querySelector(
+                    ".mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)",
+                  );
+
                 if (drawButtons) {
                   // Create download button
-                  const downloadBtn = document.createElement('button');
-                  downloadBtn.className = 'mapbox-gl-draw_download';
-                  downloadBtn.title = 'Download drawn features as GeoJSON';
-                  
+                  const downloadBtn = document.createElement("button");
+                  downloadBtn.className = "mapbox-gl-draw_download";
+                  downloadBtn.title = "Download drawn features as GeoJSON";
+
                   // Add SVG download icon
                   downloadBtn.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                       <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                     </svg>
                   `;
-                  
-                  downloadBtn.addEventListener('click', () => {
+
+                  downloadBtn.addEventListener("click", () => {
                     // Get all drawn features
                     const data = draw.getAll();
-                    
+
                     if (data.features.length === 0) {
-                      alert('No features to download. Please draw something first!');
+                      alert(
+                        "No features to download. Please draw something first!",
+                      );
                       return;
                     }
-                    
+
                     // Convert to string with nice formatting
                     const dataStr = JSON.stringify(data, null, 2);
-                    
+
                     // Create blob and download
-                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const blob = new Blob([dataStr], {
+                      type: "application/json",
+                    });
                     const url = URL.createObjectURL(blob);
-                    
-                    const a = document.createElement('a');
+
+                    const a = document.createElement("a");
                     a.href = url;
                     a.download = `${x.draw_control.download_filename}.geojson`;
                     document.body.appendChild(a);
@@ -988,7 +996,7 @@ HTMLWidgets.widget({
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                   });
-                  
+
                   // Append to the Draw control button group
                   drawButtons.appendChild(downloadBtn);
                 }
@@ -1235,17 +1243,25 @@ HTMLWidgets.widget({
             // Set the position correctly - fix position bug by using correct CSS positioning
             const position = x.layers_control.position || "top-left";
             if (position === "top-left") {
-              layersControl.style.top = (x.layers_control.margin_top || 10) + "px";
-              layersControl.style.left = (x.layers_control.margin_left || 10) + "px";
+              layersControl.style.top =
+                (x.layers_control.margin_top || 10) + "px";
+              layersControl.style.left =
+                (x.layers_control.margin_left || 10) + "px";
             } else if (position === "top-right") {
-              layersControl.style.top = (x.layers_control.margin_top || 10) + "px";
-              layersControl.style.right = (x.layers_control.margin_right || 10) + "px";
+              layersControl.style.top =
+                (x.layers_control.margin_top || 10) + "px";
+              layersControl.style.right =
+                (x.layers_control.margin_right || 10) + "px";
             } else if (position === "bottom-left") {
-              layersControl.style.bottom = (x.layers_control.margin_bottom || 30) + "px";
-              layersControl.style.left = (x.layers_control.margin_left || 10) + "px";
+              layersControl.style.bottom =
+                (x.layers_control.margin_bottom || 30) + "px";
+              layersControl.style.left =
+                (x.layers_control.margin_left || 10) + "px";
             } else if (position === "bottom-right") {
-              layersControl.style.bottom = (x.layers_control.margin_bottom || 40) + "px";
-              layersControl.style.right = (x.layers_control.margin_right || 10) + "px";
+              layersControl.style.bottom =
+                (x.layers_control.margin_bottom || 40) + "px";
+              layersControl.style.right =
+                (x.layers_control.margin_right || 10) + "px";
             }
 
             // Apply custom colors if provided
@@ -2496,9 +2512,9 @@ if (HTMLWidgets.shinyMode) {
         // Add download button if requested
         if (message.download_button) {
           // Add CSS for download button if not already added
-          if (!document.querySelector('#mapgl-draw-download-styles')) {
-            const style = document.createElement('style');
-            style.id = 'mapgl-draw-download-styles';
+          if (!document.querySelector("#mapgl-draw-download-styles")) {
+            const style = document.createElement("style");
+            style.id = "mapgl-draw-download-styles";
             style.textContent = `
               .mapbox-gl-draw_download {
                 background: transparent;
@@ -2526,46 +2542,52 @@ if (HTMLWidgets.shinyMode) {
           // Small delay to ensure Draw control is fully rendered
           setTimeout(() => {
             // Find the Draw control button group
-            const drawButtons = map.getContainer().querySelector('.mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)');
-            
+            const drawButtons = map
+              .getContainer()
+              .querySelector(
+                ".mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)",
+              );
+
             if (drawButtons) {
               // Create download button
-              const downloadBtn = document.createElement('button');
-              downloadBtn.className = 'mapbox-gl-draw_download';
-              downloadBtn.title = 'Download drawn features as GeoJSON';
-              
+              const downloadBtn = document.createElement("button");
+              downloadBtn.className = "mapbox-gl-draw_download";
+              downloadBtn.title = "Download drawn features as GeoJSON";
+
               // Add SVG download icon
               downloadBtn.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                   <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                 </svg>
               `;
-              
-              downloadBtn.addEventListener('click', () => {
+
+              downloadBtn.addEventListener("click", () => {
                 // Get all drawn features
                 const data = drawControl.getAll();
-                
+
                 if (data.features.length === 0) {
-                  alert('No features to download. Please draw something first!');
+                  alert(
+                    "No features to download. Please draw something first!",
+                  );
                   return;
                 }
-                
+
                 // Convert to string with nice formatting
                 const dataStr = JSON.stringify(data, null, 2);
-                
+
                 // Create blob and download
-                const blob = new Blob([dataStr], { type: 'application/json' });
+                const blob = new Blob([dataStr], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
+
+                const a = document.createElement("a");
                 a.href = url;
-                a.download = `${message.download_filename || 'drawn-features'}.geojson`;
+                a.download = `${message.download_filename || "drawn-features"}.geojson`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
               });
-              
+
               // Append to the Draw control button group
               drawButtons.appendChild(downloadBtn);
             }
@@ -3143,33 +3165,33 @@ if (HTMLWidgets.shinyMode) {
 
         // Update the geojson data
         sourceObject.setData(newData);
+      } else if (message.type === "set_rain") {
+        if (message.remove) {
+          map.setRain(null);
+        } else if (message.rain) {
+          map.setRain(message.rain);
+        }
+      } else if (message.type === "set_snow") {
+        if (message.remove) {
+          map.setSnow(null);
+        } else if (message.snow) {
+          map.setSnow(message.snow);
+        }
+      } else if (message.type === "set_projection") {
+        const projection = message.projection;
+        map.setProjection(projection);
+      } else if (message.type === "add_globe_minimap") {
+        const globeMinimapOptions = {
+          globeSize: message.options.globe_size || 100,
+          landColor: message.options.land_color || "#404040",
+          waterColor: message.options.water_color || "#090909",
+          markerColor: message.options.marker_color || "#1da1f2",
+          markerSize: message.options.marker_size || 2,
+        };
+        const globeMinimap = new GlobeMinimap(globeMinimapOptions);
+        map.addControl(globeMinimap, message.position || "bottom-left");
+        map.controls.push(globeMinimap);
       }
-    } else if (message.type === "set_rain") {
-      if (message.rain) {
-        map.setRain(message.rain);
-      } else {
-        map.setRain(null);
-      }
-    } else if (message.type === "set_snow") {
-      if (message.snow) {
-        map.setSnow(message.snow);
-      } else {
-        map.setSnow(null);
-      }
-    } else if (message.type === "set_projection") {
-      const projection = message.projection;
-      map.setProjection(projection);
-    } else if (message.type === "add_globe_minimap") {
-      const globeMinimapOptions = {
-        globeSize: message.options.globe_size || 100,
-        landColor: message.options.land_color || "#404040",
-        waterColor: message.options.water_color || "#090909",
-        markerColor: message.options.marker_color || "#1da1f2",
-        markerSize: message.options.marker_size || 2,
-      };
-      const globeMinimap = new GlobeMinimap(globeMinimapOptions);
-      map.addControl(globeMinimap, message.position || "bottom-left");
-      map.controls.push(globeMinimap);
     }
   });
 }
