@@ -19,7 +19,7 @@ Depends:
   R (>= 4.1.0)
 Imports:
   htmlwidgets,
-  geojsonsf,
+  yyjsonr,
   sf,
   rlang,
   htmltools,
