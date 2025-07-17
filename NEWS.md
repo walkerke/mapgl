@@ -1,3 +1,8 @@
+# mapgl 0.3.2
+
+* Added download functionality to draw control with new `download_button` and `download_filename` parameters in `add_draw_control()`. Users can now export drawn features as GeoJSON files directly from the draw control interface.
+* Enhanced geocoder control with MapTiler support for MapLibre maps. New `provider` parameter allows choosing between "osm" (OpenStreetMap/Nominatim) and "maptiler" providers, with `maptiler_api_key` parameter for MapTiler authentication.
+
 # mapgl 0.3.1
 
 * Added PMTiles support for Mapbox maps and streamlined PMTiles integration with `add_pmtiles_source()` function.
