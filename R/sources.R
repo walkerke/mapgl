@@ -9,7 +9,10 @@
 #' @export
 add_source <- function(map, id, data, ...) {
   if (inherits(data, "sf")) {
-    geojson <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    if (sf::st_crs(data) != 4326) {
+      data <- sf::st_transform(data, crs = 4326)
+    }
+    geojson <- geojsonsf::sf_geojson(data)
   } else if (is.character(data) && grepl("^http", data)) {
     geojson <- data
   } else {
