@@ -17,3 +17,6 @@ logo.png
 LICENSE.md
 CLAUDE.md
 .claude
+^inst/htmlwidgets/src$
+^inst/htmlwidgets/build$
+^inst/htmlwidgets/build\.js$
