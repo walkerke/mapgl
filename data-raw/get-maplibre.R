@@ -37,3 +37,13 @@ download.file(
   "https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js",
   destfile = "inst/htmlwidgets/lib/pmtiles/pmtiles.js"
 )
+
+# Maptiler Geocoder:
+download.file(
+  "https://unpkg.com/@maptiler/geocoding-control@2.1.7/maplibregl.umd.js",
+  destfile = "inst/htmlwidgets/lib/maptiler-geocoding-control/maplibregl.umd.js"
+)
+download.file(
+    "https://unpkg.com/@maptiler/geocoding-control@2.1.7/style.css",
+  destfile = "inst/htmlwidgets/lib/maptiler-geocoding-control/style.css"
+)
