@@ -311,6 +311,34 @@ HTMLWidgets.widget({
                     if (HTMLWidgets.shinyMode) {
                         setupShinyEvents(afterMap, el.id, "after");
                     }
+                    
+                    // Add compare-level legends after both maps are loaded
+                    if (x.compare_legends && Array.isArray(x.compare_legends)) {
+                        x.compare_legends.forEach(function(legendInfo) {
+                            // Add CSS
+                            const legendCss = document.createElement("style");
+                            legendCss.innerHTML = legendInfo.css;
+                            legendCss.setAttribute("data-mapgl-legend-css", el.id);
+                            document.head.appendChild(legendCss);
+                            
+                            // Create legend element
+                            const legend = document.createElement("div");
+                            legend.innerHTML = legendInfo.html;
+                            legend.classList.add("mapboxgl-legend");
+                            
+                            // Append to the appropriate container based on target
+                            if (legendInfo.target === "compare") {
+                                // Append to the main compare container
+                                el.appendChild(legend);
+                            } else if (legendInfo.target === "before") {
+                                // Append to the before map container
+                                beforeMap.getContainer().appendChild(legend);
+                            } else if (legendInfo.target === "after") {
+                                // Append to the after map container
+                                afterMap.getContainer().appendChild(legend);
+                            }
+                        });
+                    }
                 });
 
                 // Define updateDrawnFeatures function for the draw tool
@@ -907,9 +935,10 @@ HTMLWidgets.widget({
                                 const legend = document.createElement("div");
                                 legend.innerHTML = message.html;
                                 legend.classList.add("maplibregl-legend");
-                                document
-                                    .getElementById(data.id)
-                                    .appendChild(legend);
+                                
+                                // Append legend to the correct map container
+                                const targetContainer = map.getContainer();
+                                targetContainer.appendChild(legend);
                             } else if (message.type === "set_config_property") {
                                 map.setConfigProperty(
                                     message.importId,
@@ -2990,11 +3019,10 @@ HTMLWidgets.widget({
                         );
                     }
 
-                    const existingLegend =
-                        document.getElementById("mapboxgl-legend");
-                    if (existingLegend) {
-                        existingLegend.remove();
-                    }
+                    // Remove existing legends only from this specific map container
+                    const mapContainer = map.getContainer();
+                    const existingLegends = mapContainer.querySelectorAll(".mapboxgl-legend");
+                    existingLegends.forEach((legend) => legend.remove());
 
                     if (mapData.legend_html && mapData.legend_css) {
                         const legendCss = document.createElement("style");
@@ -3003,8 +3031,10 @@ HTMLWidgets.widget({
 
                         const legend = document.createElement("div");
                         legend.innerHTML = mapData.legend_html;
-                        // legend.classList.add("mapboxgl-legend");
-                        el.appendChild(legend);
+                        legend.classList.add("mapboxgl-legend");
+                        
+                        // Append legend to the correct map container instead of main container
+                        mapContainer.appendChild(legend);
                     }
 
                     // Add fullscreen control if enabled

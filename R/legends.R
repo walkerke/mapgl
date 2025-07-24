@@ -24,6 +24,7 @@
 #' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
 #' @param margin_right Custom right margin in pixels. Default is NULL.
 #' @param style Optional styling options created by \code{legend_style()} or a list of style options.
+#' @param target For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare".
 #'
 #' @return The updated map object with the legend added.
 #'
@@ -151,6 +152,33 @@
 #'     patch_shape = custom_svg
 #' )
 #'
+#' # Compare view legends
+#' compare_view <- compare(map1, map2)
+#'
+#' # Add persistent legend (stays visible during swipe)
+#' compare_view |>
+#'   add_legend("Persistent Legend",
+#'             values = c("Low", "High"),
+#'             colors = c("blue", "red"),
+#'             type = "categorical",
+#'             target = "compare",
+#'             position = "top-left")
+#'
+#' # Add legends to specific maps
+#' compare_view |>
+#'   add_legend("Left Map",
+#'             values = c("A", "B"),
+#'             colors = c("green", "orange"),
+#'             type = "categorical",
+#'             target = "before",
+#'             position = "bottom-left") |>
+#'   add_legend("Right Map",
+#'             values = c("X", "Y"),
+#'             colors = c("purple", "yellow"),
+#'             type = "categorical",
+#'             target = "after",
+#'             position = "bottom-right")
+#'
 #' }
 
 #' @export
@@ -172,50 +200,57 @@ add_legend <- function(
   margin_right = NULL,
   margin_bottom = NULL,
   margin_left = NULL,
-  style = NULL
+  style = NULL,
+  target = NULL
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
   }
 
-  if (type == "continuous") {
-    add_continuous_legend(
-      map,
-      legend_title,
-      values,
-      colors,
-      position,
-      unique_id,
-      add,
-      width,
-      layer_id,
-      margin_top,
-      margin_right,
-      margin_bottom,
-      margin_left,
-      style
-    )
+  # For compare objects, use S3 method dispatch
+  if (inherits(map, "mapboxgl_compare") || inherits(map, "maplibre_compare")) {
+    UseMethod("add_legend")
   } else {
-    add_categorical_legend(
-      map,
-      legend_title,
-      values,
-      colors,
-      circular_patches,
-      patch_shape,
-      position,
-      unique_id,
-      sizes,
-      add,
-      width,
-      layer_id,
-      margin_top,
-      margin_right,
-      margin_bottom,
-      margin_left,
-      style
-    )
+    # For regular maps, ignore target parameter and use existing functions
+    if (type == "continuous") {
+      add_continuous_legend(
+        map,
+        legend_title,
+        values,
+        colors,
+        position,
+        unique_id,
+        add,
+        width,
+        layer_id,
+        margin_top,
+        margin_right,
+        margin_bottom,
+        margin_left,
+        style
+      )
+    } else {
+      add_categorical_legend(
+        map,
+        legend_title,
+        values,
+        colors,
+        circular_patches,
+        patch_shape,
+        position,
+        unique_id,
+        sizes,
+        add,
+        width,
+        layer_id,
+        margin_top,
+        margin_right,
+        margin_bottom,
+        margin_left,
+        style
+      )
+    }
   }
 }
 
@@ -687,23 +722,46 @@ add_categorical_legend <- function(
   legend_css <- paste0(legend_css, custom_style_css)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- ifelse(
-      inherits(map, "mapboxgl_proxy"),
-      "mapboxgl-proxy",
-      "maplibre-proxy"
-    )
-    map$session$sendCustomMessage(
-      proxy_class,
-      list(
-        id = map$id,
-        message = list(
-          type = "add_legend",
-          html = legend_html,
-          legend_css = legend_css,
-          add = add
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add,
+            map = map$map_side
+          )
         )
       )
-    )
+    } else {
+      # For regular proxies
+      proxy_class <- ifelse(
+        inherits(map, "mapboxgl_proxy"),
+        "mapboxgl-proxy",
+        "maplibre-proxy"
+      )
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add
+          )
+        )
+      )
+    }
     map
   } else {
     if (!add) {
@@ -895,24 +953,47 @@ add_continuous_legend <- function(
   legend_css <- paste0(legend_css, custom_style_css)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- ifelse(
-      inherits(map, "mapboxgl_proxy"),
-      "mapboxgl-proxy",
-      "maplibre-proxy"
-    )
-
-    map$session$sendCustomMessage(
-      proxy_class,
-      list(
-        id = map$id,
-        message = list(
-          type = "add_legend",
-          html = legend_html,
-          legend_css = legend_css,
-          add = add
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add,
+            map = map$map_side
+          )
         )
       )
-    )
+    } else {
+      # For regular proxies
+      proxy_class <- ifelse(
+        inherits(map, "mapboxgl_proxy"),
+        "mapboxgl-proxy",
+        "maplibre-proxy"
+      )
+
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add
+          )
+        )
+      )
+    }
 
     map
   } else {
