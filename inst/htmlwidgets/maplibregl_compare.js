@@ -311,6 +311,34 @@ HTMLWidgets.widget({
                     if (HTMLWidgets.shinyMode) {
                         setupShinyEvents(afterMap, el.id, "after");
                     }
+                    
+                    // Add compare-level legends after both maps are loaded
+                    if (x.compare_legends && Array.isArray(x.compare_legends)) {
+                        x.compare_legends.forEach(function(legendInfo) {
+                            // Add CSS
+                            const legendCss = document.createElement("style");
+                            legendCss.innerHTML = legendInfo.css;
+                            legendCss.setAttribute("data-mapgl-legend-css", el.id);
+                            document.head.appendChild(legendCss);
+                            
+                            // Create legend element
+                            const legend = document.createElement("div");
+                            legend.innerHTML = legendInfo.html;
+                            legend.classList.add("mapboxgl-legend");
+                            
+                            // Append to the appropriate container based on target
+                            if (legendInfo.target === "compare") {
+                                // Append to the main compare container
+                                el.appendChild(legend);
+                            } else if (legendInfo.target === "before") {
+                                // Append to the before map container
+                                beforeMap.getContainer().appendChild(legend);
+                            } else if (legendInfo.target === "after") {
+                                // Append to the after map container
+                                afterMap.getContainer().appendChild(legend);
+                            }
+                        });
+                    }
                 });
 
                 // Define updateDrawnFeatures function for the draw tool
