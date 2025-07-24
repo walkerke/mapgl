@@ -687,23 +687,43 @@ add_categorical_legend <- function(
   legend_css <- paste0(legend_css, custom_style_css)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- ifelse(
-      inherits(map, "mapboxgl_proxy"),
-      "mapboxgl-proxy",
-      "maplibre-proxy"
-    )
-    map$session$sendCustomMessage(
-      proxy_class,
-      list(
-        id = map$id,
-        message = list(
-          type = "add_legend",
-          html = legend_html,
-          legend_css = legend_css,
-          add = add
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) 
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add,
+            map = map$map_side
+          )
         )
       )
-    )
+    } else {
+      # For regular proxies
+      proxy_class <- ifelse(
+        inherits(map, "mapboxgl_proxy"),
+        "mapboxgl-proxy",
+        "maplibre-proxy"
+      )
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add
+          )
+        )
+      )
+    }
     map
   } else {
     if (!add) {
@@ -895,24 +915,44 @@ add_continuous_legend <- function(
   legend_css <- paste0(legend_css, custom_style_css)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
-    proxy_class <- ifelse(
-      inherits(map, "mapboxgl_proxy"),
-      "mapboxgl-proxy",
-      "maplibre-proxy"
-    )
-
-    map$session$sendCustomMessage(
-      proxy_class,
-      list(
-        id = map$id,
-        message = list(
-          type = "add_legend",
-          html = legend_html,
-          legend_css = legend_css,
-          add = add
+    if (inherits(map, "mapboxgl_compare_proxy") || inherits(map, "maplibre_compare_proxy")) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) 
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add,
+            map = map$map_side
+          )
         )
       )
-    )
+    } else {
+      # For regular proxies
+      proxy_class <- ifelse(
+        inherits(map, "mapboxgl_proxy"),
+        "mapboxgl-proxy",
+        "maplibre-proxy"
+      )
+
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_legend",
+            html = legend_html,
+            legend_css = legend_css,
+            add = add
+          )
+        )
+      )
+    }
 
     map
   } else {

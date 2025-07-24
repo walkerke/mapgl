@@ -817,7 +817,10 @@ HTMLWidgets.widget({
                 const legend = document.createElement("div");
                 legend.innerHTML = message.html;
                 legend.classList.add("mapboxgl-legend");
-                document.getElementById(data.id).appendChild(legend);
+                
+                // Append legend to the correct map container
+                const targetContainer = map.getContainer();
+                targetContainer.appendChild(legend);
               } else if (message.type === "set_config_property") {
                 map.setConfigProperty(
                   message.importId,
@@ -2193,15 +2196,13 @@ HTMLWidgets.widget({
             console.error("mapData.images is not an array:", mapData.images);
           }
 
-          // Remove existing legends
-          const existingLegends = document.querySelectorAll(".mapboxgl-legend");
+          // Remove existing legends only from this specific map container
+          const mapContainer = map.getContainer();
+          const existingLegends = mapContainer.querySelectorAll(".mapboxgl-legend");
           existingLegends.forEach((legend) => legend.remove());
 
-          // Clean up any legend styles that might have been added
-          const legendStyles = document.querySelectorAll(
-            "style[data-mapgl-legend-css]",
-          );
-          legendStyles.forEach((style) => style.remove());
+          // Don't remove all legend styles globally - they might belong to other maps
+          // Only remove styles when the entire widget is being recreated
 
           if (mapData.legend_html && mapData.legend_css) {
             const legendCss = document.createElement("style");
@@ -2212,7 +2213,10 @@ HTMLWidgets.widget({
             const legend = document.createElement("div");
             legend.innerHTML = mapData.legend_html;
             legend.classList.add("mapboxgl-legend");
-            el.appendChild(legend);
+            
+            // Append legend to the correct map container instead of main container
+            const mapContainer = map.getContainer();
+            mapContainer.appendChild(legend);
           }
 
           // Add fullscreen control if enabled
