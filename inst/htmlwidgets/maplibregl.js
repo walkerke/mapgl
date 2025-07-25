@@ -276,6 +276,16 @@ function generateDrawStyles(styling) {
   ];
 }
 
+// Helper function to add features from a source to draw
+function addSourceFeaturesToDraw(draw, sourceId, map) {
+  const source = map.getSource(sourceId);
+  if (source && source._data) {
+    draw.add(source._data);
+  } else {
+    console.warn("Source not found or has no data:", sourceId);
+  }
+}
+
 HTMLWidgets.widget({
   name: "maplibregl",
 
@@ -1084,16 +1094,6 @@ HTMLWidgets.widget({
                   drawButtons.appendChild(downloadBtn);
                 }
               }, 100);
-            }
-          }
-
-          // Helper function to add features from a source to draw
-          function addSourceFeaturesToDraw(draw, sourceId, map) {
-            const source = map.getSource(sourceId);
-            if (source && source._data) {
-              draw.add(source._data);
-            } else {
-              console.warn("Source not found or has no data:", sourceId);
             }
           }
 
