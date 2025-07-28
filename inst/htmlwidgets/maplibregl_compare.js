@@ -1577,6 +1577,28 @@ HTMLWidgets.widget({
                                 map.addControl(draw, message.position);
                                 map.controls.push(draw);
 
+                                // Add lasso icon CSS for freehand mode
+                                if (message.freehand) {
+                                  if (!document.querySelector("#mapgl-freehand-lasso-styles")) {
+                                    const style = document.createElement("style");
+                                    style.id = "mapgl-freehand-lasso-styles";
+                                    style.textContent = `
+                                      .mapbox-gl-draw_polygon {
+                                        background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Cpath d="M 7 3 C 5 2.5, 3.5 3, 3 5 C 2.5 7, 3 8.5, 4 9.5 C 5 10.5, 5.5 11.5, 5 13 C 4.5 14.5, 5 15.5, 6.5 16 C 8 16.5, 9.5 16, 11 15 C 12.5 14, 13.5 13, 14.5 11.5 C 15.5 10, 16 8.5, 15.5 7 C 15 5.5, 14 4.5, 12.5 3.5 C 11 2.5, 9 2.5, 7 3 Z" fill="none" stroke="%23000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E') !important;
+                                      }
+                                    `;
+                                    document.head.appendChild(style);
+                                  }
+
+                                  // Update tooltip for freehand mode
+                                  setTimeout(() => {
+                                    const polygonButton = map.getContainer().querySelector('.mapbox-gl-draw_polygon');
+                                    if (polygonButton) {
+                                      polygonButton.title = 'Freehand polygon tool (p)';
+                                    }
+                                  }, 100);
+                                }
+
                                 // Add event listeners
                                 map.on(
                                     "draw.create",
@@ -2118,6 +2140,28 @@ HTMLWidgets.widget({
                                 draw = new MapboxDraw(drawOptions);
                                 map.addControl(draw, message.position);
                                 map.controls.push(draw);
+                                
+                                // Add lasso icon CSS for freehand mode
+                                if (message.freehand) {
+                                  if (!document.querySelector("#mapgl-freehand-lasso-styles")) {
+                                    const style = document.createElement("style");
+                                    style.id = "mapgl-freehand-lasso-styles";
+                                    style.textContent = `
+                                      .mapbox-gl-draw_polygon {
+                                        background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Cpath d="M 7 3 C 5 2.5, 3.5 3, 3 5 C 2.5 7, 3 8.5, 4 9.5 C 5 10.5, 5.5 11.5, 5 13 C 4.5 14.5, 5 15.5, 6.5 16 C 8 16.5, 9.5 16, 11 15 C 12.5 14, 13.5 13, 14.5 11.5 C 15.5 10, 16 8.5, 15.5 7 C 15 5.5, 14 4.5, 12.5 3.5 C 11 2.5, 9 2.5, 7 3 Z" fill="none" stroke="%23000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E') !important;
+                                      }
+                                    `;
+                                    document.head.appendChild(style);
+                                  }
+
+                                  // Update tooltip for freehand mode
+                                  setTimeout(() => {
+                                    const polygonButton = map.getContainer().querySelector('.mapbox-gl-draw_polygon');
+                                    if (polygonButton) {
+                                      polygonButton.title = 'Freehand polygon tool (p)';
+                                    }
+                                  }, 100);
+                                }
                                 
                                 // Add initial features if provided
                                 if (message.source) {
