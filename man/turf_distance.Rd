@@ -6,8 +6,11 @@
 \usage{
 turf_distance(
   proxy,
-  layer_id,
-  layer_id_2,
+  layer_id = NULL,
+  layer_id_2 = NULL,
+  data = NULL,
+  coordinates = NULL,
+  coordinates_2 = NULL,
   units = "kilometers",
   send_to_r = TRUE
 )
@@ -15,9 +18,15 @@ turf_distance(
 \arguments{
 \item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the first layer.}
+\item{layer_id}{The ID of the first layer (mutually exclusive with data and coordinates).}
 
-\item{layer_id_2}{The ID of the second layer.}
+\item{layer_id_2}{The ID of the second layer (required if layer_id is used).}
+
+\item{data}{An sf object for the first geometry (mutually exclusive with layer_id and coordinates).}
+
+\item{coordinates}{A numeric vector of length 2 with lng/lat coordinates for the first point (mutually exclusive with layer_id and data).}
+
+\item{coordinates_2}{A numeric vector of length 2 with lng/lat coordinates for the second point (required if coordinates is used).}
 
 \item{units}{The units for the distance calculation. One of "meters", "kilometers", "miles", etc.}
 
@@ -27,5 +36,6 @@ turf_distance(
 The proxy object for method chaining.
 }
 \description{
-This function calculates the distance between the first features of two layers.
+This function calculates the distance between the first features of two layers or coordinates.
+Note: This function only works with proxy objects as it returns a numeric value to R.
 }

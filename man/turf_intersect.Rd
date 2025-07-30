@@ -5,30 +5,31 @@
 \title{Find intersection of two geometries}
 \usage{
 turf_intersect(
-  proxy,
-  layer_id,
+  map,
+  layer_id = NULL,
   layer_id_2,
-  result_layer_id = NULL,
-  layer_style = NULL,
+  data = NULL,
+  source_id,
   send_to_r = FALSE
 )
 }
 \arguments{
-\item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
+\item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the first layer.}
+\item{layer_id}{The ID of the first layer (mutually exclusive with data).}
 
 \item{layer_id_2}{The ID of the second layer.}
 
-\item{result_layer_id}{Optional. The ID for the new layer to display the intersection result on the map.}
+\item{data}{An sf object for the first geometry (mutually exclusive with layer_id).}
 
-\item{layer_style}{Optional. A named list of paint properties for styling the result layer.}
+\item{source_id}{The ID for the new source containing the intersection result. Required.}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result.}
+\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
 }
 \value{
-The proxy object for method chaining.
+The map or proxy object for method chaining.
 }
 \description{
 This function finds the intersection between geometries in two layers.
+The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 }

@@ -6,26 +6,29 @@
 \usage{
 turf_buffer(
   map,
-  layer_id,
+  layer_id = NULL,
+  data = NULL,
+  coordinates = NULL,
   radius,
   units = "meters",
-  result_layer_id = NULL,
-  layer_style = NULL,
+  source_id,
   send_to_r = FALSE
 )
 }
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the layer containing the geometries to buffer.}
+\item{layer_id}{The ID of an existing layer to buffer (mutually exclusive with data and coordinates).}
+
+\item{data}{An sf object to buffer (mutually exclusive with layer_id and coordinates).}
+
+\item{coordinates}{A numeric vector of length 2 with lng/lat coordinates to create a point and buffer (mutually exclusive with layer_id and data).}
 
 \item{radius}{The buffer distance.}
 
 \item{units}{The units for the buffer distance. One of "meters", "kilometers", "miles", "feet", "inches", "yards", "centimeters", "millimeters", "degrees", "radians".}
 
-\item{result_layer_id}{Optional. The ID for the new layer to display the buffered results on the map.}
-
-\item{layer_style}{Optional. A named list of paint properties for styling the result layer.}
+\item{source_id}{The ID for the new source containing the buffered results. Required.}
 
 \item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
 }
@@ -38,20 +41,27 @@ All operations work with both mapboxgl and maplibre proxies.
 Create a buffer around geometries
 }
 \details{
-This function creates a buffer around points, lines, or polygons at a specified distance.
-The operation is performed client-side using turf.js.
+This function creates a buffer around geometries at a specified distance.
+The operation is performed client-side using turf.js. The result is added as a
+source to the map, which can then be styled using add_fill_layer(), add_line_layer(), etc.
 }
 \examples{
 \dontrun{
-# Interactive/static usage
-map <- maplibre() |>
-  add_circle_layer(id = "points", source = points_data) |>
-  turf_buffer(layer_id = "points", radius = 1000, units = "meters",
-              result_layer_id = "point_buffers")
+# Buffer existing layer
+map |>
+  turf_buffer(layer_id = "points", radius = 1000, units = "meters", 
+              source_id = "point_buffers") |>
+  add_fill_layer(id = "buffers", source = "point_buffers", fill_color = "blue")
 
-# Shiny proxy usage
+# Buffer sf object
+map |>
+  turf_buffer(data = sf_points, radius = 0.5, units = "miles", 
+              source_id = "buffers") |>
+  add_fill_layer(id = "buffer_layer", source = "buffers")
+
+# Buffer coordinates (great for hover events)
 maplibre_proxy("map") |>
-  turf_buffer(layer_id = "points", radius = 0.5, units = "miles",
-              send_to_r = TRUE)
+  turf_buffer(coordinates = c(-122.4, 37.7), radius = 500, units = "meters",
+              source_id = "hover_buffer")
 }
 }

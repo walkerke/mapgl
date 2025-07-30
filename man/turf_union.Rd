@@ -4,22 +4,16 @@
 \alias{turf_union}
 \title{Union geometries}
 \usage{
-turf_union(
-  map,
-  layer_id,
-  result_layer_id = NULL,
-  layer_style = NULL,
-  send_to_r = FALSE
-)
+turf_union(map, layer_id = NULL, data = NULL, source_id, send_to_r = FALSE)
 }
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the layer containing the geometries to union.}
+\item{layer_id}{The ID of an existing layer to union (mutually exclusive with data).}
 
-\item{result_layer_id}{Optional. The ID for the new layer to display the union result on the map.}
+\item{data}{An sf object to union (mutually exclusive with layer_id).}
 
-\item{layer_style}{Optional. A named list of paint properties for styling the result layer.}
+\item{source_id}{The ID for the new source containing the union result. Required.}
 
 \item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
 }
@@ -28,4 +22,5 @@ The map or proxy object for method chaining.
 }
 \description{
 This function unions all polygons in a layer into a single geometry.
+The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 }

@@ -4,12 +4,14 @@
 \alias{turf_area}
 \title{Calculate area of geometries}
 \usage{
-turf_area(proxy, layer_id, send_to_r = TRUE)
+turf_area(proxy, layer_id = NULL, data = NULL, send_to_r = TRUE)
 }
 \arguments{
 \item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the layer containing the polygons.}
+\item{layer_id}{The ID of the layer containing the polygons (mutually exclusive with data).}
+
+\item{data}{An sf object containing polygons (mutually exclusive with layer_id).}
 
 \item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result. Default is TRUE.}
 }
@@ -17,5 +19,6 @@ turf_area(proxy, layer_id, send_to_r = TRUE)
 The proxy object for method chaining.
 }
 \description{
-This function calculates the area of polygons in a layer.
+This function calculates the area of polygons in a layer or sf object.
+Note: This function only works with proxy objects as it returns a numeric value to R.
 }

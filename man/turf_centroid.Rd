@@ -5,27 +5,31 @@
 \title{Calculate centroid of geometries}
 \usage{
 turf_centroid(
-  proxy,
-  layer_id,
-  result_layer_id = NULL,
-  layer_style = NULL,
+  map,
+  layer_id = NULL,
+  data = NULL,
+  coordinates = NULL,
+  source_id,
   send_to_r = FALSE
 )
 }
 \arguments{
-\item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
+\item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the layer containing the geometries.}
+\item{layer_id}{The ID of an existing layer containing geometries (mutually exclusive with data and coordinates).}
 
-\item{result_layer_id}{Optional. The ID for the new layer to display the centroid on the map.}
+\item{data}{An sf object containing geometries (mutually exclusive with layer_id and coordinates).}
 
-\item{layer_style}{Optional. A named list of paint properties for styling the result layer.}
+\item{coordinates}{A list/matrix of coordinate pairs [\link{lng,lat}, \link{lng,lat}, ...] for multiple points (mutually exclusive with layer_id and data).}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result.}
+\item{source_id}{The ID for the new source containing the centroid. Required.}
+
+\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
 }
 \value{
-The proxy object for method chaining.
+The map or proxy object for method chaining.
 }
 \description{
-This function calculates the centroid of geometries in a layer.
+This function calculates the centroid of geometries in a layer or sf object.
+The result is added as a source to the map, which can then be styled using add_circle_layer(), etc.
 }

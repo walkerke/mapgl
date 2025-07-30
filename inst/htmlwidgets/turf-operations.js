@@ -5,7 +5,7 @@
 function processTurfOperationsOnLoad(map, turfOperations, widgetId) {
   if (!turfOperations || turfOperations.length === 0) return;
   
-  // Wait for map to be fully loaded
+  // Wait for map to be fully loaded, then execute operations
   map.on('load', function() {
     // Add a small delay to ensure all layers are loaded
     setTimeout(function() {
@@ -69,6 +69,43 @@ function handleTurfOperation(map, message, widgetId) {
   }
 }
 
+// Helper function to get input data for turf operations
+function getInputData(map, message) {
+  // If coordinates provided, create point or points client-side
+  if (message.coordinates) {
+    // Handle single coordinate pair
+    if (typeof message.coordinates[0] === 'number') {
+      return turf.point(message.coordinates);
+    }
+    // Handle multiple coordinate pairs
+    if (Array.isArray(message.coordinates[0])) {
+      const points = message.coordinates.map(coord => turf.point(coord));
+      return {
+        type: "FeatureCollection",
+        features: points
+      };
+    }
+  }
+  
+  // If GeoJSON data provided directly
+  if (message.data) {
+    // Check if data is already an object (shouldn't happen) or string
+    if (typeof message.data === 'string') {
+      return JSON.parse(message.data);
+    } else {
+      // If it's already an object, return as-is
+      return message.data;
+    }
+  }
+  
+  // If layer_id provided, get from existing layer
+  if (message.layer_id) {
+    return getSourceData(map, message.layer_id);
+  }
+  
+  throw new Error("No valid input data provided (coordinates, data, or layer_id)");
+}
+
 // Helper function to get source data from a layer
 function getSourceData(map, layerId) {
   // First try to get from existing source
@@ -95,69 +132,22 @@ function getSourceData(map, layerId) {
   throw new Error(`Could not find source data for layer: ${layerId}`);
 }
 
-// Helper function to add result to map
-function addResultToMap(map, result, resultLayerId, layerStyle) {
-  if (!resultLayerId) return;
+// Helper function to add result source to map
+function addResultSource(map, result, sourceId) {
+  if (!sourceId) return;
   
-  const sourceId = resultLayerId + "_source";
-  
-  // Remove existing source/layer if it exists
-  if (map.getLayer(resultLayerId)) {
-    map.removeLayer(resultLayerId);
+  // Check if source exists, update data or create new
+  const existingSource = map.getSource(sourceId);
+  if (existingSource) {
+    // Update existing source data
+    existingSource.setData(result);
+  } else {
+    // Add new source with result data
+    map.addSource(sourceId, {
+      type: "geojson",
+      data: result
+    });
   }
-  if (map.getSource(sourceId)) {
-    map.removeSource(sourceId);
-  }
-  
-  // Add new source
-  map.addSource(sourceId, {
-    type: "geojson",
-    data: result
-  });
-  
-  // Determine layer type based on geometry
-  let layerType = "fill";
-  if (result.type === "FeatureCollection" && result.features.length > 0) {
-    const geomType = result.features[0].geometry.type;
-    if (geomType === "Point" || geomType === "MultiPoint") {
-      layerType = "circle";
-    } else if (geomType === "LineString" || geomType === "MultiLineString") {
-      layerType = "line";
-    }
-  }
-  
-  // Add layer with default styling
-  const layerConfig = {
-    id: resultLayerId,
-    type: layerType,
-    source: sourceId
-  };
-  
-  // Apply default paint properties based on layer type
-  if (layerType === "fill") {
-    layerConfig.paint = {
-      "fill-color": "#3bb2d0",
-      "fill-opacity": 0.5
-    };
-  } else if (layerType === "line") {
-    layerConfig.paint = {
-      "line-color": "#3bb2d0",
-      "line-width": 2
-    };
-  } else if (layerType === "circle") {
-    layerConfig.paint = {
-      "circle-color": "#3bb2d0",
-      "circle-radius": 5,
-      "circle-opacity": 0.8
-    };
-  }
-  
-  // Override with custom styling if provided
-  if (layerStyle) {
-    Object.assign(layerConfig.paint, layerStyle);
-  }
-  
-  map.addLayer(layerConfig);
 }
 
 // Helper function to send result to R
@@ -174,14 +164,14 @@ function sendResultToR(widgetId, operation, result, metadata = {}) {
 
 // Buffer operation
 function executeTurfBuffer(map, message, widgetId) {
-  const sourceData = getSourceData(map, message.layer_id);
+  const inputData = getInputData(map, message);
   
-  const buffered = turf.buffer(sourceData, message.radius, {
+  const buffered = turf.buffer(inputData, message.radius, {
     units: message.units || "meters"
   });
   
-  if (message.result_layer_id) {
-    addResultToMap(map, buffered, message.result_layer_id, message.layer_style);
+  if (message.source_id) {
+    addResultSource(map, buffered, message.source_id);
   }
   
   if (message.send_to_r) {
@@ -194,12 +184,12 @@ function executeTurfBuffer(map, message, widgetId) {
 
 // Union operation
 function executeTurfUnion(map, message, widgetId) {
-  const sourceData = getSourceData(map, message.layer_id);
+  const inputData = getInputData(map, message);
   
   let result;
-  if (sourceData.type === "FeatureCollection") {
+  if (inputData.type === "FeatureCollection") {
     // Union all features in the collection
-    result = sourceData.features.reduce((acc, feature) => {
+    result = inputData.features.reduce((acc, feature) => {
       if (!acc) return feature;
       return turf.union(acc, feature);
     }, null);
@@ -215,12 +205,12 @@ function executeTurfUnion(map, message, widgetId) {
     // Single feature, return as-is in FeatureCollection
     result = {
       type: "FeatureCollection",
-      features: [sourceData]
+      features: [inputData]
     };
   }
   
-  if (message.result_layer_id && result) {
-    addResultToMap(map, result, message.result_layer_id, message.layer_style);
+  if (message.source_id) {
+    addResultSource(map, result, message.source_id);
   }
   
   if (message.send_to_r) {
@@ -230,7 +220,7 @@ function executeTurfUnion(map, message, widgetId) {
 
 // Intersect operation
 function executeTurfIntersect(map, message, widgetId) {
-  const sourceData1 = getSourceData(map, message.layer_id);
+  const sourceData1 = getInputData(map, message);
   const sourceData2 = getSourceData(map, message.layer_id_2);
   
   // For now, intersect first features of each collection
@@ -249,8 +239,8 @@ function executeTurfIntersect(map, message, widgetId) {
     features: []
   };
   
-  if (message.result_layer_id) {
-    addResultToMap(map, result, message.result_layer_id, message.layer_style);
+  if (message.source_id) {
+    addResultSource(map, result, message.source_id);
   }
   
   if (message.send_to_r) {
@@ -260,7 +250,7 @@ function executeTurfIntersect(map, message, widgetId) {
 
 // Difference operation
 function executeTurfDifference(map, message, widgetId) {
-  const sourceData1 = getSourceData(map, message.layer_id);
+  const sourceData1 = getInputData(map, message);
   const sourceData2 = getSourceData(map, message.layer_id_2);
   
   let feature1 = sourceData1.type === "FeatureCollection" ? 
@@ -278,8 +268,8 @@ function executeTurfDifference(map, message, widgetId) {
     features: []
   };
   
-  if (message.result_layer_id) {
-    addResultToMap(map, result, message.result_layer_id, message.layer_style);
+  if (message.source_id) {
+    addResultSource(map, result, message.source_id);
   }
   
   if (message.send_to_r) {
@@ -289,9 +279,9 @@ function executeTurfDifference(map, message, widgetId) {
 
 // Convex hull operation
 function executeTurfConvexHull(map, message, widgetId) {
-  const sourceData = getSourceData(map, message.layer_id);
+  const inputData = getInputData(map, message);
   
-  const hull = turf.convex(sourceData);
+  const hull = turf.convex(inputData);
   
   const result = hull ? {
     type: "FeatureCollection",
@@ -301,8 +291,8 @@ function executeTurfConvexHull(map, message, widgetId) {
     features: []
   };
   
-  if (message.result_layer_id) {
-    addResultToMap(map, result, message.result_layer_id, message.layer_style);
+  if (message.source_id) {
+    addResultSource(map, result, message.source_id);
   }
   
   if (message.send_to_r) {
@@ -312,9 +302,9 @@ function executeTurfConvexHull(map, message, widgetId) {
 
 // Concave hull operation
 function executeTurfConcaveHull(map, message, widgetId) {
-  const sourceData = getSourceData(map, message.layer_id);
+  const inputData = getInputData(map, message);
   
-  const hull = turf.concave(sourceData, {
+  const hull = turf.concave(inputData, {
     maxEdge: message.max_edge || Infinity,
     units: message.units || "kilometers"
   });
@@ -327,8 +317,8 @@ function executeTurfConcaveHull(map, message, widgetId) {
     features: []
   };
   
-  if (message.result_layer_id) {
-    addResultToMap(map, result, message.result_layer_id, message.layer_style);
+  if (message.source_id) {
+    addResultSource(map, result, message.source_id);
   }
   
   if (message.send_to_r) {
@@ -341,17 +331,17 @@ function executeTurfConcaveHull(map, message, widgetId) {
 
 // Voronoi operation
 function executeTurfVoronoi(map, message, widgetId) {
-  const sourceData = getSourceData(map, message.layer_id);
+  const inputData = getInputData(map, message);
   
   const options = {};
   if (message.bbox) {
     options.bbox = message.bbox;
   }
   
-  const voronoi = turf.voronoi(sourceData, options);
+  const voronoi = turf.voronoi(inputData, options);
   
-  if (message.result_layer_id && voronoi) {
-    addResultToMap(map, voronoi, message.result_layer_id, message.layer_style);
+  if (message.source_id && voronoi) {
+    addResultSource(map, voronoi, message.source_id);
   }
   
   if (message.send_to_r) {
@@ -363,13 +353,29 @@ function executeTurfVoronoi(map, message, widgetId) {
 
 // Distance operation
 function executeTurfDistance(map, message, widgetId) {
-  const sourceData1 = getSourceData(map, message.layer_id);
-  const sourceData2 = getSourceData(map, message.layer_id_2);
+  let feature1, feature2;
   
-  let feature1 = sourceData1.type === "FeatureCollection" ? 
-    sourceData1.features[0] : sourceData1;
-  let feature2 = sourceData2.type === "FeatureCollection" ? 
-    sourceData2.features[0] : sourceData2;
+  // Get first feature
+  if (message.coordinates) {
+    feature1 = turf.point(message.coordinates);
+  } else if (message.data) {
+    const sourceData1 = JSON.parse(message.data);
+    feature1 = sourceData1.type === "FeatureCollection" ? 
+      sourceData1.features[0] : sourceData1;
+  } else if (message.layer_id) {
+    const sourceData1 = getSourceData(map, message.layer_id);
+    feature1 = sourceData1.type === "FeatureCollection" ? 
+      sourceData1.features[0] : sourceData1;
+  }
+  
+  // Get second feature
+  if (message.coordinates_2) {
+    feature2 = turf.point(message.coordinates_2);
+  } else if (message.layer_id_2) {
+    const sourceData2 = getSourceData(map, message.layer_id_2);
+    feature2 = sourceData2.type === "FeatureCollection" ? 
+      sourceData2.features[0] : sourceData2;
+  }
   
   const distance = turf.distance(feature1, feature2, {
     units: message.units || "kilometers"
@@ -384,9 +390,9 @@ function executeTurfDistance(map, message, widgetId) {
 
 // Area operation
 function executeTurfArea(map, message, widgetId) {
-  const sourceData = getSourceData(map, message.layer_id);
+  const inputData = getInputData(map, message);
   
-  const area = turf.area(sourceData);
+  const area = turf.area(inputData);
   
   if (message.send_to_r) {
     sendResultToR(widgetId, "area", area, {
@@ -397,17 +403,17 @@ function executeTurfArea(map, message, widgetId) {
 
 // Centroid operation
 function executeTurfCentroid(map, message, widgetId) {
-  const sourceData = getSourceData(map, message.layer_id);
+  const inputData = getInputData(map, message);
   
-  const centroid = turf.centroid(sourceData);
+  const centroid = turf.centroid(inputData);
   
   const result = {
     type: "FeatureCollection",
     features: [centroid]
   };
   
-  if (message.result_layer_id) {
-    addResultToMap(map, result, message.result_layer_id, message.layer_style);
+  if (message.source_id) {
+    addResultSource(map, result, message.source_id);
   }
   
   if (message.send_to_r) {

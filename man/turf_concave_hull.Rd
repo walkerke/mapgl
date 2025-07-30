@@ -5,33 +5,37 @@
 \title{Create concave hull}
 \usage{
 turf_concave_hull(
-  proxy,
-  layer_id,
+  map,
+  layer_id = NULL,
+  data = NULL,
+  coordinates = NULL,
   max_edge = NULL,
   units = "kilometers",
-  result_layer_id = NULL,
-  layer_style = NULL,
+  source_id,
   send_to_r = FALSE
 )
 }
 \arguments{
-\item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
+\item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the layer containing the points.}
+\item{layer_id}{The ID of an existing layer containing points (mutually exclusive with data and coordinates).}
+
+\item{data}{An sf object containing points (mutually exclusive with layer_id and coordinates).}
+
+\item{coordinates}{A list/matrix of coordinate pairs [\link{lng,lat}, \link{lng,lat}, ...] for multiple points (mutually exclusive with layer_id and data).}
 
 \item{max_edge}{The maximum edge length for the concave hull. Default is Infinity (convex hull).}
 
 \item{units}{The units for max_edge. One of "meters", "kilometers", "miles", etc.}
 
-\item{result_layer_id}{Optional. The ID for the new layer to display the concave hull on the map.}
+\item{source_id}{The ID for the new source containing the concave hull. Required.}
 
-\item{layer_style}{Optional. A named list of paint properties for styling the result layer.}
-
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result.}
+\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
 }
 \value{
-The proxy object for method chaining.
+The map or proxy object for method chaining.
 }
 \description{
 This function creates a concave hull around a set of points.
+The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 }
