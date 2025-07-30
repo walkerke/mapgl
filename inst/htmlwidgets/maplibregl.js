@@ -1589,6 +1589,11 @@ HTMLWidgets.widget({
             }
           }
 
+          // Process turf operations for static maps
+          if (x.turf_operations) {
+            processTurfOperationsOnLoad(map, x.turf_operations, el.id);
+          }
+
           el.map = map;
         });
         el.map = map;
@@ -3615,6 +3620,9 @@ if (HTMLWidgets.shinyMode) {
           // Update the drawn features
           updateDrawnFeatures();
         }
+      } else if (message.type.startsWith("turf_")) {
+        // Delegate to shared turf operations module
+        handleTurfOperation(map, message, data.id);
       } else if (message.type === "add_features_to_draw") {
         var drawControl = widget.drawControl || widget.getDraw();
         if (drawControl) {

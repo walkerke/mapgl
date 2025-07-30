@@ -43,3 +43,13 @@ dependencies:
     src: "htmlwidgets/lib/mapbox-pmtiles"
     script:
       - "pmtiles-source-optimized-v2.js"
+  - name: turf
+    version: "7.2.0"
+    src: "htmlwidgets/lib/turf"
+    script:
+      - "turf.min.js"
+  - name: turf-operations
+    version: "1.0.0"
+    src: "htmlwidgets"
+    script:
+      - "turf-operations.js"
