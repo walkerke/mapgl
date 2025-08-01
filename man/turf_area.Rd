@@ -4,7 +4,7 @@
 \alias{turf_area}
 \title{Calculate area of geometries}
 \usage{
-turf_area(proxy, layer_id = NULL, data = NULL, send_to_r = TRUE)
+turf_area(proxy, layer_id = NULL, data = NULL, input_id = "turf_area_result")
 }
 \arguments{
 \item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
@@ -13,7 +13,7 @@ turf_area(proxy, layer_id = NULL, data = NULL, send_to_r = TRUE)
 
 \item{data}{An sf object containing polygons (mutually exclusive with layer_id).}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result. Default is TRUE.}
+\item{input_id}{Character string specifying the Shiny input ID suffix for storing the area result. Default is "turf_area_result". Result will be available as \code{input[[paste0(map_id, "_turf_", input_id)]]}.}
 }
 \value{
 The proxy object for method chaining.

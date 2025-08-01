@@ -12,7 +12,7 @@ turf_concave_hull(
   max_edge = NULL,
   units = "kilometers",
   source_id,
-  send_to_r = FALSE
+  input_id = NULL
 )
 }
 \arguments{
@@ -22,15 +22,15 @@ turf_concave_hull(
 
 \item{data}{An sf object containing points (mutually exclusive with layer_id and coordinates).}
 
-\item{coordinates}{A list/matrix of coordinate pairs [\link{lng,lat}, \link{lng,lat}, ...] for multiple points (mutually exclusive with layer_id and data).}
+\item{coordinates}{A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).}
 
-\item{max_edge}{The maximum edge length for the concave hull. Default is Infinity (convex hull).}
+\item{max_edge}{The maximum edge length for the concave hull. If NULL (default), an optimal value is calculated automatically.}
 
 \item{units}{The units for max_edge. One of "meters", "kilometers", "miles", etc.}
 
 \item{source_id}{The ID for the new source containing the concave hull. Required.}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
+\item{input_id}{Optional. Character string specifying the Shiny input ID suffix for storing results. If NULL (default), no input is registered. For proxy operations, the result will be available as \code{input[[paste0(map_id, "_turf_", input_id)]]}.}
 }
 \value{
 The map or proxy object for method chaining.
@@ -38,4 +38,9 @@ The map or proxy object for method chaining.
 \description{
 This function creates a concave hull around a set of points.
 The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
+}
+\details{
+If max_edge is too small and no concave hull can be computed, the function will automatically
+calculate an optimal max_edge value based on point distances. If that fails, it falls back
+to a convex hull to ensure a result is always returned.
 }

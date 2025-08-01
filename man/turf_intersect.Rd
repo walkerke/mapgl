@@ -7,10 +7,11 @@
 turf_intersect(
   map,
   layer_id = NULL,
-  layer_id_2,
+  layer_id_2 = NULL,
   data = NULL,
+  data_2 = NULL,
   source_id,
-  send_to_r = FALSE
+  input_id = NULL
 )
 }
 \arguments{
@@ -18,18 +19,20 @@ turf_intersect(
 
 \item{layer_id}{The ID of the first layer (mutually exclusive with data).}
 
-\item{layer_id_2}{The ID of the second layer.}
+\item{layer_id_2}{The ID of the second layer (mutually exclusive with data_2).}
 
 \item{data}{An sf object for the first geometry (mutually exclusive with layer_id).}
 
+\item{data_2}{An sf object for the second geometry (mutually exclusive with layer_id_2).}
+
 \item{source_id}{The ID for the new source containing the intersection result. Required.}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
+\item{input_id}{Optional. Character string specifying the Shiny input ID suffix for storing results. If NULL (default), no input is registered. For proxy operations, the result will be available as \code{input[[paste0(map_id, "_turf_", input_id)]]}.}
 }
 \value{
 The map or proxy object for method chaining.
 }
 \description{
-This function finds the intersection between geometries in two layers.
+This function finds the intersection between geometries in two layers or sf objects.
 The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 }

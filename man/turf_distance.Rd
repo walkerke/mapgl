@@ -12,7 +12,7 @@ turf_distance(
   coordinates = NULL,
   coordinates_2 = NULL,
   units = "kilometers",
-  send_to_r = TRUE
+  input_id = "turf_distance_result"
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ turf_distance(
 
 \item{units}{The units for the distance calculation. One of "meters", "kilometers", "miles", etc.}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result. Default is TRUE.}
+\item{input_id}{Character string specifying the Shiny input ID suffix for storing the distance result. Default is "turf_distance_result". Result will be available as \code{input[[paste0(map_id, "_turf_", input_id)]]}.}
 }
 \value{
 The proxy object for method chaining.

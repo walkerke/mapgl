@@ -12,7 +12,7 @@ turf_buffer(
   radius,
   units = "meters",
   source_id,
-  send_to_r = FALSE
+  input_id = NULL
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ turf_buffer(
 
 \item{source_id}{The ID for the new source containing the buffered results. Required.}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
+\item{input_id}{Optional. Character string specifying the Shiny input ID suffix for storing results. If NULL (default), no input is registered. For proxy operations, the result will be available as \code{input[[paste0(map_id, "_turf_", input_id)]]}.}
 }
 \value{
 The map or proxy object for method chaining.
@@ -49,13 +49,13 @@ source to the map, which can then be styled using add_fill_layer(), add_line_lay
 \dontrun{
 # Buffer existing layer
 map |>
-  turf_buffer(layer_id = "points", radius = 1000, units = "meters", 
+  turf_buffer(layer_id = "points", radius = 1000, units = "meters",
               source_id = "point_buffers") |>
   add_fill_layer(id = "buffers", source = "point_buffers", fill_color = "blue")
 
 # Buffer sf object
 map |>
-  turf_buffer(data = sf_points, radius = 0.5, units = "miles", 
+  turf_buffer(data = sf_points, radius = 0.5, units = "miles",
               source_id = "buffers") |>
   add_fill_layer(id = "buffer_layer", source = "buffers")
 

@@ -10,7 +10,7 @@ turf_centroid(
   data = NULL,
   coordinates = NULL,
   source_id,
-  send_to_r = FALSE
+  input_id = NULL
 )
 }
 \arguments{
@@ -20,11 +20,11 @@ turf_centroid(
 
 \item{data}{An sf object containing geometries (mutually exclusive with layer_id and coordinates).}
 
-\item{coordinates}{A list/matrix of coordinate pairs [\link{lng,lat}, \link{lng,lat}, ...] for multiple points (mutually exclusive with layer_id and data).}
+\item{coordinates}{A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).}
 
 \item{source_id}{The ID for the new source containing the centroid. Required.}
 
-\item{send_to_r}{Logical. If TRUE, sends the result back to R as input$<map_id>_turf_result (proxy only).}
+\item{input_id}{Optional. Character string specifying the Shiny input ID suffix for storing results. If NULL (default), no input is registered. For proxy operations, the result will be available as \code{input[[paste0(map_id, "_turf_", input_id)]]}.}
 }
 \value{
 The map or proxy object for method chaining.
