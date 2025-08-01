@@ -269,36 +269,52 @@ function executeTurfIntersect(map, message, widgetId) {
     throw new Error("Either data_2 or layer_id_2 must be provided for intersect operation");
   }
   
-  // Get first features from each dataset
-  let feature1 = sourceData1.type === "FeatureCollection" ? 
-    sourceData1.features[0] : sourceData1;
-  let feature2 = sourceData2.type === "FeatureCollection" ? 
-    sourceData2.features[0] : sourceData2;
+  // Extract features arrays
+  const features1 = sourceData1.type === "FeatureCollection" ? 
+    sourceData1.features : [sourceData1];
+  const features2 = sourceData2.type === "FeatureCollection" ? 
+    sourceData2.features : [sourceData2];
   
-  // Ensure we have valid features
-  if (!feature1 || !feature2) {
-    console.warn("Missing features for intersect operation", { feature1, feature2 });
-    const result = {
-      type: "FeatureCollection",
-      features: []
-    };
-    if (message.source_id) {
-      addResultSource(map, result, message.source_id);
+  // Collect all intersection results
+  const resultFeatures = [];
+  
+  features1.forEach((feature1, index1) => {
+    if (!feature1 || !feature1.geometry) {
+      console.warn(`Skipping invalid feature at index ${index1}`);
+      return;
     }
-    return;
-  }
+    
+    features2.forEach((feature2, index2) => {
+      if (!feature2 || !feature2.geometry) {
+        return;
+      }
+      
+      // Use booleanIntersects for efficient filtering
+      if (turf.booleanIntersects(feature1, feature2)) {
+        try {
+          // Use turf.intersect with options to preserve properties
+          const intersection = turf.intersect(
+            turf.featureCollection([feature1, feature2]),
+            { properties: feature1.properties }
+          );
+          
+          if (intersection) {
+            // Ensure properties are preserved (fallback if options didn't work)
+            if (!intersection.properties || Object.keys(intersection.properties).length === 0) {
+              intersection.properties = { ...feature1.properties };
+            }
+            resultFeatures.push(intersection);
+          }
+        } catch (error) {
+          console.error(`Error intersecting features ${index1} and ${index2}:`, error);
+        }
+      }
+    });
+  });
   
-  // Use turf.featureCollection to create proper FeatureCollection
-  const featureCollection = turf.featureCollection([feature1, feature2]);
-  
-  const intersection = turf.intersect(featureCollection);
-  
-  const result = intersection ? {
+  const result = {
     type: "FeatureCollection",
-    features: [intersection]
-  } : {
-    type: "FeatureCollection",
-    features: []
+    features: resultFeatures
   };
   
   if (message.source_id) {
@@ -330,35 +346,61 @@ function executeTurfDifference(map, message, widgetId) {
     throw new Error("Either data_2 or layer_id_2 must be provided for difference operation");
   }
   
-  let feature1 = sourceData1.type === "FeatureCollection" ? 
-    sourceData1.features[0] : sourceData1;
-  let feature2 = sourceData2.type === "FeatureCollection" ? 
-    sourceData2.features[0] : sourceData2;
+  // Extract features arrays
+  const features1 = sourceData1.type === "FeatureCollection" ? 
+    sourceData1.features : [sourceData1];
+  const features2 = sourceData2.type === "FeatureCollection" ? 
+    sourceData2.features : [sourceData2];
   
-  // Ensure we have valid features
-  if (!feature1 || !feature2) {
-    console.warn("Missing features for difference operation", { feature1, feature2 });
-    const result = {
-      type: "FeatureCollection",
-      features: []
-    };
-    if (message.source_id) {
-      addResultSource(map, result, message.source_id);
+  // Process each feature in features1
+  const resultFeatures = [];
+  
+  features1.forEach((feature1, index) => {
+    if (!feature1 || !feature1.geometry) {
+      console.warn(`Skipping invalid feature at index ${index}`);
+      return;
     }
-    return;
-  }
+    
+    // Start with the original feature
+    let currentFeature = feature1;
+    
+    // Apply difference with each feature from features2
+    for (const feature2 of features2) {
+      if (!feature2 || !feature2.geometry || !currentFeature) {
+        continue;
+      }
+      
+      // Use booleanIntersects for efficient filtering
+      if (turf.booleanIntersects(currentFeature, feature2)) {
+        try {
+          const diff = turf.difference(turf.featureCollection([currentFeature, feature2]));
+          
+          if (diff) {
+            // Preserve properties from the original feature
+            diff.properties = { ...feature1.properties };
+            currentFeature = diff;
+          } else {
+            // Feature was completely erased
+            currentFeature = null;
+            break;
+          }
+        } catch (error) {
+          console.error("Error in difference operation:", error);
+          // Keep the current feature unchanged on error
+        }
+      }
+      // If no intersection, currentFeature remains unchanged
+    }
+    
+    // Add the result if it still exists
+    if (currentFeature) {
+      resultFeatures.push(currentFeature);
+    }
+  });
   
-  // Use turf.featureCollection to create proper FeatureCollection
-  const featureCollection = turf.featureCollection([feature1, feature2]);
-  
-  const difference = turf.difference(featureCollection);
-  
-  const result = difference ? {
+  const result = {
     type: "FeatureCollection",
-    features: [difference]
-  } : {
-    type: "FeatureCollection",
-    features: []
+    features: resultFeatures
   };
   
   if (message.source_id) {
