@@ -9,7 +9,7 @@ turf_area(proxy, layer_id = NULL, data = NULL, input_id = "turf_area_result")
 \arguments{
 \item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the layer containing the polygons (mutually exclusive with data).}
+\item{layer_id}{The ID of the layer or source containing the polygons (mutually exclusive with data).}
 
 \item{data}{An sf object containing polygons (mutually exclusive with layer_id).}
 

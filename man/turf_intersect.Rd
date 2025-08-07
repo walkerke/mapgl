@@ -17,9 +17,9 @@ turf_intersect(
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the first layer (mutually exclusive with data).}
+\item{layer_id}{The ID of the first layer or source (mutually exclusive with data).}
 
-\item{layer_id_2}{The ID of the second layer (mutually exclusive with data_2).}
+\item{layer_id_2}{The ID of the second layer or source (mutually exclusive with data_2).}
 
 \item{data}{An sf object for the first geometry (mutually exclusive with layer_id).}
 

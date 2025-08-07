@@ -18,9 +18,9 @@ turf_distance(
 \arguments{
 \item{proxy}{A mapboxgl_proxy or maplibre_proxy object.}
 
-\item{layer_id}{The ID of the first layer (mutually exclusive with data and coordinates).}
+\item{layer_id}{The ID of the first layer or source (mutually exclusive with data and coordinates).}
 
-\item{layer_id_2}{The ID of the second layer (required if layer_id is used).}
+\item{layer_id_2}{The ID of the second layer or source (required if layer_id is used).}
 
 \item{data}{An sf object for the first geometry (mutually exclusive with layer_id and coordinates).}
 

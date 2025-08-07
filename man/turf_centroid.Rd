@@ -16,7 +16,7 @@ turf_centroid(
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of an existing layer containing geometries (mutually exclusive with data and coordinates).}
+\item{layer_id}{The ID of a layer or source containing geometries (mutually exclusive with data and coordinates).}
 
 \item{data}{An sf object containing geometries (mutually exclusive with layer_id and coordinates).}
 

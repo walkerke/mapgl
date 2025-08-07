@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@
     <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/turf.html">Client-side geospatial analysis with turf.js</a></li>
     <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -41,7 +42,21 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3.2" id="mapgl-032">mapgl 0.3.2<a class="anchor" aria-label="anchor" href="#mapgl-032"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.0" id="mapgl-040">mapgl 0.4.0<a class="anchor" aria-label="anchor" href="#mapgl-040"></a></h2>
+<ul><li>
+<strong>Client-side geospatial analysis with turf.js</strong>: Added comprehensive support for turf.js v7.2.0, enabling powerful spatial operations directly in the browser without server round-trips:
+<ul><li>Geometric operations: <code><a href="../reference/turf_buffer.html">turf_buffer()</a></code>, <code><a href="../reference/turf_union.html">turf_union()</a></code>, <code><a href="../reference/turf_intersect.html">turf_intersect()</a></code>, <code><a href="../reference/turf_difference.html">turf_difference()</a></code>
+</li>
+<li>Spatial filtering: <code><a href="../reference/turf_filter.html">turf_filter()</a></code> with predicates (intersects, within, contains, crosses, disjoint)</li>
+<li>Point analysis: <code><a href="../reference/turf_convex_hull.html">turf_convex_hull()</a></code>, <code><a href="../reference/turf_concave_hull.html">turf_concave_hull()</a></code>, <code><a href="../reference/turf_voronoi.html">turf_voronoi()</a></code>, <code><a href="../reference/turf_centroid.html">turf_centroid()</a></code>, <code><a href="../reference/turf_center_of_mass.html">turf_center_of_mass()</a></code>
+</li>
+<li>Measurement functions: <code><a href="../reference/turf_distance.html">turf_distance()</a></code> and <code><a href="../reference/turf_area.html">turf_area()</a></code> (Shiny-only)</li>
+<li>All functions support flexible inputs: existing map layers/sources or sf objects</li>
+<li>Full integration with Shiny proxy objects for real-time spatial analysis in web applications</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.2" id="mapgl-032">mapgl 0.3.2<a class="anchor" aria-label="anchor" href="#mapgl-032"></a></h2><p class="text-muted">CRAN release: 2025-07-17</p>
 <ul><li>Added download functionality to draw control with new <code>download_button</code> and <code>download_filename</code> parameters in <code><a href="../reference/add_draw_control.html">add_draw_control()</a></code>. Users can now export drawn features as GeoJSON files directly from the draw control interface.</li>
 <li>Enhanced geocoder control with MapTiler support for MapLibre maps. New <code>provider</code> parameter allows choosing between “osm” (OpenStreetMap/Nominatim) and “maptiler” providers, with <code>maptiler_api_key</code> parameter for MapTiler authentication.</li>
 </ul></div>

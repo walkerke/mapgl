@@ -18,13 +18,13 @@ turf_voronoi(
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of an existing layer containing points (mutually exclusive with data and coordinates).}
+\item{layer_id}{The ID of a layer or source containing points (mutually exclusive with data and coordinates).}
 
 \item{data}{An sf object containing points (mutually exclusive with layer_id and coordinates).}
 
 \item{coordinates}{A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).}
 
-\item{bbox}{Optional. Can be: (1) A numeric vector of length 4 \link{minX, minY, maxX, maxY}, (2) An sf object to extract bbox from, or (3) A layer_id string to extract bbox from and clip results to.}
+\item{bbox}{Optional. Can be: (1) A numeric vector of length 4, in format `c(xmin, ymin, xmax, ymax)', (2) An sf object to extract bbox from, or (3) A layer_id string to extract bbox from and clip results to.}
 
 \item{property}{Optional. Character string specifying a column name from the input points to transfer to the Voronoi polygons using spatial collection.}
 

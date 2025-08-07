@@ -9,7 +9,7 @@ turf_union(map, layer_id = NULL, data = NULL, source_id, input_id = NULL)
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of an existing layer to union (mutually exclusive with data).}
+\item{layer_id}{The ID of a layer or source to union (mutually exclusive with data).}
 
 \item{data}{An sf object to union (mutually exclusive with layer_id).}
 

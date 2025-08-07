@@ -36,6 +36,8 @@ navbar:
           href: articles/map-design.html
         - text: Using mapgl with Shiny
           href: articles/shiny.html
+        - text: Client-side geospatial analysis with turf.js
+          href: articles/turf.html
         - text: Building story maps with mapgl
           href: articles/story-maps.html
 
@@ -171,6 +173,22 @@ reference:
       - mapboxgl_compare_proxy
       - maplibre_compare_proxy
       - enable_shiny_hover
+
+  - title: "Turf.js Spatial Operations"
+    desc: "Client-side geospatial analysis functions using turf.js"
+    contents:
+      - turf_buffer
+      - turf_union
+      - turf_intersect
+      - turf_difference
+      - turf_filter
+      - turf_convex_hull
+      - turf_concave_hull
+      - turf_voronoi
+      - turf_centroid
+      - turf_center_of_mass
+      - turf_distance
+      - turf_area
 
   - title: "Advanced Features"
     desc: "Functions for advanced mapping features"

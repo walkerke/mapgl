@@ -18,7 +18,7 @@ turf_buffer(
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of an existing layer to buffer (mutually exclusive with data and coordinates).}
+\item{layer_id}{The ID of a layer or source to buffer (mutually exclusive with data and coordinates).}
 
 \item{data}{An sf object to buffer (mutually exclusive with layer_id and coordinates).}
 

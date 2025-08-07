@@ -16,7 +16,7 @@ turf_center_of_mass(
 \arguments{
 \item{map}{A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.}
 
-\item{layer_id}{The ID of an existing layer (mutually exclusive with data and coordinates).}
+\item{layer_id}{The ID of a layer or source (mutually exclusive with data and coordinates).}
 
 \item{data}{An sf object (mutually exclusive with layer_id and coordinates).}
 

@@ -10,7 +10,7 @@
 #' source to the map, which can then be styled using add_fill_layer(), add_line_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of an existing layer to buffer (mutually exclusive with data and coordinates).
+#' @param layer_id The ID of a layer or source to buffer (mutually exclusive with data and coordinates).
 #' @param data An sf object to buffer (mutually exclusive with layer_id and coordinates).
 #' @param coordinates A numeric vector of length 2 with lng/lat coordinates to create a point and buffer (mutually exclusive with layer_id and data).
 #' @param radius The buffer distance.
@@ -146,7 +146,7 @@ turf_buffer <- function(
 #' The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of an existing layer to union (mutually exclusive with data).
+#' @param layer_id The ID of a layer or source to union (mutually exclusive with data).
 #' @param data An sf object to union (mutually exclusive with layer_id).
 #' @param source_id The ID for the new source containing the union result. Required.
 #' @param input_id Optional. Character string specifying the Shiny input ID suffix for storing results. If NULL (default), no input is registered. For proxy operations, the result will be available as `input[[paste0(map_id, "_turf_", input_id)]]`.
@@ -243,8 +243,8 @@ turf_union <- function(
 #' The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of the first layer (mutually exclusive with data).
-#' @param layer_id_2 The ID of the second layer (mutually exclusive with data_2).
+#' @param layer_id The ID of the first layer or source (mutually exclusive with data).
+#' @param layer_id_2 The ID of the second layer or source (mutually exclusive with data_2).
 #' @param data An sf object for the first geometry (mutually exclusive with layer_id).
 #' @param data_2 An sf object for the second geometry (mutually exclusive with layer_id_2).
 #' @param source_id The ID for the new source containing the intersection result. Required.
@@ -370,8 +370,8 @@ turf_intersect <- function(
 #' The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of the first layer (geometry to subtract from, mutually exclusive with data).
-#' @param layer_id_2 The ID of the second layer (geometry to subtract, mutually exclusive with data_2).
+#' @param layer_id The ID of the first layer or source (geometry to subtract from, mutually exclusive with data).
+#' @param layer_id_2 The ID of the second layer or source (geometry to subtract, mutually exclusive with data_2).
 #' @param data An sf object for the first geometry (mutually exclusive with layer_id).
 #' @param data_2 An sf object for the second geometry (mutually exclusive with layer_id_2).
 #' @param source_id The ID for the new source containing the difference result. Required.
@@ -497,7 +497,7 @@ turf_difference <- function(
 #' The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of an existing layer containing points (mutually exclusive with data and coordinates).
+#' @param layer_id The ID of a layer or source containing points (mutually exclusive with data and coordinates).
 #' @param data An sf object containing points (mutually exclusive with layer_id and coordinates).
 #' @param coordinates A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).
 #' @param source_id The ID for the new source containing the convex hull. Required.
@@ -613,7 +613,7 @@ turf_convex_hull <- function(
 #' to a convex hull to ensure a result is always returned.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of an existing layer containing points (mutually exclusive with data and coordinates).
+#' @param layer_id The ID of a layer or source containing points (mutually exclusive with data and coordinates).
 #' @param data An sf object containing points (mutually exclusive with layer_id and coordinates).
 #' @param coordinates A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).
 #' @param max_edge The maximum edge length for the concave hull. If NULL (default), an optimal value is calculated automatically.
@@ -733,10 +733,10 @@ turf_concave_hull <- function(
 #' The result is added as a source to the map, which can then be styled using add_fill_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of an existing layer containing points (mutually exclusive with data and coordinates).
+#' @param layer_id The ID of a layer or source containing points (mutually exclusive with data and coordinates).
 #' @param data An sf object containing points (mutually exclusive with layer_id and coordinates).
 #' @param coordinates A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).
-#' @param bbox Optional. Can be: (1) A numeric vector of length 4 [minX, minY, maxX, maxY], (2) An sf object to extract bbox from, or (3) A layer_id string to extract bbox from and clip results to.
+#' @param bbox Optional. Can be: (1) A numeric vector of length 4, in format `c(xmin, ymin, xmax, ymax)', (2) An sf object to extract bbox from, or (3) A layer_id string to extract bbox from and clip results to.
 #' @param property Optional. Character string specifying a column name from the input points to transfer to the Voronoi polygons using spatial collection.
 #' @param source_id The ID for the new source containing the Voronoi diagram. Required.
 #' @param input_id Optional. Character string specifying the Shiny input ID suffix for storing results. If NULL (default), no input is registered. For proxy operations, the result will be available as `input[[paste0(map_id, "_turf_", input_id)]]`.
@@ -882,8 +882,8 @@ turf_voronoi <- function(
 #' Note: This function only works with proxy objects as it returns a numeric value to R.
 #'
 #' @param proxy A mapboxgl_proxy or maplibre_proxy object.
-#' @param layer_id The ID of the first layer (mutually exclusive with data and coordinates).
-#' @param layer_id_2 The ID of the second layer (required if layer_id is used).
+#' @param layer_id The ID of the first layer or source (mutually exclusive with data and coordinates).
+#' @param layer_id_2 The ID of the second layer or source (required if layer_id is used).
 #' @param data An sf object for the first geometry (mutually exclusive with layer_id and coordinates).
 #' @param coordinates A numeric vector of length 2 with lng/lat coordinates for the first point (mutually exclusive with layer_id and data).
 #' @param coordinates_2 A numeric vector of length 2 with lng/lat coordinates for the second point (required if coordinates is used).
@@ -979,7 +979,7 @@ turf_distance <- function(
 #' Note: This function only works with proxy objects as it returns a numeric value to R.
 #'
 #' @param proxy A mapboxgl_proxy or maplibre_proxy object.
-#' @param layer_id The ID of the layer containing the polygons (mutually exclusive with data).
+#' @param layer_id The ID of the layer or source containing the polygons (mutually exclusive with data).
 #' @param data An sf object containing polygons (mutually exclusive with layer_id).
 #' @param input_id Character string specifying the Shiny input ID suffix for storing the area result. Default is "turf_area_result". Result will be available as `input[[paste0(map_id, "_turf_", input_id)]]`.
 #'
@@ -1042,7 +1042,7 @@ turf_area <- function(
 #' The result is added as a source to the map, which can then be styled using add_circle_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of an existing layer containing geometries (mutually exclusive with data and coordinates).
+#' @param layer_id The ID of a layer or source containing geometries (mutually exclusive with data and coordinates).
 #' @param data An sf object containing geometries (mutually exclusive with layer_id and coordinates).
 #' @param coordinates A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).
 #' @param source_id The ID for the new source containing the centroid. Required.
@@ -1164,7 +1164,7 @@ turf_centroid <- function(
 #' The result is added as a source to the map, which can then be styled using add_circle_layer(), etc.
 #'
 #' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
-#' @param layer_id The ID of an existing layer (mutually exclusive with data and coordinates).
+#' @param layer_id The ID of a layer or source (mutually exclusive with data and coordinates).
 #' @param data An sf object (mutually exclusive with layer_id and coordinates).
 #' @param coordinates A list of coordinate pairs list(c(lng,lat), c(lng,lat), ...) for multiple points (mutually exclusive with layer_id and data).
 #' @param source_id The ID for the new source containing the center of mass points. Required.
@@ -1274,5 +1274,144 @@ turf_center_of_mass <- function(
 
   stop(
     "turf_center_of_mass can only be used with mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy objects."
+  )
+}
+
+#' Spatial filter features by predicate
+#'
+#' This function filters features from the first layer based on their spatial relationship
+#' with features in the second layer using various spatial predicates.
+#'
+#' @param map A mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy object.
+#' @param layer_id The ID of the layer or source to filter (mutually exclusive with data).
+#' @param filter_layer_id The ID of the layer or source to filter against (mutually exclusive with filter_data).
+#' @param data An sf object containing features to filter (mutually exclusive with layer_id).
+#' @param filter_data An sf object containing the filter geometry (mutually exclusive with filter_layer_id).
+#' @param predicate The spatial relationship to test. One of: "intersects", "within", "contains", "crosses", "disjoint".
+#' @param source_id The ID for the new source containing the filtered results. Required.
+#' @param input_id Optional. Character string specifying the Shiny input ID suffix for storing results. If NULL (default), no input is registered. For proxy operations, the result will be available as `input[[paste0(map_id, "_turf_", input_id)]]`.
+#'
+#' @return The map or proxy object for method chaining.
+#' @export
+turf_filter <- function(
+  map,
+  layer_id = NULL,
+  filter_layer_id = NULL,
+  data = NULL,
+  filter_data = NULL,
+  predicate = c("intersects", "within", "contains", "crosses", "disjoint"),
+  source_id,
+  input_id = NULL
+) {
+  # Validate inputs
+  input_count <- sum(!is.null(layer_id), !is.null(data))
+  if (input_count != 1) {
+    stop(
+      "Exactly one of layer_id or data must be provided for the features to filter."
+    )
+  }
+
+  # Validate filter inputs
+  filter_count <- sum(!is.null(filter_layer_id), !is.null(filter_data))
+  if (filter_count != 1) {
+    stop(
+      "Exactly one of filter_layer_id or filter_data must be provided for the filter geometry."
+    )
+  }
+
+  if (missing(source_id)) {
+    stop("source_id is required.")
+  }
+
+  # Validate predicate
+  predicate <- match.arg(predicate)
+
+  # Convert sf data to GeoJSON if provided
+  geojson_data <- NULL
+  if (!is.null(data)) {
+    if (!inherits(data, "sf")) {
+      stop("data must be an sf object.")
+    }
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+  }
+
+  # Convert sf filter_data to GeoJSON if provided
+  geojson_filter_data <- NULL
+  if (!is.null(filter_data)) {
+    if (!inherits(filter_data, "sf")) {
+      stop("filter_data must be an sf object.")
+    }
+    geojson_filter_data <- geojsonsf::sf_geojson(sf::st_transform(
+      filter_data,
+      crs = 4326
+    ))
+  }
+
+  # Handle proxy objects (Shiny)
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+      "mapboxgl-proxy"
+    } else {
+      "maplibre-proxy"
+    }
+
+    message <- list(
+      type = "turf_filter",
+      predicate = predicate,
+      source_id = source_id
+    )
+
+    # Only add non-NULL parameters to avoid serialization issues
+    if (!is.null(layer_id)) message$layer_id <- layer_id
+    if (!is.null(filter_layer_id)) message$filter_layer_id <- filter_layer_id
+    if (!is.null(geojson_data)) message$data <- geojson_data
+    if (!is.null(geojson_filter_data))
+      message$filter_data <- geojson_filter_data
+    if (!is.null(input_id)) message$input_id <- input_id
+
+    map$session$sendCustomMessage(
+      proxy_class,
+      list(
+        id = map$id,
+        message = message
+      )
+    )
+
+    return(map)
+  }
+
+  # Handle static map objects
+  if (any(inherits(map, "mapboxgl"), inherits(map, "maplibregl"))) {
+    # Add empty source immediately so layers can reference it
+    if (!is.null(source_id)) {
+      empty_source <- list(
+        id = source_id,
+        type = "geojson",
+        data = list(type = "FeatureCollection", features = list()),
+        generateId = TRUE
+      )
+      map$x$sources <- c(map$x$sources, list(empty_source))
+    }
+
+    # Add turf operation to be executed later
+    if (is.null(map$x$turf_operations)) {
+      map$x$turf_operations <- list()
+    }
+
+    map$x$turf_operations[[length(map$x$turf_operations) + 1]] <- list(
+      type = "turf_filter",
+      layer_id = layer_id,
+      filter_layer_id = filter_layer_id,
+      data = geojson_data,
+      filter_data = geojson_filter_data,
+      predicate = predicate,
+      source_id = source_id
+    )
+
+    return(map)
+  }
+
+  stop(
+    "turf_filter can only be used with mapboxgl, maplibre, mapboxgl_proxy, or maplibre_proxy objects."
   )
 }
