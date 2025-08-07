@@ -1,3 +1,13 @@
+# mapgl 0.4.0
+
+* **Client-side geospatial analysis with turf.js**: Added comprehensive support for turf.js v7.2.0, enabling powerful spatial operations directly in the browser without server round-trips:
+  - Geometric operations: `turf_buffer()`, `turf_union()`, `turf_intersect()`, `turf_difference()`
+  - Spatial filtering: `turf_filter()` with predicates (intersects, within, contains, crosses, disjoint)
+  - Point analysis: `turf_convex_hull()`, `turf_concave_hull()`, `turf_voronoi()`, `turf_centroid()`, `turf_center_of_mass()`
+  - Measurement functions: `turf_distance()` and `turf_area()` (Shiny-only)
+  - All functions support flexible inputs: existing map layers/sources or sf objects
+  - Full integration with Shiny proxy objects for real-time spatial analysis in web applications
+
 # mapgl 0.3.2
 
 * Added download functionality to draw control with new `download_button` and `download_filename` parameters in `add_draw_control()`. Users can now export drawn features as GeoJSON files directly from the draw control interface.

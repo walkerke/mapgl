@@ -9,6 +9,7 @@
 <url><loc>https://walker-data.com/mapgl/articles/map-design.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/articles/shiny.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/articles/story-maps.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/articles/turf.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/authors.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/index.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/news/index.html</loc></url>
@@ -111,5 +112,17 @@
 <url><loc>https://walker-data.com/mapgl/reference/story_map.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/story_maplibre.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/story_section.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_area.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_buffer.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_center_of_mass.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_centroid.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_concave_hull.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_convex_hull.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_difference.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_distance.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_filter.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_intersect.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_union.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_voronoi.html</loc></url>
 </urlset>
 

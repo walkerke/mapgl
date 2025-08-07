@@ -24,6 +24,8 @@ Read through these vignettes to learn how to use the package:
 
 -   [Using __mapgl__ with Shiny](https://walker-data.com/mapgl/articles/shiny.html)
 
+-   [Client-side geospatial analysis with turf.js](https://walker-data.com/mapgl/articles/turf.html)
+
 -   [Building story maps with __mapgl__](https://walker-data.com/mapgl/articles/story-maps.html)
 
 ## Recommended training and how to learn more

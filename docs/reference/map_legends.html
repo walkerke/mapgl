@@ -9,7 +9,7 @@ to customize appearance and clear_legend() to remove legends."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,6 +25,7 @@ to customize appearance and clear_legend() to remove legends."><meta property="o
     <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/turf.html">Client-side geospatial analysis with turf.js</a></li>
     <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -39,7 +40,7 @@ to customize appearance and clear_legend() to remove legends."><meta property="o
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Add legends to Mapbox GL and MapLibre GL maps</h1>
-      <small class="dont-index">Source: <a href="https://github.com/walkerke/mapgl/blob/HEAD/R/legends.R" class="external-link"><code>R/legends.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/walkerke/mapgl/blob/HEAD/R/legends.R" class="external-link"><code>R/legends.R</code></a>, <a href="https://github.com/walkerke/mapgl/blob/HEAD/R/legends_compare.R" class="external-link"><code>R/legends_compare.R</code></a></small>
       <div class="d-none name"><code>map_legends.Rd</code></div>
     </div>
 
@@ -68,7 +69,8 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  margin_right <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_bottom <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_left <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  style <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  style <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  target <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">add_categorical_legend</span><span class="op">(</span></span>
@@ -106,6 +108,52 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  margin_bottom <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_left <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  style <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'mapboxgl_compare'</span></span>
+<span><span class="fu">add_legend</span><span class="op">(</span></span>
+<span>  <span class="va">map</span>,</span>
+<span>  <span class="va">legend_title</span>,</span>
+<span>  <span class="va">values</span>,</span>
+<span>  <span class="va">colors</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span>, <span class="st">"categorical"</span><span class="op">)</span>,</span>
+<span>  circular_patches <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  patch_shape <span class="op">=</span> <span class="st">"square"</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"top-left"</span>,</span>
+<span>  sizes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  add <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  unique_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  layer_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_top <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_right <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_bottom <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_left <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  style <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  target <span class="op">=</span> <span class="st">"compare"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'maplibre_compare'</span></span>
+<span><span class="fu">add_legend</span><span class="op">(</span></span>
+<span>  <span class="va">map</span>,</span>
+<span>  <span class="va">legend_title</span>,</span>
+<span>  <span class="va">values</span>,</span>
+<span>  <span class="va">colors</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span>, <span class="st">"categorical"</span><span class="op">)</span>,</span>
+<span>  circular_patches <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  patch_shape <span class="op">=</span> <span class="st">"square"</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"top-left"</span>,</span>
+<span>  sizes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  add <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  unique_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  layer_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_top <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_right <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_bottom <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  margin_left <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  style <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  target <span class="op">=</span> <span class="st">"compare"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -183,6 +231,10 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 
 <dt id="arg-style">style<a class="anchor" aria-label="anchor" href="#arg-style"></a></dt>
 <dd><p>Optional styling options created by <code><a href="legend_style.html">legend_style()</a></code> or a list of style options.</p></dd>
+
+
+<dt id="arg-target">target<a class="anchor" aria-label="anchor" href="#arg-target"></a></dt>
+<dd><p>For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare".</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -312,6 +364,33 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span class="r-in"><span>    colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#4169E1"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    patch_shape <span class="op">=</span> <span class="va">custom_svg</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Compare view legends</span></span></span>
+<span class="r-in"><span><span class="va">compare_view</span> <span class="op">&lt;-</span> <span class="fu"><a href="compare.html">compare</a></span><span class="op">(</span><span class="va">map1</span>, <span class="va">map2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Add persistent legend (stays visible during swipe)</span></span></span>
+<span class="r-in"><span><span class="va">compare_view</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">add_legend</span><span class="op">(</span><span class="st">"Persistent Legend"</span>,</span></span>
+<span class="r-in"><span>            values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low"</span>, <span class="st">"High"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"blue"</span>, <span class="st">"red"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            type <span class="op">=</span> <span class="st">"categorical"</span>,</span></span>
+<span class="r-in"><span>            target <span class="op">=</span> <span class="st">"compare"</span>,</span></span>
+<span class="r-in"><span>            position <span class="op">=</span> <span class="st">"top-left"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Add legends to specific maps</span></span></span>
+<span class="r-in"><span><span class="va">compare_view</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">add_legend</span><span class="op">(</span><span class="st">"Left Map"</span>,</span></span>
+<span class="r-in"><span>            values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"green"</span>, <span class="st">"orange"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            type <span class="op">=</span> <span class="st">"categorical"</span>,</span></span>
+<span class="r-in"><span>            target <span class="op">=</span> <span class="st">"before"</span>,</span></span>
+<span class="r-in"><span>            position <span class="op">=</span> <span class="st">"bottom-left"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">add_legend</span><span class="op">(</span><span class="st">"Right Map"</span>,</span></span>
+<span class="r-in"><span>            values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"purple"</span>, <span class="st">"yellow"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            type <span class="op">=</span> <span class="st">"categorical"</span>,</span></span>
+<span class="r-in"><span>            target <span class="op">=</span> <span class="st">"after"</span>,</span></span>
+<span class="r-in"><span>            position <span class="op">=</span> <span class="st">"bottom-right"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
