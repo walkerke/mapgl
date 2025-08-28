@@ -4,7 +4,15 @@
 \alias{add_pmtiles_source}
 \title{Add a PMTiles source to a Mapbox GL or Maplibre GL map}
 \usage{
-add_pmtiles_source(map, id, url, ...)
+add_pmtiles_source(
+  map,
+  id,
+  url,
+  spatial_type = "vector",
+  maxzoom = 22,
+  tilesize = 256,
+  ...
+)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
@@ -12,6 +20,12 @@ add_pmtiles_source(map, id, url, ...)
 \item{id}{A unique ID for the source.}
 
 \item{url}{A URL pointing to the PMTiles archive.}
+
+\item{spatial_type}{The spatial data type for MapLibre maps. Either "vector" or "raster".}
+
+\item{maxzoom}{Only used when spatial_type is "raster". The maximum zoom level for the PMTiles source. Defaults to 22.}
+
+\item{tilesize}{Only used when spatial_type is "raster". The size of the tiles in the PMTiles source. Defaults to 256.}
 
 \item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }

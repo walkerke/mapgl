@@ -539,6 +539,9 @@ add_video_source <- function(map, id, urls, coordinates) {
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param url A URL pointing to the PMTiles archive.
+#' @param spatial_type The spatial data type for MapLibre maps. Either "vector" or "raster".
+#' @param maxzoom Only used when spatial_type is "raster". The maximum zoom level for the PMTiles source. Defaults to 22.
+#' @param tilesize Only used when spatial_type is "raster". The size of the tiles in the PMTiles source. Defaults to 256.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
@@ -572,7 +575,7 @@ add_video_source <- function(map, id, urls, coordinates) {
 #'     )
 #'   )
 #' }
-add_pmtiles_source <- function(map, id, url, ...) {
+add_pmtiles_source <- function(map, id, url, spatial_type = "vector", maxzoom = 22, tilesize = 256, ...) {
   # Detect if we're using Mapbox GL JS or MapLibre GL JS
   is_mapbox <- inherits(map, "mapboxgl") ||
     inherits(map, "mapboxgl_proxy") ||
@@ -587,12 +590,24 @@ add_pmtiles_source <- function(map, id, url, ...) {
       url = url # No pmtiles:// prefix needed
     )
   } else {
-    # For MapLibre GL JS, use the native pmtiles:// protocol
-    source <- list(
-      id = id,
-      type = "vector", # Standard vector source
-      url = paste0("pmtiles://", url) # Add pmtiles:// prefix
-    )
+    # For MapLibre GL JS
+    if (spatial_type == "raster") {
+      # For raster PMTiles
+      source <- list(
+        id = id,
+        type = "raster",
+        url = paste0("pmtiles://", url),
+        tileSize = tilesize, # Required for raster sources
+        maxzoom = maxzoom # Required for raster sources
+      )
+    } else {
+      # For vector PMTiles
+      source <- list(
+        id = id,
+        type = "vector",
+        url = paste0("pmtiles://", url)
+      )
+    }
   }
 
   # Add any additional arguments
