@@ -26,7 +26,10 @@ add_layers_control(
 
 \item{position}{The position of the control on the map (one of "top-left", "top-right", "bottom-left", "bottom-right").}
 
-\item{layers}{A vector of layer IDs to be included in the control. If NULL, all layers will be included.}
+\item{layers}{Either a character vector of layer IDs to include in the control,
+a named list/vector where names are labels and values are layer IDs,
+or a named list where values can be vectors to group multiple layers together.
+If NULL, all layers will be included.}
 
 \item{collapsible}{Whether the control should be collapsible.}
 
@@ -84,12 +87,26 @@ maplibre() |>
         active_color = "#4a90e2"
     )
 
-# Avoid collision with other controls using margin parameters
+# With custom labels
 maplibre() |>
-    add_navigation_control(position = "top-right") |>
+    add_fill_layer(id = "tract-fill", source = tr) |>
+    add_line_layer(id = "tract-line", source = tr) |>
     add_layers_control(
-        position = "top-right",
-        margin_top = 110
+        layers = list(
+            "Census Tracts" = "tract-fill",
+            "Tract Borders" = "tract-line"
+        )
+    )
+
+# Group multiple layers together
+maplibre() |>
+    add_fill_layer(id = "county-fill", source = counties) |>
+    add_line_layer(id = "county-outline", source = counties) |>
+    add_layers_control(
+        layers = list(
+            "Counties" = c("county-fill", "county-outline"),
+            "Roads" = "roads-layer"
+        )
     )
 }
 }

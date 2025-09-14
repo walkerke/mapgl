@@ -159,7 +159,10 @@ add_navigation_control <- function(
 #'
 #' @param map A map object.
 #' @param position The position of the control on the map (one of "top-left", "top-right", "bottom-left", "bottom-right").
-#' @param layers A vector of layer IDs to be included in the control. If NULL, all layers will be included.
+#' @param layers Either a character vector of layer IDs to include in the control,
+#'   a named list/vector where names are labels and values are layer IDs,
+#'   or a named list where values can be vectors to group multiple layers together.
+#'   If NULL, all layers will be included.
 #' @param collapsible Whether the control should be collapsible.
 #' @param use_icon Whether to use a stacked layers icon instead of the "Layers" text when collapsed. Only applies when collapsible = TRUE.
 #' @param background_color The background color for the layers control; this will be the
@@ -201,12 +204,26 @@ add_navigation_control <- function(
 #'         active_color = "#4a90e2"
 #'     )
 #'
-#' # Avoid collision with other controls using margin parameters
+#' # With custom labels
 #' maplibre() |>
-#'     add_navigation_control(position = "top-right") |>
+#'     add_fill_layer(id = "tract-fill", source = tr) |>
+#'     add_line_layer(id = "tract-line", source = tr) |>
 #'     add_layers_control(
-#'         position = "top-right",
-#'         margin_top = 110
+#'         layers = list(
+#'             "Census Tracts" = "tract-fill",
+#'             "Tract Borders" = "tract-line"
+#'         )
+#'     )
+#'
+#' # Group multiple layers together
+#' maplibre() |>
+#'     add_fill_layer(id = "county-fill", source = counties) |>
+#'     add_line_layer(id = "county-outline", source = counties) |>
+#'     add_layers_control(
+#'         layers = list(
+#'             "Counties" = c("county-fill", "county-outline"),
+#'             "Roads" = "roads-layer"
+#'         )
 #'     )
 #' }
 add_layers_control <- function(
@@ -227,11 +244,44 @@ add_layers_control <- function(
 ) {
   control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
 
-  # If layers is NULL, get the layers added by the user
+  # Process layers parameter
+  layers_config <- NULL
   if (is.null(layers)) {
+    # If layers is NULL, get the layers added by the user
     layers <- unlist(lapply(map$x$layers, function(y) {
       y$id
     }))
+  } else if (is.list(layers) && !is.null(names(layers))) {
+    # Named list: process labels and groups
+    layers_config <- list()
+    for (label in names(layers)) {
+      layer_ids <- layers[[label]]
+      if (length(layer_ids) > 1) {
+        # Multiple IDs - this is a group
+        layers_config[[length(layers_config) + 1]] <- list(
+          label = label,
+          ids = as.character(layer_ids),
+          type = "group"
+        )
+      } else {
+        # Single ID - regular layer with label
+        layers_config[[length(layers_config) + 1]] <- list(
+          label = label,
+          ids = as.character(layer_ids),
+          type = "single"
+        )
+      }
+    }
+  } else if (!is.null(names(layers))) {
+    # Named vector: just labels, no groups
+    layers_config <- list()
+    for (i in seq_along(layers)) {
+      layers_config[[i]] <- list(
+        label = names(layers)[i],
+        ids = as.character(layers[i]),
+        type = "single"
+      )
+    }
   }
 
   # Create custom colors object if any color options were specified
@@ -273,6 +323,7 @@ add_layers_control <- function(
             control_id = control_id,
             position = position,
             layers = layers,
+            layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
             custom_colors = custom_colors,
@@ -300,6 +351,7 @@ add_layers_control <- function(
             control_id = control_id,
             position = position,
             layers = layers,
+            layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
             custom_colors = custom_colors,
@@ -316,6 +368,7 @@ add_layers_control <- function(
       control_id = control_id,
       position = position,
       layers = layers,
+      layers_config = layers_config,
       collapsible = collapsible,
       use_icon = use_icon,
       custom_colors = custom_colors,
