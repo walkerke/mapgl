@@ -67,6 +67,7 @@ options(tigris_use_cache = TRUE)
 
 rds <- roads("TX", "Tarrant")
 tr <- tracts("TX", "Tarrant", cb = TRUE)
+cty <- counties("TX", cb = TRUE)
 
 maplibre() |>
     fit_bounds(rds) |>
@@ -99,9 +100,19 @@ maplibre() |>
     )
 
 # Group multiple layers together
-maplibre() |>
-    add_fill_layer(id = "county-fill", source = counties) |>
-    add_line_layer(id = "county-outline", source = counties) |>
+maplibre(bounds = cty) |>
+    add_fill_layer(id = "county-fill", source = cty, fill_opacity = 0.3) |>
+    add_line_layer(
+        id = "county-outline",
+        source = cty,
+        line_color = "yellow",
+        line_width = 3
+    ) |>
+    add_line_layer(
+        id = "roads-layer",
+        source = rds,
+        line_color = "blue"
+    ) |>
     add_layers_control(
         layers = list(
             "Counties" = c("county-fill", "county-outline"),

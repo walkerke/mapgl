@@ -184,6 +184,7 @@ add_navigation_control <- function(
 #'
 #' rds <- roads("TX", "Tarrant")
 #' tr <- tracts("TX", "Tarrant", cb = TRUE)
+#' cty <- counties("TX", cb = TRUE)
 #'
 #' maplibre() |>
 #'     fit_bounds(rds) |>
@@ -216,9 +217,19 @@ add_navigation_control <- function(
 #'     )
 #'
 #' # Group multiple layers together
-#' maplibre() |>
-#'     add_fill_layer(id = "county-fill", source = counties) |>
-#'     add_line_layer(id = "county-outline", source = counties) |>
+#' maplibre(bounds = cty) |>
+#'     add_fill_layer(id = "county-fill", source = cty, fill_opacity = 0.3) |>
+#'     add_line_layer(
+#'         id = "county-outline",
+#'         source = cty,
+#'         line_color = "yellow",
+#'         line_width = 3
+#'     ) |>
+#'     add_line_layer(
+#'         id = "roads-layer",
+#'         source = rds,
+#'         line_color = "blue"
+#'     ) |>
 #'     add_layers_control(
 #'         layers = list(
 #'             "Counties" = c("county-fill", "county-outline"),
@@ -1057,20 +1068,23 @@ add_geocoder_control <- function(
   ...
 ) {
   # Set default provider for MapLibre if NULL
-  if (is.null(provider) && 
-      (inherits(map, "maplibre") || 
-       inherits(map, "maplibre_proxy") || 
-       inherits(map, "maplibre_compare_proxy"))) {
+  if (
+    is.null(provider) &&
+      (inherits(map, "maplibre") ||
+        inherits(map, "maplibre_proxy") ||
+        inherits(map, "maplibre_compare_proxy"))
+  ) {
     provider <- "osm"
   }
-  
+
   # Validate provider parameter for MapLibre
   if (!is.null(provider) && !provider %in% c("osm", "maptiler")) {
     rlang::abort("Provider must be either 'osm' or 'maptiler'")
   }
-  
+
   # Check that provider parameter is only used with MapLibre
-  if (!is.null(provider) &&
+  if (
+    !is.null(provider) &&
       (inherits(map, "mapboxgl") ||
         inherits(map, "mapboxgl_proxy") ||
         inherits(map, "mapboxgl_compare_proxy"))
