@@ -844,8 +844,9 @@ HTMLWidgets.widget({
                 forwardGeocode: async (config) => {
                   const features = [];
                   try {
-                    const request = `https://nominatim.openstreetmap.org/search?q=${config.query
-                      }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                    const request = `https://nominatim.openstreetmap.org/search?q=${
+                      config.query
+                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
                     const response = await fetch(request);
                     const geojson = await response.json();
                     for (const feature of geojson.features) {
@@ -895,7 +896,7 @@ HTMLWidgets.widget({
               x.geocoder_control.position || "top-right",
             );
             map.controls.push(geocoder);
-
+            
             // Apply CSS fix for MapTiler geocoder to prevent cutoff
             if (provider === "maptiler") {
               setTimeout(() => {
@@ -906,7 +907,7 @@ HTMLWidgets.widget({
                 }
               }, 100);
             }
-
+            
             // Handle geocoder results in Shiny mode
             if (HTMLWidgets.shinyMode) {
               if (provider === "maptiler") {
@@ -1076,36 +1077,36 @@ HTMLWidgets.widget({
               setTimeout(() => {
                 // Find the Draw control button group
                 const drawButtons = map.getContainer().querySelector('.maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)');
-
+                
                 if (drawButtons) {
                   // Create download button
                   const downloadBtn = document.createElement('button');
                   downloadBtn.className = 'mapbox-gl-draw_download';
                   downloadBtn.title = 'Download drawn features as GeoJSON';
-
+                  
                   // Add SVG download icon
                   downloadBtn.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                       <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                     </svg>
                   `;
-
+                  
                   downloadBtn.addEventListener('click', () => {
                     // Get all drawn features
                     const data = draw.getAll();
-
+                    
                     if (data.features.length === 0) {
                       alert('No features to download. Please draw something first!');
                       return;
                     }
-
+                    
                     // Convert to string with nice formatting
                     const dataStr = JSON.stringify(data, null, 2);
-
+                    
                     // Create blob and download
                     const blob = new Blob([dataStr], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
-
+                    
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = `${x.draw_control.download_filename}.geojson`;
@@ -1114,7 +1115,7 @@ HTMLWidgets.widget({
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                   });
-
+                  
                   // Append to the Draw control button group
                   drawButtons.appendChild(downloadBtn);
                 }
@@ -1556,12 +1557,12 @@ HTMLWidgets.widget({
                 if (x.hover_events.features) {
                   const options = x.hover_events.layer_id
                     ? {
-                      layers: Array.isArray(x.hover_events.layer_id)
-                        ? x.hover_events.layer_id
-                        : x.hover_events.layer_id
-                          .split(",")
-                          .map((id) => id.trim()),
-                    }
+                        layers: Array.isArray(x.hover_events.layer_id)
+                          ? x.hover_events.layer_id
+                          : x.hover_events.layer_id
+                              .split(",")
+                              .map((id) => id.trim()),
+                      }
                     : undefined;
                   const features = map.queryRenderedFeatures(e.point, options);
 
@@ -3558,36 +3559,36 @@ if (HTMLWidgets.shinyMode) {
           setTimeout(() => {
             // Find the Draw control button group
             const drawButtons = map.getContainer().querySelector('.maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)');
-
+            
             if (drawButtons) {
               // Create download button
               const downloadBtn = document.createElement('button');
               downloadBtn.className = 'mapbox-gl-draw_download';
               downloadBtn.title = 'Download drawn features as GeoJSON';
-
+              
               // Add SVG download icon
               downloadBtn.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                   <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                 </svg>
               `;
-
+              
               downloadBtn.addEventListener('click', () => {
                 // Get all drawn features
                 const data = drawControl.getAll();
-
+                
                 if (data.features.length === 0) {
                   alert('No features to download. Please draw something first!');
                   return;
                 }
-
+                
                 // Convert to string with nice formatting
                 const dataStr = JSON.stringify(data, null, 2);
-
+                
                 // Create blob and download
                 const blob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
-
+                
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `${message.download_filename || 'drawn-features'}.geojson`;
@@ -3596,7 +3597,7 @@ if (HTMLWidgets.shinyMode) {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
               });
-
+              
               // Append to the Draw control button group
               drawButtons.appendChild(downloadBtn);
             }
@@ -3827,8 +3828,9 @@ if (HTMLWidgets.shinyMode) {
             forwardGeocode: async (config) => {
               const features = [];
               try {
-                const request = `https://nominatim.openstreetmap.org/search?q=${config.query
-                  }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                const request = `https://nominatim.openstreetmap.org/search?q=${
+                  config.query
+                }&format=geojson&polygon_geojson=1&addressdetails=1`;
                 const response = await fetch(request);
                 const geojson = await response.json();
                 for (const feature of geojson.features) {
@@ -3868,7 +3870,7 @@ if (HTMLWidgets.shinyMode) {
 
         map.addControl(geocoder, message.options.position);
         map.controls.push(geocoder);
-
+        
         // Apply CSS fix for MapTiler geocoder to prevent cutoff
         if (provider === "maptiler") {
           setTimeout(() => {
