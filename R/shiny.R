@@ -438,53 +438,54 @@ set_style <- function(
 
 #' Move a layer to a different z-position
 #'
-#' This function allows a layer to be moved to a different z-position in an existing Mapbox GL or Maplibre GL map using a proxy object.
+#' This function allows a layer to be moved to a different z-position in a Mapbox GL or Maplibre GL map. For initial maps, the operation is queued and executed during map initialization. For proxy objects, the operation is executed immediately.
 #'
-#' @param proxy A proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
+#' @param map A map object created by `mapboxgl` or `maplibre`, or a proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
 #' @param layer_id The ID of the layer to move.
 #' @param before_id The ID of an existing layer to insert the new layer before. __Important__: this means that the layer will appear _immediately behind_ the layer defined in `before_id`. If omitted, the layer will be appended to the end of the layers array and appear above all other layers.
 #'
-#' @return The updated proxy object.
+#' @return The updated map or proxy object.
 #' @export
-move_layer <- function(proxy, layer_id, before_id = NULL) {
-  if (
-    !any(
-      inherits(proxy, "mapboxgl_proxy"),
-      inherits(proxy, "maplibre_proxy")
-    )
-  ) {
-    stop("Invalid proxy object")
-  }
+move_layer <- function(map, layer_id, before_id = NULL) {
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+    # Proxy handling (existing logic)
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      message <- list(
+        type = "move_layer",
+        layer = layer_id,
+        before = before_id,
+        map = map$map_side
+      )
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
+      message <- list(
+        type = "move_layer",
+        layer = layer_id,
+        before = before_id
+      )
+    }
 
-  if (
-    inherits(proxy, "mapboxgl_compare_proxy") ||
-      inherits(proxy, "maplibre_compare_proxy")
-  ) {
-    # For compare proxies
-    proxy_class <- if (inherits(proxy, "mapboxgl_compare_proxy"))
-      "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
-    message <- list(
-      type = "move_layer",
-      layer = layer_id,
-      before = before_id,
-      map = proxy$map_side
+    map$session$sendCustomMessage(
+      proxy_class,
+      list(id = map$id, message = message)
     )
   } else {
-    # For regular proxies
-    proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) "mapboxgl-proxy" else
-      "maplibre-proxy"
-    message <- list(
-      type = "move_layer",
+    # For non-proxy maps, store the move operation for initialization
+    if (is.null(map$x$moveLayer)) map$x$moveLayer <- list()
+    map$x$moveLayer[[length(map$x$moveLayer) + 1]] <- list(
       layer = layer_id,
       before = before_id
     )
   }
-
-  proxy$session$sendCustomMessage(
-    proxy_class,
-    list(id = proxy$id, message = message)
-  )
-  proxy
+  return(map)
 }
 
 #' Set tooltip on a map layer
