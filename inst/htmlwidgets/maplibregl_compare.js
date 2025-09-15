@@ -3034,6 +3034,19 @@ HTMLWidgets.widget({
                     if (mapData.setZoom) {
                         map.setZoom(mapData.setZoom);
                     }
+
+                    // Apply moveLayer operations if provided
+                    if (mapData.moveLayer) {
+                        mapData.moveLayer.forEach(function (moveOp) {
+                            if (map.getLayer(moveOp.layer)) {
+                                if (moveOp.before) {
+                                    map.moveLayer(moveOp.layer, moveOp.before);
+                                } else {
+                                    map.moveLayer(moveOp.layer);
+                                }
+                            }
+                        });
+                    }
                     if (mapData.jumpTo) {
                         map.jumpTo(mapData.jumpTo);
                     }
