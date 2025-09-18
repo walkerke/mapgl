@@ -144,6 +144,7 @@ HTMLWidgets.widget({
 
         return {
             renderValue: function (x) {
+
                 if (typeof maplibregl === "undefined") {
                     console.error("Maplibre GL JS is not loaded.");
                     return;
