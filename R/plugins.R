@@ -285,7 +285,7 @@ compare.maplibre <- function(
     )
     
     # Add class to enable S3 methods
-    class(widget) <- c("maplibre_compare", class(widget))
+    class(widget) <- c("maplibregl_compare", class(widget))
     widget
 }
 
