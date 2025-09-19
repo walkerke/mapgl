@@ -393,12 +393,42 @@ add_layers_control <- function(
   return(map)
 }
 
-#' Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app
+#' Clear controls from a Mapbox GL or Maplibre GL map in a Shiny app
+#'
+#' This function allows you to remove specific controls or all controls from a map.
+#' You can target controls by their type names, which correspond to the function
+#' names used to add them (e.g., "navigation" for controls added with `add_navigation_control`).
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
+#' @param controls A character vector of control types to remove, or NULL to remove all controls.
+#'   Control types include: "navigation", "draw", "fullscreen", "scale", "geolocate",
+#'   "geocoder", "layers", "reset", "globe_minimap", or custom control IDs.
+#'   If NULL (default), all controls will be removed.
 #'
-#' @return The modified map object with all controls removed.
+#' @return The modified map object with specified controls removed.
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(shiny)
+#' library(mapgl)
+#'
+#' # Clear all controls
+#' maplibre_proxy("map") |>
+#'   clear_controls()
+#'
+#' # Clear specific controls
+#' maplibre_proxy("map") |>
+#'   clear_controls("navigation")
+#'
+#' # Clear multiple controls
+#' maplibre_proxy("map") |>
+#'   clear_controls(c("draw", "navigation"))
+#'
+#' # Clear a custom control by ID
+#' maplibre_proxy("map") |>
+#'   clear_controls("my_custom_control")
+#' }
 clear_controls <- function(map, controls = NULL) {
   if (
     inherits(map, "mapboxgl_proxy") ||
@@ -1433,6 +1463,8 @@ add_globe_control <- function(map, position = "top-right") {
 #' @param position The position of the control. Can be one of "top-left", "top-right",
 #'   "bottom-left", or "bottom-right". Default is "top-right".
 #' @param className Optional CSS class name for the control container.
+#' @param id Optional unique identifier for the control. If not provided, defaults to "custom".
+#'   This ID can be used with `clear_controls()` to selectively remove this specific control.
 #' @param ... Additional arguments passed to the JavaScript side.
 #'
 #' @return The modified map object with the custom control added.
@@ -1442,6 +1474,7 @@ add_globe_control <- function(map, position = "top-right") {
 #' \dontrun{
 #' library(mapgl)
 #'
+#' # Basic custom control
 #' maplibre() |>
 #'   add_control(
 #'     html = "<div style='background-color: white; padding: 5px;'>
@@ -1450,6 +1483,20 @@ add_globe_control <- function(map, position = "top-right") {
 #'             </div>",
 #'     position = "top-left"
 #'   )
+#'
+#' # Custom control with specific ID for selective removal
+#' maplibre() |>
+#'   add_control(
+#'     html = "<div style='background: blue; color: white; padding: 10px;'>
+#'              My Control
+#'             </div>",
+#'     position = "top-right",
+#'     id = "my_custom_control"
+#'   )
+#'
+#' # Later, remove only this specific control
+#' maplibre_proxy("map") |>
+#'   clear_controls("my_custom_control")
 #' }
 add_control <- function(
   map,
