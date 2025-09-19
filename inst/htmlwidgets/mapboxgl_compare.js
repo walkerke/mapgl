@@ -1260,14 +1260,17 @@ HTMLWidgets.widget({
                   });
                 }
 
-                draw = new MapboxDraw(drawOptions);
-                map.addControl(draw, message.position);
+                const drawControl = new MapboxDraw(drawOptions);
+                map.addControl(drawControl, message.position);
 
                 // Initialize controls array if it doesn't exist
                 if (!map.controls) {
                   map.controls = [];
                 }
-                map.controls.push({ type: "draw", control: draw });
+                map.controls.push({ type: "draw", control: drawControl });
+
+                // Store draw control on map for feature click detection
+                map._mapgl_draw = drawControl;
 
                 // Add lasso icon CSS for freehand mode
                 if (message.freehand) {
@@ -1361,7 +1364,7 @@ HTMLWidgets.widget({
                       
                       downloadBtn.addEventListener('click', () => {
                         // Get all drawn features
-                        const data = draw.getAll();
+                        const data = map._mapgl_draw ? map._mapgl_draw.getAll() : null;
                         
                         if (data.features.length === 0) {
                           alert('No features to download. Please draw something first!');
@@ -1390,8 +1393,8 @@ HTMLWidgets.widget({
                   }, 100);
                 }
               } else if (message.type === "get_drawn_features") {
-                if (draw) {
-                  const features = draw ? draw.getAll() : null;
+                if (map._mapgl_draw) {
+                  const features = map._mapgl_draw ? map._mapgl_draw.getAll() : null;
                   Shiny.setInputValue(
                     data.id + "_drawn_features",
                     JSON.stringify(features),
@@ -1404,14 +1407,14 @@ HTMLWidgets.widget({
                 }
               } else if (message.type === "clear_drawn_features") {
                 if (draw) {
-                  draw.deleteAll();
+                  if (map._mapgl_draw) map._mapgl_draw.deleteAll();
                   // Update the drawn features
                   updateDrawnFeatures();
                 }
               } else if (message.type === "add_features_to_draw") {
                 if (draw) {
                   if (message.data.clear_existing) {
-                    draw.deleteAll();
+                    if (map._mapgl_draw) map._mapgl_draw.deleteAll();
                   }
                   addSourceFeaturesToDraw(draw, message.data.source, map);
                   // Update the drawn features
@@ -1943,6 +1946,44 @@ HTMLWidgets.widget({
 
           // Send clicked point coordinates to Shiny
           map.on("click", function (e) {
+            // Check if this map's draw control is active and in a drawing mode
+            let isDrawing = false;
+            if (map._mapgl_draw && map._mapgl_draw.getMode) {
+              const mode = map._mapgl_draw.getMode();
+              isDrawing = mode === 'draw_point' ||
+                         mode === 'draw_line_string' ||
+                         mode === 'draw_polygon';
+            }
+
+            // Only process feature clicks if not actively drawing
+            if (!isDrawing) {
+              const features = map.queryRenderedFeatures(e.point);
+              // Filter out draw layers
+              const nonDrawFeatures = features.filter(feature =>
+                !feature.layer.id.includes('gl-draw') &&
+                !feature.source.includes('gl-draw')
+              );
+
+              if (nonDrawFeatures.length > 0) {
+                const feature = nonDrawFeatures[0];
+                if (window.Shiny) {
+                  Shiny.setInputValue(parentId + "_" + mapType + "_feature_click", {
+                    id: feature.id,
+                    properties: feature.properties,
+                    layer: feature.layer.id,
+                    lng: e.lngLat.lng,
+                    lat: e.lngLat.lat,
+                    time: Date.now(),
+                  });
+                }
+              } else {
+                if (window.Shiny) {
+                  Shiny.setInputValue(parentId + "_" + mapType + "_feature_click", null);
+                }
+              }
+            }
+
+            // Always send regular click event
             if (window.Shiny) {
               Shiny.setInputValue(parentId + "_" + mapType + "_click", {
                 lng: e.lngLat.lng,
@@ -2693,20 +2734,23 @@ HTMLWidgets.widget({
                 });
               }
 
-              draw = new MapboxDraw(drawOptions);
-              map.addControl(draw, mapData.draw_control.position);
-              map.controls.push(draw);
+              const drawControl = new MapboxDraw(drawOptions);
+              map.addControl(drawControl, mapData.draw_control.position);
+              map.controls.push({ type: "draw", control: drawControl });
+
+              // Store draw control on map for feature click detection
+              map._mapgl_draw = drawControl;
 
               // Add initial features if provided
               if (mapData.draw_control.source) {
-                addSourceFeaturesToDraw(draw, mapData.draw_control.source, map);
+                addSourceFeaturesToDraw(drawControl, mapData.draw_control.source, map);
               }
 
               // Process any queued features
               if (mapData.draw_features_queue) {
                 mapData.draw_features_queue.forEach(function (data) {
                   if (data.clear_existing) {
-                    draw.deleteAll();
+                    if (map._mapgl_draw) map._mapgl_draw.deleteAll();
                   }
                   addSourceFeaturesToDraw(draw, data.source, map);
                 });
@@ -2773,7 +2817,7 @@ HTMLWidgets.widget({
                     
                     downloadBtn.addEventListener('click', () => {
                       // Get all drawn features
-                      const data = draw.getAll();
+                      const data = map._mapgl_draw ? map._mapgl_draw.getAll() : null;
                       
                       if (data.features.length === 0) {
                         alert('No features to download. Please draw something first!');
@@ -2805,8 +2849,8 @@ HTMLWidgets.widget({
 
             // Helper function for updating drawn features
             function updateDrawnFeatures() {
-              if (HTMLWidgets.shinyMode && draw) {
-                const features = draw.getAll();
+              if (HTMLWidgets.shinyMode && map._mapgl_draw) {
+                const features = map._mapgl_draw ? map._mapgl_draw.getAll() : null;
                 Shiny.setInputValue(
                   el.id + "_drawn_features",
                   JSON.stringify(features),

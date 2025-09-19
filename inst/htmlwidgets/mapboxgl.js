@@ -1553,23 +1553,35 @@ HTMLWidgets.widget({
           // Add click event listener in shinyMode
           if (HTMLWidgets.shinyMode) {
             map.on("click", function (e) {
-              const features = map.queryRenderedFeatures(e.point);
-
-              if (features.length > 0) {
-                const feature = features[0];
-                Shiny.onInputChange(el.id + "_feature_click", {
-                  id: feature.id,
-                  properties: feature.properties,
-                  layer: feature.layer.id,
-                  lng: e.lngLat.lng,
-                  lat: e.lngLat.lat,
-                  time: new Date(),
-                });
-              } else {
-                Shiny.onInputChange(el.id + "_feature_click", null);
+              // Check if draw control is active and in a drawing mode
+              let isDrawing = false;
+              if (typeof draw !== 'undefined' && draw) {
+                const mode = draw.getMode();
+                isDrawing = mode === 'draw_point' ||
+                           mode === 'draw_line_string' ||
+                           mode === 'draw_polygon';
               }
 
-              // Event listener for the map
+              // Only process feature clicks if not actively drawing
+              if (!isDrawing) {
+                const features = map.queryRenderedFeatures(e.point);
+
+                if (features.length > 0) {
+                  const feature = features[0];
+                  Shiny.onInputChange(el.id + "_feature_click", {
+                    id: feature.id,
+                    properties: feature.properties,
+                    layer: feature.layer.id,
+                    lng: e.lngLat.lng,
+                    lat: e.lngLat.lat,
+                    time: new Date(),
+                  });
+                } else {
+                  Shiny.onInputChange(el.id + "_feature_click", null);
+                }
+              }
+
+              // Event listener for the map (always fire this)
               Shiny.onInputChange(el.id + "_click", {
                 lng: e.lngLat.lng,
                 lat: e.lngLat.lat,
