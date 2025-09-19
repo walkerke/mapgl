@@ -1480,6 +1480,7 @@ HTMLWidgets.widget({
                                         navBar.style.flexDirection = "row";
                                     }
                                 }
+                                map.controls.push({ type: "navigation", control: nav });
                             } else if (message.type === "add_reset_control") {
                                 const resetControl =
                                     document.createElement("button");
@@ -2421,6 +2422,34 @@ HTMLWidgets.widget({
                                         }
                                     });
                                 }
+                            } else if (message.type === "add_custom_control") {
+                                const controlOptions = message.options;
+                                const customControlContainer = document.createElement("div");
+
+                                if (controlOptions.className) {
+                                    customControlContainer.className = controlOptions.className;
+                                } else {
+                                    customControlContainer.className =
+                                        "maplibregl-ctrl maplibregl-ctrl-group";
+                                }
+
+                                customControlContainer.innerHTML = controlOptions.html;
+
+                                const customControl = {
+                                    onAdd: function () {
+                                        return customControlContainer;
+                                    },
+                                    onRemove: function () {
+                                        if (customControlContainer.parentNode) {
+                                            customControlContainer.parentNode.removeChild(
+                                                customControlContainer,
+                                            );
+                                        }
+                                    },
+                                };
+
+                                map.addControl(customControl, controlOptions.position || "top-right");
+                                map.controls.push({ type: message.control_id, control: customControl });
                             } else if (message.type === "query_rendered_features") {
                                 // Query rendered features
                                 let queryOptions = {};
@@ -2467,6 +2496,32 @@ HTMLWidgets.widget({
                                     data.id + "_queried_features",
                                     JSON.stringify(featureCollection)
                                 );
+                            } else if (message.type === "clear_controls") {
+                                // Handle clear_controls for compare widgets
+                                if (!message.controls || message.controls.length === 0) {
+                                    // Clear all controls
+                                    map.controls.forEach((controlObj) => {
+                                        if (controlObj.control) {
+                                            map.removeControl(controlObj.control);
+                                        }
+                                    });
+                                    map.controls = [];
+                                } else {
+                                    // Clear specific controls
+                                    const controlsToRemove = Array.isArray(message.controls)
+                                        ? message.controls
+                                        : [message.controls];
+
+                                    map.controls = map.controls.filter((controlObj) => {
+                                        if (controlsToRemove.includes(controlObj.type)) {
+                                            if (controlObj.control) {
+                                                map.removeControl(controlObj.control);
+                                            }
+                                            return false; // Remove from array
+                                        }
+                                        return true; // Keep in array
+                                    });
+                                }
                             }
                         },
                     );
@@ -3269,7 +3324,7 @@ HTMLWidgets.widget({
                             nav,
                             mapData.navigation_control.position,
                         );
-                        map.controls.push(nav);
+                        map.controls.push({ type: "navigation", control: nav });
                     }
 
                     // Add geolocate control if enabled

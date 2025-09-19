@@ -4,7 +4,7 @@
 \alias{clear_controls}
 \title{Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app}
 \usage{
-clear_controls(map)
+clear_controls(map, controls = NULL)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}

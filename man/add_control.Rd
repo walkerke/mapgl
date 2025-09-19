@@ -4,7 +4,14 @@
 \alias{add_control}
 \title{Add a custom control to a map}
 \usage{
-add_control(map, html, position = "top-right", className = NULL, ...)
+add_control(
+  map,
+  html,
+  position = "top-right",
+  className = NULL,
+  id = NULL,
+  ...
+)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}

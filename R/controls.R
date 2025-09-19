@@ -399,7 +399,7 @@ add_layers_control <- function(
 #'
 #' @return The modified map object with all controls removed.
 #' @export
-clear_controls <- function(map) {
+clear_controls <- function(map, controls = NULL) {
   if (
     inherits(map, "mapboxgl_proxy") ||
       inherits(map, "maplibre_proxy")
@@ -417,6 +417,7 @@ clear_controls <- function(map) {
           id = map$id,
           message = list(
             type = "clear_controls",
+            controls = controls,
             map = map$map_side
           )
         )
@@ -432,7 +433,10 @@ clear_controls <- function(map) {
         proxy_class,
         list(
           id = map$id,
-          message = list(type = "clear_controls")
+          message = list(
+            type = "clear_controls",
+            controls = controls
+          )
         )
       )
     }
@@ -1452,9 +1456,15 @@ add_control <- function(
   html,
   position = "top-right",
   className = NULL,
+  id = NULL,
   ...
 ) {
-  control_id <- paste0("custom-control-", as.hexmode(sample(1:1000000, 1)))
+  # Set control ID - user-provided or default to "custom"
+  control_id <- if (!is.null(id)) {
+    id
+  } else {
+    "custom"
+  }
 
   # Create options list
   control_options <- list(

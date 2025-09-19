@@ -2501,7 +2501,7 @@ if (HTMLWidgets.shinyMode) {
           visualizePitch: message.options.visualize_pitch,
         });
         map.addControl(nav, message.position);
-        map.controls.push(nav);
+        map.controls.push({ type: "navigation", control: nav });
 
         if (message.orientation === "horizontal") {
           const navBar = map
@@ -3209,26 +3209,65 @@ if (HTMLWidgets.shinyMode) {
         };
 
         map.addControl(customControl, controlOptions.position || "top-right");
-        map.controls.push(customControl);
+        map.controls.push({ type: message.control_id, control: customControl });
       } else if (message.type === "clear_controls") {
-        map.controls.forEach((control) => {
-          map.removeControl(control);
-        });
-        map.controls = [];
+        // If no specific controls specified, clear all
+        if (!message.controls || message.controls.length === 0) {
+          map.controls.forEach((controlObj) => {
+            if (controlObj.control) {
+              map.removeControl(controlObj.control);
+            }
+          });
+          map.controls = [];
 
-        const layersControl = document.querySelector(
-          `#${data.id} .layers-control`,
-        );
-        if (layersControl) {
-          layersControl.remove();
-        }
+          const layersControl = document.querySelector(
+            `#${data.id} .layers-control`,
+          );
+          if (layersControl) {
+            layersControl.remove();
+          }
 
-        // Remove globe minimap if it exists
-        const globeMinimap = document.querySelector(
-          ".mapboxgl-ctrl-globe-minimap",
-        );
-        if (globeMinimap) {
-          globeMinimap.remove();
+          // Remove globe minimap if it exists
+          const globeMinimap = document.querySelector(
+            ".mapboxgl-ctrl-globe-minimap",
+          );
+          if (globeMinimap) {
+            globeMinimap.remove();
+          }
+        } else {
+          // Clear specific controls
+          const controlsToRemove = Array.isArray(message.controls)
+            ? message.controls
+            : [message.controls];
+
+          map.controls = map.controls.filter((controlObj) => {
+            if (controlsToRemove.includes(controlObj.type)) {
+              if (controlObj.control) {
+                map.removeControl(controlObj.control);
+              }
+              return false; // Remove from array
+            }
+            return true; // Keep in array
+          });
+
+          // Handle special controls that aren't in the controls array
+          controlsToRemove.forEach((controlType) => {
+            if (controlType === "layers") {
+              const layersControl = document.querySelector(
+                `#${data.id} .layers-control`,
+              );
+              if (layersControl) {
+                layersControl.remove();
+              }
+            } else if (controlType === "globe_minimap") {
+              const globeMinimap = document.querySelector(
+                ".mapboxgl-ctrl-globe-minimap",
+              );
+              if (globeMinimap) {
+                globeMinimap.remove();
+              }
+            }
+          });
         }
       } else if (message.type === "move_layer") {
         if (map.getLayer(message.layer)) {

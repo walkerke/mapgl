@@ -1142,6 +1142,42 @@ HTMLWidgets.widget({
                     navBar.style.flexDirection = "row";
                   }
                 }
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "navigation", control: nav });
+              } else if (message.type === "add_custom_control") {
+                const controlOptions = message.options;
+                const customControlContainer = document.createElement("div");
+                customControlContainer.innerHTML = controlOptions.html;
+                customControlContainer.className = "mapboxgl-ctrl";
+                if (controlOptions.className) {
+                  customControlContainer.className += " " + controlOptions.className;
+                }
+
+                // Create the custom control object
+                const customControl = {
+                  onAdd: function(map) {
+                    return customControlContainer;
+                  },
+                  onRemove: function() {
+                    if (customControlContainer.parentNode) {
+                      customControlContainer.parentNode.removeChild(customControlContainer);
+                    }
+                  }
+                };
+
+                map.addControl(customControl, message.position);
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+
+                // Store control with proper type
+                map.controls.push({ type: message.control_id, control: customControl });
               } else if (message.type === "add_reset_control") {
                 const resetControl = document.createElement("button");
                 resetControl.className =
@@ -1188,17 +1224,22 @@ HTMLWidgets.widget({
                   map.easeTo(initialView);
                 };
 
-                map.addControl(
-                  {
-                    onAdd: function () {
-                      return resetContainer;
-                    },
-                    onRemove: function () {
-                      resetContainer.parentNode.removeChild(resetContainer);
-                    },
+                const resetControlObj = {
+                  onAdd: function () {
+                    return resetContainer;
                   },
-                  message.position,
-                );
+                  onRemove: function () {
+                    resetContainer.parentNode.removeChild(resetContainer);
+                  },
+                };
+
+                map.addControl(resetControlObj, message.position);
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "reset", control: resetControlObj });
               } else if (message.type === "add_draw_control") {
                 let drawOptions = message.options || {};
 
@@ -1221,7 +1262,12 @@ HTMLWidgets.widget({
 
                 draw = new MapboxDraw(drawOptions);
                 map.addControl(draw, message.position);
-                map.controls.push(draw);
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "draw", control: draw });
 
                 // Add lasso icon CSS for freehand mode
                 if (message.freehand) {
@@ -1428,12 +1474,24 @@ HTMLWidgets.widget({
                 const position = message.position || "top-right";
                 const fullscreen = new mapboxgl.FullscreenControl();
                 map.addControl(fullscreen, position);
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "fullscreen", control: fullscreen });
               } else if (message.type === "add_scale_control") {
                 const scaleControl = new mapboxgl.ScaleControl({
                   maxWidth: message.options.maxWidth,
                   unit: message.options.unit,
                 });
                 map.addControl(scaleControl, message.options.position);
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "scale", control: scaleControl });
               } else if (message.type === "add_geolocate_control") {
                 const geolocate = new mapboxgl.GeolocateControl({
                   positionOptions: message.options.positionOptions,
@@ -1476,6 +1534,12 @@ HTMLWidgets.widget({
                     }
                   });
                 }
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "geolocate", control: geolocate });
               } else if (message.type === "add_geocoder_control") {
                 const geocoderOptions = {
                   accessToken: mapboxgl.accessToken,
@@ -1492,7 +1556,12 @@ HTMLWidgets.widget({
                 const geocoder = new MapboxGeocoder(geocoderOptions);
 
                 map.addControl(geocoder, message.position || "top-right");
-                map.controls.push(geocoder);
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "geocoder", control: geocoder });
 
                 // Handle geocoder results in Shiny mode
                 geocoder.on("result", function (e) {
@@ -1627,6 +1696,12 @@ HTMLWidgets.widget({
                   };
                   layersControl.insertBefore(toggleButton, layersList);
                 }
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "layers", control: layersControl });
               } else if (message.type === "add_globe_minimap") {
                 // Add the globe minimap control
                 const minimap = new MapboxGlobeMinimap({
@@ -1642,6 +1717,12 @@ HTMLWidgets.widget({
                 });
 
                 map.addControl(minimap, message.position);
+
+                // Initialize controls array if it doesn't exist
+                if (!map.controls) {
+                  map.controls = [];
+                }
+                map.controls.push({ type: "globe_minimap", control: minimap });
               } else if (message.type === "set_rain") {
                 if (message.rain) {
                   map.setRain(message.rain);
@@ -1811,6 +1892,32 @@ HTMLWidgets.widget({
                   data.id + "_queried_features",
                   JSON.stringify(featureCollection)
                 );
+              } else if (message.type === "clear_controls") {
+                // Handle clear_controls for compare widgets
+                if (!message.controls || message.controls.length === 0) {
+                  // Clear all controls
+                  map.controls.forEach((controlObj) => {
+                    if (controlObj.control) {
+                      map.removeControl(controlObj.control);
+                    }
+                  });
+                  map.controls = [];
+                } else {
+                  // Clear specific controls
+                  const controlsToRemove = Array.isArray(message.controls)
+                    ? message.controls
+                    : [message.controls];
+
+                  map.controls = map.controls.filter((controlObj) => {
+                    if (controlsToRemove.includes(controlObj.type)) {
+                      if (controlObj.control) {
+                        map.removeControl(controlObj.control);
+                      }
+                      return false; // Remove from array
+                    }
+                    return true; // Keep in array
+                  });
+                }
               }
             },
           );
