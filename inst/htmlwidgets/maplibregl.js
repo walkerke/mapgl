@@ -318,6 +318,10 @@ HTMLWidgets.widget({
         map.controls = [];
 
         map.on("style.load", function () {
+          if (x.projection) {
+            map.setProjection({ type: x.projection });
+          }
+
           map.resize();
 
           if (HTMLWidgets.shinyMode) {

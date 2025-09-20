@@ -10,6 +10,7 @@ maplibre(
   zoom = 0,
   bearing = 0,
   pitch = 0,
+  projection = "globe",
   bounds = NULL,
   width = "100\%",
   height = NULL,
@@ -26,6 +27,8 @@ maplibre(
 \item{bearing}{The initial bearing (rotation) of the map, in degrees.}
 
 \item{pitch}{The initial pitch (tilt) of the map, in degrees.}
+
+\item{projection}{The map projection to use (e.g., "mercator", "globe").}
 
 \item{bounds}{An sf object or bounding box to fit the map to.}
 
