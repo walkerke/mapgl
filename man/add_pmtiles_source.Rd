@@ -4,7 +4,7 @@
 \alias{add_pmtiles_source}
 \title{Add a PMTiles source to a Mapbox GL or Maplibre GL map}
 \usage{
-add_pmtiles_source(map, id, url, ...)
+add_pmtiles_source(map, id, url, promote_id = NULL, ...)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
@@ -12,6 +12,8 @@ add_pmtiles_source(map, id, url, ...)
 \item{id}{A unique ID for the source.}
 
 \item{url}{A URL pointing to the PMTiles archive.}
+
+\item{promote_id}{An optional property name to use as the feature ID. This is required for hover effects.}
 
 \item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }

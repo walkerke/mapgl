@@ -539,6 +539,7 @@ add_video_source <- function(map, id, urls, coordinates) {
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param url A URL pointing to the PMTiles archive.
+#' @param promote_id An optional property name to use as the feature ID. This is required for hover effects.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
@@ -572,7 +573,7 @@ add_video_source <- function(map, id, urls, coordinates) {
 #'     )
 #'   )
 #' }
-add_pmtiles_source <- function(map, id, url, ...) {
+add_pmtiles_source <- function(map, id, url, promote_id = NULL, ...) {
   # Detect if we're using Mapbox GL JS or MapLibre GL JS
   is_mapbox <- inherits(map, "mapboxgl") ||
     inherits(map, "mapboxgl_proxy") ||
@@ -591,7 +592,8 @@ add_pmtiles_source <- function(map, id, url, ...) {
     source <- list(
       id = id,
       type = "vector", # Standard vector source
-      url = paste0("pmtiles://", url) # Add pmtiles:// prefix
+      url = paste0("pmtiles://", url), # Add pmtiles:// prefix,
+      promoteId = promote_id
     )
   }
 
