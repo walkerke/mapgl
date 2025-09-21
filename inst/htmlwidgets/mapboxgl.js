@@ -904,6 +904,22 @@ HTMLWidgets.widget({
               });
             }
 
+            // Add rectangle mode if enabled
+            if (x.draw_control.rectangle) {
+              if (!drawOptions.modes) {
+                drawOptions.modes = Object.assign({}, MapboxDraw.modes);
+              }
+              drawOptions.modes.draw_rectangle = MapboxDraw.modes.draw_rectangle;
+            }
+
+            // Add radius mode if enabled
+            if (x.draw_control.radius) {
+              if (!drawOptions.modes) {
+                drawOptions.modes = Object.assign({}, MapboxDraw.modes);
+              }
+              drawOptions.modes.draw_radius = MapboxDraw.modes.draw_radius;
+            }
+
             draw = new MapboxDraw(drawOptions);
             map.addControl(draw, x.draw_control.position);
             map.controls.push(draw);
@@ -930,6 +946,66 @@ HTMLWidgets.widget({
               }, 100);
             }
 
+            // Add rectangle icon CSS if rectangle mode is enabled
+            if (x.draw_control.rectangle) {
+              if (!document.querySelector("#mapgl-rectangle-styles")) {
+                const style = document.createElement("style");
+                style.id = "mapgl-rectangle-styles";
+                style.textContent = `
+                  .mapbox-gl-draw_rectangle {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    display: block;
+                    height: 30px;
+                    width: 30px;
+                    padding: 0;
+                    outline: none;
+                    background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Crect x="4" y="5" width="12" height="10" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
+                    background-repeat: no-repeat !important;
+                    background-position: center !important;
+                  }
+                  .mapbox-gl-draw_rectangle:hover {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                  .mapbox-gl-draw_rectangle.active {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                `;
+                document.head.appendChild(style);
+              }
+            }
+
+            // Add radius/circle icon CSS if radius mode is enabled
+            if (x.draw_control.radius) {
+              if (!document.querySelector("#mapgl-radius-styles")) {
+                const style = document.createElement("style");
+                style.id = "mapgl-radius-styles";
+                style.textContent = `
+                  .mapbox-gl-draw_radius {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    display: block;
+                    height: 30px;
+                    width: 30px;
+                    padding: 0;
+                    outline: none;
+                    background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="7" fill="none" stroke="%23000000" stroke-width="2"/%3E%3Ccircle cx="10" cy="10" r="1.5" fill="%23000000"/%3E%3C/svg%3E') !important;
+                    background-repeat: no-repeat !important;
+                    background-position: center !important;
+                  }
+                  .mapbox-gl-draw_radius:hover {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                  .mapbox-gl-draw_radius.active {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                `;
+                document.head.appendChild(style);
+              }
+            }
+
             // Add event listeners
             map.on("draw.create", updateDrawnFeatures);
             map.on("draw.delete", updateDrawnFeatures);
@@ -949,6 +1025,39 @@ HTMLWidgets.widget({
                 addSourceFeaturesToDraw(draw, data.source, map);
               });
             }
+
+            // Add custom mode buttons
+            setTimeout(() => {
+              const drawControlGroup = map.getContainer().querySelector(".mapboxgl-ctrl-group");
+
+              if (x.draw_control.rectangle && drawControlGroup) {
+                const rectangleBtn = document.createElement("button");
+                rectangleBtn.className = "mapbox-gl-draw_rectangle";
+                rectangleBtn.title = "Rectangle tool";
+                rectangleBtn.type = "button";
+                rectangleBtn.onclick = function() {
+                  draw.changeMode('draw_rectangle');
+                  // Update active state
+                  drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                  rectangleBtn.classList.add('active');
+                };
+                drawControlGroup.appendChild(rectangleBtn);
+              }
+
+              if (x.draw_control.radius && drawControlGroup) {
+                const radiusBtn = document.createElement("button");
+                radiusBtn.className = "mapbox-gl-draw_radius";
+                radiusBtn.title = "Radius/Circle tool";
+                radiusBtn.type = "button";
+                radiusBtn.onclick = function() {
+                  draw.changeMode('draw_radius');
+                  // Update active state
+                  drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                  radiusBtn.classList.add('active');
+                };
+                drawControlGroup.appendChild(radiusBtn);
+              }
+            }, 100);
 
             // Apply orientation styling
             if (x.draw_control.orientation === "horizontal") {

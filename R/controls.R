@@ -559,6 +559,8 @@ add_scale_control <- function(
 #'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
 #' @param freehand Logical, whether to enable freehand drawing mode. Default is FALSE.
 #' @param simplify_freehand Logical, whether to apply simplification to freehand drawings. Default is FALSE.
+#' @param rectangle Logical, whether to enable rectangle drawing mode. Default is FALSE.
+#' @param radius Logical, whether to enable radius/circle drawing mode. Default is FALSE.
 #' @param orientation A string specifying the orientation of the draw control.
 #'        Either "vertical" (default) or "horizontal".
 #' @param source A character string specifying a source ID to add to the draw control.
@@ -606,12 +608,30 @@ add_scale_control <- function(
 #'         vertex_radius = 7,
 #'         line_width = 3
 #'     )
+#'
+#' # Enable rectangle drawing mode
+#' mapboxgl() |>
+#'     add_draw_control(rectangle = TRUE)
+#'
+#' # Enable radius/circle drawing mode
+#' mapboxgl() |>
+#'     add_draw_control(radius = TRUE)
+#'
+#' # Enable multiple drawing modes
+#' mapboxgl() |>
+#'     add_draw_control(
+#'         freehand = TRUE,
+#'         rectangle = TRUE,
+#'         radius = TRUE
+#'     )
 #' }
 add_draw_control <- function(
   map,
   position = "top-left",
   freehand = FALSE,
   simplify_freehand = FALSE,
+  rectangle = FALSE,
+  radius = FALSE,
   orientation = "vertical",
   source = NULL,
   point_color = "#3bb2d0",
@@ -647,6 +667,8 @@ add_draw_control <- function(
     position = position,
     freehand = freehand,
     simplify_freehand = simplify_freehand,
+    rectangle = rectangle,
+    radius = radius,
     orientation = orientation,
     options = options,
     source = draw_source,
@@ -684,6 +706,8 @@ add_draw_control <- function(
             options = options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
+            rectangle = rectangle,
+            radius = radius,
             orientation = orientation,
             source = draw_source,
             download_button = download_button,
@@ -718,6 +742,8 @@ add_draw_control <- function(
             options = options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
+            rectangle = rectangle,
+            radius = radius,
             orientation = orientation,
             source = draw_source,
             download_button = download_button,

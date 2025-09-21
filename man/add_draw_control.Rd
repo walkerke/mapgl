@@ -9,6 +9,8 @@ add_draw_control(
   position = "top-left",
   freehand = FALSE,
   simplify_freehand = FALSE,
+  rectangle = FALSE,
+  radius = FALSE,
   orientation = "vertical",
   source = NULL,
   point_color = "#3bb2d0",
@@ -32,6 +34,10 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 \item{freehand}{Logical, whether to enable freehand drawing mode. Default is FALSE.}
 
 \item{simplify_freehand}{Logical, whether to apply simplification to freehand drawings. Default is FALSE.}
+
+\item{rectangle}{Logical, whether to enable rectangle drawing mode. Default is FALSE.}
+
+\item{radius}{Logical, whether to enable radius/circle drawing mode. Default is FALSE.}
 
 \item{orientation}{A string specifying the orientation of the draw control.
 Either "vertical" (default) or "horizontal".}
@@ -93,6 +99,22 @@ mapboxgl() |>
         active_color = "#ff00ff",
         vertex_radius = 7,
         line_width = 3
+    )
+
+# Enable rectangle drawing mode
+mapboxgl() |>
+    add_draw_control(rectangle = TRUE)
+
+# Enable radius/circle drawing mode
+mapboxgl() |>
+    add_draw_control(radius = TRUE)
+
+# Enable multiple drawing modes
+mapboxgl() |>
+    add_draw_control(
+        freehand = TRUE,
+        rectangle = TRUE,
+        radius = TRUE
     )
 }
 }
