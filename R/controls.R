@@ -559,6 +559,8 @@ add_scale_control <- function(
 #'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
 #' @param freehand Logical, whether to enable freehand drawing mode. Default is FALSE.
 #' @param simplify_freehand Logical, whether to apply simplification to freehand drawings. Default is FALSE.
+#' @param rectangle Logical, whether to enable rectangle drawing mode. Default is FALSE.
+#' @param radius Logical, whether to enable radius/circle drawing mode. Default is FALSE.
 #' @param orientation A string specifying the orientation of the draw control.
 #'        Either "vertical" (default) or "horizontal".
 #' @param source A character string specifying a source ID to add to the draw control.
@@ -572,6 +574,8 @@ add_scale_control <- function(
 #' @param line_width Width of lines in pixels. Default is 2.
 #' @param download_button Logical, whether to add a download button to export drawn features as GeoJSON. Default is FALSE.
 #' @param download_filename Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".
+#' @param show_measurements Logical, whether to show live measurements while drawing. Default is FALSE.
+#' @param measurement_units Units for measurements. Either "metric", "imperial", or "both". Default is "both".
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -606,12 +610,30 @@ add_scale_control <- function(
 #'         vertex_radius = 7,
 #'         line_width = 3
 #'     )
+#'
+#' # Enable rectangle drawing mode
+#' mapboxgl() |>
+#'     add_draw_control(rectangle = TRUE)
+#'
+#' # Enable radius/circle drawing mode
+#' mapboxgl() |>
+#'     add_draw_control(radius = TRUE)
+#'
+#' # Enable multiple drawing modes
+#' mapboxgl() |>
+#'     add_draw_control(
+#'         freehand = TRUE,
+#'         rectangle = TRUE,
+#'         radius = TRUE
+#'     )
 #' }
 add_draw_control <- function(
   map,
   position = "top-left",
   freehand = FALSE,
   simplify_freehand = FALSE,
+  rectangle = FALSE,
+  radius = FALSE,
   orientation = "vertical",
   source = NULL,
   point_color = "#3bb2d0",
@@ -623,6 +645,8 @@ add_draw_control <- function(
   line_width = 2,
   download_button = FALSE,
   download_filename = "drawn-features",
+  show_measurements = FALSE,
+  measurement_units = "both",
   ...
 ) {
   # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
@@ -647,11 +671,15 @@ add_draw_control <- function(
     position = position,
     freehand = freehand,
     simplify_freehand = simplify_freehand,
+    rectangle = rectangle,
+    radius = radius,
     orientation = orientation,
     options = options,
     source = draw_source,
     download_button = download_button,
     download_filename = download_filename,
+    show_measurements = show_measurements,
+    measurement_units = measurement_units,
     styling = list(
       point_color = point_color,
       line_color = line_color,
@@ -684,10 +712,14 @@ add_draw_control <- function(
             options = options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
+            rectangle = rectangle,
+            radius = radius,
             orientation = orientation,
             source = draw_source,
             download_button = download_button,
             download_filename = download_filename,
+            show_measurements = show_measurements,
+            measurement_units = measurement_units,
             styling = list(
               point_color = point_color,
               line_color = line_color,
@@ -718,10 +750,14 @@ add_draw_control <- function(
             options = options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
+            rectangle = rectangle,
+            radius = radius,
             orientation = orientation,
             source = draw_source,
             download_button = download_button,
             download_filename = download_filename,
+            show_measurements = show_measurements,
+            measurement_units = measurement_units,
             styling = list(
               point_color = point_color,
               line_color = line_color,
