@@ -574,6 +574,8 @@ add_scale_control <- function(
 #' @param line_width Width of lines in pixels. Default is 2.
 #' @param download_button Logical, whether to add a download button to export drawn features as GeoJSON. Default is FALSE.
 #' @param download_filename Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".
+#' @param show_measurements Logical, whether to show live measurements while drawing. Default is FALSE.
+#' @param measurement_units Units for measurements. Either "metric", "imperial", or "both". Default is "both".
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -643,6 +645,8 @@ add_draw_control <- function(
   line_width = 2,
   download_button = FALSE,
   download_filename = "drawn-features",
+  show_measurements = FALSE,
+  measurement_units = "both",
   ...
 ) {
   # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
@@ -674,6 +678,8 @@ add_draw_control <- function(
     source = draw_source,
     download_button = download_button,
     download_filename = download_filename,
+    show_measurements = show_measurements,
+    measurement_units = measurement_units,
     styling = list(
       point_color = point_color,
       line_color = line_color,
@@ -712,6 +718,8 @@ add_draw_control <- function(
             source = draw_source,
             download_button = download_button,
             download_filename = download_filename,
+            show_measurements = show_measurements,
+            measurement_units = measurement_units,
             styling = list(
               point_color = point_color,
               line_color = line_color,
@@ -748,6 +756,8 @@ add_draw_control <- function(
             source = draw_source,
             download_button = download_button,
             download_filename = download_filename,
+            show_measurements = show_measurements,
+            measurement_units = measurement_units,
             styling = list(
               point_color = point_color,
               line_color = line_color,

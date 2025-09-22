@@ -22,6 +22,8 @@ add_draw_control(
   line_width = 2,
   download_button = FALSE,
   download_filename = "drawn-features",
+  show_measurements = FALSE,
+  measurement_units = "both",
   ...
 )
 }
@@ -62,6 +64,10 @@ Default is NULL.}
 \item{download_button}{Logical, whether to add a download button to export drawn features as GeoJSON. Default is FALSE.}
 
 \item{download_filename}{Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".}
+
+\item{show_measurements}{Logical, whether to show live measurements while drawing. Default is FALSE.}
+
+\item{measurement_units}{Units for measurements. Either "metric", "imperial", or "both". Default is "both".}
 
 \item{...}{Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.}
 }
