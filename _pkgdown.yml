@@ -110,6 +110,7 @@ reference:
       - mapbox_style
       - maptiler_style
       - carto_style
+      - openfreemap_style
       - interpolate
       - match_expr
       - step_expr

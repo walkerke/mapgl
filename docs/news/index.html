@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,40 @@
       <small>Source: <a href="https://github.com/walkerke/mapgl/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.1" id="mapgl-041">mapgl 0.4.1<a class="anchor" aria-label="anchor" href="#mapgl-041"></a></h2>
+<ul><li>
+<p><strong>Enhanced draw control with new drawing modes and live measurements</strong>:</p>
+<ul><li>Added rectangle drawing mode: Draw rectangles by clicking two corner points</li>
+<li>Added radius/circle drawing mode: Draw circles from center point to edge</li>
+<li>New live measurement preview system showing real-time distance, area, and perimeter calculations while drawing</li>
+<li>Support for metric, imperial, or both unit systems in measurements with <code>measurement_units</code> parameter</li>
+<li>Measurements appear during drawing, editing, and when selecting existing features</li>
+</ul></li>
+<li>
+<p><strong>Advanced layers control enhancements</strong>:</p>
+<ul><li>New grouped layers control: Organize layers into logical groups with collapsible sections</li>
+<li>Custom layer labels for improved layer identification and user experience</li>
+<li>Enhanced visual styling and interaction design for better usability</li>
+</ul></li>
+<li>
+<p><strong>New map style support</strong>:</p>
+<ul><li>Added <code><a href="../reference/openfreemap_style.html">openfreemap_style()</a></code> function providing free, open-source map styles without API key requirements</li>
+</ul></li>
+<li>
+<p><strong>General improvements</strong>:</p>
+<ul><li>Updated to latest Mapbox GL JS and MapLibre GL JS versions for better performance and compatibility</li>
+<li>Fixed MapLibre compare view functionality issues</li>
+<li>Improved stability across MapLibre-specific features</li>
+</ul></li>
+<li><p><strong>Selective control functionality</strong>: Enhanced control over which map controls are displayed and when, providing more granular customization options</p></li>
+<li>
+<p><strong>Bug fixes and stability improvements</strong>:</p>
+<ul><li>Fixed issues with layer management and control interactions</li>
+<li>Improved <code><a href="../reference/move_layer.html">move_layer()</a></code> functionality outside of Shiny applications</li>
+<li>Various compatibility and performance enhancements</li>
+</ul></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="mapgl-040">mapgl 0.4.0<a class="anchor" aria-label="anchor" href="#mapgl-040"></a></h2><p class="text-muted">CRAN release: 2025-08-18</p>
 <ul><li>

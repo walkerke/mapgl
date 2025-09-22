@@ -1,3 +1,334 @@
+// Measurement functionality
+function createMeasurementBox(map) {
+  const box = document.createElement('div');
+  box.id = `measurement-box-${map._container.id}`;
+  box.className = 'mapgl-measurement-box';
+  box.style.cssText = `
+    position: absolute;
+    bottom: 45px;
+    left: 10px;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    z-index: 1;
+    display: none;
+    min-width: 120px;
+    max-width: 200px;
+    border: 1px solid rgba(0,0,0,0.1);
+  `;
+
+  box.innerHTML = `
+    <div style="font-weight: 600; margin-bottom: 5px; color: #333; font-size: 11px; text-transform: uppercase;">
+      Measurement
+    </div>
+    <div class="measurement-content">
+      <div id="measurement-primary" style="font-size: 14px; font-weight: 500; color: #000; margin-bottom: 2px;"></div>
+      <div id="measurement-secondary" style="font-size: 11px; color: #666;"></div>
+    </div>
+  `;
+
+  map.getContainer().appendChild(box);
+  return box;
+}
+
+function calculateDrawingMeasurements(mode, state, coords) {
+  try {
+    if (mode === 'draw_line_string' && coords && coords.length >= 2) {
+      const line = turf.lineString(coords);
+      const distance = turf.length(line, {units: 'kilometers'});
+      return { type: 'distance', value: distance };
+    }
+
+    else if ((mode === 'draw_polygon' || mode === 'draw_freehand') && coords && coords.length >= 3) {
+      // Ensure polygon is closed by adding first point at end if needed
+      const closedCoords = [...coords];
+      if (closedCoords[0][0] !== closedCoords[closedCoords.length - 1][0] ||
+          closedCoords[0][1] !== closedCoords[closedCoords.length - 1][1]) {
+        closedCoords.push(closedCoords[0]);
+      }
+
+      try {
+        const polygon = turf.polygon([closedCoords]);
+        const area = turf.area(polygon) / 1000000; // Convert to km²
+        const perimeter = turf.length(turf.polygonToLine(polygon), {units: 'kilometers'});
+        return { type: 'area', value: area, perimeter: perimeter };
+      } catch (error) {
+        return null;
+      }
+    }
+
+    else if (mode === 'draw_rectangle' && coords && coords.length >= 4) {
+      const polygon = turf.polygon([coords]);
+      const area = turf.area(polygon) / 1000000; // Convert to km²
+      const perimeter = turf.length(turf.polygonToLine(polygon), {units: 'kilometers'});
+      return { type: 'area', value: area, perimeter: perimeter };
+    }
+
+    else if (mode === 'draw_radius' && coords && coords.length >= 2) {
+      const center = turf.point(coords[0]);
+      const edge = turf.point(coords[1]);
+      const radius = turf.distance(center, edge, {units: 'kilometers'});
+      const area = Math.PI * radius * radius; // πr²
+      return { type: 'radius', value: radius, area: area };
+    }
+  } catch (e) {
+    return null;
+  }
+
+  return null;
+}
+
+function formatMeasurements(measurements, units) {
+  if (!measurements) return { primary: '', secondary: '' };
+
+  const formatDistance = function(km) {
+    let result = [];
+
+    if (units === 'metric' || units === 'both') {
+      if (km < 1) {
+        result.push(`${(km * 1000).toFixed(0)} m`);
+      } else {
+        result.push(`${km.toFixed(2)} km`);
+      }
+    }
+
+    if (units === 'imperial' || units === 'both') {
+      const miles = km * 0.621371;
+      if (miles < 0.1) {
+        result.push(`${(miles * 5280).toFixed(0)} ft`);
+      } else {
+        result.push(`${miles.toFixed(2)} mi`);
+      }
+    }
+
+    return result;
+  };
+
+  const formatArea = function(sqKm) {
+    let result = [];
+
+    if (units === 'metric' || units === 'both') {
+      if (sqKm < 0.01) {
+        result.push(`${(sqKm * 1000000).toFixed(0)} m²`);
+      } else if (sqKm < 1) {
+        result.push(`${(sqKm * 100).toFixed(2)} ha`);
+      } else {
+        result.push(`${sqKm.toFixed(2)} km²`);
+      }
+    }
+
+    if (units === 'imperial' || units === 'both') {
+      const sqMiles = sqKm * 0.386102;
+      if (sqMiles < 0.001) {
+        result.push(`${(sqMiles * 640).toFixed(2)} acres`);
+      } else {
+        result.push(`${sqMiles.toFixed(3)} mi²`);
+      }
+    }
+
+    return result;
+  };
+
+  if (measurements.type === 'distance') {
+    const formatted = formatDistance(measurements.value);
+    return {
+      primary: formatted[0] || '',
+      secondary: formatted[1] || ''
+    };
+  }
+
+  else if (measurements.type === 'area') {
+    const areaFormatted = formatArea(measurements.value);
+    const perimeterFormatted = formatDistance(measurements.perimeter);
+
+    if (units === 'both') {
+      return {
+        primary: areaFormatted[0] || '',
+        secondary: `${areaFormatted[1] || ''} • ${perimeterFormatted[0] || ''}`
+      };
+    } else {
+      return {
+        primary: areaFormatted[0] || '',
+        secondary: `Perimeter: ${perimeterFormatted[0] || ''}`
+      };
+    }
+  }
+
+  else if (measurements.type === 'radius') {
+    const distFormatted = formatDistance(measurements.value);
+    const areaFormatted = formatArea(measurements.area);
+
+    return {
+      primary: `Radius: ${distFormatted[0] || ''}`,
+      secondary: units === 'both' ?
+        `${distFormatted[1] || ''} • ${areaFormatted[0] || ''}` :
+        `Area: ${areaFormatted[0] || ''}`
+    };
+  }
+
+  return { primary: '', secondary: '' };
+}
+
+function updateMeasurementDisplay(box, measurements, units) {
+  const primary = box.querySelector('#measurement-primary');
+  const secondary = box.querySelector('#measurement-secondary');
+
+  const formatted = formatMeasurements(measurements, units);
+
+  if (formatted.primary) {
+    primary.textContent = formatted.primary;
+    secondary.textContent = formatted.secondary;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function initializeMeasurements(map, draw, units) {
+  const measurementBox = createMeasurementBox(map);
+  const DRAWING_MODES = ['draw_line_string', 'draw_polygon', 'draw_rectangle', 'draw_radius', 'draw_freehand'];
+
+  // Store original handlers
+  const originalHandlers = {};
+
+  DRAWING_MODES.forEach(mode => {
+    const modeObj = MapboxDraw.modes[mode];
+    if (!modeObj) return;
+
+
+    // Wrap onClick for polygon mode (better for click-based drawing)
+    if (modeObj.onClick && mode === 'draw_polygon') {
+      originalHandlers[mode + '_onClick'] = modeObj.onClick;
+      modeObj.onClick = function(state, e) {
+        const result = originalHandlers[mode + '_onClick'].call(this, state, e);
+
+        // For polygon mode, show measurements after each click
+        if (state.polygon && state.polygon.coordinates && state.polygon.coordinates[0].length >= 3) {
+          const coords = state.polygon.coordinates[0];
+          const measurements = calculateDrawingMeasurements(mode, state, coords);
+          updateMeasurementDisplay(measurementBox, measurements, units);
+        }
+
+        return result;
+      };
+    }
+
+    // Wrap onMouseMove for real-time updates (lines, rectangles, radius)
+    if (modeObj.onMouseMove && mode !== 'draw_polygon') {
+      originalHandlers[mode + '_onMouseMove'] = modeObj.onMouseMove;
+      modeObj.onMouseMove = function(state, e) {
+        originalHandlers[mode + '_onMouseMove'].call(this, state, e);
+
+        let coords = null;
+        if (state.line && state.line.coordinates) {
+          coords = [...state.line.coordinates, [e.lngLat.lng, e.lngLat.lat]];
+        } else if (state.rectangle && state.rectangle.coordinates) {
+          coords = state.rectangle.coordinates[0];
+        }
+
+        if (coords) {
+          const measurements = calculateDrawingMeasurements(mode, state, coords);
+          updateMeasurementDisplay(measurementBox, measurements, units);
+        }
+      };
+    }
+
+    // Wrap onDrag for freehand mode
+    if (modeObj.onDrag) {
+      originalHandlers[mode + '_onDrag'] = modeObj.onDrag;
+      modeObj.onDrag = function(state, e) {
+        const result = originalHandlers[mode + '_onDrag'].call(this, state, e);
+
+        if (state.polygon && state.polygon.coordinates) {
+          const coords = state.polygon.coordinates[0];
+          if (coords.length >= 3) {
+            const measurements = calculateDrawingMeasurements(mode, state, coords);
+            updateMeasurementDisplay(measurementBox, measurements, units);
+          }
+        }
+
+        return result;
+      };
+    }
+  });
+
+  // Hide measurement box when drawing stops and handle button states
+  map.on('draw.modechange', (e) => {
+    if (e.mode === 'simple_select') {
+      measurementBox.style.display = 'none';
+      // Reset button states when switching to select mode
+      const drawControlGroup = map.getContainer().querySelector(".maplibregl-ctrl-group");
+      if (drawControlGroup) {
+        drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+      }
+    }
+  });
+
+  map.on('draw.create', () => {
+    measurementBox.style.display = 'none';
+    // Reset button states when drawing is completed
+    const drawControlGroup = map.getContainer().querySelector(".maplibregl-ctrl-group");
+    if (drawControlGroup) {
+      drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+    }
+  });
+
+  map.on('draw.delete', () => {
+    measurementBox.style.display = 'none';
+  });
+
+  // Special handling for freehand mode using data update events
+  map.on('draw.update', (e) => {
+    const currentMode = draw.getMode();
+
+    if (currentMode === 'draw_freehand' && e.features && e.features[0]) {
+      const feature = e.features[0];
+      if (feature.geometry.type === 'Polygon' && feature.geometry.coordinates[0].length >= 3) {
+        const coords = feature.geometry.coordinates[0];
+        const measurements = calculateDrawingMeasurements('draw_freehand', {}, coords);
+        updateMeasurementDisplay(measurementBox, measurements, units);
+      }
+    }
+
+    // Also handle editing mode - when features are being edited
+    if (currentMode === 'direct_select' && e.features && e.features[0]) {
+      const feature = e.features[0];
+      if (feature.geometry.type === 'Polygon' && feature.geometry.coordinates[0].length >= 3) {
+        const coords = feature.geometry.coordinates[0];
+        const measurements = calculateDrawingMeasurements('draw_polygon', {}, coords);
+        updateMeasurementDisplay(measurementBox, measurements, units);
+      } else if (feature.geometry.type === 'LineString' && feature.geometry.coordinates.length >= 2) {
+        const coords = feature.geometry.coordinates;
+        const measurements = calculateDrawingMeasurements('draw_line_string', {}, coords);
+        updateMeasurementDisplay(measurementBox, measurements, units);
+      }
+    }
+  });
+
+  // Show measurements when selecting features for editing
+  map.on('draw.selectionchange', (e) => {
+    if (e.features && e.features.length > 0) {
+      const feature = e.features[0];
+      if (feature.geometry.type === 'Polygon' && feature.geometry.coordinates[0].length >= 3) {
+        const coords = feature.geometry.coordinates[0];
+        const measurements = calculateDrawingMeasurements('draw_polygon', {}, coords);
+        updateMeasurementDisplay(measurementBox, measurements, units);
+      } else if (feature.geometry.type === 'LineString' && feature.geometry.coordinates.length >= 2) {
+        const coords = feature.geometry.coordinates;
+        const measurements = calculateDrawingMeasurements('draw_line_string', {}, coords);
+        updateMeasurementDisplay(measurementBox, measurements, units);
+      }
+    } else {
+      // No features selected, hide measurement box
+      measurementBox.style.display = 'none';
+    }
+  });
+}
+
 function evaluateExpression(expression, properties) {
   if (!Array.isArray(expression)) {
     return expression;
@@ -846,7 +1177,9 @@ HTMLWidgets.widget({
               };
 
               // Create MapTiler geocoder
-              geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+              geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(
+                maptilerOptions,
+              );
             } else {
               // OSM/Nominatim geocoder (default)
               const geocoderApi = {
@@ -860,8 +1193,10 @@ HTMLWidgets.widget({
                     const geojson = await response.json();
                     for (const feature of geojson.features) {
                       const center = [
-                        feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                        feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2,
+                        feature.bbox[0] +
+                          (feature.bbox[2] - feature.bbox[0]) / 2,
+                        feature.bbox[1] +
+                          (feature.bbox[3] - feature.bbox[1]) / 2,
                       ];
                       const point = {
                         type: "Feature",
@@ -905,18 +1240,20 @@ HTMLWidgets.widget({
               x.geocoder_control.position || "top-right",
             );
             map.controls.push(geocoder);
-            
+
             // Apply CSS fix for MapTiler geocoder to prevent cutoff
             if (provider === "maptiler") {
               setTimeout(() => {
-                const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+                const controlContainer = document.querySelector(
+                  ".maplibregl-ctrl-geocoder",
+                );
                 if (controlContainer) {
-                  controlContainer.style.maxWidth = '300px';
-                  controlContainer.style.width = 'auto';
+                  controlContainer.style.maxWidth = "300px";
+                  controlContainer.style.width = "auto";
                 }
               }, 100);
             }
-            
+
             // Handle geocoder results in Shiny mode
             if (HTMLWidgets.shinyMode) {
               if (provider === "maptiler") {
@@ -982,6 +1319,22 @@ HTMLWidgets.widget({
               });
             }
 
+            // Add rectangle mode if enabled
+            if (x.draw_control.rectangle) {
+              if (!drawOptions.modes) {
+                drawOptions.modes = Object.assign({}, MapboxDraw.modes);
+              }
+              drawOptions.modes.draw_rectangle = MapboxDraw.modes.draw_rectangle;
+            }
+
+            // Add radius mode if enabled
+            if (x.draw_control.radius) {
+              if (!drawOptions.modes) {
+                drawOptions.modes = Object.assign({}, MapboxDraw.modes);
+              }
+              drawOptions.modes.draw_radius = MapboxDraw.modes.draw_radius;
+            }
+
             // Fix MapLibre compatibility - ensure we always have custom styles
             if (!drawOptions.styles) {
               drawOptions.styles = generateDrawStyles({
@@ -1014,17 +1367,84 @@ HTMLWidgets.widget({
 
               // Update tooltip for freehand mode
               setTimeout(() => {
-                const polygonButton = map.getContainer().querySelector('.mapbox-gl-draw_polygon');
+                const polygonButton = map
+                  .getContainer()
+                  .querySelector(".mapbox-gl-draw_polygon");
                 if (polygonButton) {
-                  polygonButton.title = 'Freehand polygon tool (p)';
+                  polygonButton.title = "Freehand polygon tool (p)";
                 }
               }, 100);
+            }
+
+            // Add rectangle icon CSS if rectangle mode is enabled
+            if (x.draw_control.rectangle) {
+              if (!document.querySelector("#mapgl-rectangle-styles")) {
+                const style = document.createElement("style");
+                style.id = "mapgl-rectangle-styles";
+                style.textContent = `
+                  .mapbox-gl-draw_rectangle {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    display: block;
+                    height: 30px;
+                    width: 30px;
+                    padding: 0;
+                    outline: none;
+                    background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Crect x="4" y="5" width="12" height="10" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
+                    background-repeat: no-repeat !important;
+                    background-position: center !important;
+                  }
+                  .mapbox-gl-draw_rectangle:hover {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                  .mapbox-gl-draw_rectangle.active {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                `;
+                document.head.appendChild(style);
+              }
+            }
+
+            // Add radius/circle icon CSS if radius mode is enabled
+            if (x.draw_control.radius) {
+              if (!document.querySelector("#mapgl-radius-styles")) {
+                const style = document.createElement("style");
+                style.id = "mapgl-radius-styles";
+                style.textContent = `
+                  .mapbox-gl-draw_radius {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    display: block;
+                    height: 30px;
+                    width: 30px;
+                    padding: 0;
+                    outline: none;
+                    background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="7" fill="none" stroke="%23000000" stroke-width="2"/%3E%3Ccircle cx="10" cy="10" r="1.5" fill="%23000000"/%3E%3C/svg%3E') !important;
+                    background-repeat: no-repeat !important;
+                    background-position: center !important;
+                  }
+                  .mapbox-gl-draw_radius:hover {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                  .mapbox-gl-draw_radius.active {
+                    background-color: rgba(0, 0, 0, 0.05);
+                  }
+                `;
+                document.head.appendChild(style);
+              }
             }
 
             // Add event listeners
             map.on("draw.create", updateDrawnFeatures);
             map.on("draw.delete", updateDrawnFeatures);
             map.on("draw.update", updateDrawnFeatures);
+
+            // Add measurement functionality if enabled
+            if (x.draw_control.show_measurements) {
+              initializeMeasurements(map, draw, x.draw_control.measurement_units);
+            }
 
             // Add initial features if provided
             if (x.draw_control.source) {
@@ -1041,6 +1461,39 @@ HTMLWidgets.widget({
               });
             }
 
+            // Add custom mode buttons
+            setTimeout(() => {
+              const drawControlGroup = map.getContainer().querySelector(".maplibregl-ctrl-group");
+
+              if (x.draw_control.rectangle && drawControlGroup) {
+                const rectangleBtn = document.createElement("button");
+                rectangleBtn.className = "mapbox-gl-draw_rectangle";
+                rectangleBtn.title = "Rectangle tool";
+                rectangleBtn.type = "button";
+                rectangleBtn.onclick = function() {
+                  draw.changeMode('draw_rectangle');
+                  // Update active state
+                  drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                  rectangleBtn.classList.add('active');
+                };
+                drawControlGroup.appendChild(rectangleBtn);
+              }
+
+              if (x.draw_control.radius && drawControlGroup) {
+                const radiusBtn = document.createElement("button");
+                radiusBtn.className = "mapbox-gl-draw_radius";
+                radiusBtn.title = "Radius/Circle tool";
+                radiusBtn.type = "button";
+                radiusBtn.onclick = function() {
+                  draw.changeMode('draw_radius');
+                  // Update active state
+                  drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                  radiusBtn.classList.add('active');
+                };
+                drawControlGroup.appendChild(radiusBtn);
+              }
+            }, 100);
+
             // Apply orientation styling
             if (x.draw_control.orientation === "horizontal") {
               const drawBar = map
@@ -1055,9 +1508,9 @@ HTMLWidgets.widget({
             // Add download button if requested
             if (x.draw_control.download_button) {
               // Add CSS for download button if not already added
-              if (!document.querySelector('#mapgl-draw-download-styles')) {
-                const style = document.createElement('style');
-                style.id = 'mapgl-draw-download-styles';
+              if (!document.querySelector("#mapgl-draw-download-styles")) {
+                const style = document.createElement("style");
+                style.id = "mapgl-draw-download-styles";
                 style.textContent = `
                   .mapbox-gl-draw_download {
                     background: transparent;
@@ -1085,38 +1538,46 @@ HTMLWidgets.widget({
               // Small delay to ensure Draw control is fully rendered
               setTimeout(() => {
                 // Find the Draw control button group
-                const drawButtons = map.getContainer().querySelector('.maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)');
-                
+                const drawButtons = map
+                  .getContainer()
+                  .querySelector(
+                    ".maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)",
+                  );
+
                 if (drawButtons) {
                   // Create download button
-                  const downloadBtn = document.createElement('button');
-                  downloadBtn.className = 'mapbox-gl-draw_download';
-                  downloadBtn.title = 'Download drawn features as GeoJSON';
-                  
+                  const downloadBtn = document.createElement("button");
+                  downloadBtn.className = "mapbox-gl-draw_download";
+                  downloadBtn.title = "Download drawn features as GeoJSON";
+
                   // Add SVG download icon
                   downloadBtn.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                       <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                     </svg>
                   `;
-                  
-                  downloadBtn.addEventListener('click', () => {
+
+                  downloadBtn.addEventListener("click", () => {
                     // Get all drawn features
                     const data = draw.getAll();
-                    
+
                     if (data.features.length === 0) {
-                      alert('No features to download. Please draw something first!');
+                      alert(
+                        "No features to download. Please draw something first!",
+                      );
                       return;
                     }
-                    
+
                     // Convert to string with nice formatting
                     const dataStr = JSON.stringify(data, null, 2);
-                    
+
                     // Create blob and download
-                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const blob = new Blob([dataStr], {
+                      type: "application/json",
+                    });
                     const url = URL.createObjectURL(blob);
-                    
-                    const a = document.createElement('a');
+
+                    const a = document.createElement("a");
                     a.href = url;
                     a.download = `${x.draw_control.download_filename}.geojson`;
                     document.body.appendChild(a);
@@ -1124,7 +1585,7 @@ HTMLWidgets.widget({
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                   });
-                  
+
                   // Append to the Draw control button group
                   drawButtons.appendChild(downloadBtn);
                 }
@@ -1349,17 +1810,25 @@ HTMLWidgets.widget({
             // Set the position correctly - fix position bug by using correct CSS positioning
             const position = x.layers_control.position || "top-left";
             if (position === "top-left") {
-              layersControl.style.top = (x.layers_control.margin_top || 10) + "px";
-              layersControl.style.left = (x.layers_control.margin_left || 10) + "px";
+              layersControl.style.top =
+                (x.layers_control.margin_top || 10) + "px";
+              layersControl.style.left =
+                (x.layers_control.margin_left || 10) + "px";
             } else if (position === "top-right") {
-              layersControl.style.top = (x.layers_control.margin_top || 10) + "px";
-              layersControl.style.right = (x.layers_control.margin_right || 10) + "px";
+              layersControl.style.top =
+                (x.layers_control.margin_top || 10) + "px";
+              layersControl.style.right =
+                (x.layers_control.margin_right || 10) + "px";
             } else if (position === "bottom-left") {
-              layersControl.style.bottom = (x.layers_control.margin_bottom || 10) + "px";
-              layersControl.style.left = (x.layers_control.margin_left || 10) + "px";
+              layersControl.style.bottom =
+                (x.layers_control.margin_bottom || 10) + "px";
+              layersControl.style.left =
+                (x.layers_control.margin_left || 10) + "px";
             } else if (position === "bottom-right") {
-              layersControl.style.bottom = (x.layers_control.margin_bottom || 40) + "px";
-              layersControl.style.right = (x.layers_control.margin_right || 10) + "px";
+              layersControl.style.bottom =
+                (x.layers_control.margin_bottom || 40) + "px";
+              layersControl.style.right =
+                (x.layers_control.margin_right || 10) + "px";
             }
 
             // Apply custom colors if provided
@@ -1414,7 +1883,9 @@ HTMLWidgets.widget({
               layersConfig.forEach((config, index) => {
                 const link = document.createElement("a");
                 // Ensure config.ids is always an array
-                const layerIds = Array.isArray(config.ids) ? config.ids : [config.ids];
+                const layerIds = Array.isArray(config.ids)
+                  ? config.ids
+                  : [config.ids];
                 link.id = layerIds.join("-");
                 link.href = "#";
                 link.textContent = config.label;
@@ -1431,7 +1902,7 @@ HTMLWidgets.widget({
 
                 // Also hide any associated legends if the layer is initially hidden
                 if (initialVisibility === "none") {
-                  layerIds.forEach(layerId => {
+                  layerIds.forEach((layerId) => {
                     const associatedLegends = document.querySelectorAll(
                       `.mapboxgl-legend[data-layer-id="${layerId}"]`,
                     );
@@ -1446,7 +1917,9 @@ HTMLWidgets.widget({
                   e.preventDefault();
                   e.stopPropagation();
 
-                  const layerIds = JSON.parse(this.getAttribute("data-layer-ids"));
+                  const layerIds = JSON.parse(
+                    this.getAttribute("data-layer-ids"),
+                  );
                   const firstLayerId = layerIds[0];
                   const visibility = map.getLayoutProperty(
                     firstLayerId,
@@ -1455,7 +1928,7 @@ HTMLWidgets.widget({
 
                   // Toggle visibility for all layer IDs in the group
                   if (visibility === "visible") {
-                    layerIds.forEach(layerId => {
+                    layerIds.forEach((layerId) => {
                       map.setLayoutProperty(layerId, "visibility", "none");
                       // Hide associated legends
                       const associatedLegends = document.querySelectorAll(
@@ -1467,7 +1940,7 @@ HTMLWidgets.widget({
                     });
                     this.className = "";
                   } else {
-                    layerIds.forEach(layerId => {
+                    layerIds.forEach((layerId) => {
                       map.setLayoutProperty(layerId, "visibility", "visible");
                       // Show associated legends
                       const associatedLegends = document.querySelectorAll(
@@ -1538,7 +2011,11 @@ HTMLWidgets.widget({
                     });
                   } else {
                     this.className = "active";
-                    map.setLayoutProperty(clickedLayer, "visibility", "visible");
+                    map.setLayoutProperty(
+                      clickedLayer,
+                      "visibility",
+                      "visible",
+                    );
 
                     // Show associated legends
                     const associatedLegends = document.querySelectorAll(
@@ -1613,23 +2090,35 @@ HTMLWidgets.widget({
           // Add click event listener in shinyMode
           if (HTMLWidgets.shinyMode) {
             map.on("click", function (e) {
-              const features = map.queryRenderedFeatures(e.point);
-
-              if (features.length > 0) {
-                const feature = features[0];
-                Shiny.onInputChange(el.id + "_feature_click", {
-                  id: feature.id,
-                  properties: feature.properties,
-                  layer: feature.layer.id,
-                  lng: e.lngLat.lng,
-                  lat: e.lngLat.lat,
-                  time: new Date(),
-                });
-              } else {
-                Shiny.onInputChange(el.id + "_feature_click", null);
+              // Check if draw control is active and in a drawing mode
+              let isDrawing = false;
+              if (typeof draw !== 'undefined' && draw) {
+                const mode = draw.getMode();
+                isDrawing = mode === 'draw_point' ||
+                           mode === 'draw_line_string' ||
+                           mode === 'draw_polygon';
               }
 
-              // Event listener for the map
+              // Only process feature clicks if not actively drawing
+              if (!isDrawing) {
+                const features = map.queryRenderedFeatures(e.point);
+
+                if (features.length > 0) {
+                  const feature = features[0];
+                  Shiny.onInputChange(el.id + "_feature_click", {
+                    id: feature.id,
+                    properties: feature.properties,
+                    layer: feature.layer.id,
+                    lng: e.lngLat.lng,
+                    lat: e.lngLat.lat,
+                    time: new Date(),
+                  });
+                } else {
+                  Shiny.onInputChange(el.id + "_feature_click", null);
+                }
+              }
+
+              // Event listener for the map (always fire this)
               Shiny.onInputChange(el.id + "_click", {
                 lng: e.lngLat.lng,
                 lat: e.lngLat.lat,
@@ -3524,7 +4013,7 @@ if (HTMLWidgets.shinyMode) {
           visualizePitch: message.options.visualize_pitch,
         });
         map.addControl(nav, message.position);
-        map.controls.push(nav);
+        map.controls.push({ type: "navigation", control: nav });
 
         if (message.orientation === "horizontal") {
           const navBar = map
@@ -3564,7 +4053,7 @@ if (HTMLWidgets.shinyMode) {
         // Create the draw control
         var drawControl = new MapboxDraw(drawOptions);
         map.addControl(drawControl, message.position);
-        map.controls.push(drawControl);
+        map.controls.push({ type: "draw", control: drawControl });
 
         // Store the draw control on the widget for later access
         widget.drawControl = drawControl;
@@ -3584,9 +4073,11 @@ if (HTMLWidgets.shinyMode) {
 
           // Update tooltip for freehand mode
           setTimeout(() => {
-            const polygonButton = map.getContainer().querySelector('.mapbox-gl-draw_polygon');
+            const polygonButton = map
+              .getContainer()
+              .querySelector(".mapbox-gl-draw_polygon");
             if (polygonButton) {
-              polygonButton.title = 'Freehand polygon tool (p)';
+              polygonButton.title = "Freehand polygon tool (p)";
             }
           }, 100);
         }
@@ -3615,9 +4106,9 @@ if (HTMLWidgets.shinyMode) {
         // Add download button if requested
         if (message.download_button) {
           // Add CSS for download button if not already added
-          if (!document.querySelector('#mapgl-draw-download-styles')) {
-            const style = document.createElement('style');
-            style.id = 'mapgl-draw-download-styles';
+          if (!document.querySelector("#mapgl-draw-download-styles")) {
+            const style = document.createElement("style");
+            style.id = "mapgl-draw-download-styles";
             style.textContent = `
               .mapbox-gl-draw_download {
                 background: transparent;
@@ -3645,46 +4136,52 @@ if (HTMLWidgets.shinyMode) {
           // Small delay to ensure Draw control is fully rendered
           setTimeout(() => {
             // Find the Draw control button group
-            const drawButtons = map.getContainer().querySelector('.maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)');
-            
+            const drawButtons = map
+              .getContainer()
+              .querySelector(
+                ".maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)",
+              );
+
             if (drawButtons) {
               // Create download button
-              const downloadBtn = document.createElement('button');
-              downloadBtn.className = 'mapbox-gl-draw_download';
-              downloadBtn.title = 'Download drawn features as GeoJSON';
-              
+              const downloadBtn = document.createElement("button");
+              downloadBtn.className = "mapbox-gl-draw_download";
+              downloadBtn.title = "Download drawn features as GeoJSON";
+
               // Add SVG download icon
               downloadBtn.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                   <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                 </svg>
               `;
-              
-              downloadBtn.addEventListener('click', () => {
+
+              downloadBtn.addEventListener("click", () => {
                 // Get all drawn features
                 const data = drawControl.getAll();
-                
+
                 if (data.features.length === 0) {
-                  alert('No features to download. Please draw something first!');
+                  alert(
+                    "No features to download. Please draw something first!",
+                  );
                   return;
                 }
-                
+
                 // Convert to string with nice formatting
                 const dataStr = JSON.stringify(data, null, 2);
-                
+
                 // Create blob and download
-                const blob = new Blob([dataStr], { type: 'application/json' });
+                const blob = new Blob([dataStr], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
+
+                const a = document.createElement("a");
                 a.href = url;
-                a.download = `${message.download_filename || 'drawn-features'}.geojson`;
+                a.download = `${message.download_filename || "drawn-features"}.geojson`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
               });
-              
+
               // Append to the Draw control button group
               drawButtons.appendChild(downloadBtn);
             }
@@ -3908,7 +4405,9 @@ if (HTMLWidgets.shinyMode) {
           };
 
           // Create MapTiler geocoder
-          geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+          geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(
+            maptilerOptions,
+          );
         } else {
           // OSM/Nominatim geocoder (default)
           const geocoderApi = {
@@ -3957,14 +4456,16 @@ if (HTMLWidgets.shinyMode) {
 
         map.addControl(geocoder, message.options.position);
         map.controls.push(geocoder);
-        
+
         // Apply CSS fix for MapTiler geocoder to prevent cutoff
         if (provider === "maptiler") {
           setTimeout(() => {
-            const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+            const controlContainer = document.querySelector(
+              ".maplibregl-ctrl-geocoder",
+            );
             if (controlContainer) {
-              controlContainer.style.maxWidth = '300px';
-              controlContainer.style.width = 'auto';
+              controlContainer.style.maxWidth = "300px";
+              controlContainer.style.width = "auto";
             }
           }, 100);
         }
@@ -4060,7 +4561,9 @@ if (HTMLWidgets.shinyMode) {
           layersConfig.forEach((config, index) => {
             const link = document.createElement("a");
             // Ensure config.ids is always an array
-            const layerIds = Array.isArray(config.ids) ? config.ids : [config.ids];
+            const layerIds = Array.isArray(config.ids)
+              ? config.ids
+              : [config.ids];
             link.id = layerIds.join("-");
             link.href = "#";
             link.textContent = config.label;
@@ -4077,7 +4580,7 @@ if (HTMLWidgets.shinyMode) {
 
             // Also hide any associated legends if the layer is initially hidden
             if (initialVisibility === "none") {
-              layerIds.forEach(layerId => {
+              layerIds.forEach((layerId) => {
                 const associatedLegends = document.querySelectorAll(
                   `.mapboxgl-legend[data-layer-id="${layerId}"]`,
                 );
@@ -4101,7 +4604,7 @@ if (HTMLWidgets.shinyMode) {
 
               // Toggle visibility for all layer IDs in the group
               if (visibility === "visible") {
-                layerIds.forEach(layerId => {
+                layerIds.forEach((layerId) => {
                   map.setLayoutProperty(layerId, "visibility", "none");
                   // Hide associated legends
                   const associatedLegends = document.querySelectorAll(
@@ -4113,7 +4616,7 @@ if (HTMLWidgets.shinyMode) {
                 });
                 this.className = "";
               } else {
-                layerIds.forEach(layerId => {
+                layerIds.forEach((layerId) => {
                   map.setLayoutProperty(layerId, "visibility", "visible");
                   // Show associated legends
                   const associatedLegends = document.querySelectorAll(
@@ -4167,35 +4670,35 @@ if (HTMLWidgets.shinyMode) {
               const visibility = map.getLayoutProperty(
                 clickedLayer,
                 "visibility",
-            );
-
-            if (visibility === "visible") {
-              map.setLayoutProperty(clickedLayer, "visibility", "none");
-              this.className = "";
-
-              // Hide associated legends
-              const associatedLegends = document.querySelectorAll(
-                `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
               );
-              associatedLegends.forEach((legend) => {
-                legend.style.display = "none";
-              });
-            } else {
-              this.className = "active";
-              map.setLayoutProperty(clickedLayer, "visibility", "visible");
 
-              // Show associated legends
-              const associatedLegends = document.querySelectorAll(
-                `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
-              );
-              associatedLegends.forEach((legend) => {
-                legend.style.display = "";
-              });
-            }
-          };
+              if (visibility === "visible") {
+                map.setLayoutProperty(clickedLayer, "visibility", "none");
+                this.className = "";
 
-          layersList.appendChild(link);
-        });
+                // Hide associated legends
+                const associatedLegends = document.querySelectorAll(
+                  `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
+                );
+                associatedLegends.forEach((legend) => {
+                  legend.style.display = "none";
+                });
+              } else {
+                this.className = "active";
+                map.setLayoutProperty(clickedLayer, "visibility", "visible");
+
+                // Show associated legends
+                const associatedLegends = document.querySelectorAll(
+                  `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
+                );
+                associatedLegends.forEach((legend) => {
+                  legend.style.display = "";
+                });
+              }
+            };
+
+            layersList.appendChild(link);
+          });
         }
 
         if (message.collapsible) {
@@ -4265,24 +4768,63 @@ if (HTMLWidgets.shinyMode) {
           layerState.legends = {};
         }
       } else if (message.type === "clear_controls") {
-        map.controls.forEach((control) => {
-          map.removeControl(control);
-        });
-        map.controls = [];
+        // If no specific controls specified, clear all
+        if (!message.controls || message.controls.length === 0) {
+          map.controls.forEach((controlObj) => {
+            if (controlObj.control) {
+              map.removeControl(controlObj.control);
+            }
+          });
+          map.controls = [];
 
-        const layersControl = document.querySelector(
-          `#${data.id} .layers-control`,
-        );
-        if (layersControl) {
-          layersControl.remove();
-        }
+          const layersControl = document.querySelector(
+            `#${data.id} .layers-control`,
+          );
+          if (layersControl) {
+            layersControl.remove();
+          }
 
-        // Remove globe minimap if it exists
-        const globeMinimap = document.querySelector(
-          ".mapboxgl-ctrl-globe-minimap",
-        );
-        if (globeMinimap) {
-          globeMinimap.remove();
+          // Remove globe minimap if it exists
+          const globeMinimap = document.querySelector(
+            ".mapboxgl-ctrl-globe-minimap",
+          );
+          if (globeMinimap) {
+            globeMinimap.remove();
+          }
+        } else {
+          // Clear specific controls
+          const controlsToRemove = Array.isArray(message.controls)
+            ? message.controls
+            : [message.controls];
+
+          map.controls = map.controls.filter((controlObj) => {
+            if (controlsToRemove.includes(controlObj.type)) {
+              if (controlObj.control) {
+                map.removeControl(controlObj.control);
+              }
+              return false; // Remove from array
+            }
+            return true; // Keep in array
+          });
+
+          // Handle special controls that aren't in the controls array
+          controlsToRemove.forEach((controlType) => {
+            if (controlType === "layers") {
+              const layersControl = document.querySelector(
+                `#${data.id} .layers-control`,
+              );
+              if (layersControl) {
+                layersControl.remove();
+              }
+            } else if (controlType === "globe_minimap") {
+              const globeMinimap = document.querySelector(
+                ".mapboxgl-ctrl-globe-minimap",
+              );
+              if (globeMinimap) {
+                globeMinimap.remove();
+              }
+            }
+          });
         }
       } else if (message.type === "move_layer") {
         if (map.getLayer(message.layer)) {
@@ -4442,65 +4984,65 @@ if (HTMLWidgets.shinyMode) {
 
         // Update the geojson data
         sourceObject.setData(newData);
-      }
-    } else if (message.type === "set_projection") {
-      if (map.loaded()) {
-        const projection =
-          typeof message.projection === "string"
-            ? { type: message.projection }
-            : message.projection;
+      } else if (message.type === "set_projection") {
+        if (map.loaded()) {
+          const projection =
+            typeof message.projection === "string"
+              ? { type: message.projection }
+              : message.projection;
 
-        try {
-          map.setProjection(projection);
-        } catch (e) {
-          console.error("Failed to set projection:", e);
-        }
-      } else {
-        console.error("Map not loaded yet");
-      }
-    } else if (message.type === "add_globe_minimap") {
-      const globeMinimapOptions = {
-        globeSize: message.options.globe_size || 100,
-        landColor: message.options.land_color || "#404040",
-        waterColor: message.options.water_color || "#090909",
-        markerColor: message.options.marker_color || "#1da1f2",
-        markerSize: message.options.marker_size || 2,
-      };
-      const globeMinimap = new GlobeMinimap(globeMinimapOptions);
-      map.addControl(globeMinimap, message.position || "bottom-left");
-      map.controls.push(globeMinimap);
-    } else if (message.type === "add_globe_control") {
-      const globeControl = new maplibregl.GlobeControl();
-      map.addControl(globeControl, message.position);
-      map.controls.push(globeControl);
-    } else if (message.type === "add_custom_control") {
-      const controlOptions = message.options;
-      const customControlContainer = document.createElement("div");
-
-      if (controlOptions.className) {
-        customControlContainer.className = controlOptions.className;
-      } else {
-        customControlContainer.className =
-          "maplibregl-ctrl maplibregl-ctrl-group";
-      }
-
-      customControlContainer.innerHTML = controlOptions.html;
-
-      const customControl = {
-        onAdd: function () {
-          return customControlContainer;
-        },
-        onRemove: function () {
-          if (customControlContainer.parentNode) {
-            customControlContainer.parentNode.removeChild(
-              customControlContainer,
-            );
+          try {
+            map.setProjection(projection);
+          } catch (e) {
+            console.error("Failed to set projection:", e);
           }
-        },
-      };
+        } else {
+          console.error("Map not loaded yet");
+        }
+      } else if (message.type === "add_globe_minimap") {
+        const globeMinimapOptions = {
+          globeSize: message.options.globe_size || 100,
+          landColor: message.options.land_color || "#404040",
+          waterColor: message.options.water_color || "#090909",
+          markerColor: message.options.marker_color || "#1da1f2",
+          markerSize: message.options.marker_size || 2,
+        };
+        const globeMinimap = new GlobeMinimap(globeMinimapOptions);
+        map.addControl(globeMinimap, message.position || "bottom-left");
+        map.controls.push(globeMinimap);
+      } else if (message.type === "add_globe_control") {
+        const globeControl = new maplibregl.GlobeControl();
+        map.addControl(globeControl, message.position);
+        map.controls.push(globeControl);
+      } else if (message.type === "add_custom_control") {
+        const controlOptions = message.options;
+        const customControlContainer = document.createElement("div");
 
-      map.addControl(customControl, controlOptions.position || "top-right");
-      map.controls.push(customControl);
+        if (controlOptions.className) {
+          customControlContainer.className = controlOptions.className;
+        } else {
+          customControlContainer.className =
+            "maplibregl-ctrl maplibregl-ctrl-group";
+        }
+
+        customControlContainer.innerHTML = controlOptions.html;
+
+        const customControl = {
+          onAdd: function () {
+            return customControlContainer;
+          },
+          onRemove: function () {
+            if (customControlContainer.parentNode) {
+              customControlContainer.parentNode.removeChild(
+                customControlContainer,
+              );
+            }
+          },
+        };
+
+        map.addControl(customControl, controlOptions.position || "top-right");
+        map.controls.push({ type: message.control_id, control: customControl });
+      }
     }
   });
 }

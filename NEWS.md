@@ -1,3 +1,32 @@
+# mapgl 0.4.1
+
+* **Enhanced draw control with new drawing modes and live measurements**:
+  - Added rectangle drawing mode: Draw rectangles by clicking two corner points
+  - Added radius/circle drawing mode: Draw circles from center point to edge
+  - New live measurement preview system showing real-time distance, area, and perimeter calculations while drawing
+  - Support for metric, imperial, or both unit systems in measurements with `measurement_units` parameter
+  - Measurements appear during drawing, editing, and when selecting existing features
+
+* **Advanced layers control enhancements**:
+  - New grouped layers control: Organize layers into logical groups with collapsible sections
+  - Custom layer labels for improved layer identification and user experience
+  - Enhanced visual styling and interaction design for better usability
+
+* **New map style support**:
+  - Added `openfreemap_style()` function providing free, open-source map styles without API key requirements
+
+* **General improvements**:
+  - Updated to latest Mapbox GL JS and MapLibre GL JS versions for better performance and compatibility
+  - Fixed MapLibre compare view functionality issues
+  - Improved stability across MapLibre-specific features
+
+* **Selective control functionality**: Enhanced control over which map controls are displayed and when, providing more granular customization options
+
+* **Bug fixes and stability improvements**:
+  - Fixed issues with layer management and control interactions
+  - Improved `move_layer()` functionality outside of Shiny applications
+  - Various compatibility and performance enhancements
+
 # mapgl 0.4.0
 
 * **Client-side geospatial analysis with turf.js**: Added comprehensive support for turf.js v7.2.0, enabling powerful spatial operations directly in the browser without server round-trips:

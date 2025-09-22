@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,6 +53,8 @@
 <span>  position <span class="op">=</span> <span class="st">"top-left"</span>,</span>
 <span>  freehand <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  simplify_freehand <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  rectangle <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  radius <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  orientation <span class="op">=</span> <span class="st">"vertical"</span>,</span>
 <span>  source <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  point_color <span class="op">=</span> <span class="st">"#3bb2d0"</span>,</span>
@@ -64,6 +66,8 @@
 <span>  line_width <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  download_button <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  download_filename <span class="op">=</span> <span class="st">"drawn-features"</span>,</span>
+<span>  show_measurements <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  measurement_units <span class="op">=</span> <span class="st">"both"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -87,6 +91,14 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".</p></dd>
 
 <dt id="arg-simplify-freehand">simplify_freehand<a class="anchor" aria-label="anchor" href="#arg-simplify-freehand"></a></dt>
 <dd><p>Logical, whether to apply simplification to freehand drawings. Default is FALSE.</p></dd>
+
+
+<dt id="arg-rectangle">rectangle<a class="anchor" aria-label="anchor" href="#arg-rectangle"></a></dt>
+<dd><p>Logical, whether to enable rectangle drawing mode. Default is FALSE.</p></dd>
+
+
+<dt id="arg-radius">radius<a class="anchor" aria-label="anchor" href="#arg-radius"></a></dt>
+<dd><p>Logical, whether to enable radius/circle drawing mode. Default is FALSE.</p></dd>
 
 
 <dt id="arg-orientation">orientation<a class="anchor" aria-label="anchor" href="#arg-orientation"></a></dt>
@@ -135,6 +147,14 @@ Default is NULL.</p></dd>
 <dd><p>Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".</p></dd>
 
 
+<dt id="arg-show-measurements">show_measurements<a class="anchor" aria-label="anchor" href="#arg-show-measurements"></a></dt>
+<dd><p>Logical, whether to show live measurements while drawing. Default is FALSE.</p></dd>
+
+
+<dt id="arg-measurement-units">measurement_units<a class="anchor" aria-label="anchor" href="#arg-measurement-units"></a></dt>
+<dd><p>Units for measurements. Either "metric", "imperial", or "both". Default is "both".</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional named arguments. See <a href="https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options" class="external-link">https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options</a> for a list of options.</p></dd>
 
@@ -173,6 +193,22 @@ Default is NULL.</p></dd>
 <span class="r-in"><span>        active_color <span class="op">=</span> <span class="st">"#ff00ff"</span>,</span></span>
 <span class="r-in"><span>        vertex_radius <span class="op">=</span> <span class="fl">7</span>,</span></span>
 <span class="r-in"><span>        line_width <span class="op">=</span> <span class="fl">3</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Enable rectangle drawing mode</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_draw_control</span><span class="op">(</span>rectangle <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Enable radius/circle drawing mode</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_draw_control</span><span class="op">(</span>radius <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Enable multiple drawing modes</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="mapboxgl.html">mapboxgl</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_draw_control</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        freehand <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>        rectangle <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>        radius <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
