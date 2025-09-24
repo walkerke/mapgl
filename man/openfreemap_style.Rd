@@ -7,7 +7,7 @@
 openfreemap_style(style_name)
 }
 \arguments{
-\item{style_name}{The name of the style (e.g., "bright", "positron", "liberty").}
+\item{style_name}{The name of the style (e.g., "bright", "positron", "liberty", "dark", or "fiord").}
 }
 \value{
 The style URL corresponding to the given style name.
