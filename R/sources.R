@@ -75,17 +75,36 @@ add_source <- function(map, id, data, ...) {
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param url A URL pointing to the vector tile source.
+#' @param tiles A list of tile URLs, typically in the format "https://example.com/{z}/{x}/{y}.mvt" or similar.
 #' @param promote_id An optional property name to use as the feature ID. This is required for hover effects on vector tiles.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
 #' @export
-add_vector_source <- function(map, id, url, promote_id = NULL, ...) {
+add_vector_source <- function(
+  map,
+  id,
+  url = NULL,
+  tiles = NULL,
+  promote_id = NULL,
+  ...
+) {
   source <- list(
     id = id,
-    type = "vector",
-    url = url
+    type = "vector"
   )
+
+  if (!is.null(url)) {
+    source$url <- url
+  } else if (!is.null(tiles)) {
+    if (is.character(tiles)) {
+      source$tiles <- as.list(tiles)
+    } else {
+      source$tiles <- tiles
+    }
+  } else {
+    stop("Either 'url' or 'tiles' must be provided.")
+  }
 
   if (!is.null(promote_id)) {
     source$promoteId <- promote_id
@@ -175,12 +194,20 @@ add_raster_source <- function(
 
   if (!is.null(url)) {
     source$url <- url
-  } else if (!is.null(tiles)) {
-    if (!is.list(tiles)) {
-      source$tiles <- list(tiles)
+  }
+
+  if (!is.null(tiles)) {
+    # Ensure tiles is always a list/array for JSON
+    if (is.character(tiles)) {
+      source$tiles <- as.list(tiles)
     } else {
       source$tiles <- tiles
     }
+  }
+
+  # Check that at least one is provided
+  if (is.null(url) && is.null(tiles)) {
+    stop("Either 'url' or 'tiles' must be provided.")
   }
 
   if (!is.null(maxzoom)) {
