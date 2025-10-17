@@ -8,7 +8,7 @@ editor: visual
 
 In Mapbox GL JS and MapLibre, datasets are added to maps as *sources* which are then styled as *layers*. **mapgl** aims to expose the sources and layers APIs to R users in ways that honor the deep customization available in the JavaScript libraries but also accommodate R users' typical workflows.
 
-Geospatial practitioners in R will typically work with objects from the **sf** package. The initial release of **mapgl** natively supports `sf` objects, and will aim to support other geospatial formats (such as objects from the **terra** package) in the future.
+Geospatial practitioners in R will typically work with objects from the **sf** package. **mapgl** natively supports both **sf** objects and **terra** rasters.
 
 Objects of class `sf` can be specified as sources for the map either through the `add_source()` function or via the `source` parameter in one of **mapgl**'s layer functions. The `add_fill_layer()` function calls the Mapbox GL JS `addLayer()` function internally with a `fill` type, and enumerates the available options for styling the layer as function arguments.
 
@@ -111,7 +111,7 @@ mapboxgl(style = mapbox_style("dark"),
     legend_title = "Points of Interest",
     values = c("Music", "Bar", "Theatre", "Bicycle"),
     colors = c("#1f78b4", "#33a02c", "#e31a1c", "#ff7f00"),
-    circular_patches = TRUE
+    patch_shape = "circle"
   )
 ```
 

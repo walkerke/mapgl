@@ -9,6 +9,7 @@
 <url><loc>https://walker-data.com/mapgl/articles/map-design.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/articles/shiny.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/articles/story-maps.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/articles/turf.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/authors.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/index.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/news/index.html</loc></url>
@@ -32,6 +33,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_line_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_markers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_navigation_control.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/add_pmtiles_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_dem_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_raster_source.html</loc></url>
@@ -41,11 +43,13 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_symbol_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_vector_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_video_source.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/add_view.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/carto_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/classification_helpers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_controls.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_drawn_features.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_layer.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/clear_legend.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_markers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/cluster_options.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/compare.html</loc></url>
@@ -57,10 +61,12 @@
 <url><loc>https://walker-data.com/mapgl/reference/format_numbers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/get_column.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/get_drawn_features.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/get_queried_features.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/index.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/interpolate.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/interpolate_palette.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/jump_to.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/legend_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/map_legends.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/mapbox_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/mapboxgl.html</loc></url>
@@ -81,6 +87,8 @@
 <url><loc>https://walker-data.com/mapgl/reference/move_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/number_format.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/on_section.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/openfreemap_style.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/query_rendered_features.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMapboxgl.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMapboxglCompare.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMaplibre.html</loc></url>
@@ -105,5 +113,17 @@
 <url><loc>https://walker-data.com/mapgl/reference/story_map.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/story_maplibre.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/story_section.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_area.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_buffer.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_center_of_mass.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_centroid.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_concave_hull.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_convex_hull.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_difference.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_distance.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_filter.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_intersect.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_union.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/turf_voronoi.html</loc></url>
 </urlset>
 

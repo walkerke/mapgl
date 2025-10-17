@@ -4,7 +4,14 @@
 \alias{add_control}
 \title{Add a custom control to a map}
 \usage{
-add_control(map, html, position = "top-right", className = NULL, ...)
+add_control(
+  map,
+  html,
+  position = "top-right",
+  className = NULL,
+  id = NULL,
+  ...
+)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
@@ -15,6 +22,9 @@ add_control(map, html, position = "top-right", className = NULL, ...)
 "bottom-left", or "bottom-right". Default is "top-right".}
 
 \item{className}{Optional CSS class name for the control container.}
+
+\item{id}{Optional unique identifier for the control. If not provided, defaults to "custom".
+This ID can be used with \code{clear_controls()} to selectively remove this specific control.}
 
 \item{...}{Additional arguments passed to the JavaScript side.}
 }
@@ -29,6 +39,7 @@ It allows you to create custom HTML element controls and add them to the map.
 \dontrun{
 library(mapgl)
 
+# Basic custom control
 maplibre() |>
   add_control(
     html = "<div style='background-color: white; padding: 5px;'>
@@ -37,5 +48,19 @@ maplibre() |>
             </div>",
     position = "top-left"
   )
+
+# Custom control with specific ID for selective removal
+maplibre() |>
+  add_control(
+    html = "<div style='background: blue; color: white; padding: 10px;'>
+             My Control
+            </div>",
+    position = "top-right",
+    id = "my_custom_control"
+  )
+
+# Later, remove only this specific control
+maplibre_proxy("map") |>
+  clear_controls("my_custom_control")
 }
 }

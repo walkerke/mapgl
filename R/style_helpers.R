@@ -553,6 +553,31 @@ carto_style <- function(style_name) {
   return(style_url)
 }
 
+#' Get OpenFreeMap Style URL
+#'
+#' @param style_name The name of the style (e.g., "bright", "positron", "liberty", "dark", or "fiord").
+#' @return The style URL corresponding to the given style name.
+#' @export
+openfreemap_style <- function(style_name) {
+  styles <- list(
+    bright = "https://tiles.openfreemap.org/styles/bright",
+    positron = "https://tiles.openfreemap.org/styles/positron",
+    liberty = "https://tiles.openfreemap.org/styles/liberty",
+    dark = "https://tiles.openfreemap.org/styles/dark",
+    fiord = "https://tiles.openfreemap.org/styles/fiord"
+  )
+
+  style_url <- styles[[style_name]]
+
+  if (is.null(style_url)) {
+    stop(
+      "Invalid style name. Please choose from: bright, positron, liberty, dark, or fiord."
+    )
+  }
+
+  return(style_url)
+}
+
 #' Get column or property for use in mapping
 #'
 #' This function returns a an expression to get a specified column from a dataset (or a property from a layer).

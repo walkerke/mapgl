@@ -112,26 +112,69 @@ set_rain <- function(map, density = 0.5, intensity = 1.0, color = "#a8adbc",
                      vignette = 1.0, vignette_color = "#464646",
                      remove = FALSE) {
   
-  # If remove is TRUE, set rain to NULL to remove the effect
-  if (remove) {
-    map$x$rain <- NULL
-    return(map)
+  # Check if this is a proxy object (only Mapbox proxy supported)
+  if (inherits(map, "mapboxgl_proxy")) {
+    # For proxy objects, send a message to update the rain effect
+    if (remove) {
+      # Send message to remove rain effect
+      map$session$sendCustomMessage(
+        "mapboxgl-proxy",
+        list(
+          id = map$id,
+          message = list(
+            type = "set_rain",
+            remove = TRUE
+          )
+        )
+      )
+    } else {
+      # Send message to set rain effect with parameters
+      rain <- list(
+        density = density,
+        intensity = intensity,
+        color = color,
+        opacity = opacity,
+        "center-thinning" = center_thinning,
+        direction = direction,
+        "droplet-size" = droplet_size,
+        "distortion-strength" = distortion_strength,
+        vignette = vignette,
+        "vignette-color" = vignette_color
+      )
+      
+      map$session$sendCustomMessage(
+        "mapboxgl-proxy",
+        list(
+          id = map$id,
+          message = list(
+            type = "set_rain",
+            rain = rain
+          )
+        )
+      )
+    }
+  } else {
+    # For regular map objects, use existing logic
+    if (remove) {
+      map$x$rain <- NULL
+      return(map)
+    }
+    
+    rain <- list(
+      density = density,
+      intensity = intensity,
+      color = color,
+      opacity = opacity,
+      "center-thinning" = center_thinning,
+      direction = direction,
+      "droplet-size" = droplet_size,
+      "distortion-strength" = distortion_strength,
+      vignette = vignette,
+      "vignette-color" = vignette_color
+    )
+    
+    map$x$rain <- rain
   }
-  
-  rain <- list(
-    density = density,
-    intensity = intensity,
-    color = color,
-    opacity = opacity,
-    "center-thinning" = center_thinning,
-    direction = direction,
-    "droplet-size" = droplet_size,
-    "distortion-strength" = distortion_strength,
-    vignette = vignette,
-    "vignette-color" = vignette_color
-  )
-  
-  map$x$rain <- rain
   
   map
 }
@@ -180,25 +223,67 @@ set_snow <- function(map, density = 0.85, intensity = 1.0, color = "#ffffff",
                      flake_size = 0.71, vignette = 0.3, vignette_color = "#ffffff",
                      remove = FALSE) {
   
-  # If remove is TRUE, set snow to NULL to remove the effect
-  if (remove) {
-    map$x$snow <- NULL
-    return(map)
+  # Check if this is a proxy object (only Mapbox proxy supported)
+  if (inherits(map, "mapboxgl_proxy")) {
+    # For proxy objects, send a message to update the snow effect
+    if (remove) {
+      # Send message to remove snow effect
+      map$session$sendCustomMessage(
+        "mapboxgl-proxy",
+        list(
+          id = map$id,
+          message = list(
+            type = "set_snow",
+            remove = TRUE
+          )
+        )
+      )
+    } else {
+      # Send message to set snow effect with parameters
+      snow <- list(
+        density = density,
+        intensity = intensity,
+        color = color,
+        opacity = opacity,
+        "center-thinning" = center_thinning,
+        direction = direction,
+        "flake-size" = flake_size,
+        vignette = vignette,
+        "vignette-color" = vignette_color
+      )
+      
+      map$session$sendCustomMessage(
+        "mapboxgl-proxy",
+        list(
+          id = map$id,
+          message = list(
+            type = "set_snow",
+            snow = snow
+          )
+        )
+      )
+    }
+  } else {
+    # For regular map objects, use existing logic
+    if (remove) {
+      map$x$snow <- NULL
+      return(map)
+    }
+    
+    snow <- list(
+      density = density,
+      intensity = intensity,
+      color = color,
+      opacity = opacity,
+      "center-thinning" = center_thinning,
+      direction = direction,
+      "flake-size" = flake_size,
+      vignette = vignette,
+      "vignette-color" = vignette_color
+    )
+    
+    map$x$snow <- snow
   }
-  
-  snow <- list(
-    density = density,
-    intensity = intensity,
-    color = color,
-    opacity = opacity,
-    "center-thinning" = center_thinning,
-    direction = direction,
-    "flake-size" = flake_size,
-    vignette = vignette,
-    "vignette-color" = vignette_color
-  )
-  
-  map$x$snow <- snow
   
   map
 }

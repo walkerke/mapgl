@@ -4,18 +4,18 @@
 \alias{move_layer}
 \title{Move a layer to a different z-position}
 \usage{
-move_layer(proxy, layer_id, before_id = NULL)
+move_layer(map, layer_id, before_id = NULL)
 }
 \arguments{
-\item{proxy}{A proxy object created by \code{mapboxgl_proxy} or \code{maplibre_proxy}.}
+\item{map}{A map object created by \code{mapboxgl} or \code{maplibre}, or a proxy object created by \code{mapboxgl_proxy} or \code{maplibre_proxy}.}
 
 \item{layer_id}{The ID of the layer to move.}
 
 \item{before_id}{The ID of an existing layer to insert the new layer before. \strong{Important}: this means that the layer will appear \emph{immediately behind} the layer defined in \code{before_id}. If omitted, the layer will be appended to the end of the layers array and appear above all other layers.}
 }
 \value{
-The updated proxy object.
+The updated map or proxy object.
 }
 \description{
-This function allows a layer to be moved to a different z-position in an existing Mapbox GL or Maplibre GL map using a proxy object.
+This function allows a layer to be moved to a different z-position in a Mapbox GL or Maplibre GL map. For initial maps, the operation is queued and executed during map initialization. For proxy objects, the operation is executed immediately.
 }

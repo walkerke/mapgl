@@ -2,16 +2,45 @@
 % Please edit documentation in R/controls.R
 \name{clear_controls}
 \alias{clear_controls}
-\title{Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app}
+\title{Clear controls from a Mapbox GL or Maplibre GL map in a Shiny app}
 \usage{
-clear_controls(map)
+clear_controls(map, controls = NULL)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
+
+\item{controls}{A character vector of control types to remove, or NULL to remove all controls.
+Control types include: "navigation", "draw", "fullscreen", "scale", "geolocate",
+"geocoder", "layers", "reset", "globe_minimap", or custom control IDs.
+If NULL (default), all controls will be removed.}
 }
 \value{
-The modified map object with all controls removed.
+The modified map object with specified controls removed.
 }
 \description{
-Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app
+This function allows you to remove specific controls or all controls from a map.
+You can target controls by their type names, which correspond to the function
+names used to add them (e.g., "navigation" for controls added with \code{add_navigation_control}).
+}
+\examples{
+\dontrun{
+library(shiny)
+library(mapgl)
+
+# Clear all controls
+maplibre_proxy("map") |>
+  clear_controls()
+
+# Clear specific controls
+maplibre_proxy("map") |>
+  clear_controls("navigation")
+
+# Clear multiple controls
+maplibre_proxy("map") |>
+  clear_controls(c("draw", "navigation"))
+
+# Clear a custom control by ID
+maplibre_proxy("map") |>
+  clear_controls("my_custom_control")
+}
 }

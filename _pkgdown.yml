@@ -36,6 +36,8 @@ navbar:
           href: articles/map-design.html
         - text: Using mapgl with Shiny
           href: articles/shiny.html
+        - text: Client-side geospatial analysis with turf.js
+          href: articles/turf.html
         - text: Building story maps with mapgl
           href: articles/story-maps.html
 
@@ -48,6 +50,7 @@ reference:
       - mapboxgl_view
       - maplibre_view
 
+
   - title: "Adding Layers"
     desc: "Functions to add various types of visualization layers to your map"
     contents:
@@ -59,6 +62,7 @@ reference:
       - add_fill_extrusion_layer
       - add_raster_layer
       - add_symbol_layer
+      - add_view
 
   - title: "Data Sources"
     desc: "Functions to add different types of data sources"
@@ -70,6 +74,7 @@ reference:
       - add_image_source
       - add_video_source
       - add_h3j_source
+      - add_pmtiles_source
 
   - title: "Map Controls"
     desc: "Functions to add interactive controls to your map"
@@ -90,6 +95,8 @@ reference:
     desc: "Functions for adding and managing map legends with customizable styling"
     contents:
       - map_legends
+      - legend_style
+      - clear_legend
 
   - title: "Markers"
     desc: "Functions for adding and managing markers"
@@ -103,6 +110,7 @@ reference:
       - mapbox_style
       - maptiler_style
       - carto_style
+      - openfreemap_style
       - interpolate
       - match_expr
       - step_expr
@@ -167,6 +175,22 @@ reference:
       - maplibre_compare_proxy
       - enable_shiny_hover
 
+  - title: "Turf.js Spatial Operations"
+    desc: "Client-side geospatial analysis functions using turf.js"
+    contents:
+      - turf_buffer
+      - turf_union
+      - turf_intersect
+      - turf_difference
+      - turf_filter
+      - turf_convex_hull
+      - turf_concave_hull
+      - turf_voronoi
+      - turf_centroid
+      - turf_center_of_mass
+      - turf_distance
+      - turf_area
+
   - title: "Advanced Features"
     desc: "Functions for advanced mapping features"
     contents:
@@ -176,6 +200,8 @@ reference:
       - get_drawn_features
       - add_features_to_draw
       - clear_drawn_features
+      - query_rendered_features
+      - get_queried_features
 
   - title: "Story Maps"
     desc: "Functions for creating scrollytelling story maps"

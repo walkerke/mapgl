@@ -14,7 +14,11 @@ add_layers_control(
   active_color = NULL,
   hover_color = NULL,
   active_text_color = NULL,
-  inactive_text_color = NULL
+  inactive_text_color = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL
 )
 }
 \arguments{
@@ -22,7 +26,10 @@ add_layers_control(
 
 \item{position}{The position of the control on the map (one of "top-left", "top-right", "bottom-left", "bottom-right").}
 
-\item{layers}{A vector of layer IDs to be included in the control. If NULL, all layers will be included.}
+\item{layers}{Either a character vector of layer IDs to include in the control,
+a named list/vector where names are labels and values are layer IDs,
+or a named list where values can be vectors to group multiple layers together.
+If NULL, all layers will be included.}
 
 \item{collapsible}{Whether the control should be collapsible.}
 
@@ -38,6 +45,14 @@ color used for inactive layer items.}
 \item{active_text_color}{The text color for active layer items.}
 
 \item{inactive_text_color}{The text color for inactive layer items.}
+
+\item{margin_top}{Custom top margin in pixels, allowing for fine control over control positioning to avoid overlaps. Default is NULL (uses standard positioning).}
+
+\item{margin_right}{Custom right margin in pixels. Default is NULL.}
+
+\item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
+
+\item{margin_left}{Custom left margin in pixels. Default is NULL.}
 }
 \value{
 The modified map object with the layers control added.
@@ -52,6 +67,7 @@ options(tigris_use_cache = TRUE)
 
 rds <- roads("TX", "Tarrant")
 tr <- tracts("TX", "Tarrant", cb = TRUE)
+cty <- counties("TX", cb = TRUE)
 
 maplibre() |>
     fit_bounds(rds) |>
@@ -70,6 +86,38 @@ maplibre() |>
         position = "top-left",
         background_color = "#ffffff",
         active_color = "#4a90e2"
+    )
+
+# With custom labels
+maplibre() |>
+    add_fill_layer(id = "tract-fill", source = tr) |>
+    add_line_layer(id = "tract-line", source = tr) |>
+    add_layers_control(
+        layers = list(
+            "Census Tracts" = "tract-fill",
+            "Tract Borders" = "tract-line"
+        )
+    )
+
+# Group multiple layers together
+maplibre(bounds = cty) |>
+    add_fill_layer(id = "county-fill", source = cty, fill_opacity = 0.3) |>
+    add_line_layer(
+        id = "county-outline",
+        source = cty,
+        line_color = "yellow",
+        line_width = 3
+    ) |>
+    add_line_layer(
+        id = "roads-layer",
+        source = rds,
+        line_color = "blue"
+    ) |>
+    add_layers_control(
+        layers = list(
+            "Counties" = c("county-fill", "county-outline"),
+            "Roads" = "roads-layer"
+        )
     )
 }
 }

@@ -182,7 +182,7 @@ compare.mapboxgl <- function(
         stylesheet = "layers-control.css"
     )
 
-    htmlwidgets::createWidget(
+    widget <- htmlwidgets::createWidget(
         name = "mapboxgl_compare",
         x,
         width = width,
@@ -202,6 +202,10 @@ compare.mapboxgl <- function(
             browser.defaultHeight = "100vh"
         )
     )
+    
+    # Add class to enable S3 methods
+    class(widget) <- c("mapboxgl_compare", class(widget))
+    widget
 }
 
 # Maplibre comparison widget
@@ -259,7 +263,7 @@ compare.maplibre <- function(
         stylesheet = "layers-control.css"
     )
 
-    htmlwidgets::createWidget(
+    widget <- htmlwidgets::createWidget(
         name = "maplibregl_compare",
         x,
         width = width,
@@ -279,6 +283,10 @@ compare.maplibre <- function(
             browser.defaultHeight = "100vh"
         )
     )
+    
+    # Add class to enable S3 methods
+    class(widget) <- c("maplibregl_compare", class(widget))
+    widget
 }
 
 #' Create a Mapbox GL Compare output element for Shiny

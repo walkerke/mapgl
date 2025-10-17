@@ -1,3 +1,53 @@
+# mapgl 0.4.1
+
+* **Enhanced draw control with new drawing modes and live measurements**:
+  - Added rectangle drawing mode: Draw rectangles by clicking two corner points
+  - Added radius/circle drawing mode: Draw circles from center point to edge
+  - New live measurement preview system showing real-time distance, area, and perimeter calculations while drawing
+  - Support for metric, imperial, or both unit systems in measurements with `measurement_units` parameter
+  - Measurements appear during drawing, editing, and when selecting existing features
+
+* **Advanced layers control enhancements**:
+  - New grouped layers control: Organize layers into logical groups with collapsible sections
+  - Custom layer labels for improved layer identification and user experience
+  - Enhanced visual styling and interaction design for better usability
+
+* **New map style support**:
+  - Added `openfreemap_style()` function providing free, open-source map styles without API key requirements
+
+* **General improvements**:
+  - Updated to latest Mapbox GL JS and MapLibre GL JS versions for better performance and compatibility
+  - Fixed MapLibre compare view functionality issues
+  - Improved stability across MapLibre-specific features
+
+* **Selective control functionality**: Enhanced control over which map controls are displayed and when, providing more granular customization options
+
+* **Bug fixes and stability improvements**:
+  - Fixed issues with layer management and control interactions
+  - Improved `move_layer()` functionality outside of Shiny applications
+  - Various compatibility and performance enhancements
+
+# mapgl 0.4.0
+
+* **Client-side geospatial analysis with turf.js**: Added comprehensive support for turf.js v7.2.0, enabling powerful spatial operations directly in the browser without server round-trips:
+  - Geometric operations: `turf_buffer()`, `turf_union()`, `turf_intersect()`, `turf_difference()`
+  - Spatial filtering: `turf_filter()` with predicates (intersects, within, contains, crosses, disjoint)
+  - Point analysis: `turf_convex_hull()`, `turf_concave_hull()`, `turf_voronoi()`, `turf_centroid()`, `turf_center_of_mass()`
+  - Measurement functions: `turf_distance()` and `turf_area()` (Shiny-only)
+  - All functions support flexible inputs: existing map layers/sources or sf objects
+  - Full integration with Shiny proxy objects for real-time spatial analysis in web applications
+
+# mapgl 0.3.2
+
+* Added download functionality to draw control with new `download_button` and `download_filename` parameters in `add_draw_control()`. Users can now export drawn features as GeoJSON files directly from the draw control interface.
+* Enhanced geocoder control with MapTiler support for MapLibre maps. New `provider` parameter allows choosing between "osm" (OpenStreetMap/Nominatim) and "maptiler" providers, with `maptiler_api_key` parameter for MapTiler authentication.
+
+# mapgl 0.3.1
+
+* Added PMTiles support for Mapbox maps and streamlined PMTiles integration with `add_pmtiles_source()` function.
+* New functions `query_rendered_features()` and `get_queried_features()` allow users to directly invoke the `map.queryRenderedFeatures()` method from the parent libraries in Shiny apps, with guidance for users to avoid race conditions and ensure proper synchronization.  Functions query visible features in the map's viewport and which can be extracted as sf objects.
+* `mapboxgl_view()` and `maplibre_view()` now support quick view of terra rasters.  A new function, `add_view()`, is designed to help users quickly stack layers on top of the core view functions.
+
 # mapgl 0.3
 
 * Added `enable_shiny_hover()` function for optional hover events in Shiny applications:

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@
     <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/turf.html">Client-side geospatial analysis with turf.js</a></li>
     <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -133,6 +134,12 @@
 
         </dt>
         <dd>Add a symbol layer to a map</dd>
+      </dl><dl><dt>
+
+          <code><a href="add_view.html">add_view()</a></code>
+
+        </dt>
+        <dd>Add a visualization layer to an existing map</dd>
       </dl></div><div class="section level2">
       <h2 id="data-sources">Data Sources<a class="anchor" aria-label="anchor" href="#data-sources"></a></h2>
 
@@ -186,6 +193,12 @@
 
         </dt>
         <dd>Add a hexagon source from the H3 geospatial indexing system.</dd>
+      </dl><dl><dt>
+
+          <code><a href="add_pmtiles_source.html">add_pmtiles_source()</a></code>
+
+        </dt>
+        <dd>Add a PMTiles source to a Mapbox GL or Maplibre GL map</dd>
       </dl></div><div class="section level2">
       <h2 id="map-controls">Map Controls<a class="anchor" aria-label="anchor" href="#map-controls"></a></h2>
 
@@ -262,7 +275,7 @@
           <code><a href="clear_controls.html">clear_controls()</a></code>
 
         </dt>
-        <dd>Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app</dd>
+        <dd>Clear controls from a Mapbox GL or Maplibre GL map in a Shiny app</dd>
       </dl></div><div class="section level2">
       <h2 id="legends">Legends<a class="anchor" aria-label="anchor" href="#legends"></a></h2>
 
@@ -276,10 +289,22 @@
 
       <dl><dt>
 
-          <code><a href="map_legends.html">legend_style()</a></code> <code><a href="map_legends.html">add_legend()</a></code> <code><a href="map_legends.html">add_categorical_legend()</a></code> <code><a href="map_legends.html">add_continuous_legend()</a></code> <code><a href="map_legends.html">clear_legend()</a></code>
+          <code><a href="map_legends.html">add_legend()</a></code> <code><a href="map_legends.html">add_categorical_legend()</a></code> <code><a href="map_legends.html">add_continuous_legend()</a></code>
 
         </dt>
-        <dd>Add legends to maps with customizable styling</dd>
+        <dd>Add legends to Mapbox GL and MapLibre GL maps</dd>
+      </dl><dl><dt>
+
+          <code><a href="legend_style.html">legend_style()</a></code>
+
+        </dt>
+        <dd>Create custom styling for map legends</dd>
+      </dl><dl><dt>
+
+          <code><a href="clear_legend.html">clear_legend()</a></code>
+
+        </dt>
+        <dd>Clear legends from a map</dd>
       </dl></div><div class="section level2">
       <h2 id="markers">Markers<a class="anchor" aria-label="anchor" href="#markers"></a></h2>
 
@@ -332,6 +357,12 @@
 
         </dt>
         <dd>Get CARTO Style URL</dd>
+      </dl><dl><dt>
+
+          <code><a href="openfreemap_style.html">openfreemap_style()</a></code>
+
+        </dt>
+        <dd>Get OpenFreeMap Style URL</dd>
       </dl><dl><dt>
 
           <code><a href="interpolate.html">interpolate()</a></code>
@@ -646,6 +677,89 @@
         </dt>
         <dd>Enable hover events for Shiny applications</dd>
       </dl></div><div class="section level2">
+      <h2 id="turf-js-spatial-operations">Turf.js Spatial Operations<a class="anchor" aria-label="anchor" href="#turf-js-spatial-operations"></a></h2>
+
+      <div class="section-desc"><p>Client-side geospatial analysis functions using turf.js</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="turf_buffer.html">turf_buffer()</a></code>
+
+        </dt>
+        <dd>Turf.js Geospatial Operations for mapgl</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_union.html">turf_union()</a></code>
+
+        </dt>
+        <dd>Union geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_intersect.html">turf_intersect()</a></code>
+
+        </dt>
+        <dd>Find intersection of two geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_difference.html">turf_difference()</a></code>
+
+        </dt>
+        <dd>Find difference between two geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_filter.html">turf_filter()</a></code>
+
+        </dt>
+        <dd>Spatial filter features by predicate</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_convex_hull.html">turf_convex_hull()</a></code>
+
+        </dt>
+        <dd>Create convex hull</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_concave_hull.html">turf_concave_hull()</a></code>
+
+        </dt>
+        <dd>Create concave hull</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_voronoi.html">turf_voronoi()</a></code>
+
+        </dt>
+        <dd>Create Voronoi diagram</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_centroid.html">turf_centroid()</a></code>
+
+        </dt>
+        <dd>Calculate centroid of geometries</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_center_of_mass.html">turf_center_of_mass()</a></code>
+
+        </dt>
+        <dd>Calculate center of mass</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_distance.html">turf_distance()</a></code>
+
+        </dt>
+        <dd>Calculate distance between two features</dd>
+      </dl><dl><dt>
+
+          <code><a href="turf_area.html">turf_area()</a></code>
+
+        </dt>
+        <dd>Calculate area of geometries</dd>
+      </dl></div><div class="section level2">
       <h2 id="advanced-features">Advanced Features<a class="anchor" aria-label="anchor" href="#advanced-features"></a></h2>
 
       <div class="section-desc"><p>Functions for advanced mapping features</p></div>
@@ -692,6 +806,18 @@
 
         </dt>
         <dd>Clear all drawn features from a map</dd>
+      </dl><dl><dt>
+
+          <code><a href="query_rendered_features.html">query_rendered_features()</a></code>
+
+        </dt>
+        <dd>Query rendered features on a map in a Shiny session</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_queried_features.html">get_queried_features()</a></code>
+
+        </dt>
+        <dd>Get queried features from a map as an sf object</dd>
       </dl></div><div class="section level2">
       <h2 id="story-maps">Story Maps<a class="anchor" aria-label="anchor" href="#story-maps"></a></h2>
 

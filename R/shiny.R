@@ -85,8 +85,8 @@ set_filter <- function(map, layer_id, filter) {
       )
     } else {
       # For regular proxies, use existing message handler
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -167,11 +167,20 @@ clear_layer <- function(proxy, layer_id) {
 #'
 #' @return The updated map object.
 #' @export
-set_layout_property <- function(map, layer_id = NULL, name, value, layer = NULL) {
+set_layout_property <- function(
+  map,
+  layer_id = NULL,
+  name,
+  value,
+  layer = NULL
+) {
   # Handle backwards compatibility
   if (!is.null(layer) && is.null(layer_id)) {
     layer_id <- layer
-    warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    warning(
+      "The 'layer' argument is deprecated. Please use 'layer_id' instead.",
+      call. = FALSE
+    )
   }
 
   if (is.null(layer_id)) {
@@ -200,8 +209,8 @@ set_layout_property <- function(map, layer_id = NULL, name, value, layer = NULL)
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -236,11 +245,20 @@ set_layout_property <- function(map, layer_id = NULL, name, value, layer = NULL)
 #'
 #' @return The updated map object.
 #' @export
-set_paint_property <- function(map, layer_id = NULL, name, value, layer = NULL) {
+set_paint_property <- function(
+  map,
+  layer_id = NULL,
+  name,
+  value,
+  layer = NULL
+) {
   # Handle backwards compatibility
   if (!is.null(layer) && is.null(layer_id)) {
     layer_id <- layer
-    warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    warning(
+      "The 'layer' argument is deprecated. Please use 'layer_id' instead.",
+      call. = FALSE
+    )
   }
 
   if (is.null(layer_id)) {
@@ -269,8 +287,8 @@ set_paint_property <- function(map, layer_id = NULL, name, value, layer = NULL) 
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -322,8 +340,8 @@ clear_markers <- function(map) {
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(id = map$id, message = list(type = "clear_markers"))
@@ -363,7 +381,13 @@ clear_markers <- function(map) {
 #'         set_style(mapbox_style("dark"), config = list(showLabels = FALSE), diff = TRUE)
 #' })
 #' }
-set_style <- function(map, style, config = NULL, diff = TRUE, preserve_layers = TRUE) {
+set_style <- function(
+  map,
+  style,
+  config = NULL,
+  diff = TRUE,
+  preserve_layers = TRUE
+) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
@@ -388,8 +412,8 @@ set_style <- function(map, style, config = NULL, diff = TRUE, preserve_layers = 
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -414,41 +438,34 @@ set_style <- function(map, style, config = NULL, diff = TRUE, preserve_layers = 
 
 #' Move a layer to a different z-position
 #'
-#' This function allows a layer to be moved to a different z-position in an existing Mapbox GL or Maplibre GL map using a proxy object.
+#' This function allows a layer to be moved to a different z-position in a Mapbox GL or Maplibre GL map. For initial maps, the operation is queued and executed during map initialization. For proxy objects, the operation is executed immediately.
 #'
-#' @param proxy A proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
+#' @param map A map object created by `mapboxgl` or `maplibre`, or a proxy object created by `mapboxgl_proxy` or `maplibre_proxy`.
 #' @param layer_id The ID of the layer to move.
 #' @param before_id The ID of an existing layer to insert the new layer before. __Important__: this means that the layer will appear _immediately behind_ the layer defined in `before_id`. If omitted, the layer will be appended to the end of the layers array and appear above all other layers.
 #'
-#' @return The updated proxy object.
+#' @return The updated map or proxy object.
 #' @export
-move_layer <- function(proxy, layer_id, before_id = NULL) {
+move_layer <- function(map, layer_id, before_id = NULL) {
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+    # Proxy handling (existing logic)
   if (
-    !any(
-      inherits(proxy, "mapboxgl_proxy"),
-      inherits(proxy, "maplibre_proxy")
-    )
-  ) {
-    stop("Invalid proxy object")
-  }
-
-  if (
-    inherits(proxy, "mapboxgl_compare_proxy") ||
-    inherits(proxy, "maplibre_compare_proxy")
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
   ) {
     # For compare proxies
-    proxy_class <- if (inherits(proxy, "mapboxgl_compare_proxy"))
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
       "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
     message <- list(
       type = "move_layer",
       layer = layer_id,
       before = before_id,
-      map = proxy$map_side
+        map = map$map_side
     )
   } else {
     # For regular proxies
-    proxy_class <- if (inherits(proxy, "mapboxgl_proxy"))
-      "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
     message <- list(
       type = "move_layer",
       layer = layer_id,
@@ -456,11 +473,19 @@ move_layer <- function(proxy, layer_id, before_id = NULL) {
     )
   }
 
-  proxy$session$sendCustomMessage(
+    map$session$sendCustomMessage(
     proxy_class,
-    list(id = proxy$id, message = message)
+      list(id = map$id, message = message)
   )
-  proxy
+  } else {
+    # For non-proxy maps, store the move operation for initialization
+    if (is.null(map$x$moveLayer)) map$x$moveLayer <- list()
+    map$x$moveLayer[[length(map$x$moveLayer) + 1]] <- list(
+      layer = layer_id,
+      before = before_id
+    )
+  }
+  return(map)
 }
 
 #' Set tooltip on a map layer
@@ -476,7 +501,10 @@ set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
   # Handle backwards compatibility
   if (!is.null(layer) && is.null(layer_id)) {
     layer_id <- layer
-    warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    warning(
+      "The 'layer' argument is deprecated. Please use 'layer_id' instead.",
+      call. = FALSE
+    )
   }
 
   if (is.null(layer_id)) {
@@ -504,8 +532,8 @@ set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -539,7 +567,10 @@ set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
   # Handle backwards compatibility
   if (!is.null(layer) && is.null(layer_id)) {
     layer_id <- layer
-    warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    warning(
+      "The 'layer' argument is deprecated. Please use 'layer_id' instead.",
+      call. = FALSE
+    )
   }
 
   if (is.null(layer_id)) {
@@ -567,8 +598,8 @@ set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -602,7 +633,10 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
   # Handle backwards compatibility
   if (!is.null(layer) && is.null(layer_id)) {
     layer_id <- layer
-    warning("The 'layer' argument is deprecated. Please use 'layer_id' instead.", call. = FALSE)
+    warning(
+      "The 'layer' argument is deprecated. Please use 'layer_id' instead.",
+      call. = FALSE
+    )
   }
 
   if (is.null(layer_id)) {
@@ -638,8 +672,8 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
       )
     } else {
       # For regular proxies
-      proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-        "mapboxgl-proxy" else "maplibre-proxy"
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
       map$session$sendCustomMessage(
         proxy_class,
         list(
@@ -726,42 +760,9 @@ update_feature_query <- function(map, layer_id = NULL, geometry = NULL
       )
     )
   }
-
-  #browser()
-  # # remove the module namespace so the input element can be constructed
-  # # correctly by the javascript appropriately
-  # map_id <-
-  #   sub(
-  #     pattern = session$ns(""),
-  #     replacement = "",
-  #     x = paste0(map_id, "_feature_query")
-  #   )
-  #
-  # # Wait for response
-  # features_json <- NULL
-  # wait_time <- 0
-  # while (
-  #   is.null(features_json) &&
-  #   wait_time < 3
-  # ) {
-  #   # Wait up to 3 seconds
-  #   features_json <- session$input[[map_id]]
-  #   Sys.sleep(0.1)
-  #   wait_time <- wait_time + 0.1
-  # }
-  #
-  # if (
-  #   !is.null(features_json) &&
-  #   features_json != "null" &&
-  #   nchar(features_json) > 0
-  # ) {
-  #   features <- jsonlite::fromJSON(features_json)
-  #   features <- features |> dplyr::distinct()
-  #   return(features)
-  # } else {
-  #   NULL
-  # }
 }
+
+
 
 
 #' Queries  all features in a source
@@ -835,6 +836,67 @@ update_source_query <- function(map, source_id, source_layer = NULL
       )
     )
   }
-
-
 }
+
+#' Clear legends from a map
+#'
+#' Remove one or more legends from a Mapbox GL or MapLibre GL map in a Shiny application.
+#'
+#' @param map A map proxy object created by \code{mapboxgl_proxy()} or \code{maplibre_proxy()}.
+#' @param legend_ids Optional. A character vector of legend IDs to clear. If not provided, all legends will be cleared.
+#'
+#' @return The updated map proxy object with the specified legend(s) cleared.
+#'
+#' @note This function can only be used with map proxy objects in Shiny applications.
+#' It cannot be used with static map objects.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # In a Shiny server function:
+#'
+#' # Clear all legends
+#' observeEvent(input$clear_all, {
+#'   mapboxgl_proxy("map") %>%
+#'     clear_legend()
+#' })
+#'
+#' # Clear specific legends by ID
+#' observeEvent(input$clear_specific, {
+#'   mapboxgl_proxy("map") %>%
+#'     clear_legend(legend_ids = c("legend-1", "legend-2"))
+#' })
+#'
+#' # Clear legend after removing a layer
+#' observeEvent(input$remove_layer, {
+#'   mapboxgl_proxy("map") %>%
+#'     remove_layer("my_layer") %>%
+#'     clear_legend(legend_ids = "my_layer_legend")
+#' })
+#' }
+clear_legend <- function(map, legend_ids = NULL) {
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    proxy_class <- ifelse(
+      inherits(map, "mapboxgl_proxy"),
+      "mapboxgl-proxy",
+      "maplibre-proxy"
+    )
+    message <- if (is.null(legend_ids)) {
+      list(type = "clear_legend")
+    } else {
+      list(type = "clear_legend", ids = legend_ids)
+    }
+    map$session$sendCustomMessage(
+      proxy_class,
+      list(id = map$id, message = message)
+    )
+  } else {
+    stop(
+      "clear_legend can only be used with mapboxgl_proxy or maplibre_proxy objects."
+    )
+  }
+  return(map)
+}
+
+

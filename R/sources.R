@@ -9,7 +9,10 @@
 #' @export
 add_source <- function(map, id, data, ...) {
   if (inherits(data, "sf")) {
-    geojson <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    if (sf::st_crs(data) != 4326) {
+      data <- sf::st_transform(data, crs = 4326)
+    }
+    geojson <- geojsonsf::sf_geojson(data)
   } else if (is.character(data) && grepl("^http", data)) {
     geojson <- data
   } else {
@@ -72,17 +75,42 @@ add_source <- function(map, id, data, ...) {
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param url A URL pointing to the vector tile source.
+#' @param tiles A vector of tile URLs, typically in the format "https://example.com/{z}/{x}/{y}.mvt" or similar.
 #' @param promote_id An optional property name to use as the feature ID. This is required for hover effects on vector tiles.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
 #' @export
-add_vector_source <- function(map, id, url, promote_id = NULL, ...) {
+add_vector_source <- function(
+  map,
+  id,
+  url = NULL,
+  tiles = NULL,
+  promote_id = NULL,
+  ...
+) {
   source <- list(
     id = id,
-    type = "vector",
-    url = url
+    type = "vector"
   )
+
+  if (!is.null(url)) {
+    source$url <- url
+  }
+
+  if (!is.null(tiles)) {
+    # Ensure tiles is always a list/array for JSON
+    if (is.character(tiles)) {
+      source$tiles <- as.list(tiles)
+    } else {
+      source$tiles <- tiles
+    }
+  }
+
+  # Check that at least one is provided
+  if (is.null(url) && is.null(tiles)) {
+    stop("Either 'url' or 'tiles' must be provided.")
+  }
 
   if (!is.null(promote_id)) {
     source$promoteId <- promote_id
@@ -488,6 +516,142 @@ add_video_source <- function(map, id, urls, coordinates) {
     urls = urls,
     coordinates = coordinates
   )
+
+  if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      # For compare proxies
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) {
+        "mapboxgl-compare-proxy"
+      } else {
+        "maplibre-compare-proxy"
+      }
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_source",
+            source = source,
+            map = map$map_side
+          )
+        )
+      )
+    } else {
+      # For regular proxies
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+        "mapboxgl-proxy"
+      } else {
+        "maplibre-proxy"
+      }
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(id = map$id, message = list(type = "add_source", source = source))
+      )
+    }
+  } else {
+    map$x$sources <- c(map$x$sources, list(source))
+  }
+
+  return(map)
+}
+
+
+#' Add a PMTiles source to a Mapbox GL or Maplibre GL map
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` function.
+#' @param id A unique ID for the source.
+#' @param url A URL pointing to the PMTiles archive.
+#' @param source_type The source type for MapLibre maps. Either "vector" (default) or "raster".
+#' @param maxzoom Only used when source_type is "raster". The maximum zoom level for the PMTiles source. Defaults to 22.
+#' @param tilesize Only used when source_type is "raster". The size of the tiles in the PMTiles source. Defaults to 256.
+#' @param promote_id An optional property name to use as the feature ID. This is required for hover effects on vector sources.
+#' @param ... Additional arguments to be passed to the JavaScript addSource method.
+#'
+#' @return The modified map object with the new source added.
+#' @export
+#' @examples
+#' \dontrun{
+#'
+#' # Visualize the Overture Maps places data as PMTiles
+#' # Works with either `maplibre()` or `mapboxgl()`
+#'
+#' library(mapgl)
+#'
+#' maplibre(style = maptiler_style("basic", variant = "dark")) |>
+#'   set_projection("globe") |>
+#'   add_pmtiles_source(
+#'     id = "places-source",
+#'     url = "https://overturemaps-tiles-us-west-2-beta.s3.amazonaws.com/2025-06-25/places.pmtiles"
+#'   ) |>
+#'   add_circle_layer(
+#'     id = "places-layer",
+#'     source = "places-source",
+#'     source_layer = "place",
+#'     circle_color = "cyan",
+#'     circle_opacity = 0.7,
+#'     circle_radius = 4,
+#'     tooltip = concat(
+#'       "Name: ",
+#'       get_column("@name"),
+#'       "<br>Confidence: ",
+#'       number_format(get_column("confidence"), maximum_fraction_digits = 2)
+#'     )
+#'   )
+#' }
+add_pmtiles_source <- function(
+  map,
+  id,
+  url,
+  source_type = "vector",
+  maxzoom = 22,
+  tilesize = 256,
+  promote_id = NULL,
+  ...
+) {
+  # Detect if we're using Mapbox GL JS or MapLibre GL JS
+  is_mapbox <- inherits(map, "mapboxgl") ||
+    inherits(map, "mapboxgl_proxy") ||
+    inherits(map, "mapboxgl_compare") ||
+    inherits(map, "mapboxgl_compare_proxy")
+
+  if (is_mapbox) {
+    # For Mapbox GL JS, use the custom PMTiles source type
+    source <- list(
+      id = id,
+      type = "pmtile-source", # Custom source type from mapbox-pmtiles
+      url = url # No pmtiles:// prefix needed
+    )
+  } else {
+    # For MapLibre GL JS
+    if (source_type == "raster") {
+      # For raster PMTiles
+      source <- list(
+        id = id,
+        type = "raster",
+        url = paste0("pmtiles://", url),
+        tileSize = tilesize,
+        maxzoom = maxzoom
+      )
+    } else {
+      # For vector PMTiles
+      source <- list(
+        id = id,
+        type = "vector",
+        url = paste0("pmtiles://", url)
+      )
+
+      if (!is.null(promote_id)) {
+        source$promoteId <- promote_id
+      }
+    }
+  }
+
+  # Add any additional arguments
+  extra_args <- list(...)
+  source <- c(source, extra_args)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     if (

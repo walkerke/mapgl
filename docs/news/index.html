@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@
     <li><a class="dropdown-item" href="../articles/layers-overview.html">An overview of layers in mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/map-design.html">Fundamentals of map design with mapgl</a></li>
     <li><a class="dropdown-item" href="../articles/shiny.html">Using mapgl with Shiny</a></li>
+    <li><a class="dropdown-item" href="../articles/turf.html">Client-side geospatial analysis with turf.js</a></li>
     <li><a class="dropdown-item" href="../articles/story-maps.html">Building story maps with mapgl</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -41,7 +42,67 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3" id="mapgl-03">mapgl 0.3<a class="anchor" aria-label="anchor" href="#mapgl-03"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.1" id="mapgl-041">mapgl 0.4.1<a class="anchor" aria-label="anchor" href="#mapgl-041"></a></h2>
+<ul><li>
+<p><strong>Enhanced draw control with new drawing modes and live measurements</strong>:</p>
+<ul><li>Added rectangle drawing mode: Draw rectangles by clicking two corner points</li>
+<li>Added radius/circle drawing mode: Draw circles from center point to edge</li>
+<li>New live measurement preview system showing real-time distance, area, and perimeter calculations while drawing</li>
+<li>Support for metric, imperial, or both unit systems in measurements with <code>measurement_units</code> parameter</li>
+<li>Measurements appear during drawing, editing, and when selecting existing features</li>
+</ul></li>
+<li>
+<p><strong>Advanced layers control enhancements</strong>:</p>
+<ul><li>New grouped layers control: Organize layers into logical groups with collapsible sections</li>
+<li>Custom layer labels for improved layer identification and user experience</li>
+<li>Enhanced visual styling and interaction design for better usability</li>
+</ul></li>
+<li>
+<p><strong>New map style support</strong>:</p>
+<ul><li>Added <code><a href="../reference/openfreemap_style.html">openfreemap_style()</a></code> function providing free, open-source map styles without API key requirements</li>
+</ul></li>
+<li>
+<p><strong>General improvements</strong>:</p>
+<ul><li>Updated to latest Mapbox GL JS and MapLibre GL JS versions for better performance and compatibility</li>
+<li>Fixed MapLibre compare view functionality issues</li>
+<li>Improved stability across MapLibre-specific features</li>
+</ul></li>
+<li><p><strong>Selective control functionality</strong>: Enhanced control over which map controls are displayed and when, providing more granular customization options</p></li>
+<li>
+<p><strong>Bug fixes and stability improvements</strong>:</p>
+<ul><li>Fixed issues with layer management and control interactions</li>
+<li>Improved <code><a href="../reference/move_layer.html">move_layer()</a></code> functionality outside of Shiny applications</li>
+<li>Various compatibility and performance enhancements</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="mapgl-040">mapgl 0.4.0<a class="anchor" aria-label="anchor" href="#mapgl-040"></a></h2><p class="text-muted">CRAN release: 2025-08-18</p>
+<ul><li>
+<strong>Client-side geospatial analysis with turf.js</strong>: Added comprehensive support for turf.js v7.2.0, enabling powerful spatial operations directly in the browser without server round-trips:
+<ul><li>Geometric operations: <code><a href="../reference/turf_buffer.html">turf_buffer()</a></code>, <code><a href="../reference/turf_union.html">turf_union()</a></code>, <code><a href="../reference/turf_intersect.html">turf_intersect()</a></code>, <code><a href="../reference/turf_difference.html">turf_difference()</a></code>
+</li>
+<li>Spatial filtering: <code><a href="../reference/turf_filter.html">turf_filter()</a></code> with predicates (intersects, within, contains, crosses, disjoint)</li>
+<li>Point analysis: <code><a href="../reference/turf_convex_hull.html">turf_convex_hull()</a></code>, <code><a href="../reference/turf_concave_hull.html">turf_concave_hull()</a></code>, <code><a href="../reference/turf_voronoi.html">turf_voronoi()</a></code>, <code><a href="../reference/turf_centroid.html">turf_centroid()</a></code>, <code><a href="../reference/turf_center_of_mass.html">turf_center_of_mass()</a></code>
+</li>
+<li>Measurement functions: <code><a href="../reference/turf_distance.html">turf_distance()</a></code> and <code><a href="../reference/turf_area.html">turf_area()</a></code> (Shiny-only)</li>
+<li>All functions support flexible inputs: existing map layers/sources or sf objects</li>
+<li>Full integration with Shiny proxy objects for real-time spatial analysis in web applications</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.2" id="mapgl-032">mapgl 0.3.2<a class="anchor" aria-label="anchor" href="#mapgl-032"></a></h2><p class="text-muted">CRAN release: 2025-07-17</p>
+<ul><li>Added download functionality to draw control with new <code>download_button</code> and <code>download_filename</code> parameters in <code><a href="../reference/add_draw_control.html">add_draw_control()</a></code>. Users can now export drawn features as GeoJSON files directly from the draw control interface.</li>
+<li>Enhanced geocoder control with MapTiler support for MapLibre maps. New <code>provider</code> parameter allows choosing between “osm” (OpenStreetMap/Nominatim) and “maptiler” providers, with <code>maptiler_api_key</code> parameter for MapTiler authentication.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1" id="mapgl-031">mapgl 0.3.1<a class="anchor" aria-label="anchor" href="#mapgl-031"></a></h2><p class="text-muted">CRAN release: 2025-07-03</p>
+<ul><li>Added PMTiles support for Mapbox maps and streamlined PMTiles integration with <code><a href="../reference/add_pmtiles_source.html">add_pmtiles_source()</a></code> function.</li>
+<li>New functions <code><a href="../reference/query_rendered_features.html">query_rendered_features()</a></code> and <code><a href="../reference/get_queried_features.html">get_queried_features()</a></code> allow users to directly invoke the <code>map.queryRenderedFeatures()</code> method from the parent libraries in Shiny apps, with guidance for users to avoid race conditions and ensure proper synchronization. Functions query visible features in the map’s viewport and which can be extracted as sf objects.</li>
+<li>
+<code><a href="../reference/mapboxgl_view.html">mapboxgl_view()</a></code> and <code><a href="../reference/maplibre_view.html">maplibre_view()</a></code> now support quick view of terra rasters. A new function, <code><a href="../reference/add_view.html">add_view()</a></code>, is designed to help users quickly stack layers on top of the core view functions.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3" id="mapgl-03">mapgl 0.3<a class="anchor" aria-label="anchor" href="#mapgl-03"></a></h2><p class="text-muted">CRAN release: 2025-06-16</p>
 <ul><li>Added <code><a href="../reference/enable_shiny_hover.html">enable_shiny_hover()</a></code> function for optional hover events in Shiny applications:
 <ul><li>Provides <code>_hover</code> input for mouse coordinates and <code>_feature_hover</code> input for feature information</li>
 <li>Performance-conscious design: hover functionality is disabled by default and must be explicitly enabled</li>
@@ -53,7 +114,7 @@
 <li>Compare views support: hover events include map side (<code>"before"</code> or <code>"after"</code>) in input names</li>
 </ul></li>
 <li>Comprehensive legend styling system: Major enhancement to legend functionality with extensive customization options:
-<ul><li>New <code><a href="../reference/map_legends.html">legend_style()</a></code> function provides user-friendly interface for legend styling without requiring CSS knowledge</li>
+<ul><li>New <code><a href="../reference/legend_style.html">legend_style()</a></code> function provides user-friendly interface for legend styling without requiring CSS knowledge</li>
 <li>Container styling: background colors/opacity, borders, border radius, padding, and customizable drop shadows</li>
 <li>Typography control: font families (with fallbacks), sizes, weights, and colors for both title and text</li>
 <li>Element borders: add borders around categorical patches/circles and continuous color bars for improved visibility</li>

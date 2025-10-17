@@ -11,11 +11,14 @@ maplibre_view(
   n = NULL,
   palette = viridisLite::viridis,
   style = carto_style("positron"),
+  layer_id = "quickview",
+  legend = TRUE,
+  legend_position = "top-left",
   ...
 )
 }
 \arguments{
-\item{data}{An sf object to visualize}
+\item{data}{An sf object, SpatRaster, or RasterLayer to visualize}
 
 \item{color}{The color used to visualize points, lines, or polygons if \code{column} is NULL.  Defaults to \code{"navy"}.}
 
@@ -27,13 +30,19 @@ maplibre_view(
 
 \item{style}{The MapLibre style to use. Defaults to carto_style("positron").}
 
+\item{layer_id}{The layer ID to use for the visualization. Defaults to "quickview".}
+
+\item{legend}{Logical, whether to add a legend when a column is specified. Defaults to TRUE.}
+
+\item{legend_position}{The position of the legend on the map. Defaults to "top-left".}
+
 \item{...}{Additional arguments passed to maplibre()}
 }
 \value{
 A MapLibre GL map object
 }
 \description{
-This function provides a quick way to visualize sf geometries using MapLibre GL JS.
+This function provides a quick way to visualize sf geometries and raster data using MapLibre GL JS.
 It automatically detects the geometry type and applies appropriate styling.
 }
 \examples{

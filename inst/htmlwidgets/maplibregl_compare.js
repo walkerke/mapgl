@@ -114,7 +114,7 @@ function onClickPopup(e, map, popupProperty, layerId) {
     }
     
     // Create and show the popup
-    const popup = new maplibregl.Popup()
+    const popup = new maplibregl.Popup({ maxWidth: '400px' })
         .setLngLat(e.lngLat)
         .setHTML(description)
         .addTo(map);
@@ -144,6 +144,7 @@ HTMLWidgets.widget({
 
         return {
             renderValue: function (x) {
+
                 if (typeof maplibregl === "undefined") {
                     console.error("Maplibre GL JS is not loaded.");
                     return;
@@ -311,6 +312,34 @@ HTMLWidgets.widget({
                     if (HTMLWidgets.shinyMode) {
                         setupShinyEvents(afterMap, el.id, "after");
                     }
+                    
+                    // Add compare-level legends after both maps are loaded
+                    if (x.compare_legends && Array.isArray(x.compare_legends)) {
+                        x.compare_legends.forEach(function(legendInfo) {
+                            // Add CSS
+                            const legendCss = document.createElement("style");
+                            legendCss.innerHTML = legendInfo.css;
+                            legendCss.setAttribute("data-mapgl-legend-css", el.id);
+                            document.head.appendChild(legendCss);
+                            
+                            // Create legend element
+                            const legend = document.createElement("div");
+                            legend.innerHTML = legendInfo.html;
+                            legend.classList.add("mapboxgl-legend");
+                            
+                            // Append to the appropriate container based on target
+                            if (legendInfo.target === "compare") {
+                                // Append to the main compare container
+                                el.appendChild(legend);
+                            } else if (legendInfo.target === "before") {
+                                // Append to the before map container
+                                beforeMap.getContainer().appendChild(legend);
+                            } else if (legendInfo.target === "after") {
+                                // Append to the after map container
+                                afterMap.getContainer().appendChild(legend);
+                            }
+                        });
+                    }
                 });
 
                 // Define updateDrawnFeatures function for the draw tool
@@ -364,15 +393,21 @@ HTMLWidgets.widget({
                                 if (message.source.type === "vector") {
                                     const sourceConfig = {
                                         type: "vector",
-                                        url: message.source.url,
                                     };
+                                    // Add url or tiles
+                                    if (message.source.url) {
+                                        sourceConfig.url = message.source.url;
+                                    }
+                                    if (message.source.tiles) {
+                                        sourceConfig.tiles = message.source.tiles;
+                                    }
                                     // Add promoteId if provided
                                     if (message.source.promoteId) {
                                         sourceConfig.promoteId = message.source.promoteId;
                                     }
                                     // Add any other properties from the source object
                                     Object.keys(message.source).forEach(function(key) {
-                                        if (key !== "id" && key !== "type" && key !== "url" && key !== "promoteId") {
+                                        if (key !== "id" && key !== "type" && key !== "url" && key !== "tiles" && key !== "promoteId") {
                                             sourceConfig[key] = message.source[key];
                                         }
                                     });
@@ -454,6 +489,18 @@ HTMLWidgets.widget({
                                         }
                                     });
                                     map.addSource(message.source.id, sourceConfig);
+                                } else {
+                                    // Handle custom source types
+                                    const sourceConfig = { type: message.source.type };
+                                    
+                                    // Copy all properties except id
+                                    Object.keys(message.source).forEach(function(key) {
+                                        if (key !== "id") {
+                                            sourceConfig[key] = message.source[key];
+                                        }
+                                    });
+                                    
+                                    map.addSource(message.source.id, sourceConfig);
                                 }
                             } else if (message.type === "add_layer") {
                                 try {
@@ -511,6 +558,7 @@ HTMLWidgets.widget({
                                         const tooltip = new maplibregl.Popup({
                                             closeButton: false,
                                             closeOnClick: false,
+                                            maxWidth: '400px',
                                         });
 
                                         // Define named handler functions:
@@ -895,9 +943,10 @@ HTMLWidgets.widget({
                                 const legend = document.createElement("div");
                                 legend.innerHTML = message.html;
                                 legend.classList.add("maplibregl-legend");
-                                document
-                                    .getElementById(data.id)
-                                    .appendChild(legend);
+                                
+                                // Append legend to the correct map container
+                                const targetContainer = map.getContainer();
+                                targetContainer.appendChild(legend);
                             } else if (message.type === "set_config_property") {
                                 map.setConfigProperty(
                                     message.importId,
@@ -1106,7 +1155,8 @@ HTMLWidgets.widget({
                                                     // Create a new tooltip popup
                                                     const tooltip = new maplibregl.Popup({
                                                         closeButton: false,
-                                                        closeOnClick: false
+                                                        closeOnClick: false,
+                                                        maxWidth: '400px',
                                                     });
                                                     
                                                     // Re-add tooltip handlers
@@ -1221,10 +1271,11 @@ HTMLWidgets.widget({
                                                     // Remove existing tooltip handlers first
                                                     map.off("mousemove", layerId);
                                                     map.off("mouseleave", layerId);
-                                                    
+
                                                     const tooltip = new maplibregl.Popup({
                                                         closeButton: false,
                                                         closeOnClick: false,
+                                                        maxWidth: '400px',
                                                     });
 
                                                     map.on("mousemove", layerId, function (e) {
@@ -1321,7 +1372,8 @@ HTMLWidgets.widget({
                                                                         // Create a new tooltip popup
                                                                         const tooltip = new maplibregl.Popup({
                                                                             closeButton: false,
-                                                                            closeOnClick: false
+                                                                            closeOnClick: false,
+                                                                            maxWidth: '400px',
                                                                         });
                                                                         
                                                                         // Re-add tooltip handlers
@@ -1438,6 +1490,7 @@ HTMLWidgets.widget({
                                         navBar.style.flexDirection = "row";
                                     }
                                 }
+                                map.controls.push({ type: "navigation", control: nav });
                             } else if (message.type === "add_reset_control") {
                                 const resetControl =
                                     document.createElement("button");
@@ -1532,9 +1585,34 @@ HTMLWidgets.widget({
                                     );
                                 }
 
-                                draw = new MapboxDraw(drawOptions);
-                                map.addControl(draw, message.position);
-                                map.controls.push(draw);
+                                const drawControl = new MapboxDraw(drawOptions);
+                                map.addControl(drawControl, message.position);
+                                map.controls.push({ type: "draw", control: drawControl });
+
+                                // Store draw control on map for feature click detection
+                                map._mapgl_draw = drawControl;
+
+                                // Add lasso icon CSS for freehand mode
+                                if (message.freehand) {
+                                  if (!document.querySelector("#mapgl-freehand-lasso-styles")) {
+                                    const style = document.createElement("style");
+                                    style.id = "mapgl-freehand-lasso-styles";
+                                    style.textContent = `
+                                      .mapbox-gl-draw_polygon {
+                                        background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Cpath d="M 7 3 C 5 2.5, 3.5 3, 3 5 C 2.5 7, 3 8.5, 4 9.5 C 5 10.5, 5.5 11.5, 5 13 C 4.5 14.5, 5 15.5, 6.5 16 C 8 16.5, 9.5 16, 11 15 C 12.5 14, 13.5 13, 14.5 11.5 C 15.5 10, 16 8.5, 15.5 7 C 15 5.5, 14 4.5, 12.5 3.5 C 11 2.5, 9 2.5, 7 3 Z" fill="none" stroke="%23000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E') !important;
+                                      }
+                                    `;
+                                    document.head.appendChild(style);
+                                  }
+
+                                  // Update tooltip for freehand mode
+                                  setTimeout(() => {
+                                    const polygonButton = map.getContainer().querySelector('.mapbox-gl-draw_polygon');
+                                    if (polygonButton) {
+                                      polygonButton.title = 'Freehand polygon tool (p)';
+                                    }
+                                  }, 100);
+                                }
 
                                 // Add event listeners
                                 map.on(
@@ -1606,6 +1684,7 @@ HTMLWidgets.widget({
                                         mapMarker.setPopup(
                                             new maplibregl.Popup({
                                                 offset: 25,
+                                                maxWidth: '400px',
                                             }).setHTML(marker.popup),
                                         );
                                     }
@@ -1744,90 +1823,128 @@ HTMLWidgets.widget({
                             } else if (
                                 message.type === "add_geocoder_control"
                             ) {
-                                const geocoderApi = {
-                                    forwardGeocode: async (config) => {
-                                        const features = [];
-                                        try {
-                                            const request = `https://nominatim.openstreetmap.org/search?q=${
-                                                config.query
-                                            }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                                            const response =
-                                                await fetch(request);
-                                            const geojson =
-                                                await response.json();
-                                            for (const feature of geojson.features) {
-                                                const center = [
-                                                    feature.bbox[0] +
-                                                        (feature.bbox[2] -
-                                                            feature.bbox[0]) /
-                                                            2,
-                                                    feature.bbox[1] +
-                                                        (feature.bbox[3] -
-                                                            feature.bbox[1]) /
-                                                            2,
-                                                ];
-                                                const point = {
-                                                    type: "Feature",
-                                                    geometry: {
-                                                        type: "Point",
-                                                        coordinates: center,
-                                                    },
-                                                    place_name:
-                                                        feature.properties
+                                const provider = message.options.provider || "osm";
+                                let geocoder;
+
+                                if (provider === "maptiler") {
+                                    // MapTiler geocoder
+                                    const maptilerOptions = {
+                                        apiKey: message.options.api_key,
+                                        maplibregl: maplibregl,
+                                        ...message.options,
+                                    };
+
+                                    // Create MapTiler geocoder
+                                    geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+                                } else {
+                                    // OSM/Nominatim geocoder (default)
+                                    const geocoderApi = {
+                                        forwardGeocode: async (config) => {
+                                            const features = [];
+                                            try {
+                                                const request = `https://nominatim.openstreetmap.org/search?q=${
+                                                    config.query
+                                                }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                                                const response =
+                                                    await fetch(request);
+                                                const geojson =
+                                                    await response.json();
+                                                for (const feature of geojson.features) {
+                                                    const center = [
+                                                        feature.bbox[0] +
+                                                            (feature.bbox[2] -
+                                                                feature.bbox[0]) /
+                                                                2,
+                                                        feature.bbox[1] +
+                                                            (feature.bbox[3] -
+                                                                feature.bbox[1]) /
+                                                                2,
+                                                    ];
+                                                    const point = {
+                                                        type: "Feature",
+                                                        geometry: {
+                                                            type: "Point",
+                                                            coordinates: center,
+                                                        },
+                                                        place_name:
+                                                            feature.properties
+                                                                .display_name,
+                                                        properties:
+                                                            feature.properties,
+                                                        text: feature.properties
                                                             .display_name,
-                                                    properties:
-                                                        feature.properties,
-                                                    text: feature.properties
-                                                        .display_name,
-                                                    place_type: ["place"],
-                                                    center,
-                                                };
-                                                features.push(point);
+                                                        place_type: ["place"],
+                                                        center,
+                                                    };
+                                                    features.push(point);
+                                                }
+                                            } catch (e) {
+                                                console.error(
+                                                    `Failed to forwardGeocode with error: ${e}`,
+                                                );
                                             }
-                                        } catch (e) {
-                                            console.error(
-                                                `Failed to forwardGeocode with error: ${e}`,
-                                            );
-                                        }
 
-                                        return {
-                                            features,
-                                        };
-                                    },
-                                };
+                                            return {
+                                                features,
+                                            };
+                                        },
+                                    };
 
-                                const geocoderOptions = {
-                                    maplibregl: maplibregl,
-                                    ...message.options,
-                                };
+                                    const geocoderOptions = {
+                                        maplibregl: maplibregl,
+                                        ...message.options,
+                                    };
 
-                                // Set default values if not provided
-                                if (!geocoderOptions.placeholder)
-                                    geocoderOptions.placeholder = "Search";
-                                if (
-                                    typeof geocoderOptions.collapsed ===
-                                    "undefined"
-                                )
-                                    geocoderOptions.collapsed = false;
+                                    // Set default values if not provided
+                                    if (!geocoderOptions.placeholder)
+                                        geocoderOptions.placeholder = "Search";
+                                    if (
+                                        typeof geocoderOptions.collapsed ===
+                                        "undefined"
+                                    )
+                                        geocoderOptions.collapsed = false;
 
-                                const geocoder = new MaplibreGeocoder(
-                                    geocoderApi,
-                                    geocoderOptions,
-                                );
+                                    geocoder = new MaplibreGeocoder(
+                                        geocoderApi,
+                                        geocoderOptions,
+                                    );
+                                }
 
                                 map.addControl(
                                     geocoder,
-                                    message.position || "top-right",
+                                    message.options.position || "top-right",
                                 );
                                 map.controls.push(geocoder);
+                                
+                                // Apply CSS fix for MapTiler geocoder to prevent cutoff
+                                if (provider === "maptiler") {
+                                    setTimeout(() => {
+                                        const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+                                        if (controlContainer) {
+                                            controlContainer.style.maxWidth = '300px';
+                                            controlContainer.style.width = 'auto';
+                                        }
+                                    }, 100);
+                                }
 
                                 // Handle geocoder results in Shiny mode
-                                geocoder.on("results", function (e) {
-                                    Shiny.setInputValue(data.id + "_geocoder", {
-                                        result: e,
-                                        time: new Date(),
+                                if (provider === "maptiler") {
+                                    // MapTiler uses different event names
+                                    geocoder.on("pick", function (e) {
+                                        Shiny.setInputValue(data.id + "_geocoder", {
+                                            result: e,
+                                            time: new Date(),
+                                        });
                                     });
-                                });
+                                } else {
+                                    // OSM geocoder
+                                    geocoder.on("results", function (e) {
+                                        Shiny.setInputValue(data.id + "_geocoder", {
+                                            result: e,
+                                            time: new Date(),
+                                        });
+                                    });
+                                }
                             } else if (message.type === "add_layers_control") {
                                 const layersControl =
                                     document.createElement("div");
@@ -1840,17 +1957,17 @@ HTMLWidgets.widget({
                                 // Set the position correctly
                                 const position = message.position || "top-left";
                                 if (position === "top-left") {
-                                    layersControl.style.top = "10px";
-                                    layersControl.style.left = "10px";
+                                    layersControl.style.top = (message.margin_top || 10) + "px";
+                                    layersControl.style.left = (message.margin_left || 10) + "px";
                                 } else if (position === "top-right") {
-                                    layersControl.style.top = "10px";
-                                    layersControl.style.right = "10px";
+                                    layersControl.style.top = (message.margin_top || 10) + "px";
+                                    layersControl.style.right = (message.margin_right || 10) + "px";
                                 } else if (position === "bottom-left") {
-                                    layersControl.style.bottom = "30px";
-                                    layersControl.style.left = "10px";
+                                    layersControl.style.bottom = (message.margin_bottom || 30) + "px";
+                                    layersControl.style.left = (message.margin_left || 10) + "px";
                                 } else if (position === "bottom-right") {
-                                    layersControl.style.bottom = "40px";
-                                    layersControl.style.right = "10px";
+                                    layersControl.style.bottom = (message.margin_bottom || 40) + "px";
+                                    layersControl.style.right = (message.margin_right || 10) + "px";
                                 }
 
                                 // Apply custom colors if provided
@@ -2036,9 +2153,34 @@ HTMLWidgets.widget({
                                     });
                                 }
 
-                                draw = new MapboxDraw(drawOptions);
-                                map.addControl(draw, message.position);
-                                map.controls.push(draw);
+                                const drawControl = new MapboxDraw(drawOptions);
+                                map.addControl(drawControl, message.position);
+                                map.controls.push({ type: "draw", control: drawControl });
+
+                                // Store draw control on map for feature click detection
+                                map._mapgl_draw = drawControl;
+
+                                // Add lasso icon CSS for freehand mode
+                                if (message.freehand) {
+                                  if (!document.querySelector("#mapgl-freehand-lasso-styles")) {
+                                    const style = document.createElement("style");
+                                    style.id = "mapgl-freehand-lasso-styles";
+                                    style.textContent = `
+                                      .mapbox-gl-draw_polygon {
+                                        background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Cpath d="M 7 3 C 5 2.5, 3.5 3, 3 5 C 2.5 7, 3 8.5, 4 9.5 C 5 10.5, 5.5 11.5, 5 13 C 4.5 14.5, 5 15.5, 6.5 16 C 8 16.5, 9.5 16, 11 15 C 12.5 14, 13.5 13, 14.5 11.5 C 15.5 10, 16 8.5, 15.5 7 C 15 5.5, 14 4.5, 12.5 3.5 C 11 2.5, 9 2.5, 7 3 Z" fill="none" stroke="%23000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E') !important;
+                                      }
+                                    `;
+                                    document.head.appendChild(style);
+                                  }
+
+                                  // Update tooltip for freehand mode
+                                  setTimeout(() => {
+                                    const polygonButton = map.getContainer().querySelector('.mapbox-gl-draw_polygon');
+                                    if (polygonButton) {
+                                      polygonButton.title = 'Freehand polygon tool (p)';
+                                    }
+                                  }, 100);
+                                }
                                 
                                 // Add initial features if provided
                                 if (message.source) {
@@ -2058,6 +2200,85 @@ HTMLWidgets.widget({
                                         drawBar.style.display = "flex";
                                         drawBar.style.flexDirection = "row";
                                     }
+                                }
+
+                                // Add download button if requested
+                                if (message.download_button) {
+                                    // Add CSS for download button if not already added
+                                    if (!document.querySelector('#mapgl-draw-download-styles')) {
+                                        const style = document.createElement('style');
+                                        style.id = 'mapgl-draw-download-styles';
+                                        style.textContent = `
+                                          .mapbox-gl-draw_download {
+                                            background: transparent;
+                                            border: none;
+                                            cursor: pointer;
+                                            display: block;
+                                            height: 30px;
+                                            width: 30px;
+                                            padding: 0;
+                                            outline: none;
+                                          }
+                                          .mapbox-gl-draw_download:hover {
+                                            background-color: rgba(0, 0, 0, 0.05);
+                                          }
+                                          .mapbox-gl-draw_download svg {
+                                            width: 20px;
+                                            height: 20px;
+                                            margin: 5px;
+                                            fill: #333;
+                                          }
+                                        `;
+                                        document.head.appendChild(style);
+                                    }
+
+                                    // Small delay to ensure Draw control is fully rendered
+                                    setTimeout(() => {
+                                        // Find the Draw control button group
+                                        const drawButtons = map.getContainer().querySelector('.maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)');
+                                        
+                                        if (drawButtons) {
+                                            // Create download button
+                                            const downloadBtn = document.createElement('button');
+                                            downloadBtn.className = 'mapbox-gl-draw_download';
+                                            downloadBtn.title = 'Download drawn features as GeoJSON';
+                                            
+                                            // Add SVG download icon
+                                            downloadBtn.innerHTML = `
+                                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                                              </svg>
+                                            `;
+                                            
+                                            downloadBtn.addEventListener('click', () => {
+                                                // Get all drawn features
+                                                const data = draw.getAll();
+                                                
+                                                if (data.features.length === 0) {
+                                                    alert('No features to download. Please draw something first!');
+                                                    return;
+                                                }
+                                                
+                                                // Convert to string with nice formatting
+                                                const dataStr = JSON.stringify(data, null, 2);
+                                                
+                                                // Create blob and download
+                                                const blob = new Blob([dataStr], { type: 'application/json' });
+                                                const url = URL.createObjectURL(blob);
+                                                
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = `${message.download_filename || 'drawn-features'}.geojson`;
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                document.body.removeChild(a);
+                                                URL.revokeObjectURL(url);
+                                            });
+                                            
+                                            // Append to the Draw control button group
+                                            drawButtons.appendChild(downloadBtn);
+                                        }
+                                    }, 100);
                                 }
                             } else if (message.type === "get_drawn_features") {
                                 if (draw) {
@@ -2119,6 +2340,7 @@ HTMLWidgets.widget({
                                     const tooltip = new maplibregl.Popup({
                                         closeButton: false,
                                         closeOnClick: false,
+                                        maxWidth: '400px',
                                     });
 
                                     map.on(
@@ -2218,6 +2440,106 @@ HTMLWidgets.widget({
                                         }
                                     });
                                 }
+                            } else if (message.type === "add_custom_control") {
+                                const controlOptions = message.options;
+                                const customControlContainer = document.createElement("div");
+
+                                if (controlOptions.className) {
+                                    customControlContainer.className = controlOptions.className;
+                                } else {
+                                    customControlContainer.className =
+                                        "maplibregl-ctrl maplibregl-ctrl-group";
+                                }
+
+                                customControlContainer.innerHTML = controlOptions.html;
+
+                                const customControl = {
+                                    onAdd: function () {
+                                        return customControlContainer;
+                                    },
+                                    onRemove: function () {
+                                        if (customControlContainer.parentNode) {
+                                            customControlContainer.parentNode.removeChild(
+                                                customControlContainer,
+                                            );
+                                        }
+                                    },
+                                };
+
+                                map.addControl(customControl, controlOptions.position || "top-right");
+                                map.controls.push({ type: message.control_id, control: customControl });
+                            } else if (message.type === "query_rendered_features") {
+                                // Query rendered features
+                                let queryOptions = {};
+                                if (message.layers) {
+                                    // Ensure layers is always an array
+                                    queryOptions.layers = Array.isArray(message.layers)
+                                        ? message.layers
+                                        : [message.layers];
+                                }
+                                if (message.filter) queryOptions.filter = message.filter;
+
+                                let features;
+                                if (message.geometry) {
+                                    features = map.queryRenderedFeatures(message.geometry, queryOptions);
+                                } else {
+                                    // No geometry specified - query entire viewport
+                                    features = map.queryRenderedFeatures(queryOptions);
+                                }
+
+                                // Deduplicate features by id or by properties if no id
+                                const uniqueFeatures = new Map();
+                                features.forEach(function (feature) {
+                                    let key;
+                                    if (feature.id !== undefined && feature.id !== null) {
+                                        key = feature.id;
+                                    } else {
+                                        // Create a key from properties if no id available
+                                        key = JSON.stringify(feature.properties);
+                                    }
+
+                                    if (!uniqueFeatures.has(key)) {
+                                        uniqueFeatures.set(key, feature);
+                                    }
+                                });
+
+                                // Convert to GeoJSON FeatureCollection
+                                const deduplicatedFeatures = Array.from(uniqueFeatures.values());
+                                const featureCollection = {
+                                    type: "FeatureCollection",
+                                    features: deduplicatedFeatures,
+                                };
+
+                                Shiny.setInputValue(
+                                    data.id + "_queried_features",
+                                    JSON.stringify(featureCollection)
+                                );
+                            } else if (message.type === "clear_controls") {
+                                // Handle clear_controls for compare widgets
+                                if (!message.controls || message.controls.length === 0) {
+                                    // Clear all controls
+                                    map.controls.forEach((controlObj) => {
+                                        if (controlObj.control) {
+                                            map.removeControl(controlObj.control);
+                                        }
+                                    });
+                                    map.controls = [];
+                                } else {
+                                    // Clear specific controls
+                                    const controlsToRemove = Array.isArray(message.controls)
+                                        ? message.controls
+                                        : [message.controls];
+
+                                    map.controls = map.controls.filter((controlObj) => {
+                                        if (controlsToRemove.includes(controlObj.type)) {
+                                            if (controlObj.control) {
+                                                map.removeControl(controlObj.control);
+                                            }
+                                            return false; // Remove from array
+                                        }
+                                        return true; // Keep in array
+                                    });
+                                }
                             }
                         },
                     );
@@ -2246,6 +2568,58 @@ HTMLWidgets.widget({
 
                     // Send clicked point coordinates to Shiny
                     map.on("click", function (e) {
+                        // Check if this map's draw control is active and in a drawing mode
+                        let isDrawing = false;
+                        if (map._mapgl_draw && map._mapgl_draw.getMode) {
+                            const mode = map._mapgl_draw.getMode();
+                            isDrawing = mode === 'draw_point' ||
+                                       mode === 'draw_line_string' ||
+                                       mode === 'draw_polygon';
+                            console.log(`[${mapType}] Draw mode: ${mode}, isDrawing: ${isDrawing}`);
+                        } else {
+                            console.log(`[${mapType}] No draw control found`);
+                        }
+
+                        // Only process feature clicks if not actively drawing
+                        if (!isDrawing) {
+                            const features = map.queryRenderedFeatures(e.point);
+                            // Filter out draw layers
+                            const nonDrawFeatures = features.filter(feature =>
+                                !feature.layer.id.includes('gl-draw') &&
+                                !feature.source.includes('gl-draw')
+                            );
+                            console.log(`[${mapType}] Features found: ${features.length}, non-draw: ${nonDrawFeatures.length}`);
+
+                            if (nonDrawFeatures.length > 0) {
+                                const feature = nonDrawFeatures[0];
+                                console.log(`[${mapType}] Feature click detected, layer: ${feature.layer.id}`);
+                                if (window.Shiny) {
+                                    Shiny.setInputValue(
+                                        parentId + "_" + mapType + "_feature_click",
+                                        {
+                                            id: feature.id,
+                                            properties: feature.properties,
+                                            layer: feature.layer.id,
+                                            lng: e.lngLat.lng,
+                                            lat: e.lngLat.lat,
+                                            time: Date.now(),
+                                        },
+                                    );
+                                }
+                            } else {
+                                console.log(`[${mapType}] No non-draw features found at click point`);
+                                if (window.Shiny) {
+                                    Shiny.setInputValue(
+                                        parentId + "_" + mapType + "_feature_click",
+                                        null
+                                    );
+                                }
+                            }
+                        } else {
+                            console.log(`[${mapType}] Feature click suppressed - currently drawing`);
+                        }
+
+                        // Always send regular click event
                         if (window.Shiny) {
                             Shiny.setInputValue(
                                 parentId + "_" + mapType + "_click",
@@ -2265,7 +2639,12 @@ HTMLWidgets.widget({
                             if (window.Shiny) {
                                 // Feature hover events
                                 if (mapConfig.hover_events.features) {
-                                    const features = map.queryRenderedFeatures(e.point);
+                                    const options = mapConfig.hover_events.layer_id
+                                        ? { layers: Array.isArray(mapConfig.hover_events.layer_id) 
+                                            ? mapConfig.hover_events.layer_id 
+                                            : mapConfig.hover_events.layer_id.split(',').map(id => id.trim()) }
+                                        : undefined;
+                                    const features = map.queryRenderedFeatures(e.point, options);
 
                                     if(features.length > 0) {
                                         const feature = features[0];
@@ -2393,7 +2772,7 @@ HTMLWidgets.widget({
                         }
                         
                         // Create and show the popup
-                        const popup = new maplibregl.Popup()
+                        const popup = new maplibregl.Popup({ maxWidth: '400px' })
                             .setLngLat(e.lngLat)
                             .setHTML(description)
                             .addTo(map);
@@ -2453,6 +2832,7 @@ HTMLWidgets.widget({
                                 mapMarker.setPopup(
                                     new maplibregl.Popup({
                                         offset: 25,
+                                        maxWidth: '400px',
                                     }).setText(marker.popup),
                                 );
                             }
@@ -2496,8 +2876,14 @@ HTMLWidgets.widget({
                             if (source.type === "vector") {
                                 const sourceConfig = {
                                     type: "vector",
-                                    url: source.url,
                                 };
+                                // Add url or tiles
+                                if (source.url) {
+                                    sourceConfig.url = source.url;
+                                }
+                                if (source.tiles) {
+                                    sourceConfig.tiles = source.tiles;
+                                }
                                 if (source.promoteId) {
                                     sourceConfig.promoteId = source.promoteId;
                                 }
@@ -2615,6 +3001,7 @@ HTMLWidgets.widget({
                                     const tooltip = new maplibregl.Popup({
                                         closeButton: false,
                                         closeOnClick: false,
+                                        maxWidth: '400px',
                                     });
 
                                     // Create a reference to the mousemove handler function
@@ -2781,6 +3168,19 @@ HTMLWidgets.widget({
                     if (mapData.setZoom) {
                         map.setZoom(mapData.setZoom);
                     }
+
+                    // Apply moveLayer operations if provided
+                    if (mapData.moveLayer) {
+                        mapData.moveLayer.forEach(function (moveOp) {
+                            if (map.getLayer(moveOp.layer)) {
+                                if (moveOp.before) {
+                                    map.moveLayer(moveOp.layer, moveOp.before);
+                                } else {
+                                    map.moveLayer(moveOp.layer);
+                                }
+                            }
+                        });
+                    }
                     if (mapData.jumpTo) {
                         map.jumpTo(mapData.jumpTo);
                     }
@@ -2810,11 +3210,10 @@ HTMLWidgets.widget({
                         );
                     }
 
-                    const existingLegend =
-                        document.getElementById("mapboxgl-legend");
-                    if (existingLegend) {
-                        existingLegend.remove();
-                    }
+                    // Remove existing legends only from this specific map container
+                    const mapContainer = map.getContainer();
+                    const existingLegends = mapContainer.querySelectorAll(".mapboxgl-legend");
+                    existingLegends.forEach((legend) => legend.remove());
 
                     if (mapData.legend_html && mapData.legend_css) {
                         const legendCss = document.createElement("style");
@@ -2823,8 +3222,10 @@ HTMLWidgets.widget({
 
                         const legend = document.createElement("div");
                         legend.innerHTML = mapData.legend_html;
-                        // legend.classList.add("mapboxgl-legend");
-                        el.appendChild(legend);
+                        legend.classList.add("mapboxgl-legend");
+                        
+                        // Append legend to the correct map container instead of main container
+                        mapContainer.appendChild(legend);
                     }
 
                     // Add fullscreen control if enabled
@@ -3001,7 +3402,7 @@ HTMLWidgets.widget({
                             nav,
                             mapData.navigation_control.position,
                         );
-                        map.controls.push(nav);
+                        map.controls.push({ type: "navigation", control: nav });
                     }
 
                     // Add geolocate control if enabled
@@ -3078,7 +3479,23 @@ HTMLWidgets.widget({
                                 // defaultMode: 'draw_polygon' # Don't set the default yet
                             });
                         }
-                        
+
+                        // Add rectangle mode if enabled
+                        if (mapData.draw_control.rectangle) {
+                            if (!drawOptions.modes) {
+                                drawOptions.modes = Object.assign({}, MapboxDraw.modes);
+                            }
+                            drawOptions.modes.draw_rectangle = MapboxDraw.modes.draw_rectangle;
+                        }
+
+                        // Add radius mode if enabled
+                        if (mapData.draw_control.radius) {
+                            if (!drawOptions.modes) {
+                                drawOptions.modes = Object.assign({}, MapboxDraw.modes);
+                            }
+                            drawOptions.modes.draw_radius = MapboxDraw.modes.draw_radius;
+                        }
+
                         // Fix MapLibre compatibility - ensure we always have custom styles
                         if (!drawOptions.styles) {
                             drawOptions.styles = generateDrawStyles({
@@ -3092,22 +3509,116 @@ HTMLWidgets.widget({
                             });
                         }
 
-                        draw = new MapboxDraw(drawOptions);
-                        map.addControl(draw, mapData.draw_control.position);
-                        map.controls.push(draw);
-                        
+                        const drawControl = new MapboxDraw(drawOptions);
+                        map.addControl(drawControl, mapData.draw_control.position);
+                        map.controls.push({ type: "draw", control: drawControl });
+
+                        // Store draw control on map for feature click detection
+                        map._mapgl_draw = drawControl;
+
+                        // Add custom mode buttons and styling
+                        setTimeout(() => {
+                            const drawControlGroup = map.getContainer().querySelector(".maplibregl-ctrl-group");
+
+                            // Add rectangle styling and button
+                            if (mapData.draw_control.rectangle) {
+                                if (!document.querySelector("#mapgl-rectangle-styles")) {
+                                    const style = document.createElement("style");
+                                    style.id = "mapgl-rectangle-styles";
+                                    style.textContent = `
+                                      .mapbox-gl-draw_rectangle {
+                                        background: transparent;
+                                        border: none;
+                                        cursor: pointer;
+                                        display: block;
+                                        height: 30px;
+                                        width: 30px;
+                                        padding: 0;
+                                        outline: none;
+                                        background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Crect x="4" y="5" width="12" height="10" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
+                                        background-repeat: no-repeat !important;
+                                        background-position: center !important;
+                                      }
+                                      .mapbox-gl-draw_rectangle:hover {
+                                        background-color: rgba(0, 0, 0, 0.05);
+                                      }
+                                      .mapbox-gl-draw_rectangle.active {
+                                        background-color: rgba(0, 0, 0, 0.05);
+                                      }
+                                    `;
+                                    document.head.appendChild(style);
+                                }
+
+                                if (drawControlGroup) {
+                                    const rectangleBtn = document.createElement("button");
+                                    rectangleBtn.className = "mapbox-gl-draw_rectangle";
+                                    rectangleBtn.title = "Rectangle tool";
+                                    rectangleBtn.type = "button";
+                                    rectangleBtn.onclick = function() {
+                                        drawControl.changeMode('draw_rectangle');
+                                        drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                                        rectangleBtn.classList.add('active');
+                                    };
+                                    drawControlGroup.appendChild(rectangleBtn);
+                                }
+                            }
+
+                            // Add radius styling and button
+                            if (mapData.draw_control.radius) {
+                                if (!document.querySelector("#mapgl-radius-styles")) {
+                                    const style = document.createElement("style");
+                                    style.id = "mapgl-radius-styles";
+                                    style.textContent = `
+                                      .mapbox-gl-draw_radius {
+                                        background: transparent;
+                                        border: none;
+                                        cursor: pointer;
+                                        display: block;
+                                        height: 30px;
+                                        width: 30px;
+                                        padding: 0;
+                                        outline: none;
+                                        background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="7" fill="none" stroke="%23000000" stroke-width="2"/%3E%3Ccircle cx="10" cy="10" r="1.5" fill="%23000000"/%3E%3C/svg%3E') !important;
+                                        background-repeat: no-repeat !important;
+                                        background-position: center !important;
+                                      }
+                                      .mapbox-gl-draw_radius:hover {
+                                        background-color: rgba(0, 0, 0, 0.05);
+                                      }
+                                      .mapbox-gl-draw_radius.active {
+                                        background-color: rgba(0, 0, 0, 0.05);
+                                      }
+                                    `;
+                                    document.head.appendChild(style);
+                                }
+
+                                if (drawControlGroup) {
+                                    const radiusBtn = document.createElement("button");
+                                    radiusBtn.className = "mapbox-gl-draw_radius";
+                                    radiusBtn.title = "Radius/Circle tool";
+                                    radiusBtn.type = "button";
+                                    radiusBtn.onclick = function() {
+                                        drawControl.changeMode('draw_radius');
+                                        drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                                        radiusBtn.classList.add('active');
+                                    };
+                                    drawControlGroup.appendChild(radiusBtn);
+                                }
+                            }
+                        }, 100);
+
                         // Add initial features if provided
                         if (mapData.draw_control.source) {
-                            addSourceFeaturesToDraw(draw, mapData.draw_control.source, map);
+                            addSourceFeaturesToDraw(drawControl, mapData.draw_control.source, map);
                         }
-                        
+
                         // Process any queued features
                         if (mapData.draw_features_queue) {
                             mapData.draw_features_queue.forEach(function(data) {
                                 if (data.clear_existing) {
-                                    draw.deleteAll();
+                                    drawControl.deleteAll();
                                 }
-                                addSourceFeaturesToDraw(draw, data.source, map);
+                                addSourceFeaturesToDraw(drawControl, data.source, map);
                             });
                         }
 
@@ -3120,6 +3631,85 @@ HTMLWidgets.widget({
                                 drawBar.style.display = "flex";
                                 drawBar.style.flexDirection = "row";
                             }
+                        }
+
+                        // Add download button if requested
+                        if (mapData.draw_control.download_button) {
+                            // Add CSS for download button if not already added
+                            if (!document.querySelector('#mapgl-draw-download-styles')) {
+                                const style = document.createElement('style');
+                                style.id = 'mapgl-draw-download-styles';
+                                style.textContent = `
+                                  .mapbox-gl-draw_download {
+                                    background: transparent;
+                                    border: none;
+                                    cursor: pointer;
+                                    display: block;
+                                    height: 30px;
+                                    width: 30px;
+                                    padding: 0;
+                                    outline: none;
+                                  }
+                                  .mapbox-gl-draw_download:hover {
+                                    background-color: rgba(0, 0, 0, 0.05);
+                                  }
+                                  .mapbox-gl-draw_download svg {
+                                    width: 20px;
+                                    height: 20px;
+                                    margin: 5px;
+                                    fill: #333;
+                                  }
+                                `;
+                                document.head.appendChild(style);
+                            }
+
+                            // Small delay to ensure Draw control is fully rendered
+                            setTimeout(() => {
+                                // Find the Draw control button group
+                                const drawButtons = map.getContainer().querySelector('.maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)');
+                                
+                                if (drawButtons) {
+                                    // Create download button
+                                    const downloadBtn = document.createElement('button');
+                                    downloadBtn.className = 'mapbox-gl-draw_download';
+                                    downloadBtn.title = 'Download drawn features as GeoJSON';
+                                    
+                                    // Add SVG download icon
+                                    downloadBtn.innerHTML = `
+                                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                                      </svg>
+                                    `;
+                                    
+                                    downloadBtn.addEventListener('click', () => {
+                                        // Get all drawn features
+                                        const data = draw.getAll();
+                                        
+                                        if (data.features.length === 0) {
+                                            alert('No features to download. Please draw something first!');
+                                            return;
+                                        }
+                                        
+                                        // Convert to string with nice formatting
+                                        const dataStr = JSON.stringify(data, null, 2);
+                                        
+                                        // Create blob and download
+                                        const blob = new Blob([dataStr], { type: 'application/json' });
+                                        const url = URL.createObjectURL(blob);
+                                        
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `${mapData.draw_control.download_filename}.geojson`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        URL.revokeObjectURL(url);
+                                    });
+                                    
+                                    // Append to the Draw control button group
+                                    drawButtons.appendChild(downloadBtn);
+                                }
+                            }, 100);
                         }
                         
                         // Helper function for updating drawn features
@@ -3176,82 +3766,120 @@ HTMLWidgets.widget({
 
                     // Add geocoder control if enabled
                     if (mapData.geocoder_control) {
-                        const geocoderApi = {
-                            forwardGeocode: async (config) => {
-                                const features = [];
-                                try {
-                                    const request = `https://nominatim.openstreetmap.org/search?q=${
-                                        config.query
-                                    }&format=geojson&polygon_geojson=1&addressdetails=1`;
-                                    const response = await fetch(request);
-                                    const geojson = await response.json();
-                                    for (const feature of geojson.features) {
-                                        const center = [
-                                            feature.bbox[0] +
-                                                (feature.bbox[2] -
-                                                    feature.bbox[0]) /
-                                                    2,
-                                            feature.bbox[1] +
-                                                (feature.bbox[3] -
-                                                    feature.bbox[1]) /
-                                                    2,
-                                        ];
-                                        const point = {
-                                            type: "Feature",
-                                            geometry: {
-                                                type: "Point",
-                                                coordinates: center,
-                                            },
-                                            place_name:
-                                                feature.properties.display_name,
-                                            properties: feature.properties,
-                                            text: feature.properties
-                                                .display_name,
-                                            place_type: ["place"],
-                                            center,
-                                        };
-                                        features.push(point);
+                        const provider = mapData.geocoder_control.provider || "osm";
+                        let geocoder;
+
+                        if (provider === "maptiler") {
+                            // MapTiler geocoder
+                            const maptilerOptions = {
+                                apiKey: mapData.geocoder_control.api_key,
+                                maplibregl: maplibregl,
+                                ...mapData.geocoder_control,
+                            };
+
+                            // Create MapTiler geocoder
+                            geocoder = new maplibreglMaptilerGeocoder.GeocodingControl(maptilerOptions);
+                        } else {
+                            // OSM/Nominatim geocoder (default)
+                            const geocoderApi = {
+                                forwardGeocode: async (config) => {
+                                    const features = [];
+                                    try {
+                                        const request = `https://nominatim.openstreetmap.org/search?q=${
+                                            config.query
+                                        }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                                        const response = await fetch(request);
+                                        const geojson = await response.json();
+                                        for (const feature of geojson.features) {
+                                            const center = [
+                                                feature.bbox[0] +
+                                                    (feature.bbox[2] -
+                                                        feature.bbox[0]) /
+                                                        2,
+                                                feature.bbox[1] +
+                                                    (feature.bbox[3] -
+                                                        feature.bbox[1]) /
+                                                        2,
+                                            ];
+                                            const point = {
+                                                type: "Feature",
+                                                geometry: {
+                                                    type: "Point",
+                                                    coordinates: center,
+                                                },
+                                                place_name:
+                                                    feature.properties.display_name,
+                                                properties: feature.properties,
+                                                text: feature.properties
+                                                    .display_name,
+                                                place_type: ["place"],
+                                                center,
+                                            };
+                                            features.push(point);
+                                        }
+                                    } catch (e) {
+                                        console.error(
+                                            `Failed to forwardGeocode with error: ${e}`,
+                                        );
                                     }
-                                } catch (e) {
-                                    console.error(
-                                        `Failed to forwardGeocode with error: ${e}`,
-                                    );
-                                }
 
-                                return {
-                                    features,
-                                };
-                            },
-                        };
-                        const geocoderOptions = {
-                            maplibregl: maplibregl,
-                            ...mapData.geocoder_control,
-                        };
+                                    return {
+                                        features,
+                                    };
+                                },
+                            };
+                            const geocoderOptions = {
+                                maplibregl: maplibregl,
+                                ...mapData.geocoder_control,
+                            };
 
-                        // Set default values if not provided
-                        if (!geocoderOptions.placeholder)
-                            geocoderOptions.placeholder = "Search";
-                        if (typeof geocoderOptions.collapsed === "undefined")
-                            geocoderOptions.collapsed = false;
+                            // Set default values if not provided
+                            if (!geocoderOptions.placeholder)
+                                geocoderOptions.placeholder = "Search";
+                            if (typeof geocoderOptions.collapsed === "undefined")
+                                geocoderOptions.collapsed = false;
 
-                        const geocoder = new MaplibreGeocoder(
-                            geocoderApi,
-                            geocoderOptions,
-                        );
+                            geocoder = new MaplibreGeocoder(
+                                geocoderApi,
+                                geocoderOptions,
+                            );
+                        }
 
                         map.addControl(
                             geocoder,
                             mapData.geocoder_control.position || "top-right",
                         );
+                        
+                        // Apply CSS fix for MapTiler geocoder to prevent cutoff
+                        if (provider === "maptiler") {
+                            setTimeout(() => {
+                                const controlContainer = document.querySelector('.maplibregl-ctrl-geocoder');
+                                if (controlContainer) {
+                                    controlContainer.style.maxWidth = '300px';
+                                    controlContainer.style.width = 'auto';
+                                }
+                            }, 100);
+                        }
 
                         // Handle geocoder results in Shiny mode
                         if (HTMLWidgets.shinyMode) {
-                            geocoder.on("results", function (e) {
-                                Shiny.setInputValue(el.id + "_geocoder", {
-                                    result: e,
-                                    time: new Date(),
+                            if (provider === "maptiler") {
+                                // MapTiler uses different event names
+                                geocoder.on("pick", function (e) {
+                                    Shiny.setInputValue(el.id + "_geocoder", {
+                                        result: e,
+                                        time: new Date(),
+                                    });
                                 });
-                            });
+                            } else {
+                                // OSM geocoder
+                                geocoder.on("results", function (e) {
+                                    Shiny.setInputValue(el.id + "_geocoder", {
+                                        result: e,
+                                        time: new Date(),
+                                    });
+                                });
+                            }
                         }
                     }
 
@@ -3319,65 +3947,10 @@ HTMLWidgets.widget({
                         );
                     }
 
-                    if (mapData.draw_control && mapData.draw_control.enabled) {
-                        MapboxDraw.constants.classes.CONTROL_BASE =
-                            "maplibregl-ctrl";
-                        MapboxDraw.constants.classes.CONTROL_PREFIX =
-                            "maplibregl-ctrl-";
-                        MapboxDraw.constants.classes.CONTROL_GROUP =
-                            "maplibregl-ctrl-group";
-
-                        let drawOptions = mapData.draw_control.options || {};
-
-                        if (mapData.draw_control.freehand) {
-                            drawOptions = Object.assign({}, drawOptions, {
-                                modes: Object.assign({}, MapboxDraw.modes, {
-                                    draw_polygon: Object.assign(
-                                        {},
-                                        MapboxDraw.modes.draw_freehand,
-                                        {
-                                            // Store the simplify_freehand option on the map object
-                                            onSetup: function (opts) {
-                                                const state =
-                                                    MapboxDraw.modes.draw_freehand.onSetup.call(
-                                                        this,
-                                                        opts,
-                                                    );
-                                                this.map.simplify_freehand =
-                                                    mapData.draw_control.simplify_freehand;
-                                                return state;
-                                            },
-                                        },
-                                    ),
-                                }),
-                                // defaultMode: 'draw_polygon' # Don't set the default yet
-                            });
-                        }
-
-                        draw = new MapboxDraw(drawOptions);
-                        map.addControl(draw, mapData.draw_control.position);
-                        map.controls.push(draw);
-
-                        // Add event listeners
-                        map.on("draw.create", updateDrawnFeatures);
-                        map.on("draw.delete", updateDrawnFeatures);
-                        map.on("draw.update", updateDrawnFeatures);
-
-                        // Apply orientation styling
-                        if (mapData.draw_control.orientation === "horizontal") {
-                            const drawBar = map
-                                .getContainer()
-                                .querySelector(".maplibregl-ctrl-group");
-                            if (drawBar) {
-                                drawBar.style.display = "flex";
-                                drawBar.style.flexDirection = "row";
-                            }
-                        }
-                    }
 
                     function updateDrawnFeatures() {
-                        if (draw) {
-                            var drawnFeatures = draw.getAll();
+                        if (map._mapgl_draw) {
+                            var drawnFeatures = map._mapgl_draw.getAll();
                             if (HTMLWidgets.shinyMode) {
                                 Shiny.setInputValue(
                                     el.id + "_drawn_features",
@@ -3411,17 +3984,17 @@ HTMLWidgets.widget({
                         const position =
                             mapData.layers_control.position || "top-left";
                         if (position === "top-left") {
-                            layersControl.style.top = "10px";
-                            layersControl.style.left = "10px";
+                            layersControl.style.top = (mapData.layers_control.margin_top || 10) + "px";
+                            layersControl.style.left = (mapData.layers_control.margin_left || 10) + "px";
                         } else if (position === "top-right") {
-                            layersControl.style.top = "10px";
-                            layersControl.style.right = "10px";
+                            layersControl.style.top = (mapData.layers_control.margin_top || 10) + "px";
+                            layersControl.style.right = (mapData.layers_control.margin_right || 10) + "px";
                         } else if (position === "bottom-left") {
-                            layersControl.style.bottom = "30px";
-                            layersControl.style.left = "10px";
+                            layersControl.style.bottom = (mapData.layers_control.margin_bottom || 30) + "px";
+                            layersControl.style.left = (mapData.layers_control.margin_left || 10) + "px";
                         } else if (position === "bottom-right") {
-                            layersControl.style.bottom = "40px";
-                            layersControl.style.right = "10px";
+                            layersControl.style.bottom = (mapData.layers_control.margin_bottom || 40) + "px";
+                            layersControl.style.right = (mapData.layers_control.margin_right || 10) + "px";
                         }
 
                         el.appendChild(layersControl);
@@ -3434,45 +4007,97 @@ HTMLWidgets.widget({
                         let layers =
                             mapData.layers_control.layers ||
                             map.getStyle().layers.map((layer) => layer.id);
+                        let layersConfig = mapData.layers_control.layers_config;
 
-                        layers.forEach((layerId, index) => {
-                            const link = document.createElement("a");
-                            link.id = layerId;
-                            link.href = "#";
-                            link.textContent = layerId;
-                            link.className = "active";
+                        // If we have a layers_config, use that; otherwise fall back to original behavior
+                        if (layersConfig && Array.isArray(layersConfig)) {
+                            layersConfig.forEach((config, index) => {
+                                const link = document.createElement("a");
+                                // Ensure config.ids is always an array
+                                const layerIds = Array.isArray(config.ids) ? config.ids : [config.ids];
+                                link.id = layerIds.join("-");
+                                link.href = "#";
+                                link.textContent = config.label;
+                                link.setAttribute("data-layer-ids", JSON.stringify(layerIds));
+                                link.setAttribute("data-layer-type", config.type);
 
-                            // Show or hide layer when the toggle is clicked
-                            link.onclick = function (e) {
-                                const clickedLayer = this.textContent;
-                                e.preventDefault();
-                                e.stopPropagation();
-
-                                const visibility = map.getLayoutProperty(
-                                    clickedLayer,
+                                // Check if the first layer's visibility is set to "none" initially
+                                const firstLayerId = layerIds[0];
+                                const initialVisibility = map.getLayoutProperty(
+                                    firstLayerId,
                                     "visibility",
                                 );
+                                link.className = initialVisibility === "none" ? "" : "active";
 
-                                // Toggle layer visibility by changing the layout object's visibility property
-                                if (visibility === "visible") {
-                                    map.setLayoutProperty(
+                                // Show or hide layer(s) when the toggle is clicked
+                                link.onclick = function (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+
+                                    const layerIds = JSON.parse(this.getAttribute("data-layer-ids"));
+                                    const firstLayerId = layerIds[0];
+                                    const visibility = map.getLayoutProperty(
+                                        firstLayerId,
+                                        "visibility",
+                                    );
+
+                                    // Toggle visibility for all layer IDs in the group
+                                    if (visibility === "visible") {
+                                        layerIds.forEach(layerId => {
+                                            map.setLayoutProperty(layerId, "visibility", "none");
+                                        });
+                                        this.className = "";
+                                    } else {
+                                        layerIds.forEach(layerId => {
+                                            map.setLayoutProperty(layerId, "visibility", "visible");
+                                        });
+                                        this.className = "active";
+                                    }
+                                };
+
+                                layersList.appendChild(link);
+                            });
+                        } else {
+                            // Fallback to original behavior for simple layer arrays
+                            layers.forEach((layerId, index) => {
+                                const link = document.createElement("a");
+                                link.id = layerId;
+                                link.href = "#";
+                                link.textContent = layerId;
+                                link.className = "active";
+
+                                // Show or hide layer when the toggle is clicked
+                                link.onclick = function (e) {
+                                    const clickedLayer = this.textContent;
+                                    e.preventDefault();
+                                    e.stopPropagation();
+
+                                    const visibility = map.getLayoutProperty(
                                         clickedLayer,
                                         "visibility",
-                                        "none",
                                     );
-                                    this.className = "";
-                                } else {
-                                    this.className = "active";
-                                    map.setLayoutProperty(
-                                        clickedLayer,
-                                        "visibility",
-                                        "visible",
-                                    );
-                                }
-                            };
 
-                            layersList.appendChild(link);
-                        });
+                                    // Toggle layer visibility by changing the layout object's visibility property
+                                    if (visibility === "visible") {
+                                        map.setLayoutProperty(
+                                            clickedLayer,
+                                            "visibility",
+                                            "none",
+                                        );
+                                        this.className = "";
+                                    } else {
+                                        this.className = "active";
+                                        map.setLayoutProperty(
+                                            clickedLayer,
+                                            "visibility",
+                                            "visible",
+                                        );
+                                    }
+                                };
+
+                                layersList.appendChild(link);
+                            });
+                        }
 
                         // Handle collapsible behavior
                         if (mapData.layers_control.collapsible) {
@@ -3504,6 +4129,23 @@ HTMLWidgets.widget({
                                 layersList,
                             );
                         }
+                    }
+                    
+                    // Set projection if provided (after all other setup is complete)
+                    if (mapData.setProjection && mapData.setProjection.length > 0) {
+                        mapData.setProjection.forEach(function (projectionConfig) {
+                            if (projectionConfig.projection) {
+                                const projection =
+                                    typeof projectionConfig.projection === "string"
+                                        ? { type: projectionConfig.projection }
+                                        : projectionConfig.projection;
+                                try {
+                                    map.setProjection(projection);
+                                } catch (e) {
+                                    console.error("Failed to set projection in compare view:", e);
+                                }
+                            }
+                        });
                     }
                 }
             },

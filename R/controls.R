@@ -159,7 +159,10 @@ add_navigation_control <- function(
 #'
 #' @param map A map object.
 #' @param position The position of the control on the map (one of "top-left", "top-right", "bottom-left", "bottom-right").
-#' @param layers A vector of layer IDs to be included in the control. If NULL, all layers will be included.
+#' @param layers Either a character vector of layer IDs to include in the control,
+#'   a named list/vector where names are labels and values are layer IDs,
+#'   or a named list where values can be vectors to group multiple layers together.
+#'   If NULL, all layers will be included.
 #' @param collapsible Whether the control should be collapsible.
 #' @param use_icon Whether to use a stacked layers icon instead of the "Layers" text when collapsed. Only applies when collapsible = TRUE.
 #' @param background_color The background color for the layers control; this will be the
@@ -168,6 +171,10 @@ add_navigation_control <- function(
 #' @param hover_color The background color for layer items when hovered.
 #' @param active_text_color The text color for active layer items.
 #' @param inactive_text_color The text color for inactive layer items.
+#' @param margin_top Custom top margin in pixels, allowing for fine control over control positioning to avoid overlaps. Default is NULL (uses standard positioning).
+#' @param margin_right Custom right margin in pixels. Default is NULL.
+#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
+#' @param margin_left Custom left margin in pixels. Default is NULL.
 #'
 #' @return The modified map object with the layers control added.
 #' @export
@@ -177,6 +184,7 @@ add_navigation_control <- function(
 #'
 #' rds <- roads("TX", "Tarrant")
 #' tr <- tracts("TX", "Tarrant", cb = TRUE)
+#' cty <- counties("TX", cb = TRUE)
 #'
 #' maplibre() |>
 #'     fit_bounds(rds) |>
@@ -196,6 +204,38 @@ add_navigation_control <- function(
 #'         background_color = "#ffffff",
 #'         active_color = "#4a90e2"
 #'     )
+#'
+#' # With custom labels
+#' maplibre() |>
+#'     add_fill_layer(id = "tract-fill", source = tr) |>
+#'     add_line_layer(id = "tract-line", source = tr) |>
+#'     add_layers_control(
+#'         layers = list(
+#'             "Census Tracts" = "tract-fill",
+#'             "Tract Borders" = "tract-line"
+#'         )
+#'     )
+#'
+#' # Group multiple layers together
+#' maplibre(bounds = cty) |>
+#'     add_fill_layer(id = "county-fill", source = cty, fill_opacity = 0.3) |>
+#'     add_line_layer(
+#'         id = "county-outline",
+#'         source = cty,
+#'         line_color = "yellow",
+#'         line_width = 3
+#'     ) |>
+#'     add_line_layer(
+#'         id = "roads-layer",
+#'         source = rds,
+#'         line_color = "blue"
+#'     ) |>
+#'     add_layers_control(
+#'         layers = list(
+#'             "Counties" = c("county-fill", "county-outline"),
+#'             "Roads" = "roads-layer"
+#'         )
+#'     )
 #' }
 add_layers_control <- function(
   map,
@@ -207,15 +247,52 @@ add_layers_control <- function(
   active_color = NULL,
   hover_color = NULL,
   active_text_color = NULL,
-  inactive_text_color = NULL
+  inactive_text_color = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL
 ) {
   control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
 
-  # If layers is NULL, get the layers added by the user
+  # Process layers parameter
+  layers_config <- NULL
   if (is.null(layers)) {
+    # If layers is NULL, get the layers added by the user
     layers <- unlist(lapply(map$x$layers, function(y) {
       y$id
     }))
+  } else if (is.list(layers) && !is.null(names(layers))) {
+    # Named list: process labels and groups
+    layers_config <- list()
+    for (label in names(layers)) {
+      layer_ids <- layers[[label]]
+      if (length(layer_ids) > 1) {
+        # Multiple IDs - this is a group
+        layers_config[[length(layers_config) + 1]] <- list(
+          label = label,
+          ids = as.character(layer_ids),
+          type = "group"
+        )
+      } else {
+        # Single ID - regular layer with label
+        layers_config[[length(layers_config) + 1]] <- list(
+          label = label,
+          ids = as.character(layer_ids),
+          type = "single"
+        )
+      }
+    }
+  } else if (!is.null(names(layers))) {
+    # Named vector: just labels, no groups
+    layers_config <- list()
+    for (i in seq_along(layers)) {
+      layers_config[[i]] <- list(
+        label = names(layers)[i],
+        ids = as.character(layers[i]),
+        type = "single"
+      )
+    }
   }
 
   # Create custom colors object if any color options were specified
@@ -257,9 +334,14 @@ add_layers_control <- function(
             control_id = control_id,
             position = position,
             layers = layers,
+            layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
             custom_colors = custom_colors,
+            margin_top = margin_top,
+            margin_right = margin_right,
+            margin_bottom = margin_bottom,
+            margin_left = margin_left,
             map = map$map_side
           )
         )
@@ -280,9 +362,14 @@ add_layers_control <- function(
             control_id = control_id,
             position = position,
             layers = layers,
+            layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
-            custom_colors = custom_colors
+            custom_colors = custom_colors,
+            margin_top = margin_top,
+            margin_right = margin_right,
+            margin_bottom = margin_bottom,
+            margin_left = margin_left
           )
         )
       )
@@ -292,22 +379,57 @@ add_layers_control <- function(
       control_id = control_id,
       position = position,
       layers = layers,
+      layers_config = layers_config,
       collapsible = collapsible,
       use_icon = use_icon,
-      custom_colors = custom_colors
+      custom_colors = custom_colors,
+      margin_top = margin_top,
+      margin_right = margin_right,
+      margin_bottom = margin_bottom,
+      margin_left = margin_left
     )
   }
 
   return(map)
 }
 
-#' Clear all controls from a Mapbox GL or Maplibre GL map in a Shiny app
+#' Clear controls from a Mapbox GL or Maplibre GL map in a Shiny app
+#'
+#' This function allows you to remove specific controls or all controls from a map.
+#' You can target controls by their type names, which correspond to the function
+#' names used to add them (e.g., "navigation" for controls added with `add_navigation_control`).
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
+#' @param controls A character vector of control types to remove, or NULL to remove all controls.
+#'   Control types include: "navigation", "draw", "fullscreen", "scale", "geolocate",
+#'   "geocoder", "layers", "reset", "globe_minimap", or custom control IDs.
+#'   If NULL (default), all controls will be removed.
 #'
-#' @return The modified map object with all controls removed.
+#' @return The modified map object with specified controls removed.
 #' @export
-clear_controls <- function(map) {
+#'
+#' @examples
+#' \dontrun{
+#' library(shiny)
+#' library(mapgl)
+#'
+#' # Clear all controls
+#' maplibre_proxy("map") |>
+#'   clear_controls()
+#'
+#' # Clear specific controls
+#' maplibre_proxy("map") |>
+#'   clear_controls("navigation")
+#'
+#' # Clear multiple controls
+#' maplibre_proxy("map") |>
+#'   clear_controls(c("draw", "navigation"))
+#'
+#' # Clear a custom control by ID
+#' maplibre_proxy("map") |>
+#'   clear_controls("my_custom_control")
+#' }
+clear_controls <- function(map, controls = NULL) {
   if (
     inherits(map, "mapboxgl_proxy") ||
       inherits(map, "maplibre_proxy")
@@ -325,6 +447,7 @@ clear_controls <- function(map) {
           id = map$id,
           message = list(
             type = "clear_controls",
+            controls = controls,
             map = map$map_side
           )
         )
@@ -340,7 +463,10 @@ clear_controls <- function(map) {
         proxy_class,
         list(
           id = map$id,
-          message = list(type = "clear_controls")
+          message = list(
+            type = "clear_controls",
+            controls = controls
+          )
         )
       )
     }
@@ -433,6 +559,8 @@ add_scale_control <- function(
 #'        One of "top-right", "top-left", "bottom-right", or "bottom-left".
 #' @param freehand Logical, whether to enable freehand drawing mode. Default is FALSE.
 #' @param simplify_freehand Logical, whether to apply simplification to freehand drawings. Default is FALSE.
+#' @param rectangle Logical, whether to enable rectangle drawing mode. Default is FALSE.
+#' @param radius Logical, whether to enable radius/circle drawing mode. Default is FALSE.
 #' @param orientation A string specifying the orientation of the draw control.
 #'        Either "vertical" (default) or "horizontal".
 #' @param source A character string specifying a source ID to add to the draw control.
@@ -444,6 +572,10 @@ add_scale_control <- function(
 #' @param active_color Color for active (selected) features. Default is "#fbb03b" (orange).
 #' @param vertex_radius Radius of vertex points in pixels. Default is 5.
 #' @param line_width Width of lines in pixels. Default is 2.
+#' @param download_button Logical, whether to add a download button to export drawn features as GeoJSON. Default is FALSE.
+#' @param download_filename Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".
+#' @param show_measurements Logical, whether to show live measurements while drawing. Default is FALSE.
+#' @param measurement_units Units for measurements. Either "metric", "imperial", or "both". Default is "both".
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
@@ -478,12 +610,30 @@ add_scale_control <- function(
 #'         vertex_radius = 7,
 #'         line_width = 3
 #'     )
+#'
+#' # Enable rectangle drawing mode
+#' mapboxgl() |>
+#'     add_draw_control(rectangle = TRUE)
+#'
+#' # Enable radius/circle drawing mode
+#' mapboxgl() |>
+#'     add_draw_control(radius = TRUE)
+#'
+#' # Enable multiple drawing modes
+#' mapboxgl() |>
+#'     add_draw_control(
+#'         freehand = TRUE,
+#'         rectangle = TRUE,
+#'         radius = TRUE
+#'     )
 #' }
 add_draw_control <- function(
   map,
   position = "top-left",
   freehand = FALSE,
   simplify_freehand = FALSE,
+  rectangle = FALSE,
+  radius = FALSE,
   orientation = "vertical",
   source = NULL,
   point_color = "#3bb2d0",
@@ -493,6 +643,10 @@ add_draw_control <- function(
   active_color = "#fbb03b",
   vertex_radius = 5,
   line_width = 2,
+  download_button = FALSE,
+  download_filename = "drawn-features",
+  show_measurements = FALSE,
+  measurement_units = "both",
   ...
 ) {
   # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
@@ -517,9 +671,15 @@ add_draw_control <- function(
     position = position,
     freehand = freehand,
     simplify_freehand = simplify_freehand,
+    rectangle = rectangle,
+    radius = radius,
     orientation = orientation,
     options = options,
     source = draw_source,
+    download_button = download_button,
+    download_filename = download_filename,
+    show_measurements = show_measurements,
+    measurement_units = measurement_units,
     styling = list(
       point_color = point_color,
       line_color = line_color,
@@ -552,8 +712,14 @@ add_draw_control <- function(
             options = options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
+            rectangle = rectangle,
+            radius = radius,
             orientation = orientation,
             source = draw_source,
+            download_button = download_button,
+            download_filename = download_filename,
+            show_measurements = show_measurements,
+            measurement_units = measurement_units,
             styling = list(
               point_color = point_color,
               line_color = line_color,
@@ -584,8 +750,14 @@ add_draw_control <- function(
             options = options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
+            rectangle = rectangle,
+            radius = radius,
             orientation = orientation,
             source = draw_source,
+            download_button = download_button,
+            download_filename = download_filename,
+            show_measurements = show_measurements,
+            measurement_units = measurement_units,
             styling = list(
               point_color = point_color,
               line_color = line_color,
@@ -910,8 +1082,8 @@ clear_drawn_features <- function(map) {
     )
   } else {
     # For regular proxies
-    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
-      "mapboxgl-proxy" else "maplibre-proxy"
+    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+      "maplibre-proxy"
     map$session$sendCustomMessage(
       proxy_class,
       list(
@@ -935,6 +1107,8 @@ clear_drawn_features <- function(map) {
 #' @param position The position of the control. Can be one of "top-left", "top-right", "bottom-left", or "bottom-right". Default is "top-right".
 #' @param placeholder A string to use as placeholder text for the search bar. Default is "Search".
 #' @param collapsed Whether the control should be collapsed until hovered or clicked. Default is FALSE.
+#' @param provider The geocoding provider to use for MapLibre maps. Either "osm" for OpenStreetMap/Nominatim or "maptiler" for MapTiler geocoding. If NULL (default), MapLibre maps will use "osm". Mapbox maps will always use the Mapbox geocoder, regardless of this parameter.
+#' @param maptiler_api_key Your MapTiler API key (required when provider is "maptiler" for MapLibre maps). Can also be set with `MAPTILER_API_KEY` environment variable. Mapbox maps will always use the Mapbox API key set at the map level.
 #' @param ... Additional parameters to pass to the Geocoder.
 #'
 #' @return The modified map object with the geocoder control added.
@@ -949,18 +1123,65 @@ clear_drawn_features <- function(map) {
 #'
 #' maplibre() |>
 #'     add_geocoder_control(position = "top-right", placeholder = "Search location")
+#'
+#' # Using MapTiler geocoder
+#' maplibre() |>
+#'     add_geocoder_control(provider = "maptiler", maptiler_api_key = "YOUR_API_KEY")
 #' }
 add_geocoder_control <- function(
   map,
   position = "top-right",
   placeholder = "Search",
   collapsed = FALSE,
+  provider = NULL,
+  maptiler_api_key = NULL,
   ...
 ) {
+  # Set default provider for MapLibre if NULL
+  if (
+    is.null(provider) &&
+      (inherits(map, "maplibre") ||
+        inherits(map, "maplibre_proxy") ||
+        inherits(map, "maplibre_compare_proxy"))
+  ) {
+    provider <- "osm"
+  }
+
+  # Validate provider parameter for MapLibre
+  if (!is.null(provider) && !provider %in% c("osm", "maptiler")) {
+    rlang::abort("Provider must be either 'osm' or 'maptiler'")
+  }
+
+  # Check that provider parameter is only used with MapLibre
+  if (
+    !is.null(provider) &&
+      (inherits(map, "mapboxgl") ||
+        inherits(map, "mapboxgl_proxy") ||
+        inherits(map, "mapboxgl_compare_proxy"))
+  ) {
+    rlang::abort(
+      "The provider parameter is only available for MapLibre GL maps. Mapbox maps will always use the Mapbox geocoder."
+    )
+  }
+
+  # Handle MapTiler API key
+  if (!is.null(provider) && provider == "maptiler") {
+    if (is.null(maptiler_api_key)) {
+      if (Sys.getenv("MAPTILER_API_KEY") == "") {
+        rlang::abort(
+          "A MapTiler API key is required for the MapTiler geocoder. Get one at https://www.maptiler.com, then supply it here or set it in your .Renviron file with 'MAPTILER_API_KEY'='YOUR_KEY_HERE'."
+        )
+      }
+      maptiler_api_key <- Sys.getenv("MAPTILER_API_KEY")
+    }
+  }
+
   geocoder_options <- list(
     position = position,
     placeholder = placeholder,
     collapsed = collapsed,
+    provider = provider,
+    api_key = maptiler_api_key,
     ...
   )
 
@@ -1278,6 +1499,8 @@ add_globe_control <- function(map, position = "top-right") {
 #' @param position The position of the control. Can be one of "top-left", "top-right",
 #'   "bottom-left", or "bottom-right". Default is "top-right".
 #' @param className Optional CSS class name for the control container.
+#' @param id Optional unique identifier for the control. If not provided, defaults to "custom".
+#'   This ID can be used with `clear_controls()` to selectively remove this specific control.
 #' @param ... Additional arguments passed to the JavaScript side.
 #'
 #' @return The modified map object with the custom control added.
@@ -1287,6 +1510,7 @@ add_globe_control <- function(map, position = "top-right") {
 #' \dontrun{
 #' library(mapgl)
 #'
+#' # Basic custom control
 #' maplibre() |>
 #'   add_control(
 #'     html = "<div style='background-color: white; padding: 5px;'>
@@ -1295,15 +1519,35 @@ add_globe_control <- function(map, position = "top-right") {
 #'             </div>",
 #'     position = "top-left"
 #'   )
+#'
+#' # Custom control with specific ID for selective removal
+#' maplibre() |>
+#'   add_control(
+#'     html = "<div style='background: blue; color: white; padding: 10px;'>
+#'              My Control
+#'             </div>",
+#'     position = "top-right",
+#'     id = "my_custom_control"
+#'   )
+#'
+#' # Later, remove only this specific control
+#' maplibre_proxy("map") |>
+#'   clear_controls("my_custom_control")
 #' }
 add_control <- function(
   map,
   html,
   position = "top-right",
   className = NULL,
+  id = NULL,
   ...
 ) {
-  control_id <- paste0("custom-control-", as.hexmode(sample(1:1000000, 1)))
+  # Set control ID - user-provided or default to "custom"
+  control_id <- if (!is.null(id)) {
+    id
+  } else {
+    "custom"
+  }
 
   # Create options list
   control_options <- list(

@@ -4,7 +4,7 @@
 \alias{enable_shiny_hover}
 \title{Enable hover events for Shiny applications}
 \usage{
-enable_shiny_hover(map, coordinates = TRUE, features = TRUE)
+enable_shiny_hover(map, coordinates = TRUE, features = TRUE, layer_id = NULL)
 }
 \arguments{
 \item{map}{A maplibre or mapboxgl widget object.}
@@ -12,6 +12,8 @@ enable_shiny_hover(map, coordinates = TRUE, features = TRUE)
 \item{coordinates}{Logical. If TRUE, provides general mouse coordinates via \verb{_hover} input. Defaults to TRUE.}
 
 \item{features}{Logical. If TRUE, provides feature information via \verb{_feature_hover} input when hovering over map features. Defaults to TRUE.}
+
+\item{layer_id}{Character. If provided, only features from the specified layer will be included in the \verb{_feature_hover} input. Defaults to NULL. For multiple layers, provide a vector of layer IDs.}
 }
 \value{
 The modified map object with hover events enabled.

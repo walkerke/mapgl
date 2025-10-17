@@ -64,6 +64,23 @@ maplibre(
   add_navigation_control()
 ```
 
+### Quick data visualization with view functions
+
+If you're looking to quickly visualize spatial data without building layers from scratch, **mapgl** includes view functions that streamline the process. `mapboxgl_view()` and `maplibre_view()` automatically detect your data type and create appropriate visualizations with sensible defaults.
+
+These functions work with **sf** objects and **terra** rasters, and will automatically style your data based on geometry type. You can also specify a column for styling, and the functions will create appropriate color scales for you.
+
+```{r}
+library(sf)
+
+# Quick view of the North Carolina dataset
+nc <- st_read(system.file("shape/nc.shp", package="sf"))
+
+maplibre_view(nc, column = "AREA")
+```
+
+If you want to add additional layers on top of a view function, you can use the `add_view()` function to stack layers. This gives you a middle ground between the quick view functions and the full layer-by-layer approach shown in the [layers overview vignette](https://walker-data.com/mapgl/articles/layers-overview.html).
+
 ### Comparing map views
 
 **mapgl** includes a function `compare()` that allows users to create synced swipe maps that can compare two styles. This function works for either Mapbox or MapLibre maps.
