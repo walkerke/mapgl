@@ -687,6 +687,8 @@ HTMLWidgets.widget({
   factory: function (el, width, height) {
     let map;
     let draw;
+    let initialFitBounds = null; // Track fitBounds for invalidation on resize
+    let containerWasInvisible = false; // Track if container started hidden
 
     return {
       renderValue: function (x) {
@@ -1155,6 +1157,13 @@ HTMLWidgets.widget({
           }
 
           if (x.fitBounds) {
+            initialFitBounds = x.fitBounds;
+            var container = map.getContainer();
+            var rect = container.getBoundingClientRect();
+            // Check if container is invisible (0 dimensions)
+            if (rect.width === 0 || rect.height === 0) {
+              containerWasInvisible = true;
+            }
             map.fitBounds(x.fitBounds.bounds, x.fitBounds.options);
           }
           if (x.flyTo) {
@@ -2199,6 +2208,11 @@ HTMLWidgets.widget({
       resize: function (width, height) {
         if (map) {
           map.resize();
+          // Re-apply fitBounds if container was initially invisible and is now visible
+          if (containerWasInvisible && initialFitBounds && width > 0 && height > 0) {
+            map.fitBounds(initialFitBounds.bounds, initialFitBounds.options);
+            containerWasInvisible = false; // Only re-apply once
+          }
         }
       },
     };
