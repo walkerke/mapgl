@@ -51,9 +51,39 @@ enable_shiny_hover <- function(
   }
 
   map$x$hover_events$enabled <- TRUE
+  map$x$hover_events$layer_id <- layer_id
   map$x$hover_events$coordinates <- coordinates
   map$x$hover_events$features <- features
-  map$x$hover_events$layer_id <- layer_id
+
+  return(map)
+}
+
+
+#' Enable features in viewport automatically updating shiny inputs
+#'
+#' This function causes a map widget in shiny to automatically refresh a shiny
+#' input `_bbox_features` with all features for the given layer in the bounding
+#' box of the map's viewport.
+#'
+#' @return The modified map object with automatic querying of viewport features
+#'   enabled.
+#' @export enable_shiny_viewport_features
+#'
+enable_shiny_viewport_features <- function(map,
+                                           layer_id) {
+
+  # Check if map is valid
+  if (!inherits(map, c("maplibregl", "mapboxgl"))) {
+    stop("Map must be a maplibre or mapboxgl widget object", call. = FALSE)
+  }
+
+  # Add hover configuration to the widget
+  if (is.null(map$x$viewport_features)) {
+    map$x$viewport_features <- list()
+  }
+
+  map$x$viewport_features$enabled <- TRUE
+  map$x$viewport_features$layer <- layer_id
 
   return(map)
 }
