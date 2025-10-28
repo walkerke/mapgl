@@ -680,6 +680,9 @@ maplibre_view <- function(
     map <- maplibre(style = style, bounds = data, ...)
   }
 
+  # Set the projection to globe view by default
+  map <- set_projection(map, "globe")
+
   # Default navy color
   default_color <- color
 
