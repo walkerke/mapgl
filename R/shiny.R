@@ -14,8 +14,8 @@ mapboxgl_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
 
   if (
     !is.null(session$ns) &&
-      nzchar(session$ns(NULL)) &&
-      substring(mapId, 1, nchar(session$ns(""))) != session$ns("")
+    nzchar(session$ns(NULL)) &&
+    substring(mapId, 1, nchar(session$ns(""))) != session$ns("")
   ) {
     mapId <- session$ns(mapId)
   }
@@ -41,8 +41,8 @@ maplibre_proxy <- function(mapId, session = shiny::getDefaultReactiveDomain()) {
 
   if (
     !is.null(session$ns) &&
-      nzchar(session$ns(NULL)) &&
-      substring(mapId, 1, nchar(session$ns(""))) != session$ns("")
+    nzchar(session$ns(NULL)) &&
+    substring(mapId, 1, nchar(session$ns(""))) != session$ns("")
   ) {
     mapId <- session$ns(mapId)
   }
@@ -66,7 +66,7 @@ set_filter <- function(map, layer_id, filter) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies, use the appropriate message handler
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -132,7 +132,7 @@ clear_layer <- function(proxy, layer_id) {
   for (layer in layer_id) {
     if (
       inherits(proxy, "mapboxgl_compare_proxy") ||
-        inherits(proxy, "maplibre_compare_proxy")
+      inherits(proxy, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(proxy, "mapboxgl_compare_proxy"))
@@ -189,7 +189,7 @@ set_layout_property <- function(
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -267,7 +267,7 @@ set_paint_property <- function(
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -323,7 +323,7 @@ clear_markers <- function(map) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -391,7 +391,7 @@ set_style <- function(
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -449,34 +449,34 @@ set_style <- function(
 move_layer <- function(map, layer_id, before_id = NULL) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     # Proxy handling (existing logic)
-    if (
+  if (
       inherits(map, "mapboxgl_compare_proxy") ||
         inherits(map, "maplibre_compare_proxy")
-    ) {
-      # For compare proxies
+  ) {
+    # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
-        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
-      message <- list(
-        type = "move_layer",
-        layer = layer_id,
-        before = before_id,
+      "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+    message <- list(
+      type = "move_layer",
+      layer = layer_id,
+      before = before_id,
         map = map$map_side
-      )
-    } else {
-      # For regular proxies
+    )
+  } else {
+    # For regular proxies
       proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
         "maplibre-proxy"
-      message <- list(
-        type = "move_layer",
-        layer = layer_id,
-        before = before_id
-      )
-    }
+    message <- list(
+      type = "move_layer",
+      layer = layer_id,
+      before = before_id
+    )
+  }
 
     map$session$sendCustomMessage(
-      proxy_class,
+    proxy_class,
       list(id = map$id, message = message)
-    )
+  )
   } else {
     # For non-proxy maps, store the move operation for initialization
     if (is.null(map$x$moveLayer)) map$x$moveLayer <- list()
@@ -513,7 +513,7 @@ set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -579,7 +579,7 @@ set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -653,7 +653,7 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
 
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
-        inherits(map, "maplibre_compare_proxy")
+      inherits(map, "maplibre_compare_proxy")
     ) {
       # For compare proxies
       proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
@@ -692,6 +692,150 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
     )
   }
   return(map)
+}
+
+#' Get a set of features on a map
+#'
+#' @param layer_id layer_id of map layer from which to query features.
+#' @param geometry if NULL, uses the bbox of the current viewport. Otherwise, a
+#'   specific geometry can be specified to pull features overlapping that
+#'   geometry.
+#'
+#' See [queryrenderedfeatures][https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#queryrenderedfeatures]
+#'
+#' @return Nothing, but updates `input$map_feature_query`
+#' @export update_feature_query
+#'
+update_feature_query <- function(map, layer_id = NULL, geometry = NULL
+                                 ) {
+  #query_rendered_features <- function(map, layer_id = NULL, geometry = NULL) {
+  #browser()
+  if( !(inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy"))
+      ) {
+    warning(
+      "Getting features in bbox outside of a Shiny context is not supported. Please use this function within a Shiny application."
+    )
+    return(data.frame()) # Return an empty data.frame
+  }
+
+  # Get the session object
+  session <- shiny::getDefaultReactiveDomain()
+  # Proxy object id
+  map_id <- map$id
+
+  #browser()
+
+  # Send message to get drawn features
+  message.content <- list(
+    type = "query_rendered_features",
+    layer = layer_id,
+    geometry = geometry
+  )
+
+  if (
+    inherits(map, "mapboxgl_compare_proxy") ||
+    inherits(map, "maplibre_compare_proxy")
+  ) {
+    # For compare proxies
+    proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+      "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+    session$sendCustomMessage(
+      proxy_class,
+      list(
+        id = map_id,
+        message =
+          c(message.content,
+            map = map$map_side)
+        )
+      )
+  } else {
+    # For regular proxies
+    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
+      "mapboxgl-proxy" else "maplibre-proxy"
+    session$sendCustomMessage(
+      proxy_class,
+      list(
+        id = map_id,
+        message = message.content
+      )
+    )
+  }
+}
+
+
+
+
+#' Queries  all features in a source
+#'
+#' Will pull all features (visible or not) from a given source and save as a
+#' shiny input
+#'
+#' @param layer_id layer_id of map layer from which to query features.
+#' @param source_id id of source layer for which to query features. Note the
+#'   returned features will be empty if this is left NULL and query is refering
+#'   to a basemap layer.
+#'
+#' See
+#' [querySourceFeatures][https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#querysourcefeatures]
+#'
+#' @return Nothing, but updates `input$map_source_query` in shiny contexts.
+#' @export update_source_query
+#'
+update_source_query <- function(map, source_id, source_layer = NULL
+                                ) {
+
+  #browser()
+  if( !(inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy"))
+  ) {
+    warning(
+      "Getting features in bbox outside of a Shiny context is not supported. Please use this function within a Shiny application."
+    )
+    return(data.frame()) # Return an empty data.frame
+  }
+
+  # Get the session object
+  session <- shiny::getDefaultReactiveDomain()
+  # Proxy object id
+  map_id <- map$id
+
+  #browser()
+
+  # Send message to get drawn features
+  message.content <- list(
+    type = "query_source_features",
+    source = source_id,
+    layer = source_layer
+  )
+
+  if (
+    inherits(map, "mapboxgl_compare_proxy") ||
+    inherits(map, "maplibre_compare_proxy")
+  ) {
+    # For compare proxies
+    proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+      "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+    session$sendCustomMessage(
+      proxy_class,
+      list(
+        id = map_id,
+        message =
+          c(message.content,
+            map = map$map_side)
+      )
+    )
+  } else {
+    # For regular proxies
+    proxy_class <- if (inherits(map, "mapboxgl_proxy"))
+      "mapboxgl-proxy" else "maplibre-proxy"
+    session$sendCustomMessage(
+      proxy_class,
+      list(
+        id = map_id,
+        message =
+          message.content
+      )
+    )
+  }
 }
 
 #' Clear legends from a map
@@ -754,3 +898,5 @@ clear_legend <- function(map, legend_ids = NULL) {
   }
   return(map)
 }
+
+
