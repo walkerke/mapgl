@@ -1473,32 +1473,47 @@ HTMLWidgets.widget({
             setTimeout(() => {
               const drawControlGroup = map.getContainer().querySelector(".maplibregl-ctrl-group");
 
-              if (x.draw_control.rectangle && drawControlGroup) {
-                const rectangleBtn = document.createElement("button");
-                rectangleBtn.className = "mapbox-gl-draw_rectangle";
-                rectangleBtn.title = "Rectangle tool";
-                rectangleBtn.type = "button";
-                rectangleBtn.onclick = function() {
-                  draw.changeMode('draw_rectangle');
-                  // Update active state
-                  drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
-                  rectangleBtn.classList.add('active');
-                };
-                drawControlGroup.appendChild(rectangleBtn);
-              }
+              if (drawControlGroup) {
+                // Find the trash button to insert before it
+                const trashBtn = drawControlGroup.querySelector('.mapbox-gl-draw_trash');
 
-              if (x.draw_control.radius && drawControlGroup) {
-                const radiusBtn = document.createElement("button");
-                radiusBtn.className = "mapbox-gl-draw_radius";
-                radiusBtn.title = "Radius/Circle tool";
-                radiusBtn.type = "button";
-                radiusBtn.onclick = function() {
-                  draw.changeMode('draw_radius');
-                  // Update active state
-                  drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
-                  radiusBtn.classList.add('active');
-                };
-                drawControlGroup.appendChild(radiusBtn);
+                if (x.draw_control.rectangle) {
+                  const rectangleBtn = document.createElement("button");
+                  rectangleBtn.className = "mapbox-gl-draw_rectangle";
+                  rectangleBtn.title = "Rectangle tool";
+                  rectangleBtn.type = "button";
+                  rectangleBtn.onclick = function() {
+                    draw.changeMode('draw_rectangle');
+                    // Update active state
+                    drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                    rectangleBtn.classList.add('active');
+                  };
+                  // Insert before trash button if it exists, otherwise append
+                  if (trashBtn) {
+                    drawControlGroup.insertBefore(rectangleBtn, trashBtn);
+                  } else {
+                    drawControlGroup.appendChild(rectangleBtn);
+                  }
+                }
+
+                if (x.draw_control.radius) {
+                  const radiusBtn = document.createElement("button");
+                  radiusBtn.className = "mapbox-gl-draw_radius";
+                  radiusBtn.title = "Radius/Circle tool";
+                  radiusBtn.type = "button";
+                  radiusBtn.onclick = function() {
+                    draw.changeMode('draw_radius');
+                    // Update active state
+                    drawControlGroup.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                    radiusBtn.classList.add('active');
+                  };
+                  // Insert before trash button if it exists, otherwise append
+                  if (trashBtn) {
+                    drawControlGroup.insertBefore(radiusBtn, trashBtn);
+                  } else {
+                    drawControlGroup.appendChild(radiusBtn);
+                  }
+                }
               }
             }, 100);
 
@@ -4114,6 +4129,20 @@ if (HTMLWidgets.shinyMode) {
           });
         }
 
+        // Add rectangle mode if enabled
+        if (message.rectangle) {
+          drawOptions.modes = Object.assign({}, drawOptions.modes || MapboxDraw.modes, {
+            draw_rectangle: MapboxDraw.modes.draw_rectangle,
+          });
+        }
+
+        // Add radius mode if enabled
+        if (message.radius) {
+          drawOptions.modes = Object.assign({}, drawOptions.modes || MapboxDraw.modes, {
+            draw_radius: MapboxDraw.modes.draw_radius,
+          });
+        }
+
         // Create the draw control
         var drawControl = new MapboxDraw(drawOptions);
         map.addControl(drawControl, message.position);
@@ -4146,6 +4175,52 @@ if (HTMLWidgets.shinyMode) {
           }, 100);
         }
 
+        // Add rectangle icon CSS if rectangle mode is enabled
+        if (message.rectangle) {
+          if (!document.querySelector("#mapgl-rectangle-styles")) {
+            const style = document.createElement("style");
+            style.id = "mapgl-rectangle-styles";
+            style.textContent = `
+              .mapbox-gl-draw_rectangle {
+                background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Crect x="2" y="4" width="16" height="12" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
+                background-size: 20px 20px;
+                background-position: center;
+                background-repeat: no-repeat;
+              }
+              .mapbox-gl-draw_rectangle:hover {
+                background-color: rgba(0, 0, 0, 0.05);
+              }
+              .mapbox-gl-draw_rectangle.active {
+                background-color: #4264fb;
+              }
+            `;
+            document.head.appendChild(style);
+          }
+        }
+
+        // Add radius/circle icon CSS if radius mode is enabled
+        if (message.radius) {
+          if (!document.querySelector("#mapgl-radius-styles")) {
+            const style = document.createElement("style");
+            style.id = "mapgl-radius-styles";
+            style.textContent = `
+              .mapbox-gl-draw_radius {
+                background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="7" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
+                background-size: 20px 20px;
+                background-position: center;
+                background-repeat: no-repeat;
+              }
+              .mapbox-gl-draw_radius:hover {
+                background-color: rgba(0, 0, 0, 0.05);
+              }
+              .mapbox-gl-draw_radius.active {
+                background-color: #4264fb;
+              }
+            `;
+            document.head.appendChild(style);
+          }
+        }
+
         // Add event listeners
         map.on("draw.create", updateDrawnFeatures);
         map.on("draw.delete", updateDrawnFeatures);
@@ -4155,6 +4230,56 @@ if (HTMLWidgets.shinyMode) {
         if (message.source) {
           addSourceFeaturesToDraw(drawControl, message.source, map);
         }
+
+        // Add rectangle and radius buttons if enabled
+        setTimeout(() => {
+          const drawControlGroup = map
+            .getContainer()
+            .querySelector(".maplibregl-ctrl-group:has(.mapbox-gl-draw_polygon)");
+
+          if (drawControlGroup) {
+            // Find the trash button to insert before it
+            const trashBtn = drawControlGroup.querySelector('.mapbox-gl-draw_trash');
+
+            if (message.rectangle) {
+              const rectangleBtn = document.createElement("button");
+              rectangleBtn.className = "mapbox-gl-draw_rectangle maplibregl-ctrl-icon";
+              rectangleBtn.title = "Rectangle tool";
+              rectangleBtn.type = "button";
+              rectangleBtn.onclick = function() {
+                drawControl.changeMode('draw_rectangle');
+                // Remove active class from all buttons and add to this one
+                drawControlGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                rectangleBtn.classList.add('active');
+              };
+              // Insert before trash button if it exists, otherwise append
+              if (trashBtn) {
+                drawControlGroup.insertBefore(rectangleBtn, trashBtn);
+              } else {
+                drawControlGroup.appendChild(rectangleBtn);
+              }
+            }
+
+            if (message.radius) {
+              const radiusBtn = document.createElement("button");
+              radiusBtn.className = "mapbox-gl-draw_radius maplibregl-ctrl-icon";
+              radiusBtn.title = "Radius/Circle tool";
+              radiusBtn.type = "button";
+              radiusBtn.onclick = function() {
+                drawControl.changeMode('draw_radius');
+                // Remove active class from all buttons and add to this one
+                drawControlGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                radiusBtn.classList.add('active');
+              };
+              // Insert before trash button if it exists, otherwise append
+              if (trashBtn) {
+                drawControlGroup.insertBefore(radiusBtn, trashBtn);
+              } else {
+                drawControlGroup.appendChild(radiusBtn);
+              }
+            }
+          }
+        }, 100);
 
         // Apply orientation styling
         if (message.orientation === "horizontal") {
