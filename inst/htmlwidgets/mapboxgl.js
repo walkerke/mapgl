@@ -3224,16 +3224,23 @@ if (HTMLWidgets.shinyMode) {
             style.id = "mapgl-rectangle-styles";
             style.textContent = `
               .mapbox-gl-draw_rectangle {
-                background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Crect x="2" y="4" width="16" height="12" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
-                background-size: 20px 20px;
-                background-position: center;
-                background-repeat: no-repeat;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                display: block;
+                height: 30px;
+                width: 30px;
+                padding: 0;
+                outline: none;
+                background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Crect x="4" y="5" width="12" height="10" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
+                background-repeat: no-repeat !important;
+                background-position: center !important;
               }
               .mapbox-gl-draw_rectangle:hover {
                 background-color: rgba(0, 0, 0, 0.05);
               }
               .mapbox-gl-draw_rectangle.active {
-                background-color: #4264fb;
+                background-color: rgba(0, 0, 0, 0.05);
               }
             `;
             document.head.appendChild(style);
@@ -3247,16 +3254,23 @@ if (HTMLWidgets.shinyMode) {
             style.id = "mapgl-radius-styles";
             style.textContent = `
               .mapbox-gl-draw_radius {
-                background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="7" fill="none" stroke="%23000000" stroke-width="2"/%3E%3C/svg%3E') !important;
-                background-size: 20px 20px;
-                background-position: center;
-                background-repeat: no-repeat;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                display: block;
+                height: 30px;
+                width: 30px;
+                padding: 0;
+                outline: none;
+                background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="7" fill="none" stroke="%23000000" stroke-width="2"/%3E%3Ccircle cx="10" cy="10" r="1.5" fill="%23000000"/%3E%3C/svg%3E') !important;
+                background-repeat: no-repeat !important;
+                background-position: center !important;
               }
               .mapbox-gl-draw_radius:hover {
                 background-color: rgba(0, 0, 0, 0.05);
               }
               .mapbox-gl-draw_radius.active {
-                background-color: #4264fb;
+                background-color: rgba(0, 0, 0, 0.05);
               }
             `;
             document.head.appendChild(style);
@@ -3267,6 +3281,11 @@ if (HTMLWidgets.shinyMode) {
         map.on("draw.create", updateDrawnFeatures);
         map.on("draw.delete", updateDrawnFeatures);
         map.on("draw.update", updateDrawnFeatures);
+
+        // Add measurement functionality if enabled
+        if (message.show_measurements) {
+          initializeMeasurements(map, drawControl, message.measurement_units);
+        }
 
         // Add initial features if provided
         if (message.source) {
