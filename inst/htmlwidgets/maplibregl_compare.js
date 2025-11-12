@@ -60,32 +60,59 @@ function evaluateExpression(expression, properties) {
   }
 }
 
-function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
-  map.getCanvas().style.cursor = "pointer";
+function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty, layerId) {
   if (e.features.length > 0) {
-    // Clear any existing active tooltip first to prevent stacking
-    if (window._activeTooltip && window._activeTooltip !== tooltipPopup) {
-      window._activeTooltip.remove();
+    // Query all features at this point to determine z-order
+    // Features are returned in top-to-bottom rendering order
+    const allFeatures = map.queryRenderedFeatures(e.point);
+
+    // Find the topmost layer that has a tooltip
+    let topmostLayerWithTooltip = null;
+    for (let i = 0; i < allFeatures.length; i++) {
+      const feature = allFeatures[i];
+      const featureLayerId = feature.layer.id;
+
+      // Check if this layer has a tooltip handler registered
+      if (window._mapboxHandlers && window._mapboxHandlers[featureLayerId]) {
+        topmostLayerWithTooltip = featureLayerId;
+        break;
+      }
     }
 
-    let description;
+    // Only show tooltip if this is the topmost layer with a tooltip
+    if (topmostLayerWithTooltip === layerId) {
+      map.getCanvas().style.cursor = "pointer";
 
-    // Check if tooltipProperty is an expression (array) or a simple property name (string)
-    if (Array.isArray(tooltipProperty)) {
-      // It's an expression, evaluate it
-      description = evaluateExpression(
-        tooltipProperty,
-        e.features[0].properties,
-      );
+      // Clear any existing active tooltip first to prevent stacking
+      if (window._activeTooltip && window._activeTooltip !== tooltipPopup) {
+        window._activeTooltip.remove();
+      }
+
+      let description;
+
+      // Check if tooltipProperty is an expression (array) or a simple property name (string)
+      if (Array.isArray(tooltipProperty)) {
+        // It's an expression, evaluate it
+        description = evaluateExpression(
+          tooltipProperty,
+          e.features[0].properties,
+        );
+      } else {
+        // It's a property name, get the value
+        description = e.features[0].properties[tooltipProperty];
+      }
+
+      tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
+
+      // Store reference to currently active tooltip
+      window._activeTooltip = tooltipPopup;
     } else {
-      // It's a property name, get the value
-      description = e.features[0].properties[tooltipProperty];
+      // This layer is not topmost, hide tooltip if it was showing
+      tooltipPopup.remove();
+      if (window._activeTooltip === tooltipPopup) {
+        delete window._activeTooltip;
+      }
     }
-
-    tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
-
-    // Store reference to currently active tooltip
-    window._activeTooltip = tooltipPopup;
   } else {
     tooltipPopup.remove();
     // If this was the active tooltip, clear the reference
@@ -104,40 +131,67 @@ function onMouseLeaveTooltip(map, tooltipPopup) {
 }
 
 function onClickPopup(e, map, popupProperty, layerId) {
-  let description;
+  if (e.features.length > 0) {
+    // Query all features at this point to determine z-order
+    const allFeatures = map.queryRenderedFeatures(e.point);
 
-  // Check if popupProperty is an expression (array) or a simple property name (string)
-  if (Array.isArray(popupProperty)) {
-    // It's an expression, evaluate it
-    description = evaluateExpression(popupProperty, e.features[0].properties);
-  } else {
-    // It's a property name, get the value
-    description = e.features[0].properties[popupProperty];
-  }
+    // Find the topmost layer that has a popup
+    let topmostLayerWithPopup = null;
+    for (let i = 0; i < allFeatures.length; i++) {
+      const feature = allFeatures[i];
+      const featureLayerId = feature.layer.id;
 
-  // Remove any existing popup for this layer
-  if (window._maplibrePopups && window._maplibrePopups[layerId]) {
-    window._maplibrePopups[layerId].remove();
-  }
-
-  // Create and show the popup
-  const popup = new maplibregl.Popup({ maxWidth: "400px" })
-    .setLngLat(e.lngLat)
-    .setHTML(description)
-    .addTo(map);
-
-  // Store reference to this popup
-  if (!window._maplibrePopups) {
-    window._maplibrePopups = {};
-  }
-  window._maplibrePopups[layerId] = popup;
-
-  // Remove reference when popup is closed
-  popup.on("close", function () {
-    if (window._maplibrePopups[layerId] === popup) {
-      delete window._maplibrePopups[layerId];
+      // Check if this layer has a popup handler registered
+      if (
+        window._mapboxClickHandlers &&
+        window._mapboxClickHandlers[featureLayerId]
+      ) {
+        topmostLayerWithPopup = featureLayerId;
+        break;
+      }
     }
-  });
+
+    // Only show popup if this is the topmost layer with a popup
+    if (topmostLayerWithPopup === layerId) {
+      let description;
+
+      // Check if popupProperty is an expression (array) or a simple property name (string)
+      if (Array.isArray(popupProperty)) {
+        // It's an expression, evaluate it
+        description = evaluateExpression(
+          popupProperty,
+          e.features[0].properties,
+        );
+      } else {
+        // It's a property name, get the value
+        description = e.features[0].properties[popupProperty];
+      }
+
+      // Remove any existing popup for this layer
+      if (window._maplibrePopups && window._maplibrePopups[layerId]) {
+        window._maplibrePopups[layerId].remove();
+      }
+
+      // Create and show the popup
+      const popup = new maplibregl.Popup({ maxWidth: "400px" })
+        .setLngLat(e.lngLat)
+        .setHTML(description)
+        .addTo(map);
+
+      // Store reference to this popup
+      if (!window._maplibrePopups) {
+        window._maplibrePopups = {};
+      }
+      window._maplibrePopups[layerId] = popup;
+
+      // Remove reference when popup is closed
+      popup.on("close", function () {
+        if (window._maplibrePopups[layerId] === popup) {
+          delete window._maplibrePopups[layerId];
+        }
+      });
+    }
+  }
 }
 
 HTMLWidgets.widget({
@@ -598,6 +652,7 @@ HTMLWidgets.widget({
                         map,
                         tooltip,
                         message.layer.tooltip,
+                        message.layer.id,
                       );
                     };
 
@@ -1353,6 +1408,7 @@ HTMLWidgets.widget({
                               map,
                               tooltip,
                               tooltipProperty,
+                              layerId,
                             );
                           });
 
@@ -2710,27 +2766,65 @@ HTMLWidgets.widget({
             map.controls = [];
           }
           // Define the tooltip handler functions to match the ones in maplibregl.js
-          function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
-            map.getCanvas().style.cursor = "pointer";
+          function onMouseMoveTooltip(
+            e,
+            map,
+            tooltipPopup,
+            tooltipProperty,
+            layerId,
+          ) {
             if (e.features.length > 0) {
-              let description;
+              // Query all features at this point to determine z-order
+              const allFeatures = map.queryRenderedFeatures(e.point);
 
-              // Check if tooltipProperty is an expression (array) or a simple property name (string)
-              if (Array.isArray(tooltipProperty)) {
-                // It's an expression, evaluate it
-                description = evaluateExpression(
-                  tooltipProperty,
-                  e.features[0].properties,
-                );
-              } else {
-                // It's a property name, get the value
-                description = e.features[0].properties[tooltipProperty];
+              // Find the topmost layer that has a tooltip
+              let topmostLayerWithTooltip = null;
+              for (let i = 0; i < allFeatures.length; i++) {
+                const feature = allFeatures[i];
+                const featureLayerId = feature.layer.id;
+
+                // Check if this layer has a tooltip handler registered
+                if (
+                  window._mapboxHandlers &&
+                  window._mapboxHandlers[featureLayerId]
+                ) {
+                  topmostLayerWithTooltip = featureLayerId;
+                  break;
+                }
               }
 
-              tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
+              // Only show tooltip if this is the topmost layer with a tooltip
+              if (topmostLayerWithTooltip === layerId) {
+                map.getCanvas().style.cursor = "pointer";
 
-              // Store reference to currently active tooltip
-              window._activeTooltip = tooltipPopup;
+                let description;
+
+                // Check if tooltipProperty is an expression (array) or a simple property name (string)
+                if (Array.isArray(tooltipProperty)) {
+                  // It's an expression, evaluate it
+                  description = evaluateExpression(
+                    tooltipProperty,
+                    e.features[0].properties,
+                  );
+                } else {
+                  // It's a property name, get the value
+                  description = e.features[0].properties[tooltipProperty];
+                }
+
+                tooltipPopup
+                  .setLngLat(e.lngLat)
+                  .setHTML(description)
+                  .addTo(map);
+
+                // Store reference to currently active tooltip
+                window._activeTooltip = tooltipPopup;
+              } else {
+                // This layer is not topmost, hide tooltip if it was showing
+                tooltipPopup.remove();
+                if (window._activeTooltip === tooltipPopup) {
+                  delete window._activeTooltip;
+                }
+              }
             } else {
               tooltipPopup.remove();
               // If this was the active tooltip, clear the reference
@@ -3060,7 +3154,13 @@ HTMLWidgets.widget({
 
                   // Create a reference to the mousemove handler function
                   const mouseMoveHandler = function (e) {
-                    onMouseMoveTooltip(e, map, tooltip, layer.tooltip);
+                    onMouseMoveTooltip(
+                      e,
+                      map,
+                      tooltip,
+                      layer.tooltip,
+                      layer.id,
+                    );
                   };
 
                   // Create a reference to the mouseleave handler function
