@@ -453,32 +453,59 @@ function evaluateExpression(expression, properties) {
   }
 }
 
-function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty) {
-  map.getCanvas().style.cursor = "pointer";
+function onMouseMoveTooltip(e, map, tooltipPopup, tooltipProperty, layerId) {
   if (e.features.length > 0) {
-    // Clear any existing active tooltip first to prevent stacking
-    if (window._activeTooltip && window._activeTooltip !== tooltipPopup) {
-      window._activeTooltip.remove();
+    // Query all features at this point to determine z-order
+    // Features are returned in top-to-bottom rendering order
+    const allFeatures = map.queryRenderedFeatures(e.point);
+
+    // Find the topmost layer that has a tooltip
+    let topmostLayerWithTooltip = null;
+    for (let i = 0; i < allFeatures.length; i++) {
+      const feature = allFeatures[i];
+      const featureLayerId = feature.layer.id;
+
+      // Check if this layer has a tooltip handler registered
+      if (window._mapboxHandlers && window._mapboxHandlers[featureLayerId]) {
+        topmostLayerWithTooltip = featureLayerId;
+        break;
+      }
     }
 
-    let description;
+    // Only show tooltip if this is the topmost layer with a tooltip
+    if (topmostLayerWithTooltip === layerId) {
+      map.getCanvas().style.cursor = "pointer";
 
-    // Check if tooltipProperty is an expression (array) or a simple property name (string)
-    if (Array.isArray(tooltipProperty)) {
-      // It's an expression, evaluate it
-      description = evaluateExpression(
-        tooltipProperty,
-        e.features[0].properties,
-      );
+      // Clear any existing active tooltip first to prevent stacking
+      if (window._activeTooltip && window._activeTooltip !== tooltipPopup) {
+        window._activeTooltip.remove();
+      }
+
+      let description;
+
+      // Check if tooltipProperty is an expression (array) or a simple property name (string)
+      if (Array.isArray(tooltipProperty)) {
+        // It's an expression, evaluate it
+        description = evaluateExpression(
+          tooltipProperty,
+          e.features[0].properties,
+        );
+      } else {
+        // It's a property name, get the value
+        description = e.features[0].properties[tooltipProperty];
+      }
+
+      tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
+
+      // Store reference to currently active tooltip
+      window._activeTooltip = tooltipPopup;
     } else {
-      // It's a property name, get the value
-      description = e.features[0].properties[tooltipProperty];
+      // This layer is not topmost, hide tooltip if it was showing
+      tooltipPopup.remove();
+      if (window._activeTooltip === tooltipPopup) {
+        delete window._activeTooltip;
+      }
     }
-
-    tooltipPopup.setLngLat(e.lngLat).setHTML(description).addTo(map);
-
-    // Store reference to currently active tooltip
-    window._activeTooltip = tooltipPopup;
   } else {
     tooltipPopup.remove();
     // If this was the active tooltip, clear the reference
@@ -497,40 +524,67 @@ function onMouseLeaveTooltip(map, tooltipPopup) {
 }
 
 function onClickPopup(e, map, popupProperty, layerId) {
-  let description;
+  if (e.features.length > 0) {
+    // Query all features at this point to determine z-order
+    const allFeatures = map.queryRenderedFeatures(e.point);
 
-  // Check if popupProperty is an expression (array) or a simple property name (string)
-  if (Array.isArray(popupProperty)) {
-    // It's an expression, evaluate it
-    description = evaluateExpression(popupProperty, e.features[0].properties);
-  } else {
-    // It's a property name, get the value
-    description = e.features[0].properties[popupProperty];
-  }
+    // Find the topmost layer that has a popup
+    let topmostLayerWithPopup = null;
+    for (let i = 0; i < allFeatures.length; i++) {
+      const feature = allFeatures[i];
+      const featureLayerId = feature.layer.id;
 
-  // Remove any existing popup for this layer
-  if (window._mapboxPopups && window._mapboxPopups[layerId]) {
-    window._mapboxPopups[layerId].remove();
-  }
-
-  // Create and show the popup
-  const popup = new mapboxgl.Popup({ maxWidth: '400px' })
-    .setLngLat(e.lngLat)
-    .setHTML(description)
-    .addTo(map);
-
-  // Store reference to this popup
-  if (!window._mapboxPopups) {
-    window._mapboxPopups = {};
-  }
-  window._mapboxPopups[layerId] = popup;
-
-  // Remove reference when popup is closed
-  popup.on("close", function () {
-    if (window._mapboxPopups[layerId] === popup) {
-      delete window._mapboxPopups[layerId];
+      // Check if this layer has a popup handler registered
+      if (
+        window._mapboxClickHandlers &&
+        window._mapboxClickHandlers[featureLayerId]
+      ) {
+        topmostLayerWithPopup = featureLayerId;
+        break;
+      }
     }
-  });
+
+    // Only show popup if this is the topmost layer with a popup
+    if (topmostLayerWithPopup === layerId) {
+      let description;
+
+      // Check if popupProperty is an expression (array) or a simple property name (string)
+      if (Array.isArray(popupProperty)) {
+        // It's an expression, evaluate it
+        description = evaluateExpression(
+          popupProperty,
+          e.features[0].properties,
+        );
+      } else {
+        // It's a property name, get the value
+        description = e.features[0].properties[popupProperty];
+      }
+
+      // Remove any existing popup for this layer
+      if (window._mapboxPopups && window._mapboxPopups[layerId]) {
+        window._mapboxPopups[layerId].remove();
+      }
+
+      // Create and show the popup
+      const popup = new mapboxgl.Popup({ maxWidth: "400px" })
+        .setLngLat(e.lngLat)
+        .setHTML(description)
+        .addTo(map);
+
+      // Store reference to this popup
+      if (!window._mapboxPopups) {
+        window._mapboxPopups = {};
+      }
+      window._mapboxPopups[layerId] = popup;
+
+      // Remove reference when popup is closed
+      popup.on("close", function () {
+        if (window._mapboxPopups[layerId] === popup) {
+          delete window._mapboxPopups[layerId];
+        }
+      });
+    }
+  }
 }
 
 // Helper function to generate draw styles based on parameters
@@ -797,7 +851,9 @@ HTMLWidgets.widget({
 
               if (marker.popup) {
                 mapMarker.setPopup(
-                  new mapboxgl.Popup({ offset: 25, maxWidth: '400px' }).setHTML(marker.popup),
+                  new mapboxgl.Popup({ offset: 25, maxWidth: "400px" }).setHTML(
+                    marker.popup,
+                  ),
                 );
               }
 
@@ -846,7 +902,9 @@ HTMLWidgets.widget({
                 }
                 // Add any other additional options
                 for (const [key, value] of Object.entries(source)) {
-                  if (!["id", "type", "url", "tiles", "promoteId"].includes(key)) {
+                  if (
+                    !["id", "type", "url", "tiles", "promoteId"].includes(key)
+                  ) {
                     sourceOptions[key] = value;
                   }
                 }
@@ -1002,13 +1060,19 @@ HTMLWidgets.widget({
                   const tooltip = new mapboxgl.Popup({
                     closeButton: false,
                     closeOnClick: false,
-                    maxWidth: '400px',
+                    maxWidth: "400px",
                   });
 
                   // Create a reference to the mousemove handler function.
-                  // We need to pass 'e', 'map', 'tooltip', and 'layer.tooltip' to onMouseMoveTooltip.
+                  // We need to pass 'e', 'map', 'tooltip', 'layer.tooltip', and 'layer.id' to onMouseMoveTooltip.
                   const mouseMoveHandler = function (e) {
-                    onMouseMoveTooltip(e, map, tooltip, layer.tooltip);
+                    onMouseMoveTooltip(
+                      e,
+                      map,
+                      tooltip,
+                      layer.tooltip,
+                      layer.id,
+                    );
                   };
 
                   // Create a reference to the mouseleave handler function.
@@ -1446,7 +1510,9 @@ HTMLWidgets.widget({
 
               if (drawControlGroup) {
                 // Find the trash button to insert before it
-                const trashBtn = drawControlGroup.querySelector('.mapbox-gl-draw_trash');
+                const trashBtn = drawControlGroup.querySelector(
+                  ".mapbox-gl-draw_trash",
+                );
 
                 if (x.draw_control.rectangle) {
                   const rectangleBtn = document.createElement("button");
@@ -2455,12 +2521,18 @@ if (HTMLWidgets.shinyMode) {
             const tooltip = new mapboxgl.Popup({
               closeButton: false,
               closeOnClick: false,
-              maxWidth: '400px',
+              maxWidth: "400px",
             });
 
             // Define named handler functions:
             const mouseMoveHandler = function (e) {
-              onMouseMoveTooltip(e, map, tooltip, message.layer.tooltip);
+              onMouseMoveTooltip(
+                e,
+                map,
+                tooltip,
+                message.layer.tooltip,
+                message.layer.id,
+              );
             };
 
             const mouseLeaveHandler = function () {
@@ -2957,11 +3029,17 @@ if (HTMLWidgets.shinyMode) {
                   const tooltip = new mapboxgl.Popup({
                     closeButton: false,
                     closeOnClick: false,
-                    maxWidth: '400px',
+                    maxWidth: "400px",
                   });
 
                   const mouseMoveHandler = function (e) {
-                    onMouseMoveTooltip(e, map, tooltip, tooltipProperty);
+                    onMouseMoveTooltip(
+                      e,
+                      map,
+                      tooltip,
+                      tooltipProperty,
+                      layerId,
+                    );
                   };
 
                   const mouseLeaveHandler = function () {
@@ -3173,16 +3251,24 @@ if (HTMLWidgets.shinyMode) {
 
         // Add rectangle mode if enabled
         if (message.rectangle) {
-          drawOptions.modes = Object.assign({}, drawOptions.modes || MapboxDraw.modes, {
-            draw_rectangle: MapboxDraw.modes.draw_rectangle,
-          });
+          drawOptions.modes = Object.assign(
+            {},
+            drawOptions.modes || MapboxDraw.modes,
+            {
+              draw_rectangle: MapboxDraw.modes.draw_rectangle,
+            },
+          );
         }
 
         // Add radius mode if enabled
         if (message.radius) {
-          drawOptions.modes = Object.assign({}, drawOptions.modes || MapboxDraw.modes, {
-            draw_radius: MapboxDraw.modes.draw_radius,
-          });
+          drawOptions.modes = Object.assign(
+            {},
+            drawOptions.modes || MapboxDraw.modes,
+            {
+              draw_radius: MapboxDraw.modes.draw_radius,
+            },
+          );
         }
 
         // Create the draw control
@@ -3300,18 +3386,23 @@ if (HTMLWidgets.shinyMode) {
 
           if (drawControlGroup) {
             // Find the trash button to insert before it
-            const trashBtn = drawControlGroup.querySelector('.mapbox-gl-draw_trash');
+            const trashBtn = drawControlGroup.querySelector(
+              ".mapbox-gl-draw_trash",
+            );
 
             if (message.rectangle) {
               const rectangleBtn = document.createElement("button");
-              rectangleBtn.className = "mapbox-gl-draw_rectangle mapboxgl-ctrl-icon";
+              rectangleBtn.className =
+                "mapbox-gl-draw_rectangle mapboxgl-ctrl-icon";
               rectangleBtn.title = "Rectangle tool";
               rectangleBtn.type = "button";
-              rectangleBtn.onclick = function() {
-                drawControl.changeMode('draw_rectangle');
+              rectangleBtn.onclick = function () {
+                drawControl.changeMode("draw_rectangle");
                 // Remove active class from all buttons and add to this one
-                drawControlGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                rectangleBtn.classList.add('active');
+                drawControlGroup
+                  .querySelectorAll("button")
+                  .forEach((b) => b.classList.remove("active"));
+                rectangleBtn.classList.add("active");
               };
               // Insert before trash button if it exists, otherwise append
               if (trashBtn) {
@@ -3326,11 +3417,13 @@ if (HTMLWidgets.shinyMode) {
               radiusBtn.className = "mapbox-gl-draw_radius mapboxgl-ctrl-icon";
               radiusBtn.title = "Radius/Circle tool";
               radiusBtn.type = "button";
-              radiusBtn.onclick = function() {
-                drawControl.changeMode('draw_radius');
+              radiusBtn.onclick = function () {
+                drawControl.changeMode("draw_radius");
                 // Remove active class from all buttons and add to this one
-                drawControlGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                radiusBtn.classList.add('active');
+                drawControlGroup
+                  .querySelectorAll("button")
+                  .forEach((b) => b.classList.remove("active"));
+                radiusBtn.classList.add("active");
               };
               // Insert before trash button if it exists, otherwise append
               if (trashBtn) {
@@ -3489,7 +3582,9 @@ if (HTMLWidgets.shinyMode) {
 
           if (marker.popup) {
             mapMarker.setPopup(
-              new mapboxgl.Popup({ offset: 25, maxWidth: '400px' }).setHTML(marker.popup),
+              new mapboxgl.Popup({ offset: 25, maxWidth: "400px" }).setHTML(
+                marker.popup,
+              ),
             );
           }
 
@@ -4039,12 +4134,12 @@ if (HTMLWidgets.shinyMode) {
         const tooltip = new mapboxgl.Popup({
           closeButton: false,
           closeOnClick: false,
-          maxWidth: '400px',
+          maxWidth: "400px",
         });
 
         // Define new handlers referencing the updated tooltip property
         const mouseMoveHandler = function (e) {
-          onMouseMoveTooltip(e, map, tooltip, newTooltipProperty);
+          onMouseMoveTooltip(e, map, tooltip, newTooltipProperty, layerId);
         };
         const mouseLeaveHandler = function () {
           onMouseLeaveTooltip(map, tooltip);
