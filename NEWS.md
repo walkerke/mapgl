@@ -1,3 +1,7 @@
+# mapgl (development)
+
+* In `maplibre()` and `mapboxgl()`, the `bounds` argument now accepts the output of `sf::st_bbox()`.
+
 # mapgl 0.4.1
 
 * **Enhanced draw control with new drawing modes and live measurements**:
