@@ -5,7 +5,8 @@
 #' @param zoom The initial zoom level of the map.
 #' @param bearing The initial bearing (rotation) of the map, in degrees.
 #' @param pitch The initial pitch (tilt) of the map, in degrees.
-#' @param bounds An sf object or bounding box to fit the map to.
+#' @param bounds An sf object or an unnamed numeric vector of the form `c(xmin, ymin, xmax, ymax)`
+#' indicating the bounding box to fit the map to.
 #' @param width The width of the output htmlwidget.
 #' @param height The height of the output htmlwidget.
 #' @param ... Additional named parameters to be passed to the Mapbox GL map.

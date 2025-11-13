@@ -36,7 +36,8 @@ mapboxgl(
 
 \item{access_token}{Your Mapbox access token.}
 
-\item{bounds}{An sf object or bounding box to fit the map to.}
+\item{bounds}{An sf object or an unnamed numeric vector of the form \code{c(xmin, ymin, xmax, ymax)}
+indicating the bounding box to fit the map to.}
 
 \item{width}{The width of the output htmlwidget.}
 
