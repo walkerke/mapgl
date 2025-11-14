@@ -5,6 +5,7 @@
 #' @param zoom The initial zoom level of the map.
 #' @param bearing The initial bearing (rotation) of the map, in degrees.
 #' @param pitch The initial pitch (tilt) of the map, in degrees.
+#' @param projection The map projection to use (e.g., "mercator", "globe").
 #' @param bounds The bounding box to fit the map to. Accepts one of the following:
 #' * `sf` object;
 #' * output of `st_bbox()`;
@@ -26,6 +27,7 @@ maplibre <- function(
     zoom = 0,
     bearing = 0,
     pitch = 0,
+    projection = "globe",
     bounds = NULL,
     width = "100%",
     height = NULL,
@@ -63,6 +65,7 @@ maplibre <- function(
             zoom = zoom,
             bearing = bearing,
             pitch = pitch,
+            projection = projection,
             additional_params = additional_params
         ),
         width = width,
