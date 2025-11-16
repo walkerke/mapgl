@@ -1727,19 +1727,19 @@ HTMLWidgets.widget({
                   map.easeTo(initialView);
                 };
 
-                map.addControl(
-                  {
-                    onAdd: function () {
-                      return resetContainer;
-                    },
-                    onRemove: function () {
-                      resetContainer.parentNode.removeChild(resetContainer);
-                    },
+                const resetControlObj = {
+                  onAdd: function () {
+                    return resetContainer;
                   },
-                  message.position,
-                );
+                  onRemove: function () {
+                    resetContainer.parentNode.removeChild(resetContainer);
+                  },
+                };
+
+                map.addControl(resetControlObj, message.position);
+
                 // Add to controls array
-                map.controls.push(resetControl);
+                map.controls.push({ type: "reset", control: resetControlObj });
               } else if (message.type === "add_draw_control") {
                 let drawOptions = message.options || {};
                 if (message.freehand) {
@@ -1870,14 +1870,14 @@ HTMLWidgets.widget({
                 const position = message.position || "top-right";
                 const fullscreen = new maplibregl.FullscreenControl();
                 map.addControl(fullscreen, position);
-                map.controls.push(fullscreen);
+                map.controls.push({ type: "fullscreen", control: fullscreen });
               } else if (message.type === "add_scale_control") {
                 const scaleControl = new maplibregl.ScaleControl({
                   maxWidth: message.options.maxWidth,
                   unit: message.options.unit,
                 });
                 map.addControl(scaleControl, message.options.position);
-                map.controls.push(scaleControl);
+                map.controls.push({ type: "scale", control: scaleControl });
               } else if (message.type === "add_geolocate_control") {
                 const geolocate = new maplibregl.GeolocateControl({
                   positionOptions: message.options.positionOptions,
@@ -1888,7 +1888,7 @@ HTMLWidgets.widget({
                   fitBoundsOptions: message.options.fitBoundsOptions,
                 });
                 map.addControl(geolocate, message.options.position);
-                map.controls.push(geolocate);
+                map.controls.push({ type: "geolocate", control: geolocate });
 
                 if (HTMLWidgets.shinyMode) {
                   geolocate.on("geolocate", function (event) {
@@ -1999,7 +1999,7 @@ HTMLWidgets.widget({
                   geocoder,
                   message.options.position || "top-right",
                 );
-                map.controls.push(geocoder);
+                map.controls.push({ type: "geocoder", control: geocoder });
 
                 // Apply CSS fix for MapTiler geocoder to prevent cutoff
                 if (provider === "maptiler") {
@@ -2177,7 +2177,7 @@ HTMLWidgets.widget({
                 // Add the globe control
                 const globeControl = new maplibregl.GlobeControl();
                 map.addControl(globeControl, message.position);
-                map.controls.push(globeControl);
+                map.controls.push({ type: "globe", control: globeControl });
               } else if (message.type === "add_draw_control") {
                 MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
                 MapboxDraw.constants.classes.CONTROL_PREFIX =

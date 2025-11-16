@@ -3209,26 +3209,18 @@ if (HTMLWidgets.shinyMode) {
           map.easeTo(initialView);
         };
 
-        map.addControl(
-          {
-            onAdd: function () {
-              return resetContainer;
-            },
-            onRemove: function () {
-              resetContainer.parentNode.removeChild(resetContainer);
-            },
-          },
-          message.position,
-        );
-
-        map.controls.push({
+        const resetControlObj = {
           onAdd: function () {
             return resetContainer;
           },
           onRemove: function () {
             resetContainer.parentNode.removeChild(resetContainer);
           },
-        });
+        };
+
+        map.addControl(resetControlObj, message.position);
+
+        map.controls.push({ type: "reset", control: resetControlObj });
       } else if (message.type === "add_draw_control") {
         let drawOptions = message.options || {};
 
@@ -3620,14 +3612,14 @@ if (HTMLWidgets.shinyMode) {
         const position = message.position || "top-right";
         const fullscreen = new mapboxgl.FullscreenControl();
         map.addControl(fullscreen, position);
-        map.controls.push(fullscreen);
+        map.controls.push({ type: "fullscreen", control: fullscreen });
       } else if (message.type === "add_scale_control") {
         const scaleControl = new mapboxgl.ScaleControl({
           maxWidth: message.options.maxWidth,
           unit: message.options.unit,
         });
         map.addControl(scaleControl, message.options.position);
-        map.controls.push(scaleControl);
+        map.controls.push({ type: "scale", control: scaleControl });
       } else if (message.type === "add_geolocate_control") {
         const geolocate = new mapboxgl.GeolocateControl({
           positionOptions: message.options.positionOptions,
@@ -3638,7 +3630,7 @@ if (HTMLWidgets.shinyMode) {
           fitBoundsOptions: message.options.fitBoundsOptions,
         });
         map.addControl(geolocate, message.options.position);
-        map.controls.push(geolocate);
+        map.controls.push({ type: "geolocate", control: geolocate });
 
         if (HTMLWidgets.shinyMode) {
           geolocate.on("geolocate", function (event) {
@@ -3687,7 +3679,7 @@ if (HTMLWidgets.shinyMode) {
         const geocoder = new MapboxGeocoder(geocoderOptions);
 
         map.addControl(geocoder, message.position || "top-right");
-        map.controls.push(geocoder);
+        map.controls.push({ type: "geocoder", control: geocoder });
 
         // Handle geocoder results in Shiny mode
         geocoder.on("result", function (e) {
@@ -4251,7 +4243,7 @@ if (HTMLWidgets.shinyMode) {
         };
         const globeMinimap = new GlobeMinimap(globeMinimapOptions);
         map.addControl(globeMinimap, message.position || "bottom-left");
-        map.controls.push(globeMinimap);
+        map.controls.push({ type: "globe_minimap", control: globeMinimap });
       }
     }
   });
