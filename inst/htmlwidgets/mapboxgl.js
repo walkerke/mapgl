@@ -2885,12 +2885,33 @@ if (HTMLWidgets.shinyMode) {
           // Identify layers using user-added sources
           currentStyle.layers.forEach(function (layer) {
             if (userSourceIds.includes(layer.source)) {
+              // Capture current visibility state (may differ from layer definition)
+              const currentVisibility = map.getLayoutProperty(layer.id, 'visibility');
+              console.log(`[MapGL Debug] Layer ${layer.id} current visibility:`, currentVisibility);
+              if (currentVisibility !== undefined) {
+                if (!layer.layout) {
+                  layer.layout = {};
+                }
+                layer.layout.visibility = currentVisibility;
+                console.log(`[MapGL Debug] Set layer ${layer.id} layout.visibility to:`, layer.layout.visibility);
+              }
               userLayers.push(layer);
             }
           });
 
           // Set up event listener to re-add sources and layers after style loads
           const onStyleLoad = function () {
+            console.log("[MapGL Debug] style.load event fired! Re-adding", userLayers.length, "layers");
+
+            // HACK: Reset layers control UI to show all layers as active
+            const layersControl = document.querySelector('.layers-control');
+            if (layersControl) {
+              const layerLinks = layersControl.querySelectorAll('a');
+              layerLinks.forEach(link => {
+                link.className = 'active';
+              });
+            }
+
             // Re-add user sources
             userSourceIds.forEach(function (sourceId) {
               if (!map.getSource(sourceId)) {
@@ -2902,7 +2923,14 @@ if (HTMLWidgets.shinyMode) {
             // Re-add user layers
             userLayers.forEach(function (layer) {
               if (!map.getLayer(layer.id)) {
+                console.log(`[MapGL Debug] Re-adding layer ${layer.id} with layout:`, layer.layout);
                 map.addLayer(layer);
+
+                // Explicitly set visibility if it was set to 'none'
+                if (layer.layout && layer.layout.visibility === 'none') {
+                  map.setLayoutProperty(layer.id, 'visibility', 'none');
+                  console.log(`[MapGL Debug] Explicitly set ${layer.id} visibility to none`);
+                }
 
                 // Re-add event handlers for tooltips and hover effects
                 if (layer._handlers) {
@@ -3139,11 +3167,12 @@ if (HTMLWidgets.shinyMode) {
               }
             }
 
-            // Remove this listener to avoid adding the same layers multiple times
-            map.off("style.load", onStyleLoad);
           };
 
-          map.on("style.load", onStyleLoad);
+          map.once("style.load", function() {
+            // Wait for map to be fully idle before adding layers
+            map.once("idle", onStyleLoad);
+          });
         }
 
         // Change the style

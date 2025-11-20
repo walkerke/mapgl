@@ -3054,6 +3054,14 @@ if (HTMLWidgets.shinyMode) {
                 layer.source.startsWith("maptiler"));
 
             if ((usesUserSource || isKnownUserLayer) && !isBaseMapSource) {
+              // Capture current visibility state (may differ from layer definition)
+              const currentVisibility = map.getLayoutProperty(layer.id, 'visibility');
+              if (currentVisibility !== undefined) {
+                if (!layer.layout) {
+                  layer.layout = {};
+                }
+                layer.layout.visibility = currentVisibility;
+              }
               userLayers.push(layer);
               console.log(
                 "[MapGL Debug] Including user layer:",
@@ -3100,6 +3108,15 @@ if (HTMLWidgets.shinyMode) {
           const onStyleLoad = function () {
             console.log("[MapGL Debug] style.load event fired");
 
+            // HACK: Reset layers control UI to show all layers as active
+            const layersControl = document.querySelector('.layers-control');
+            if (layersControl) {
+              const layerLinks = layersControl.querySelectorAll('a');
+              layerLinks.forEach(link => {
+                link.className = 'active';
+              });
+            }
+
             try {
               // Re-add user sources
               userSourceIds.forEach(function (sourceId) {
@@ -3124,6 +3141,12 @@ if (HTMLWidgets.shinyMode) {
                   if (!map.getLayer(layer.id)) {
                     console.log("[MapGL Debug] Re-adding layer:", layer.id);
                     map.addLayer(layer);
+
+                    // Explicitly set visibility if it was set to 'none'
+                    if (layer.layout && layer.layout.visibility === 'none') {
+                      map.setLayoutProperty(layer.id, 'visibility', 'none');
+                      console.log(`[MapGL Debug] Explicitly set ${layer.id} visibility to none`);
+                    }
 
                     // Re-add event handlers for tooltips and hover effects
                     if (layer._handlers) {
@@ -3462,11 +3485,12 @@ if (HTMLWidgets.shinyMode) {
               }
             }
 
-            // Remove this listener to avoid adding the same layers multiple times
-            map.off("style.load", onStyleLoad);
           };
 
-          map.on("style.load", onStyleLoad);
+          map.once("style.load", function() {
+            // Wait for map to be fully idle before adding layers
+            map.once("idle", onStyleLoad);
+          });
 
           // Add a backup mechanism specific to MapLibre
           // Some MapLibre styles or versions may have different event timing

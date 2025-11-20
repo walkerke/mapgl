@@ -974,6 +974,14 @@ HTMLWidgets.widget({
                   // Identify layers using user-added sources
                   currentStyle.layers.forEach(function (layer) {
                     if (userSourceIds.includes(layer.source)) {
+                      // Capture current visibility state (may differ from layer definition)
+                      const currentVisibility = map.getLayoutProperty(layer.id, 'visibility');
+                      if (currentVisibility !== undefined) {
+                        if (!layer.layout) {
+                          layer.layout = {};
+                        }
+                        layer.layout.visibility = currentVisibility;
+                      }
                       userLayers.push(layer);
                     }
                   });
@@ -992,6 +1000,11 @@ HTMLWidgets.widget({
                     userLayers.forEach(function (layer) {
                       if (!map.getLayer(layer.id)) {
                         map.addLayer(layer);
+
+                        // Explicitly set visibility if it was set to 'none'
+                        if (layer.layout && layer.layout.visibility === 'none') {
+                          map.setLayoutProperty(layer.id, 'visibility', 'none');
+                        }
 
                         // Re-add event handlers for tooltips and hover effects
                         if (layer._handlers) {
@@ -1172,7 +1185,10 @@ HTMLWidgets.widget({
                     map.off("style.load", onStyleLoad);
                   };
 
-                  map.on("style.load", onStyleLoad);
+                  map.once("style.load", function() {
+                    // Wait for map to be fully idle before adding layers
+                    map.once("idle", onStyleLoad);
+                  });
                 }
 
                 // Change the style

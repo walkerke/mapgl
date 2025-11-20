@@ -1,6 +1,6 @@
 Package: mapgl
 Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS'
-Version: 0.4.3
+Version: 0.4.3.9000
 Date: 2025-11-20
 Authors@R:
     person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre"))
