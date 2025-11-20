@@ -3,11 +3,11 @@
 
 # Main assets:
 download.file(
-  "https://unpkg.com/maplibre-gl@5.7.2/dist/maplibre-gl.js",
+  "https://unpkg.com/maplibre-gl@5.13.0/dist/maplibre-gl.js",
   destfile = "inst/htmlwidgets/lib/maplibre-gl/maplibre-gl.js"
 )
 download.file(
-  "https://unpkg.com/maplibre-gl@5.7.2/dist/maplibre-gl.css",
+  "https://unpkg.com/maplibre-gl@5.13.0/dist/maplibre-gl.css",
   destfile = "inst/htmlwidgets/lib/maplibre-gl/maplibre-gl.css"
 )
 

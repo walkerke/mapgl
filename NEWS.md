@@ -4,7 +4,7 @@
 * Fixed control duplication when `set_style()` is called in Shiny applications.
 * Fixed `clear_controls()` not properly removing controls.
 * Added `projection` argument to `maplibre()` for consistency with `mapboxgl()`.
-* Fixed tooltip/popup z-index conflicts - tooltips now appear above popups.
+* Fixed tooltip/popup z-index conflicts.
 * Fixed tooltips with `number_format()` in comparison maps.
 * New `palette_to_lut()` function for creating custom color lookup tables in Mapbox styles.
 * Improved draw control proxy functionality and element ordering.
