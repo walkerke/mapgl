@@ -13,7 +13,7 @@ add_vector_source(map, id, url = NULL, tiles = NULL, promote_id = NULL, ...)
 
 \item{url}{A URL pointing to the vector tile source.}
 
-\item{tiles}{A vector of tile URLs, typically in the format "https://example.com/{z}/{x}/{y}.mvt" or similar.}
+\item{tiles}{A vector of tile URLs, typically in the format "https://example.com/\{z\}/\{x\}/\{y\}.mvt" or similar.}
 
 \item{promote_id}{An optional property name to use as the feature ID. This is required for hover effects on vector tiles.}
 

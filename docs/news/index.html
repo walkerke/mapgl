@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,22 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.4.1" id="mapgl-041">mapgl 0.4.1<a class="anchor" aria-label="anchor" href="#mapgl-041"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.3" id="mapgl-043">mapgl 0.4.3<a class="anchor" aria-label="anchor" href="#mapgl-043"></a></h2>
+<ul><li>The <code>bounds</code> argument in <code><a href="../reference/maplibre.html">maplibre()</a></code> and <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code> now accepts <code><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">sf::st_bbox()</a></code> output with automatic CRS transformation to EPSG:4326.</li>
+<li>Fixed control duplication when <code><a href="../reference/set_style.html">set_style()</a></code> is called in Shiny applications.</li>
+<li>Fixed <code><a href="../reference/clear_controls.html">clear_controls()</a></code> not properly removing controls.</li>
+<li>Added <code>projection</code> argument to <code><a href="../reference/maplibre.html">maplibre()</a></code> for consistency with <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code>.</li>
+<li>Fixed tooltip/popup z-index conflicts - tooltips now appear above popups.</li>
+<li>Fixed tooltips with <code><a href="../reference/number_format.html">number_format()</a></code> in comparison maps.</li>
+<li>New <code><a href="../reference/palette_to_lut.html">palette_to_lut()</a></code> function for creating custom color lookup tables in Mapbox styles.</li>
+<li>Improved draw control proxy functionality and element ordering.</li>
+<li>
+<code><a href="../reference/maplibre.html">maplibre()</a></code> and <code><a href="../reference/maplibre_view.html">maplibre_view()</a></code> now defaults to the globe projection.</li>
+<li>Added support for raster PMTiles.</li>
+<li>Factor columns now handled correctly in quickview functions.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.1" id="mapgl-041">mapgl 0.4.1<a class="anchor" aria-label="anchor" href="#mapgl-041"></a></h2><p class="text-muted">CRAN release: 2025-09-22</p>
 <ul><li>
 <p><strong>Enhanced draw control with new drawing modes and live measurements</strong>:</p>
 <ul><li>Added rectangle drawing mode: Draw rectangles by clicking two corner points</li>

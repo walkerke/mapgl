@@ -118,6 +118,7 @@ reference:
       - concat
       - number_format
       - cluster_options
+      - palette_to_lut
 
   - title: "Data Classification"
     desc: "Functions for automatic data classification and choropleth styling"

@@ -75,7 +75,7 @@ add_source <- function(map, id, data, ...) {
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param url A URL pointing to the vector tile source.
-#' @param tiles A vector of tile URLs, typically in the format "https://example.com/{z}/{x}/{y}.mvt" or similar.
+#' @param tiles A vector of tile URLs, typically in the format "https://example.com/\{z\}/\{x\}/\{y\}.mvt" or similar.
 #' @param promote_id An optional property name to use as the feature ID. This is required for hover effects on vector tiles.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'

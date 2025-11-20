@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,16 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_pmtiles_source</span><span class="op">(</span><span class="va">map</span>, <span class="va">id</span>, <span class="va">url</span>, promote_id <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_pmtiles_source</span><span class="op">(</span></span>
+<span>  <span class="va">map</span>,</span>
+<span>  <span class="va">id</span>,</span>
+<span>  <span class="va">url</span>,</span>
+<span>  source_type <span class="op">=</span> <span class="st">"vector"</span>,</span>
+<span>  maxzoom <span class="op">=</span> <span class="fl">22</span>,</span>
+<span>  tilesize <span class="op">=</span> <span class="fl">256</span>,</span>
+<span>  promote_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,8 +76,20 @@
 <dd><p>A URL pointing to the PMTiles archive.</p></dd>
 
 
+<dt id="arg-source-type">source_type<a class="anchor" aria-label="anchor" href="#arg-source-type"></a></dt>
+<dd><p>The source type for MapLibre maps. Either "vector" (default) or "raster".</p></dd>
+
+
+<dt id="arg-maxzoom">maxzoom<a class="anchor" aria-label="anchor" href="#arg-maxzoom"></a></dt>
+<dd><p>Only used when source_type is "raster". The maximum zoom level for the PMTiles source. Defaults to 22.</p></dd>
+
+
+<dt id="arg-tilesize">tilesize<a class="anchor" aria-label="anchor" href="#arg-tilesize"></a></dt>
+<dd><p>Only used when source_type is "raster". The size of the tiles in the PMTiles source. Defaults to 256.</p></dd>
+
+
 <dt id="arg-promote-id">promote_id<a class="anchor" aria-label="anchor" href="#arg-promote-id"></a></dt>
-<dd><p>An optional property name to use as the feature ID. This is required for hover effects.</p></dd>
+<dd><p>An optional property name to use as the feature ID. This is required for hover effects on vector sources.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
