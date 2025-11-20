@@ -780,6 +780,7 @@ HTMLWidgets.widget({
         });
 
         map.controls = [];
+        map._initialStyleLoaded = false;
 
         map.on("style.load", function () {
           map.resize();
@@ -1237,8 +1238,10 @@ HTMLWidgets.widget({
             map.jumpTo(x.jumpTo);
           }
 
-          // Add scale control if enabled
-          if (x.scale_control) {
+          // Add controls only on initial style load to prevent duplication when set_style() is called
+          if (!map._initialStyleLoaded) {
+            // Add scale control if enabled
+            if (x.scale_control) {
             const scaleControl = new mapboxgl.ScaleControl({
               maxWidth: x.scale_control.maxWidth,
               unit: x.scale_control.unit,
@@ -2135,6 +2138,10 @@ HTMLWidgets.widget({
               };
               layersControl.insertBefore(toggleButton, layersList);
             }
+          }
+
+            // Mark initial style as loaded to prevent control duplication on subsequent set_style() calls
+            map._initialStyleLoaded = true;
           }
 
           // If clusters are present, add event handling
