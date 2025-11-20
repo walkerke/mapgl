@@ -45,7 +45,14 @@ maplibre <- function(
             if (any(missings)) {
                 stop("`bounds` shouldn't contain missing values.")
             }
-            bounds <- as.vector(bounds)
+            # Transform to EPSG:4326 if not already
+            crs <- attr(bounds, "crs")
+            if (!is.null(crs) && !sf::st_is_longlat(crs)) {
+                bbox_sfc <- sf::st_as_sfc(bounds)
+                bounds <- as.vector(sf::st_bbox(sf::st_transform(bbox_sfc, 4326)))
+            } else {
+                bounds <- as.vector(bounds)
+            }
         }
         additional_params$bounds <- bounds
     }
