@@ -11,7 +11,7 @@ options(tigris_use_cache = TRUE)
 
 ### Why client-side geospatial analysis?
 
-**mapgl** integrates turf.js v7.2.0 to bring powerful geospatial analysis directly to the browser. This means you can perform spatial operations like buffering, filtering, and overlay analysis without any server round-trips - making your Shiny applications much more responsive and reducing computational load on your server.
+**mapgl** integrates turf.js v7.3.0 to bring powerful geospatial analysis directly to the browser. This means you can perform spatial operations like buffering, filtering, and overlay analysis without any server round-trips - making your Shiny applications much more responsive and reducing computational load on your server.
 
 This is particularly valuable for deployed applications where you want users to interact with spatial data in real-time without waiting for server processing. Think interactive filtering, drawing tools that immediately show results, or exploratory analysis that responds instantly to user input.
 

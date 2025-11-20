@@ -1,6 +1,7 @@
 # mapgl 0.4.3
 
-* The `bounds` argument in `maplibre()` and `mapboxgl()` now accepts `sf::st_bbox()` output with automatic CRS transformation to EPSG:4326.
+* Update Mapbox GL JS, MapLibre GL JS, and Turf.js versions 
+The `bounds` argument in `maplibre()` and `mapboxgl()` now accepts `sf::st_bbox()` output with automatic CRS transformation to EPSG:4326.
 * Fixed control duplication when `set_style()` is called in Shiny applications.
 * Fixed `clear_controls()` not properly removing controls.
 * Added `projection` argument to `maplibre()` for consistency with `mapboxgl()`.

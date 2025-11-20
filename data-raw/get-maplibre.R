@@ -58,3 +58,9 @@ download.file(
     "https://unpkg.com/@maptiler/geocoding-control@2.1.7/style.css",
   destfile = "inst/htmlwidgets/lib/maptiler-geocoding-control/style.css"
 )
+
+# Turf.js:
+download.file(
+  "https://unpkg.com/@turf/turf@7.3.0/turf.min.js",
+  destfile = "inst/htmlwidgets/lib/turf/turf.min.js"
+)
