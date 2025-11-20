@@ -8,7 +8,10 @@
 #' @param projection The map projection to use (e.g., "mercator", "globe").
 #' @param parallels A vector of two numbers representing the standard parallels of the projection.  Only available when the projection is "albers" or "lambertConformalConic".
 #' @param access_token Your Mapbox access token.
-#' @param bounds An sf object or bounding box to fit the map to.
+#' @param bounds The bounding box to fit the map to. Accepts one of the following:
+#' * `sf` object;
+#' * output of `st_bbox()`;
+#' * unnamed numeric vector of the form `c(xmin, ymin, xmax, ymax)`.
 #' @param width The width of the output htmlwidget.
 #' @param height The height of the output htmlwidget.
 #' @param ... Additional named parameters to be passed to the Mapbox GL map.
@@ -52,6 +55,14 @@ mapboxgl <- function(
     if (!is.null(bounds)) {
         if (inherits(bounds, "sf")) {
             bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
+        } else if (inherits(bounds, "bbox")) {
+            # Curiously, anyNA(bounds) or any(is.na(bounds)) would return FALSE even
+            # if one of the four values is NA.
+            missings <- vapply(bounds, is.na, logical(1))
+            if (any(missings)) {
+                stop("`bounds` shouldn't contain missing values.")
+            }
+            bounds <- as.vector(bounds)
         }
         additional_params$bounds <- bounds
     }
