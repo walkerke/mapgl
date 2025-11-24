@@ -657,6 +657,18 @@ add_fill_extrusion_layer <- function(
   before_id = NULL,
   filter = NULL
 ) {
+  # Check if using MapLibre with globe projection and warn
+  if (inherits(map, "maplibregl") &&
+      !is.null(map$x$projection) &&
+      map$x$projection == "globe") {
+    warning(
+      "Fill-extrusion layers may have rendering artifacts in globe projection. ",
+      "Consider using projection = \"mercator\" in maplibre() for better performance. ",
+      "See https://github.com/maplibre/maplibre-gl-js/issues/5025",
+      call. = FALSE
+    )
+  }
+
   paint <- list()
   layout <- list()
 
