@@ -599,6 +599,13 @@ HTMLWidgets.widget({
                 }
               } else if (message.type === "add_layer") {
                 try {
+                  // Ensure paint and layout are objects, not null
+                  if (message.layer.paint === null) {
+                    message.layer.paint = {};
+                  }
+                  if (message.layer.layout === null) {
+                    message.layer.layout = {};
+                  }
                   if (message.layer.before_id) {
                     map.addLayer(message.layer, message.layer.before_id);
                   } else {
