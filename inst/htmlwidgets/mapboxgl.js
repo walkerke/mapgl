@@ -4094,6 +4094,14 @@ if (HTMLWidgets.shinyMode) {
               if (globeMinimap) {
                 globeMinimap.remove();
               }
+            } else if (controlType === "draw") {
+              // Hide measurement box when draw control is cleared
+              const measurementBox = document.getElementById(
+                `measurement-box-${map.getContainer().id}`,
+              );
+              if (measurementBox) {
+                measurementBox.style.display = "none";
+              }
             }
           });
         }
