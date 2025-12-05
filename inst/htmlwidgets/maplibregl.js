@@ -736,6 +736,75 @@ function addSourceFeaturesToDraw(draw, sourceId, map) {
   }
 }
 
+// Global registries for tracking user-added images and pending operations during style changes
+if (!window._mapgl) {
+  window._mapgl = {
+    // Registry of user-added images per map: { mapId: { imageId: { url, options } } }
+    userImages: {},
+    // Queue of pending operations during style loading: { mapId: [] }
+    pendingOperations: {},
+    // Track which maps are currently loading a style: { mapId: true/false }
+    styleLoading: {}
+  };
+}
+
+// Helper to queue an operation or execute it immediately
+function queueOrExecute(mapId, operation) {
+  if (window._mapgl.styleLoading[mapId]) {
+    if (!window._mapgl.pendingOperations[mapId]) {
+      window._mapgl.pendingOperations[mapId] = [];
+    }
+    window._mapgl.pendingOperations[mapId].push(operation);
+    console.log("[MapGL Debug] Queued operation during style load for map:", mapId);
+  } else {
+    operation();
+  }
+}
+
+// Helper to execute all pending operations for a map
+function executePendingOperations(mapId) {
+  const pending = window._mapgl.pendingOperations[mapId];
+  if (pending && pending.length > 0) {
+    console.log("[MapGL Debug] Executing", pending.length, "pending operations for map:", mapId);
+    pending.forEach(function(op) {
+      try {
+        op();
+      } catch (err) {
+        console.error("[MapGL Debug] Error executing pending operation:", err);
+      }
+    });
+    window._mapgl.pendingOperations[mapId] = [];
+  }
+}
+
+// Helper to register a user image
+function registerUserImage(mapId, imageId, url, options) {
+  if (!window._mapgl.userImages[mapId]) {
+    window._mapgl.userImages[mapId] = {};
+  }
+  window._mapgl.userImages[mapId][imageId] = { url: url, options: options };
+  console.log("[MapGL Debug] Registered user image:", imageId, "for map:", mapId);
+}
+
+// Helper to re-add all user images after style change
+async function reAddUserImages(map, mapId) {
+  const images = window._mapgl.userImages[mapId];
+  if (!images) return;
+
+  for (const imageId in images) {
+    const imageInfo = images[imageId];
+    try {
+      const image = await map.loadImage(imageInfo.url);
+      if (!map.hasImage(imageId)) {
+        map.addImage(imageId, image.data, imageInfo.options);
+        console.log("[MapGL Debug] Re-added user image after style change:", imageId);
+      }
+    } catch (error) {
+      console.error("[MapGL Debug] Error re-adding image:", imageId, error);
+    }
+  }
+}
+
 HTMLWidgets.widget({
   name: "maplibregl",
 
@@ -1940,8 +2009,11 @@ HTMLWidgets.widget({
           }
 
           if (x.images && Array.isArray(x.images)) {
+            const mapId = el.id;
             x.images.forEach(async function (imageInfo) {
               try {
+                // Register the image for potential re-adding after style changes
+                registerUserImage(mapId, imageInfo.id, imageInfo.url, imageInfo.options);
                 const image = await map.loadImage(imageInfo.url);
                 if (!map.hasImage(imageInfo.id)) {
                   map.addImage(imageInfo.id, image.data, imageInfo.options);
@@ -2862,6 +2934,11 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "set_style") {
         // Default preserve_layers to true if not specified
         const preserveLayers = message.preserve_layers !== false;
+        const mapId = map.getContainer().id;
+
+        // Mark style as loading to queue any incoming operations
+        window._mapgl.styleLoading[mapId] = true;
+        console.log("[MapGL Debug] Style loading started for map:", mapId);
 
         console.log(
           "[MapGL Debug] set_style called with preserve_layers:",
@@ -3491,6 +3568,14 @@ if (HTMLWidgets.shinyMode) {
                 }
               }
             }
+
+            // Re-add user images after style change
+            reAddUserImages(map, mapId);
+
+            // Mark style loading as complete and execute any pending operations
+            window._mapgl.styleLoading[mapId] = false;
+            console.log("[MapGL Debug] Style loading completed for map:", mapId);
+            executePendingOperations(mapId);
 
           };
 
@@ -4266,6 +4351,22 @@ if (HTMLWidgets.shinyMode) {
         if (message.config) {
           Object.keys(message.config).forEach(function (key) {
             map.setConfigProperty("basemap", key, message.config[key]);
+          });
+        }
+
+        // For non-preserve mode, still need to handle style loading completion
+        // to re-add images and execute pending operations
+        if (!preserveLayers) {
+          map.once("style.load", function() {
+            map.once("idle", function() {
+              // Re-add user images after style change
+              reAddUserImages(map, mapId);
+
+              // Mark style loading as complete and execute any pending operations
+              window._mapgl.styleLoading[mapId] = false;
+              console.log("[MapGL Debug] Style loading completed (non-preserve) for map:", mapId);
+              executePendingOperations(mapId);
+            });
           });
         }
       } else if (message.type === "add_navigation_control") {
@@ -5248,30 +5349,36 @@ if (HTMLWidgets.shinyMode) {
           console.error("Layer not found:", message.layer);
         }
       } else if (message.type === "add_image") {
-        if (Array.isArray(message.images)) {
-          message.images.forEach(function (imageInfo) {
-            map
-              .loadImage(imageInfo.url)
-              .then((image) => {
-                if (!map.hasImage(imageInfo.id)) {
-                  map.addImage(imageInfo.id, image.data, imageInfo.options);
-                }
-              })
-              .catch((error) => {
-                console.error("Error loading image:", error);
-              });
-          });
-        } else if (message.url) {
+        const mapId = map.getContainer().id;
+
+        // Helper function to actually add the image
+        const doAddImage = function(imageId, url, options) {
+          // Register the image for re-adding after style changes
+          registerUserImage(mapId, imageId, url, options);
+
           map
-            .loadImage(message.url)
+            .loadImage(url)
             .then((image) => {
-              if (!map.hasImage(message.imageId)) {
-                map.addImage(message.imageId, image.data, message.options);
+              if (!map.hasImage(imageId)) {
+                map.addImage(imageId, image.data, options);
+                console.log("[MapGL Debug] Added image via proxy:", imageId);
               }
             })
             .catch((error) => {
               console.error("Error loading image:", error);
             });
+        };
+
+        if (Array.isArray(message.images)) {
+          message.images.forEach(function (imageInfo) {
+            queueOrExecute(mapId, function() {
+              doAddImage(imageInfo.id, imageInfo.url, imageInfo.options);
+            });
+          });
+        } else if (message.url) {
+          queueOrExecute(mapId, function() {
+            doAddImage(message.imageId, message.url, message.options);
+          });
         } else {
           console.error("Invalid image data:", message);
         }
