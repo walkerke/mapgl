@@ -1,7 +1,7 @@
 Package: mapgl
 Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS'
 Version: 0.4.3.9000
-Date: 2025-12-05
+Date: 2025-12-29
 Authors@R:
     person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre"))
 Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.com/mapbox-gl-js/guides>)

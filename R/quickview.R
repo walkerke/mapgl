@@ -1,3 +1,12 @@
+# Internal helper for categorical colors (Set1 palette, recycled)
+categorical_colors <- function(n) {
+  set1 <- c(
+    "#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00",
+    "#ffff33", "#a65628", "#f781bf", "#999999"
+  )
+  rep_len(set1, n)
+}
+
 #' Quick visualization of geometries with Mapbox GL
 #'
 #' This function provides a quick way to visualize sf geometries and raster data using Mapbox GL JS.
@@ -287,7 +296,7 @@ mapboxgl_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_circle_layer(
@@ -439,7 +448,7 @@ mapboxgl_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_line_layer(
@@ -590,7 +599,7 @@ mapboxgl_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_fill_layer(
@@ -915,7 +924,7 @@ maplibre_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_circle_layer(
@@ -1067,7 +1076,7 @@ maplibre_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_line_layer(
@@ -1218,7 +1227,7 @@ maplibre_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_fill_layer(
@@ -1550,7 +1559,7 @@ add_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_circle_layer(
@@ -1705,7 +1714,7 @@ add_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_line_layer(
@@ -1859,7 +1868,7 @@ add_view <- function(
         }
         unique_vals <- unique(col_data[!is.na(col_data)])
         n_cats <- length(unique_vals)
-        colors <- palette(n_cats)
+        colors <- categorical_colors(n_cats)
 
         map <- map |>
           add_fill_layer(
