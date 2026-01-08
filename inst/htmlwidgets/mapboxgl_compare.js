@@ -3379,6 +3379,14 @@ HTMLWidgets.widget({
       resize: function (width, height) {
         // Code to handle resizing if necessary
       },
+
+      getBeforeMap: function () {
+        return beforeMap;
+      },
+
+      getAfterMap: function () {
+        return afterMap;
+      },
     };
   },
 });

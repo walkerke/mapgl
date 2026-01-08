@@ -268,6 +268,13 @@ HTMLWidgets.widget({
         // Initialize controls array
         beforeMap.controls = [];
 
+        // Set projection on style load (MapLibre doesn't support projection in constructor)
+        beforeMap.on("style.load", function () {
+          if (x.map1.projection) {
+            beforeMap.setProjection({ type: x.map1.projection });
+          }
+        });
+
         afterMap = new maplibregl.Map({
           container: afterContainerId,
           style: x.map2.style,
@@ -281,6 +288,13 @@ HTMLWidgets.widget({
 
         // Initialize controls array
         afterMap.controls = [];
+
+        // Set projection on style load (MapLibre doesn't support projection in constructor)
+        afterMap.on("style.load", function () {
+          if (x.map2.projection) {
+            afterMap.setProjection({ type: x.map2.projection });
+          }
+        });
 
         if (x.mode === "swipe") {
           // Only create the swiper in swipe mode
@@ -4291,6 +4305,14 @@ HTMLWidgets.widget({
 
       resize: function (width, height) {
         // Code to handle resizing if necessary
+      },
+
+      getBeforeMap: function () {
+        return beforeMap;
+      },
+
+      getAfterMap: function () {
+        return afterMap;
       },
     };
   },
