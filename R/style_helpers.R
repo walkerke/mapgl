@@ -1,3 +1,24 @@
+# Helper function to wrap a single value in "literal" if it's a vector
+# Arrays in expressions must be wrapped as ["literal", [...]] to be interpreted correctly
+wrap_in_literal <- function(x) {
+  if (is.null(x)) {
+    return(x)
+  }
+
+  # If it's already a list starting with "literal", return as-is
+  if (is.list(x) && length(x) >= 1 && identical(x[[1]], "literal")) {
+    return(x)
+  }
+
+  # If it's a vector with length > 1 (and not a list), wrap in literal
+  if (!is.list(x) && length(x) > 1) {
+    return(list("literal", x))
+  }
+
+  # Single values and other lists pass through unchanged
+  x
+}
+
 #' Create an interpolation expression
 #'
 #' This function generates an interpolation expression that can be used to style your data.
@@ -105,11 +126,26 @@ match_expr <- function(
 
   expr <- list("match", to_map)
   for (i in seq_along(values)) {
-    expr <- c(expr, values[i], stops[i])
+    # Get stop value - use [[ for lists, [ for vectors
+    stop_val <- if (is.list(stops)) stops[[i]] else stops[i]
+    # Wrap vectors in "literal" for array values (e.g., offsets)
+    stop_val <- wrap_in_literal(stop_val)
+    # Use list() wrapper for list values to prevent flattening
+    if (is.list(stop_val)) {
+      expr <- c(expr, values[i], list(stop_val))
+    } else {
+      expr <- c(expr, values[i], stop_val)
+    }
   }
 
   if (!is.null(default)) {
-    expr <- c(expr, default)
+    default <- wrap_in_literal(default)
+    # Use list() wrapper for list values to prevent flattening
+    if (is.list(default)) {
+      expr <- c(expr, list(default))
+    } else {
+      expr <- c(expr, default)
+    }
   }
 
   expr
@@ -162,10 +198,25 @@ step_expr <- function(
 
   expr <- list("step", to_map)
   if (!is.null(base)) {
-    expr <- c(expr, base)
+    base <- wrap_in_literal(base)
+    # Use list() wrapper for list values to prevent flattening
+    if (is.list(base)) {
+      expr <- c(expr, list(base))
+    } else {
+      expr <- c(expr, base)
+    }
   }
   for (i in seq_along(values)) {
-    expr <- c(expr, values[i], stops[i])
+    # Get stop value - use [[ for lists, [ for vectors
+    stop_val <- if (is.list(stops)) stops[[i]] else stops[i]
+    # Wrap vectors in "literal" for array values
+    stop_val <- wrap_in_literal(stop_val)
+    # Use list() wrapper for list values to prevent flattening
+    if (is.list(stop_val)) {
+      expr <- c(expr, values[i], list(stop_val))
+    } else {
+      expr <- c(expr, values[i], stop_val)
+    }
   }
 
   if (!is.null(na_color)) {
