@@ -41,16 +41,37 @@ maplibre(
 
 \item{height}{The height of the output htmlwidget.}
 
-\item{...}{Additional named parameters to be passed to the Mapbox GL map.}
+\item{...}{Additional named parameters to be passed to the MapLibre GL JS Map.
+See the MapLibre GL JS documentation for a full list of options:
+\url{https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/}.
+Common options include:
+\itemize{
+\item \code{minZoom} / \code{maxZoom}: Minimum and maximum zoom levels (0-24).
+\item \code{maxBounds}: Restrict panning to a bounding box, specified as
+\code{list(c(sw_lng, sw_lat), c(ne_lng, ne_lat))}.
+\item \code{dragRotate}: If \code{FALSE}, disables rotation via mouse drag (default \code{TRUE}).
+\item \code{touchZoomRotate}: If \code{FALSE}, disables pinch-to-rotate on touch (default \code{TRUE}).
+\item \code{scrollZoom}: If \code{FALSE}, disables scroll wheel zoom (default \code{TRUE}).
+}}
 }
 \value{
-An HTML widget for a Mapbox map.
+An HTML widget for a MapLibre GL map.
 }
 \description{
 Initialize a Maplibre GL Map
 }
 \examples{
 \dontrun{
+# Basic map
 maplibre()
+
+# Constrained map with zoom limits and disabled rotation
+maplibre(
+  bounds = my_sf_object,
+  minZoom = 5,
+  maxZoom = 12,
+  dragRotate = FALSE,
+  touchZoomRotate = FALSE
+)
 }
 }

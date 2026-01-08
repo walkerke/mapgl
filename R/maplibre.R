@@ -12,84 +12,103 @@
 #' * unnamed numeric vector of the form `c(xmin, ymin, xmax, ymax)`.
 #' @param width The width of the output htmlwidget.
 #' @param height The height of the output htmlwidget.
-#' @param ... Additional named parameters to be passed to the Mapbox GL map.
+#' @param ... Additional named parameters to be passed to the MapLibre GL JS Map.
+#'   See the MapLibre GL JS documentation for a full list of options:
+#'   \url{https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/}.
+#'   Common options include:
+#'   * `minZoom` / `maxZoom`: Minimum and maximum zoom levels (0-24).
+#'   * `maxBounds`: Restrict panning to a bounding box, specified as
+#'     `list(c(sw_lng, sw_lat), c(ne_lng, ne_lat))`.
+#'   * `dragRotate`: If `FALSE`, disables rotation via mouse drag (default `TRUE`).
+#'   * `touchZoomRotate`: If `FALSE`, disables pinch-to-rotate on touch (default `TRUE`).
+#'   * `scrollZoom`: If `FALSE`, disables scroll wheel zoom (default `TRUE`).
 #'
-#' @return An HTML widget for a Mapbox map.
+#' @return An HTML widget for a MapLibre GL map.
 #' @export
 #'
 #' @examples
 #' \dontrun{
+#' # Basic map
 #' maplibre()
+#'
+#' # Constrained map with zoom limits and disabled rotation
+#' maplibre(
+#'   bounds = my_sf_object,
+#'   minZoom = 5,
+#'   maxZoom = 12,
+#'   dragRotate = FALSE,
+#'   touchZoomRotate = FALSE
+#' )
 #' }
 maplibre <- function(
-    style = carto_style("voyager"),
-    center = c(0, 0),
-    zoom = 0,
-    bearing = 0,
-    pitch = 0,
-    projection = "globe",
-    bounds = NULL,
-    width = "100%",
-    height = NULL,
-    ...
+  style = carto_style("voyager"),
+  center = c(0, 0),
+  zoom = 0,
+  bearing = 0,
+  pitch = 0,
+  projection = "globe",
+  bounds = NULL,
+  width = "100%",
+  height = NULL,
+  ...
 ) {
-    additional_params <- list(...)
+  additional_params <- list(...)
 
-    if (!is.null(bounds)) {
-        if (inherits(bounds, "sf")) {
-            bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
-        } else if (inherits(bounds, "bbox")) {
-            # Curiously, anyNA(bounds) or any(is.na(bounds)) would return FALSE even
-            # if one of the four values is NA.
-            missings <- vapply(bounds, is.na, logical(1))
-            if (any(missings)) {
-                stop("`bounds` shouldn't contain missing values.")
-            }
-            # Transform to EPSG:4326 if not already
-            crs <- attr(bounds, "crs")
-            if (!is.null(crs) && !sf::st_is_longlat(crs)) {
-                bbox_sfc <- sf::st_as_sfc(bounds)
-                bounds <- as.vector(sf::st_bbox(sf::st_transform(bbox_sfc, 4326)))
-            } else {
-                bounds <- as.vector(bounds)
-            }
-        }
-        additional_params$bounds <- bounds
+  if (!is.null(bounds)) {
+    if (inherits(bounds, "sf")) {
+      bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
+    } else if (inherits(bounds, "bbox")) {
+      # Curiously, anyNA(bounds) or any(is.na(bounds)) would return FALSE even
+      # if one of the four values is NA.
+      missings <- vapply(bounds, is.na, logical(1))
+      if (any(missings)) {
+        stop("`bounds` shouldn't contain missing values.")
+      }
+      # Transform to EPSG:4326 if not already
+      crs <- attr(bounds, "crs")
+      if (!is.null(crs) && !sf::st_is_longlat(crs)) {
+        bbox_sfc <- sf::st_as_sfc(bounds)
+        bounds <- as.vector(sf::st_bbox(sf::st_transform(bbox_sfc, 4326)))
+      } else {
+        bounds <- as.vector(bounds)
+      }
     }
+    additional_params$bounds <- bounds
+  }
 
-    control_css <- htmltools::htmlDependency(
-        name = "layers-control",
-        version = "1.0.0",
-        src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
-        stylesheet = "layers-control.css"
-    )
+  control_css <- htmltools::htmlDependency(
+    name = "layers-control",
+    version = "1.0.0",
+    src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
+    stylesheet = "layers-control.css"
+  )
 
-    htmlwidgets::createWidget(
-        name = "maplibregl",
-        x = list(
-            style = style,
-            center = center,
-            zoom = zoom,
-            bearing = bearing,
-            pitch = pitch,
-            projection = projection,
-            additional_params = additional_params
-        ),
-        width = width,
-        height = height,
-        package = "mapgl",
-        dependencies = list(control_css),
-        sizingPolicy = htmlwidgets::sizingPolicy(
-            viewer.suppress = FALSE,
-            browser.fill = TRUE,
-            viewer.fill = TRUE,
-            knitr.figure = TRUE,
-            padding = 0,
-            knitr.defaultHeight = "500px",
-            viewer.defaultHeight = "100vh",
-            browser.defaultHeight = "100vh"
-        )
+  htmlwidgets::createWidget(
+    name = "maplibregl",
+    x = list(
+      style = style,
+      center = center,
+      zoom = zoom,
+      bearing = bearing,
+      pitch = pitch,
+      projection = projection,
+      additional_params = additional_params
+    ),
+    width = width,
+    height = height,
+    package = "mapgl",
+    dependencies = list(control_css),
+    sizingPolicy = htmlwidgets::sizingPolicy(
+      viewer.suppress = FALSE,
+      browser.fill = TRUE,
+      viewer.fill = TRUE,
+      knitr.figure = TRUE,
+      padding = 0,
+      knitr.defaultHeight = "500px",
+      viewer.defaultHeight = "100vh",
+      browser.defaultHeight = "100vh"
     )
+  )
 }
 
 #' Create a Maplibre GL output element for Shiny
@@ -101,13 +120,13 @@ maplibre <- function(
 #' @return A Maplibre GL output element for use in a Shiny UI
 #' @export
 maplibreOutput <- function(outputId, width = "100%", height = "400px") {
-    htmlwidgets::shinyWidgetOutput(
-        outputId,
-        "maplibregl",
-        width,
-        height,
-        package = "mapgl"
-    )
+  htmlwidgets::shinyWidgetOutput(
+    outputId,
+    "maplibregl",
+    width,
+    height,
+    package = "mapgl"
+  )
 }
 
 #' Render a Maplibre GL output element in Shiny
@@ -119,8 +138,8 @@ maplibreOutput <- function(outputId, width = "100%", height = "400px") {
 #' @return A rendered Maplibre GL map for use in a Shiny server
 #' @export
 renderMaplibre <- function(expr, env = parent.frame(), quoted = FALSE) {
-    if (!quoted) {
-        expr <- substitute(expr)
-    } # force quoted
-    htmlwidgets::shinyRenderWidget(expr, maplibreOutput, env, quoted = TRUE)
+  if (!quoted) {
+    expr <- substitute(expr)
+  } # force quoted
+  htmlwidgets::shinyRenderWidget(expr, maplibreOutput, env, quoted = TRUE)
 }

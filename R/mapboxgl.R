@@ -14,14 +14,33 @@
 #' * unnamed numeric vector of the form `c(xmin, ymin, xmax, ymax)`.
 #' @param width The width of the output htmlwidget.
 #' @param height The height of the output htmlwidget.
-#' @param ... Additional named parameters to be passed to the Mapbox GL map.
+#' @param ... Additional named parameters to be passed to the Mapbox GL JS Map.
+#'   See the Mapbox GL JS documentation for a full list of options:
+#'   \url{https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters}.
+#'   Common options include:
+#'   * `minZoom` / `maxZoom`: Minimum and maximum zoom levels (0-24).
+#'   * `maxBounds`: Restrict panning to a bounding box, specified as
+#'     `list(c(sw_lng, sw_lat), c(ne_lng, ne_lat))`.
+#'   * `dragRotate`: If `FALSE`, disables rotation via mouse drag (default `TRUE`).
+#'   * `touchZoomRotate`: If `FALSE`, disables pinch-to-rotate on touch (default `TRUE`).
+#'   * `scrollZoom`: If `FALSE`, disables scroll wheel zoom (default `TRUE`).
 #'
-#' @return An HTML widget for a Mapbox map.
+#' @return An HTML widget for a Mapbox GL map.
 #' @export
 #'
 #' @examples
 #' \dontrun{
+#' # Basic map
 #' mapboxgl(projection = "globe")
+#'
+#' # Constrained map with zoom limits and disabled rotation
+#' mapboxgl(
+#'   bounds = my_sf_object,
+#'   minZoom = 5,
+#'   maxZoom = 12,
+#'   dragRotate = FALSE,
+#'   touchZoomRotate = FALSE
+#' )
 #' }
 mapboxgl <- function(
     style = NULL,
