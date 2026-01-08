@@ -10,7 +10,8 @@ add_screenshot_control(
   filename = "map-screenshot",
   include_legend = TRUE,
   hide_controls = TRUE,
-  include_scale = TRUE,
+  include_scale_bar = TRUE,
+  image_scale = 1,
   button_title = "Capture screenshot"
 )
 }
@@ -29,10 +30,15 @@ Default is TRUE.}
 \item{hide_controls}{Logical, whether to hide interactive controls (navigation,
 fullscreen, etc.) during screenshot capture. Default is TRUE.}
 
-\item{include_scale}{Logical, whether to keep the scale control visible in
+\item{include_scale_bar}{Logical, whether to keep the scale bar visible in
 the screenshot when \code{hide_controls = TRUE}. Default is TRUE. The scale
-control is the only interactive control that renders correctly and provides
+bar is the only interactive control that renders correctly and provides
 useful context in static images.}
+
+\item{image_scale}{Numeric, the scale factor for the output image resolution.
+Default is 1. Higher values (2 or 3) produce sharper text and legend
+elements but increase file size. Scale 2 produces 4x larger files,
+scale 3 produces 9x larger files.}
 
 \item{button_title}{The tooltip title for the button.
 Default is "Capture screenshot".}
@@ -52,8 +58,8 @@ to comply with map provider terms of service.
 
 Most interactive controls (navigation, fullscreen, etc.) do not render correctly
 in screenshots due to SVG rendering limitations and will appear as blank boxes.
-The scale control is an exception and renders correctly, which is why it is
-preserved by default via \code{include_scale = TRUE}.
+The scale bar is an exception and renders correctly, which is why it is
+preserved by default via \code{include_scale_bar = TRUE}.
 }
 \examples{
 \dontrun{

@@ -813,8 +813,8 @@ async function captureMapScreenshot(map, options) {
   // Hide controls (nav, fullscreen, screenshot, etc.) but keep legends/attribution based on options
   if (options.hide_controls) {
     container.querySelectorAll('.maplibregl-ctrl-group, .mapboxgl-ctrl-group').forEach(el => {
-      // Skip scale control if include_scale is true
-      if (options.include_scale && el.querySelector('.maplibregl-ctrl-scale, .mapboxgl-ctrl-scale')) {
+      // Skip scale bar if include_scale_bar is true
+      if (options.include_scale_bar && el.querySelector('.maplibregl-ctrl-scale, .mapboxgl-ctrl-scale')) {
         return;
       }
       hiddenElements.push({ element: el, display: el.style.display });
@@ -852,6 +852,7 @@ async function captureMapScreenshot(map, options) {
       allowTaint: true,
       backgroundColor: null,
       logging: false,
+      scale: options.image_scale || 1,
       onclone: function(clonedDoc, clonedElement) {
         // Copy WebGL canvas content to cloned canvas
         const originalCanvas = container.querySelector('canvas.maplibregl-canvas, canvas.mapboxgl-canvas');
@@ -911,7 +912,8 @@ function createScreenshotControl(map, options, isMaplibre = true) {
       const canvas = await captureMapScreenshot(map, {
         include_legend: options.include_legend !== false,
         hide_controls: options.hide_controls !== false,
-        include_scale: options.include_scale !== false
+        include_scale_bar: options.include_scale_bar !== false,
+        image_scale: options.image_scale || 1
       });
       downloadScreenshot(canvas, options.filename || "map-screenshot");
     } catch (e) {

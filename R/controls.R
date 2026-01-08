@@ -1629,10 +1629,14 @@ add_control <- function(
 #'   Default is TRUE.
 #' @param hide_controls Logical, whether to hide interactive controls (navigation,
 #'   fullscreen, etc.) during screenshot capture. Default is TRUE.
-#' @param include_scale Logical, whether to keep the scale control visible in
+#' @param include_scale_bar Logical, whether to keep the scale bar visible in
 #'   the screenshot when `hide_controls = TRUE`. Default is TRUE. The scale
-#'   control is the only interactive control that renders correctly and provides
+#'   bar is the only interactive control that renders correctly and provides
 #'   useful context in static images.
+#' @param image_scale Numeric, the scale factor for the output image resolution.
+#'   Default is 1. Higher values (2 or 3) produce sharper text and legend
+#'   elements but increase file size. Scale 2 produces 4x larger files,
+#'   scale 3 produces 9x larger files.
 #' @param button_title The tooltip title for the button.
 #'   Default is "Capture screenshot".
 #'
@@ -1646,8 +1650,8 @@ add_control <- function(
 #'
 #' Most interactive controls (navigation, fullscreen, etc.) do not render correctly
 #' in screenshots due to SVG rendering limitations and will appear as blank boxes.
-#' The scale control is an exception and renders correctly, which is why it is
-#' preserved by default via `include_scale = TRUE`.
+#' The scale bar is an exception and renders correctly, which is why it is
+#' preserved by default via `include_scale_bar = TRUE`.
 #'
 #' @examples
 #' \dontrun{
@@ -1684,7 +1688,8 @@ add_screenshot_control <- function(
     filename = "map-screenshot",
     include_legend = TRUE,
     hide_controls = TRUE,
-    include_scale = TRUE,
+    include_scale_bar = TRUE,
+    image_scale = 1,
     button_title = "Capture screenshot"
 ) {
   screenshot_control <- list(
@@ -1692,7 +1697,8 @@ add_screenshot_control <- function(
     filename = filename,
     include_legend = include_legend,
     hide_controls = hide_controls,
-    include_scale = include_scale,
+    include_scale_bar = include_scale_bar,
+    image_scale = image_scale,
     button_title = button_title
   )
 
