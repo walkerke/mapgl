@@ -1613,3 +1613,133 @@ add_control <- function(
 
   return(map)
 }
+
+#' Add a screenshot control to a map
+#'
+#' This function adds a screenshot control to a Mapbox GL or MapLibre GL map.
+#' The screenshot control allows users to capture the map along with legends
+#' and attribution as a PNG image download.
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
+#' @param position The position of the control. Can be one of "top-left",
+#'   "top-right", "bottom-left", or "bottom-right". Default is "top-right".
+#' @param filename The base filename for the downloaded image (without extension).
+#'   Default is "map-screenshot".
+#' @param include_legend Logical, whether to include legends in the screenshot.
+#'   Default is TRUE.
+#' @param hide_controls Logical, whether to hide interactive controls (navigation,
+#'   fullscreen, etc.) during screenshot capture. Default is TRUE.
+#' @param include_scale Logical, whether to keep the scale control visible in
+#'   the screenshot when `hide_controls = TRUE`. Default is TRUE. The scale
+#'   control is the only interactive control that renders correctly and provides
+#'   useful context in static images.
+#' @param button_title The tooltip title for the button.
+#'   Default is "Capture screenshot".
+#'
+#' @return The modified map object with the screenshot control added.
+#' @export
+#'
+#' @details
+#' The screenshot is captured using html2canvas, which renders the map container
+#' including legends and attribution. Attribution is always included in screenshots
+#' to comply with map provider terms of service.
+#'
+#' Most interactive controls (navigation, fullscreen, etc.) do not render correctly
+#' in screenshots due to SVG rendering limitations and will appear as blank boxes.
+#' The scale control is an exception and renders correctly, which is why it is
+#' preserved by default via `include_scale = TRUE`.
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' # Basic usage
+#' maplibre(style = carto_style("positron")) |>
+#'   add_screenshot_control()
+#'
+#' # With scale control (recommended for screenshots)
+#' maplibre() |>
+#'   add_scale_control(position = "bottom-left") |>
+#'   add_screenshot_control()
+#'
+#' # With custom filename
+#' maplibre() |>
+#'   add_fill_layer(
+#'     id = "counties",
+#'     source = list(type = "geojson", data = counties_sf)
+#'   ) |>
+#'   add_legend("Median Income", values = c("Low", "High")) |>
+#'   add_screenshot_control(
+#'     filename = "county-map",
+#'     position = "top-left"
+#'   )
+#'
+#' # Exclude legend from screenshot
+#' maplibre() |>
+#'   add_screenshot_control(include_legend = FALSE)
+#' }
+add_screenshot_control <- function(
+    map,
+    position = "top-right",
+    filename = "map-screenshot",
+    include_legend = TRUE,
+    hide_controls = TRUE,
+    include_scale = TRUE,
+    button_title = "Capture screenshot"
+) {
+  screenshot_control <- list(
+    position = position,
+    filename = filename,
+    include_legend = include_legend,
+    hide_controls = hide_controls,
+    include_scale = include_scale,
+    button_title = button_title
+  )
+
+  if (
+    inherits(map, "mapboxgl_proxy") ||
+      inherits(map, "maplibre_proxy")
+  ) {
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) {
+        "mapboxgl-compare-proxy"
+      } else {
+        "maplibre-compare-proxy"
+      }
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_screenshot_control",
+            options = screenshot_control,
+            map = map$map_side
+          )
+        )
+      )
+    } else {
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+        "mapboxgl-proxy"
+      } else {
+        "maplibre-proxy"
+      }
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_screenshot_control",
+            options = screenshot_control
+          )
+        )
+      )
+    }
+  } else {
+    map$x$screenshot_control <- screenshot_control
+  }
+
+  return(map)
+}
