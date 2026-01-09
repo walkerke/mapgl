@@ -725,6 +725,16 @@ function generateDrawStyles(styling) {
 
 // Helper function to add features from a source to draw
 function addSourceFeaturesToDraw(draw, sourceId, map) {
+  const mapId = map.getContainer().id;
+
+  // First try to get data from our registry (more reliable across MapLibre/Mapbox)
+  const storedData = getStoredSourceDataMapbox(mapId, sourceId);
+  if (storedData) {
+    draw.add(storedData);
+    return;
+  }
+
+  // Fallback to internal _data property (for backwards compatibility)
   const source = map.getSource(sourceId);
   if (source && source._data) {
     draw.add(source._data);
@@ -742,8 +752,29 @@ if (!window._mapgl) {
     // Queue of pending operations during style loading: { mapId: [] }
     pendingOperations: {},
     // Track which maps are currently loading a style: { mapId: true/false }
-    styleLoading: {}
+    styleLoading: {},
+    // Registry of GeoJSON source data per map: { mapId: { sourceId: geojsonData } }
+    sourceData: {}
   };
+}
+
+// Helper to store GeoJSON source data for later retrieval
+function storeSourceDataMapbox(mapId, sourceId, data) {
+  if (!window._mapgl.sourceData) {
+    window._mapgl.sourceData = {};
+  }
+  if (!window._mapgl.sourceData[mapId]) {
+    window._mapgl.sourceData[mapId] = {};
+  }
+  window._mapgl.sourceData[mapId][sourceId] = data;
+}
+
+// Helper to get stored GeoJSON source data
+function getStoredSourceDataMapbox(mapId, sourceId) {
+  if (window._mapgl.sourceData && window._mapgl.sourceData[mapId]) {
+    return window._mapgl.sourceData[mapId][sourceId];
+  }
+  return null;
 }
 
 // Helper to queue an operation or execute it immediately
@@ -1129,6 +1160,8 @@ HTMLWidgets.widget({
                 }
 
                 map.addSource(source.id, sourceOptions);
+                // Store GeoJSON data for later retrieval (e.g., for draw control)
+                storeSourceDataMapbox(el.id, source.id, geojsonData);
               } else if (source.type === "raster") {
                 if (source.url) {
                   map.addSource(source.id, {
@@ -2599,6 +2632,8 @@ if (HTMLWidgets.shinyMode) {
             }
           });
           map.addSource(message.source.id, sourceConfig);
+          // Store GeoJSON data for later retrieval (e.g., for draw control)
+          storeSourceDataMapbox(mapId, message.source.id, message.source.data);
         } else if (message.source.type === "raster") {
           const sourceConfig = {
             type: "raster",
