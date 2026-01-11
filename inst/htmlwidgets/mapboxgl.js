@@ -1931,6 +1931,15 @@ HTMLWidgets.widget({
             el.appendChild(legend);
           }
 
+          // Initialize legend interactivity if configured
+          if (x.legend_interactivity && x.legend_interactivity.length > 0) {
+            x.legend_interactivity.forEach(function(config) {
+              if (typeof initializeLegendInteractivity === "function") {
+                initializeLegendInteractivity(map, el.id, config);
+              }
+            });
+          }
+
           // Add fullscreen control if enabled
           if (x.fullscreen_control && x.fullscreen_control.enabled) {
             const position = x.fullscreen_control.position || "top-right";
@@ -3094,6 +3103,11 @@ if (HTMLWidgets.shinyMode) {
         legend.innerHTML = message.html;
         legend.classList.add("mapboxgl-legend");
         document.getElementById(data.id).appendChild(legend);
+
+        // Initialize legend interactivity if configured
+        if (message.interactivity && typeof initializeLegendInteractivity === "function") {
+          initializeLegendInteractivity(map, data.id, message.interactivity);
+        }
       } else if (message.type === "set_config_property") {
         map.setConfigProperty(
           message.importId,

@@ -12,8 +12,8 @@
 add_legend(
   map,
   legend_title,
-  values,
-  colors,
+  values = NULL,
+  colors = NULL,
   type = c("continuous", "categorical"),
   circular_patches = FALSE,
   patch_shape = "square",
@@ -28,7 +28,12 @@ add_legend(
   margin_bottom = NULL,
   margin_left = NULL,
   style = NULL,
-  target = NULL
+  target = NULL,
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  classification = NULL,
+  breaks = NULL
 )
 
 add_categorical_legend(
@@ -48,7 +53,11 @@ add_categorical_legend(
   margin_right = NULL,
   margin_bottom = NULL,
   margin_left = NULL,
-  style = NULL
+  style = NULL,
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  breaks = NULL
 )
 
 add_continuous_legend(
@@ -65,7 +74,9 @@ add_continuous_legend(
   margin_right = NULL,
   margin_bottom = NULL,
   margin_left = NULL,
-  style = NULL
+  style = NULL,
+  interactive = FALSE,
+  filter_column = NULL
 )
 
 \method{add_legend}{mapboxgl_compare}(
@@ -150,6 +161,14 @@ add_continuous_legend(
 \item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
 
 \item{target}{For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare".}
+
+\item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE.}
+
+\item{filter_column}{Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.}
+
+\item{filter_values}{For interactive categorical legends, the actual data values to filter on. Use this when your display labels (values) differ from the data values. For example, if your data has lowercase categories but you want capitalized legend labels, set values = c("Music", "Bar") for display and filter_values = c("music", "bar") for filtering. If NULL (default), uses values.}
+
+\item{classification}{A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.}
 }
 \value{
 The updated map object with the legend added.

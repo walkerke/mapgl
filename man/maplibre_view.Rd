@@ -14,6 +14,7 @@ maplibre_view(
   layer_id = "quickview",
   legend = TRUE,
   legend_position = "top-left",
+  interactive_legend = FALSE,
   ...
 )
 }
@@ -35,6 +36,10 @@ maplibre_view(
 \item{legend}{Logical, whether to add a legend when a column is specified. Defaults to TRUE.}
 
 \item{legend_position}{The position of the legend on the map. Defaults to "top-left".}
+
+\item{interactive_legend}{Logical, whether to make the legend interactive.
+When TRUE, categorical legends allow clicking to toggle visibility,
+and continuous legends show a range slider. Defaults to FALSE.}
 
 \item{...}{Additional arguments passed to maplibre()}
 }

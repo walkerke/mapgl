@@ -181,12 +181,16 @@
 #'
 #' }
 
+#' @param interactive Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE.
+#' @param filter_column Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.
+#' @param filter_values For interactive categorical legends, the actual data values to filter on. Use this when your display labels (values) differ from the data values. For example, if your data has lowercase categories but you want capitalized legend labels, set values = c("Music", "Bar") for display and filter_values = c("music", "bar") for filtering. If NULL (default), uses values.
+#' @param classification A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.
 #' @export
 add_legend <- function(
   map,
   legend_title,
-  values,
-  colors,
+  values = NULL,
+  colors = NULL,
   type = c("continuous", "categorical"),
   circular_patches = FALSE,
   patch_shape = "square",
@@ -201,11 +205,38 @@ add_legend <- function(
   margin_bottom = NULL,
   margin_left = NULL,
   style = NULL,
-  target = NULL
+  target = NULL,
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  classification = NULL,
+  breaks = NULL
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
+  }
+
+  # Handle classification object if provided
+  if (!is.null(classification)) {
+    if (!inherits(classification, "mapgl_classification")) {
+      rlang::abort("classification must be a mapgl_classification object (from step_quantile, etc.)")
+    }
+    # Extract values and colors from classification if not provided
+    if (is.null(values)) {
+      values <- classification$labels
+    }
+    if (is.null(colors)) {
+      colors <- classification$colors
+    }
+    # Store breaks for range-based filtering
+    breaks <- classification$breaks
+  }
+
+  # Validate that values and colors are provided
+
+if (is.null(values) || is.null(colors)) {
+    rlang::abort("values and colors must be provided, either directly or via classification parameter")
   }
 
   # For compare objects, use S3 method dispatch
@@ -228,7 +259,9 @@ add_legend <- function(
         margin_right,
         margin_bottom,
         margin_left,
-        style
+        style,
+        interactive,
+        filter_column
       )
     } else {
       add_categorical_legend(
@@ -248,7 +281,11 @@ add_legend <- function(
         margin_right,
         margin_bottom,
         margin_left,
-        style
+        style,
+        interactive,
+        filter_column,
+        filter_values,
+        breaks
       )
     }
   }
@@ -274,7 +311,11 @@ add_categorical_legend <- function(
   margin_right = NULL,
   margin_bottom = NULL,
   margin_left = NULL,
-  style = NULL
+  style = NULL,
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  breaks = NULL
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -548,8 +589,15 @@ add_categorical_legend <- function(
       container_height <- max_size
     }
 
+    # Add data-value attribute for interactive legends
+    item_data_attr <- if (interactive) {
+      paste0(' data-value="', htmltools::htmlEscape(as.character(values[i])), '" data-enabled="true"')
+    } else {
+      ""
+    }
+
     paste0(
-      '<div class="legend-item">',
+      '<div class="legend-item"', item_data_attr, '>',
       '<div class="legend-patch-container" style="width:',
       container_width,
       "px; height:",
@@ -575,6 +623,13 @@ add_categorical_legend <- function(
     ""
   }
 
+  # Add interactive data attributes if interactive is TRUE
+  interactive_attr <- if (interactive) {
+    paste0(' data-interactive="true" data-legend-type="categorical"')
+  } else {
+    ""
+  }
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
@@ -582,6 +637,7 @@ add_categorical_legend <- function(
     position,
     '"',
     layer_attr,
+    interactive_attr,
     ">",
     "<h2>",
     legend_title,
@@ -721,6 +777,29 @@ add_categorical_legend <- function(
   custom_style_css <- .translate_style_to_css(style, unique_id)
   legend_css <- paste0(legend_css, custom_style_css)
 
+  # Create interactivity config if interactive is TRUE
+  interactivity_config <- NULL
+  if (interactive && !is.null(layer_id)) {
+    # Determine filter values: use filter_values if provided, otherwise use values
+    # Preserve original types - don't coerce to character for numeric data
+    actual_filter_values <- if (!is.null(filter_values)) {
+      filter_values
+    } else {
+      values
+    }
+
+    interactivity_config <- list(
+      legendId = unique_id,
+      layerId = layer_id,
+      type = "categorical",
+      values = as.character(values),  # Display values can be strings
+      colors = colors,
+      filterColumn = filter_column,
+      filterValues = as.list(actual_filter_values),  # Use list to preserve types in JSON
+      breaks = if (!is.null(breaks)) as.numeric(breaks) else NULL
+    )
+  }
+
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
@@ -738,7 +817,8 @@ add_categorical_legend <- function(
             html = legend_html,
             legend_css = legend_css,
             add = add,
-            map = map$map_side
+            map = map$map_side,
+            interactivity = interactivity_config
           )
         )
       )
@@ -757,7 +837,8 @@ add_categorical_legend <- function(
             type = "add_legend",
             html = legend_html,
             legend_css = legend_css,
-            add = add
+            add = add,
+            interactivity = interactivity_config
           )
         )
       )
@@ -771,6 +852,15 @@ add_categorical_legend <- function(
       map$x$legend_html <- paste(map$x$legend_html, legend_html)
       map$x$legend_css <- paste(map$x$legend_css, legend_css)
     }
+
+    # Store interactivity config for static widgets
+    if (!is.null(interactivity_config)) {
+      if (is.null(map$x$legend_interactivity)) {
+        map$x$legend_interactivity <- list()
+      }
+      map$x$legend_interactivity <- c(map$x$legend_interactivity, list(interactivity_config))
+    }
+
     return(map)
   }
 }
@@ -792,7 +882,9 @@ add_continuous_legend <- function(
   margin_right = NULL,
   margin_bottom = NULL,
   margin_left = NULL,
-  style = NULL
+  style = NULL,
+  interactive = FALSE,
+  filter_column = NULL
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
@@ -806,13 +898,28 @@ add_continuous_legend <- function(
 
   num_values <- length(values)
 
+  # Format values for display (K/M notation for large numbers)
+  display_values <- sapply(values, function(val) {
+    if (is.na(val)) return(NA_character_)
+    abs_val <- abs(val)
+    if (abs_val >= 1e6) {
+      paste0(round(val / 1e6, 1), "M")
+    } else if (abs_val >= 1e3) {
+      paste0(round(val / 1e3, 1), "K")
+    } else if (abs_val >= 1) {
+      as.character(round(val, 1))
+    } else {
+      as.character(round(val, 2))
+    }
+  })
+
   value_labels <- paste0(
     '<div class="legend-labels">',
     paste0(
       '<span style="position: absolute; left: ',
       seq(0, 100, length.out = num_values),
       '%;">',
-      values,
+      display_values,
       "</span>",
       collapse = ""
     ),
@@ -826,6 +933,17 @@ add_continuous_legend <- function(
     ""
   }
 
+  # Add interactive data attributes if interactive is TRUE
+  interactive_attr <- if (interactive) {
+    paste0(
+      ' data-interactive="true" data-legend-type="continuous"',
+      ' data-min-value="', min(values), '"',
+      ' data-max-value="', max(values), '"'
+    )
+  } else {
+    ""
+  }
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
@@ -833,6 +951,7 @@ add_continuous_legend <- function(
     position,
     '"',
     layer_attr,
+    interactive_attr,
     ">",
     "<h2>",
     legend_title,
@@ -952,6 +1071,19 @@ add_continuous_legend <- function(
   custom_style_css <- .translate_style_to_css(style, unique_id)
   legend_css <- paste0(legend_css, custom_style_css)
 
+  # Create interactivity config if interactive is TRUE
+  interactivity_config <- NULL
+  if (interactive && !is.null(layer_id)) {
+    interactivity_config <- list(
+      legendId = unique_id,
+      layerId = layer_id,
+      type = "continuous",
+      values = as.numeric(values),
+      colors = colors,
+      filterColumn = filter_column
+    )
+  }
+
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
@@ -969,7 +1101,8 @@ add_continuous_legend <- function(
             html = legend_html,
             legend_css = legend_css,
             add = add,
-            map = map$map_side
+            map = map$map_side,
+            interactivity = interactivity_config
           )
         )
       )
@@ -989,7 +1122,8 @@ add_continuous_legend <- function(
             type = "add_legend",
             html = legend_html,
             legend_css = legend_css,
-            add = add
+            add = add,
+            interactivity = interactivity_config
           )
         )
       )
@@ -1004,6 +1138,15 @@ add_continuous_legend <- function(
       map$x$legend_html <- paste(map$x$legend_html, legend_html)
       map$x$legend_css <- paste(map$x$legend_css, legend_css)
     }
+
+    # Store interactivity config for static widgets
+    if (!is.null(interactivity_config)) {
+      if (is.null(map$x$legend_interactivity)) {
+        map$x$legend_interactivity <- list()
+      }
+      map$x$legend_interactivity <- c(map$x$legend_interactivity, list(interactivity_config))
+    }
+
     return(map)
   }
 }
