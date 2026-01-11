@@ -218,7 +218,6 @@ add_legend <- function(
   }
 
   # Handle classification object if provided
-  breaks <- NULL
   if (!is.null(classification)) {
     if (!inherits(classification, "mapgl_classification")) {
       rlang::abort("classification must be a mapgl_classification object (from step_quantile, etc.)")
@@ -782,20 +781,21 @@ add_categorical_legend <- function(
   interactivity_config <- NULL
   if (interactive && !is.null(layer_id)) {
     # Determine filter values: use filter_values if provided, otherwise use values
+    # Preserve original types - don't coerce to character for numeric data
     actual_filter_values <- if (!is.null(filter_values)) {
-      as.character(filter_values)
+      filter_values
     } else {
-      as.character(values)
+      values
     }
 
     interactivity_config <- list(
       legendId = unique_id,
       layerId = layer_id,
       type = "categorical",
-      values = as.character(values),
+      values = as.character(values),  # Display values can be strings
       colors = colors,
       filterColumn = filter_column,
-      filterValues = actual_filter_values,
+      filterValues = as.list(actual_filter_values),  # Use list to preserve types in JSON
       breaks = if (!is.null(breaks)) as.numeric(breaks) else NULL
     )
   }

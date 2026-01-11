@@ -585,8 +585,6 @@ function initContinuousLegend(map, mapId, legendElement, filterColumn, config) {
         if (!dragState.active) return;
 
         var percent = getPositionPercent(e);
-        var deltaPercent =
-            percent - getPositionPercent({ clientX: dragState.startX });
 
         if (dragState.target === "left") {
             // Move left handle
@@ -731,11 +729,12 @@ function applyCategoricalFilter(
         // No categories enabled - hide all features
         interactiveFilter = ["==", ["get", column], "__IMPOSSIBLE_VALUE__"];
     } else {
-        // Build array of enabled filter values
+        // Build array of enabled filter values - preserve original types
         var enabledValues = [];
         enabledIndices.forEach(function(i) {
             if (filterValues[i] !== undefined) {
-                enabledValues.push(String(filterValues[i]));
+                // Don't convert to String - preserve numeric types for proper matching
+                enabledValues.push(filterValues[i]);
             }
         });
 
