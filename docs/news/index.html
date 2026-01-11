@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,8 +42,36 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.4.3" id="mapgl-043">mapgl 0.4.3<a class="anchor" aria-label="anchor" href="#mapgl-043"></a></h2>
-<ul><li>Update Mapbox GL JS, MapLibre GL JS, and Turf.js versions The <code>bounds</code> argument in <code><a href="../reference/maplibre.html">maplibre()</a></code> and <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code> now accepts <code><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">sf::st_bbox()</a></code> output with automatic CRS transformation to EPSG:4326.</li>
+<h2 class="pkg-version" data-toc-text="0.4.4" id="mapgl-044">mapgl 0.4.4<a class="anchor" aria-label="anchor" href="#mapgl-044"></a></h2>
+<ul><li><p>Update Mapbox GL JS to v3.17.0 and MapLibre GL JS to v5.15.0.</p></li>
+<li>
+<p><strong>Interactive legends</strong>: New opt-in interactivity for map legends enables direct data filtering from the legend:</p>
+<ul><li>Categorical legends: Click legend items to toggle category visibility on the map. Disabled categories are visually indicated with reduced opacity and strikethrough text.</li>
+<li>Continuous legends: Drag dual handles on the gradient bar to filter data within a selected range. Ghost overlays indicate excluded regions, and the middle section can be dragged to pan the selection window.</li>
+<li>New parameters <code>interactive = TRUE</code>, <code>filter_column</code>, and <code>classification</code> in legend functions</li>
+<li>Smart number formatting with K/M notation for large values in legend labels</li>
+<li>New <code>interactive_legend</code> parameter in <code><a href="../reference/maplibre_view.html">maplibre_view()</a></code> and <code><a href="../reference/mapboxgl_view.html">mapboxgl_view()</a></code> for quick interactive visualizations</li>
+<li>Full Shiny integration with filter state available via input values</li>
+<li>Works with GeoJSON, vector tiles, and PMTiles sources</li>
+</ul></li>
+<li><p><strong>Screenshot control</strong>: New <code><a href="../reference/add_screenshot_control.html">add_screenshot_control()</a></code> function allows users to capture and download map screenshots as PNG images. Includes <code>image_scale</code> parameter for controlling output resolution.</p></li>
+<li><p><strong>Globe projection for compare views</strong>: Compare maps in MapLibre now properly respect globe projection when specified.</p></li>
+<li>
+<p><strong>Bug fixes and improvements</strong>:</p>
+<ul><li>Fixed continuous legend error when values are pre-formatted character strings (e.g., from <code><a href="../reference/classification_helpers.html">get_legend_labels()</a></code>)</li>
+<li>Fixed draw control source handling for better feature management (<a href="https://github.com/walkerke/mapgl/issues/164" class="external-link">#164</a>)</li>
+<li>Fixed <code><a href="../reference/step_expr.html">step_expr()</a></code> to properly handle quoted column names (<a href="https://github.com/walkerke/mapgl/issues/148" class="external-link">#148</a>)</li>
+<li>Fixed layer visibility state synchronization on style changes (<a href="https://github.com/walkerke/mapgl/issues/159" class="external-link">#159</a>)</li>
+<li>Images added via <code><a href="../reference/add_image.html">add_image()</a></code> now persist across <code><a href="../reference/set_style.html">set_style()</a></code> calls</li>
+<li>Measurement display box properly removed when draw control is cleared</li>
+<li>Added warning when fill extrusion layers are used with MapLibre globe projection (unsupported)</li>
+<li>Improved categorical color palette usage in quickview functions</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.3" id="mapgl-043">mapgl 0.4.3<a class="anchor" aria-label="anchor" href="#mapgl-043"></a></h2><p class="text-muted">CRAN release: 2025-11-20</p>
+<ul><li>Update Mapbox GL JS, MapLibre GL JS, and Turf.js versions.</li>
+<li>The <code>bounds</code> argument in <code><a href="../reference/maplibre.html">maplibre()</a></code> and <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code> now accepts <code><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">sf::st_bbox()</a></code> output with automatic CRS transformation to EPSG:4326.</li>
 <li>Fixed control duplication when <code><a href="../reference/set_style.html">set_style()</a></code> is called in Shiny applications.</li>
 <li>Fixed <code><a href="../reference/clear_controls.html">clear_controls()</a></code> not properly removing controls.</li>
 <li>Added <code>projection</code> argument to <code><a href="../reference/maplibre.html">maplibre()</a></code> for consistency with <code><a href="../reference/mapboxgl.html">mapboxgl()</a></code>.</li>

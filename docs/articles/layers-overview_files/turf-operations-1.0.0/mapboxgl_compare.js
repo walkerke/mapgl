@@ -597,6 +597,13 @@ HTMLWidgets.widget({
                 }
               } else if (message.type === "add_layer") {
                 try {
+                  // Ensure paint and layout are objects, not null
+                  if (message.layer.paint === null) {
+                    message.layer.paint = {};
+                  }
+                  if (message.layer.layout === null) {
+                    message.layer.layout = {};
+                  }
                   if (message.layer.before_id) {
                     map.addLayer(message.layer, message.layer.before_id);
                   } else {
@@ -974,6 +981,14 @@ HTMLWidgets.widget({
                   // Identify layers using user-added sources
                   currentStyle.layers.forEach(function (layer) {
                     if (userSourceIds.includes(layer.source)) {
+                      // Capture current visibility state (may differ from layer definition)
+                      const currentVisibility = map.getLayoutProperty(layer.id, 'visibility');
+                      if (currentVisibility !== undefined) {
+                        if (!layer.layout) {
+                          layer.layout = {};
+                        }
+                        layer.layout.visibility = currentVisibility;
+                      }
                       userLayers.push(layer);
                     }
                   });
@@ -992,6 +1007,11 @@ HTMLWidgets.widget({
                     userLayers.forEach(function (layer) {
                       if (!map.getLayer(layer.id)) {
                         map.addLayer(layer);
+
+                        // Explicitly set visibility if it was set to 'none'
+                        if (layer.layout && layer.layout.visibility === 'none') {
+                          map.setLayoutProperty(layer.id, 'visibility', 'none');
+                        }
 
                         // Re-add event handlers for tooltips and hover effects
                         if (layer._handlers) {
@@ -1172,7 +1192,10 @@ HTMLWidgets.widget({
                     map.off("style.load", onStyleLoad);
                   };
 
-                  map.on("style.load", onStyleLoad);
+                  map.once("style.load", function() {
+                    // Wait for map to be fully idle before adding layers
+                    map.once("idle", onStyleLoad);
+                  });
                 }
 
                 // Change the style
@@ -3355,6 +3378,14 @@ HTMLWidgets.widget({
 
       resize: function (width, height) {
         // Code to handle resizing if necessary
+      },
+
+      getBeforeMap: function () {
+        return beforeMap;
+      },
+
+      getAfterMap: function () {
+        return afterMap;
       },
     };
   },

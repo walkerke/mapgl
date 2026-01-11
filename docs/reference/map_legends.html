@@ -9,7 +9,7 @@ to customize appearance and clear_legend() to remove legends."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,8 +54,8 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_legend</span><span class="op">(</span></span>
 <span>  <span class="va">map</span>,</span>
 <span>  <span class="va">legend_title</span>,</span>
-<span>  <span class="va">values</span>,</span>
-<span>  <span class="va">colors</span>,</span>
+<span>  values <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span>, <span class="st">"categorical"</span><span class="op">)</span>,</span>
 <span>  circular_patches <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  patch_shape <span class="op">=</span> <span class="st">"square"</span>,</span>
@@ -70,7 +70,12 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  margin_bottom <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_left <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  style <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  target <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  target <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  interactive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  filter_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  filter_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  classification <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">add_categorical_legend</span><span class="op">(</span></span>
@@ -90,7 +95,11 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  margin_right <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_bottom <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_left <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  style <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  style <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  interactive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  filter_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  filter_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">add_continuous_legend</span><span class="op">(</span></span>
@@ -107,7 +116,9 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  margin_right <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_bottom <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_left <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  style <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  style <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  interactive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  filter_column <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mapboxgl_compare'</span></span>
@@ -235,6 +246,22 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 
 <dt id="arg-target">target<a class="anchor" aria-label="anchor" href="#arg-target"></a></dt>
 <dd><p>For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare".</p></dd>
+
+
+<dt id="arg-interactive">interactive<a class="anchor" aria-label="anchor" href="#arg-interactive"></a></dt>
+<dd><p>Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE.</p></dd>
+
+
+<dt id="arg-filter-column">filter_column<a class="anchor" aria-label="anchor" href="#arg-filter-column"></a></dt>
+<dd><p>Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.</p></dd>
+
+
+<dt id="arg-filter-values">filter_values<a class="anchor" aria-label="anchor" href="#arg-filter-values"></a></dt>
+<dd><p>For interactive categorical legends, the actual data values to filter on. Use this when your display labels (values) differ from the data values. For example, if your data has lowercase categories but you want capitalized legend labels, set values = c("Music", "Bar") for display and filter_values = c("music", "bar") for filtering. If NULL (default), uses values.</p></dd>
+
+
+<dt id="arg-classification">classification<a class="anchor" aria-label="anchor" href="#arg-classification"></a></dt>
+<dd><p>A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -16,6 +16,7 @@
 * **Globe projection for compare views**: Compare maps in MapLibre now properly respect globe projection when specified.
 
 * **Bug fixes and improvements**:
+  - Fixed continuous legend error when values are pre-formatted character strings (e.g., from `get_legend_labels()`)
   - Fixed draw control source handling for better feature management (#164)
   - Fixed `step_expr()` to properly handle quoted column names (#148)
   - Fixed layer visibility state synchronization on style changes (#159)

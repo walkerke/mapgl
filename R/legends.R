@@ -183,7 +183,7 @@
 
 #' @param interactive Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE.
 #' @param filter_column Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.
-#' @param filter_values For interactive categorical legends, the actual data values to filter on. Use this when your display labels (values) differ from the data values. For example, if your data has lowercase categories but you want capitalized legend labels, set values = c("Music", "Bar") for display and filter_values = c("music", "bar") for filtering. If NULL (default), uses values.
+#' @param filter_values For interactive legends, the actual data values to filter on. For categorical legends, use this when your display labels differ from the data values (e.g., values = c("Music", "Bar") for display, filter_values = c("music", "bar") for filtering). For continuous legends, provide numeric break values when using formatted display labels (e.g., values = get_legend_labels(scale), filter_values = get_breaks(scale)). If NULL (default), uses values.
 #' @param classification A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.
 #' @export
 add_legend <- function(
@@ -261,7 +261,8 @@ if (is.null(values) || is.null(colors)) {
         margin_left,
         style,
         interactive,
-        filter_column
+        filter_column,
+        filter_values
       )
     } else {
       add_categorical_legend(
@@ -884,10 +885,31 @@ add_continuous_legend <- function(
   margin_left = NULL,
   style = NULL,
   interactive = FALSE,
-  filter_column = NULL
+  filter_column = NULL,
+  filter_values = NULL
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
+  }
+
+  # For interactive legends, determine numeric values for filtering
+  if (interactive) {
+    if (!is.null(filter_values)) {
+      # Use explicitly provided filter_values
+      if (!is.numeric(filter_values)) {
+        rlang::abort("filter_values must be numeric for interactive continuous legends.")
+      }
+      numeric_values <- filter_values
+    } else if (is.numeric(values)) {
+      # Use values directly if numeric
+      numeric_values <- values
+    } else {
+      rlang::abort(c(
+        "Interactive continuous legends require numeric values for filtering.",
+        i = "Either pass numeric values, or provide filter_values with the numeric break points.",
+        i = "Example: filter_values = scale$breaks or filter_values = get_breaks(scale)"
+      ))
+    }
   }
 
   color_gradient <- paste0(
@@ -899,19 +921,24 @@ add_continuous_legend <- function(
   num_values <- length(values)
 
   # Format values for display (K/M notation for large numbers)
-  display_values <- sapply(values, function(val) {
-    if (is.na(val)) return(NA_character_)
-    abs_val <- abs(val)
-    if (abs_val >= 1e6) {
-      paste0(round(val / 1e6, 1), "M")
-    } else if (abs_val >= 1e3) {
-      paste0(round(val / 1e3, 1), "K")
-    } else if (abs_val >= 1) {
-      as.character(round(val, 1))
-    } else {
-      as.character(round(val, 2))
-    }
-  })
+  # Only format if values are numeric; if already character, use as-is
+  if (is.numeric(values)) {
+    display_values <- sapply(values, function(val) {
+      if (is.na(val)) return(NA_character_)
+      abs_val <- abs(val)
+      if (abs_val >= 1e6) {
+        paste0(round(val / 1e6, 1), "M")
+      } else if (abs_val >= 1e3) {
+        paste0(round(val / 1e3, 1), "K")
+      } else if (abs_val >= 1) {
+        as.character(round(val, 1))
+      } else {
+        as.character(round(val, 2))
+      }
+    })
+  } else {
+    display_values <- as.character(values)
+  }
 
   value_labels <- paste0(
     '<div class="legend-labels">',
@@ -937,8 +964,8 @@ add_continuous_legend <- function(
   interactive_attr <- if (interactive) {
     paste0(
       ' data-interactive="true" data-legend-type="continuous"',
-      ' data-min-value="', min(values), '"',
-      ' data-max-value="', max(values), '"'
+      ' data-min-value="', min(numeric_values), '"',
+      ' data-max-value="', max(numeric_values), '"'
     )
   } else {
     ""
@@ -1078,7 +1105,7 @@ add_continuous_legend <- function(
       legendId = unique_id,
       layerId = layer_id,
       type = "continuous",
-      values = as.numeric(values),
+      values = numeric_values,
       colors = colors,
       filterColumn = filter_column
     )

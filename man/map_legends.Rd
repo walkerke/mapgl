@@ -76,7 +76,8 @@ add_continuous_legend(
   margin_left = NULL,
   style = NULL,
   interactive = FALSE,
-  filter_column = NULL
+  filter_column = NULL,
+  filter_values = NULL
 )
 
 \method{add_legend}{mapboxgl_compare}(
@@ -166,7 +167,7 @@ add_continuous_legend(
 
 \item{filter_column}{Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.}
 
-\item{filter_values}{For interactive categorical legends, the actual data values to filter on. Use this when your display labels (values) differ from the data values. For example, if your data has lowercase categories but you want capitalized legend labels, set values = c("Music", "Bar") for display and filter_values = c("music", "bar") for filtering. If NULL (default), uses values.}
+\item{filter_values}{For interactive legends, the actual data values to filter on. For categorical legends, use this when your display labels differ from the data values (e.g., values = c("Music", "Bar") for display, filter_values = c("music", "bar") for filtering). For continuous legends, provide numeric break values when using formatted display labels (e.g., values = get_legend_labels(scale), filter_values = get_breaks(scale)). If NULL (default), uses values.}
 
 \item{classification}{A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.}
 }

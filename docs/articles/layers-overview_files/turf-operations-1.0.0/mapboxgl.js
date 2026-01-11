@@ -725,12 +725,246 @@ function generateDrawStyles(styling) {
 
 // Helper function to add features from a source to draw
 function addSourceFeaturesToDraw(draw, sourceId, map) {
+  const mapId = map.getContainer().id;
+
+  // First try to get data from our registry (more reliable across MapLibre/Mapbox)
+  const storedData = getStoredSourceDataMapbox(mapId, sourceId);
+  if (storedData) {
+    draw.add(storedData);
+    return;
+  }
+
+  // Fallback to internal _data property (for backwards compatibility)
   const source = map.getSource(sourceId);
   if (source && source._data) {
     draw.add(source._data);
   } else {
     console.warn("Source not found or has no data:", sourceId);
   }
+}
+
+// Global registries for tracking user-added images and pending operations during style changes
+// Using same window._mapgl object as maplibregl.js for consistency
+if (!window._mapgl) {
+  window._mapgl = {
+    // Registry of user-added images per map: { mapId: { imageId: { url, options } } }
+    userImages: {},
+    // Queue of pending operations during style loading: { mapId: [] }
+    pendingOperations: {},
+    // Track which maps are currently loading a style: { mapId: true/false }
+    styleLoading: {},
+    // Registry of GeoJSON source data per map: { mapId: { sourceId: geojsonData } }
+    sourceData: {}
+  };
+}
+
+// Helper to store GeoJSON source data for later retrieval
+function storeSourceDataMapbox(mapId, sourceId, data) {
+  if (!window._mapgl.sourceData) {
+    window._mapgl.sourceData = {};
+  }
+  if (!window._mapgl.sourceData[mapId]) {
+    window._mapgl.sourceData[mapId] = {};
+  }
+  window._mapgl.sourceData[mapId][sourceId] = data;
+}
+
+// Helper to get stored GeoJSON source data
+function getStoredSourceDataMapbox(mapId, sourceId) {
+  if (window._mapgl.sourceData && window._mapgl.sourceData[mapId]) {
+    return window._mapgl.sourceData[mapId][sourceId];
+  }
+  return null;
+}
+
+// Helper to queue an operation or execute it immediately
+function queueOrExecuteMapbox(mapId, operation) {
+  if (window._mapgl.styleLoading[mapId]) {
+    if (!window._mapgl.pendingOperations[mapId]) {
+      window._mapgl.pendingOperations[mapId] = [];
+    }
+    window._mapgl.pendingOperations[mapId].push(operation);
+    console.log("[MapGL Debug] Queued operation during style load for map:", mapId);
+  } else {
+    operation();
+  }
+}
+
+// Helper to execute all pending operations for a map
+function executePendingOperationsMapbox(mapId) {
+  const pending = window._mapgl.pendingOperations[mapId];
+  if (pending && pending.length > 0) {
+    console.log("[MapGL Debug] Executing", pending.length, "pending operations for map:", mapId);
+    pending.forEach(function(op) {
+      try {
+        op();
+      } catch (err) {
+        console.error("[MapGL Debug] Error executing pending operation:", err);
+      }
+    });
+    window._mapgl.pendingOperations[mapId] = [];
+  }
+}
+
+// Helper to register a user image
+function registerUserImageMapbox(mapId, imageId, url, options) {
+  if (!window._mapgl.userImages[mapId]) {
+    window._mapgl.userImages[mapId] = {};
+  }
+  window._mapgl.userImages[mapId][imageId] = { url: url, options: options };
+  console.log("[MapGL Debug] Registered user image:", imageId, "for map:", mapId);
+}
+
+// Helper to re-add all user images after style change (Mapbox uses callback-based loadImage)
+function reAddUserImagesMapbox(map, mapId) {
+  const images = window._mapgl.userImages[mapId];
+  if (!images) return;
+
+  for (const imageId in images) {
+    const imageInfo = images[imageId];
+    map.loadImage(imageInfo.url, function(error, image) {
+      if (error) {
+        console.error("[MapGL Debug] Error re-adding image:", imageId, error);
+        return;
+      }
+      if (!map.hasImage(imageId)) {
+        map.addImage(imageId, image, imageInfo.options);
+        console.log("[MapGL Debug] Re-added user image after style change:", imageId);
+      }
+    });
+  }
+}
+
+// Screenshot capture functionality
+async function captureMapScreenshot(map, options) {
+  const container = map.getContainer();
+  const hiddenElements = [];
+
+  // Hide controls (nav, fullscreen, screenshot, etc.) but keep legends/attribution based on options
+  if (options.hide_controls) {
+    container.querySelectorAll('.maplibregl-ctrl-group, .mapboxgl-ctrl-group').forEach(el => {
+      // Skip scale bar if include_scale_bar is true
+      if (options.include_scale_bar && el.querySelector('.maplibregl-ctrl-scale, .mapboxgl-ctrl-scale')) {
+        return;
+      }
+      hiddenElements.push({ element: el, display: el.style.display });
+      el.style.display = 'none';
+    });
+    // Also hide layers control and measurement box
+    container.querySelectorAll('.layers-control, .mapgl-measurement-box').forEach(el => {
+      hiddenElements.push({ element: el, display: el.style.display });
+      el.style.display = 'none';
+    });
+  }
+
+  // Hide legends if requested
+  if (!options.include_legend) {
+    container.querySelectorAll('.mapboxgl-legend').forEach(el => {
+      hiddenElements.push({ element: el, display: el.style.display });
+      el.style.display = 'none';
+    });
+  }
+
+  // Attribution is always included to comply with map provider TOS
+
+  try {
+    // Wait for map to be idle
+    if (!map.loaded()) {
+      await new Promise(resolve => map.once('idle', resolve));
+    }
+
+    // Force render and capture
+    map.triggerRepaint();
+    await new Promise(resolve => map.once('render', resolve));
+
+    const canvas = await html2canvas(container, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      logging: false,
+      scale: options.image_scale || 1,
+      onclone: function(clonedDoc, clonedElement) {
+        // Copy WebGL canvas content to cloned canvas
+        const originalCanvas = container.querySelector('canvas.maplibregl-canvas, canvas.mapboxgl-canvas');
+        const clonedCanvas = clonedElement.querySelector('canvas.maplibregl-canvas, canvas.mapboxgl-canvas');
+        if (originalCanvas && clonedCanvas) {
+          const ctx = clonedCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(originalCanvas, 0, 0);
+          }
+        }
+      }
+    });
+
+    // Restore hidden elements
+    hiddenElements.forEach(item => item.element.style.display = item.display);
+    return canvas;
+
+  } catch (error) {
+    // Restore hidden elements even on error
+    hiddenElements.forEach(item => item.element.style.display = item.display);
+    throw error;
+  }
+}
+
+function downloadScreenshot(canvas, filename) {
+  const link = document.createElement('a');
+  link.download = `${filename}.png`;
+  link.href = canvas.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function createScreenshotControl(map, options, isMaplibre = true) {
+  const ctrlPrefix = isMaplibre ? 'maplibregl' : 'mapboxgl';
+
+  const btn = document.createElement("button");
+  btn.className = `${ctrlPrefix}-ctrl-icon ${ctrlPrefix}-ctrl-screenshot`;
+  btn.type = "button";
+  btn.title = options.button_title || "Capture screenshot";
+  btn.setAttribute("aria-label", options.button_title || "Capture screenshot");
+  btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  btn.style.cssText = "display:flex;justify-content:center;align-items:center;cursor:pointer;";
+
+  const container = document.createElement("div");
+  container.className = `${ctrlPrefix}-ctrl ${ctrlPrefix}-ctrl-group`;
+  container.appendChild(btn);
+
+  let capturing = false;
+  btn.onclick = async () => {
+    if (capturing) return;
+    capturing = true;
+    btn.style.opacity = "0.5";
+    btn.style.cursor = "wait";
+
+    try {
+      const canvas = await captureMapScreenshot(map, {
+        include_legend: options.include_legend !== false,
+        hide_controls: options.hide_controls !== false,
+        include_scale_bar: options.include_scale_bar !== false,
+        image_scale: options.image_scale || 1
+      });
+      downloadScreenshot(canvas, options.filename || "map-screenshot");
+    } catch (e) {
+      console.error("Screenshot capture failed:", e);
+    }
+
+    btn.style.opacity = "1";
+    btn.style.cursor = "pointer";
+    capturing = false;
+  };
+
+  const controlObj = {
+    onAdd: () => container,
+    onRemove: () => {
+      if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+    }
+  };
+
+  return controlObj;
 }
 
 HTMLWidgets.widget({
@@ -926,6 +1160,8 @@ HTMLWidgets.widget({
                 }
 
                 map.addSource(source.id, sourceOptions);
+                // Store GeoJSON data for later retrieval (e.g., for draw control)
+                storeSourceDataMapbox(el.id, source.id, geojsonData);
               } else if (source.type === "raster") {
                 if (source.url) {
                   map.addSource(source.id, {
@@ -1695,6 +1931,15 @@ HTMLWidgets.widget({
             el.appendChild(legend);
           }
 
+          // Initialize legend interactivity if configured
+          if (x.legend_interactivity && x.legend_interactivity.length > 0) {
+            x.legend_interactivity.forEach(function(config) {
+              if (typeof initializeLegendInteractivity === "function") {
+                initializeLegendInteractivity(map, el.id, config);
+              }
+            });
+          }
+
           // Add fullscreen control if enabled
           if (x.fullscreen_control && x.fullscreen_control.enabled) {
             const position = x.fullscreen_control.position || "top-right";
@@ -1853,6 +2098,13 @@ HTMLWidgets.widget({
             });
           }
 
+          // Add screenshot control if enabled
+          if (x.screenshot_control) {
+            const screenshotControlObj = createScreenshotControl(map, x.screenshot_control, false);
+            map.addControl(screenshotControlObj, x.screenshot_control.position || "top-right");
+            map.controls.push({ type: "screenshot", control: screenshotControlObj });
+          }
+
           if (x.setProjection) {
             x.setProjection.forEach(function (projectionConfig) {
               if (projectionConfig.projection) {
@@ -1862,7 +2114,10 @@ HTMLWidgets.widget({
           }
 
           if (x.images && Array.isArray(x.images)) {
+            const mapId = el.id;
             x.images.forEach(function (imageInfo) {
+              // Register the image for potential re-adding after style changes
+              registerUserImageMapbox(mapId, imageInfo.id, imageInfo.url, imageInfo.options);
               map.loadImage(imageInfo.url, function (error, image) {
                 if (error) {
                   console.error("Error loading image:", error);
@@ -2386,6 +2641,8 @@ if (HTMLWidgets.shinyMode) {
             }
           });
           map.addSource(message.source.id, sourceConfig);
+          // Store GeoJSON data for later retrieval (e.g., for draw control)
+          storeSourceDataMapbox(mapId, message.source.id, message.source.data);
         } else if (message.source.type === "raster") {
           const sourceConfig = {
             type: "raster",
@@ -2486,6 +2743,13 @@ if (HTMLWidgets.shinyMode) {
         }
       } else if (message.type === "add_layer") {
         try {
+          // Ensure paint and layout are objects, not null
+          if (message.layer.paint === null) {
+            message.layer.paint = {};
+          }
+          if (message.layer.layout === null) {
+            message.layer.layout = {};
+          }
           if (message.layer.before_id) {
             map.addLayer(message.layer, message.layer.before_id);
           } else {
@@ -2839,6 +3103,11 @@ if (HTMLWidgets.shinyMode) {
         legend.innerHTML = message.html;
         legend.classList.add("mapboxgl-legend");
         document.getElementById(data.id).appendChild(legend);
+
+        // Initialize legend interactivity if configured
+        if (message.interactivity && typeof initializeLegendInteractivity === "function") {
+          initializeLegendInteractivity(map, data.id, message.interactivity);
+        }
       } else if (message.type === "set_config_property") {
         map.setConfigProperty(
           message.importId,
@@ -2848,6 +3117,11 @@ if (HTMLWidgets.shinyMode) {
       } else if (message.type === "set_style") {
         // Default preserve_layers to true if not specified
         const preserveLayers = message.preserve_layers !== false;
+        const mapId = map.getContainer().id;
+
+        // Mark style as loading to queue any incoming operations
+        window._mapgl.styleLoading[mapId] = true;
+        console.log("[MapGL Debug] Style loading started for map:", mapId);
 
         // If we should preserve layers and sources
         if (preserveLayers) {
@@ -2885,12 +3159,33 @@ if (HTMLWidgets.shinyMode) {
           // Identify layers using user-added sources
           currentStyle.layers.forEach(function (layer) {
             if (userSourceIds.includes(layer.source)) {
+              // Capture current visibility state (may differ from layer definition)
+              const currentVisibility = map.getLayoutProperty(layer.id, 'visibility');
+              console.log(`[MapGL Debug] Layer ${layer.id} current visibility:`, currentVisibility);
+              if (currentVisibility !== undefined) {
+                if (!layer.layout) {
+                  layer.layout = {};
+                }
+                layer.layout.visibility = currentVisibility;
+                console.log(`[MapGL Debug] Set layer ${layer.id} layout.visibility to:`, layer.layout.visibility);
+              }
               userLayers.push(layer);
             }
           });
 
           // Set up event listener to re-add sources and layers after style loads
           const onStyleLoad = function () {
+            console.log("[MapGL Debug] style.load event fired! Re-adding", userLayers.length, "layers");
+
+            // HACK: Reset layers control UI to show all layers as active
+            const layersControl = document.querySelector('.layers-control');
+            if (layersControl) {
+              const layerLinks = layersControl.querySelectorAll('a');
+              layerLinks.forEach(link => {
+                link.className = 'active';
+              });
+            }
+
             // Re-add user sources
             userSourceIds.forEach(function (sourceId) {
               if (!map.getSource(sourceId)) {
@@ -2902,7 +3197,14 @@ if (HTMLWidgets.shinyMode) {
             // Re-add user layers
             userLayers.forEach(function (layer) {
               if (!map.getLayer(layer.id)) {
+                console.log(`[MapGL Debug] Re-adding layer ${layer.id} with layout:`, layer.layout);
                 map.addLayer(layer);
+
+                // Explicitly set visibility if it was set to 'none'
+                if (layer.layout && layer.layout.visibility === 'none') {
+                  map.setLayoutProperty(layer.id, 'visibility', 'none');
+                  console.log(`[MapGL Debug] Explicitly set ${layer.id} visibility to none`);
+                }
 
                 // Re-add event handlers for tooltips and hover effects
                 if (layer._handlers) {
@@ -3139,11 +3441,20 @@ if (HTMLWidgets.shinyMode) {
               }
             }
 
-            // Remove this listener to avoid adding the same layers multiple times
-            map.off("style.load", onStyleLoad);
+            // Re-add user images after style change
+            reAddUserImagesMapbox(map, mapId);
+
+            // Mark style loading as complete and execute any pending operations
+            window._mapgl.styleLoading[mapId] = false;
+            console.log("[MapGL Debug] Style loading completed for map:", mapId);
+            executePendingOperationsMapbox(mapId);
+
           };
 
-          map.on("style.load", onStyleLoad);
+          map.once("style.load", function() {
+            // Wait for map to be fully idle before adding layers
+            map.once("idle", onStyleLoad);
+          });
         }
 
         // Change the style
@@ -3151,6 +3462,22 @@ if (HTMLWidgets.shinyMode) {
           config: message.config,
           diff: message.diff,
         });
+
+        // For non-preserve mode, still need to handle style loading completion
+        // to re-add images and execute pending operations
+        if (!preserveLayers) {
+          map.once("style.load", function() {
+            map.once("idle", function() {
+              // Re-add user images after style change
+              reAddUserImagesMapbox(map, mapId);
+
+              // Mark style loading as complete and execute any pending operations
+              window._mapgl.styleLoading[mapId] = false;
+              console.log("[MapGL Debug] Style loading completed (non-preserve) for map:", mapId);
+              executePendingOperationsMapbox(mapId);
+            });
+          });
+        }
       } else if (message.type === "add_navigation_control") {
         const nav = new mapboxgl.NavigationControl({
           showCompass: message.options.show_compass,
@@ -3228,6 +3555,10 @@ if (HTMLWidgets.shinyMode) {
         map.addControl(resetControlObj, message.position);
 
         map.controls.push({ type: "reset", control: resetControlObj });
+      } else if (message.type === "add_screenshot_control") {
+        const screenshotControlObj = createScreenshotControl(map, message.options, false);
+        map.addControl(screenshotControlObj, message.options.position || "top-right");
+        map.controls.push({ type: "screenshot", control: screenshotControlObj });
       } else if (message.type === "add_draw_control") {
         let drawOptions = message.options || {};
 
@@ -4065,6 +4396,14 @@ if (HTMLWidgets.shinyMode) {
               if (globeMinimap) {
                 globeMinimap.remove();
               }
+            } else if (controlType === "draw") {
+              // Hide measurement box when draw control is cleared
+              const measurementBox = document.getElementById(
+                `measurement-box-${map.getContainer().id}`,
+              );
+              if (measurementBox) {
+                measurementBox.style.display = "none";
+              }
             }
           });
         }
@@ -4079,27 +4418,34 @@ if (HTMLWidgets.shinyMode) {
           console.error("Layer not found:", message.layer);
         }
       } else if (message.type === "add_image") {
-        if (Array.isArray(message.images)) {
-          message.images.forEach(function (imageInfo) {
-            map.loadImage(imageInfo.url, function (error, image) {
-              if (error) {
-                console.error("Error loading image:", error);
-                return;
-              }
-              if (!map.hasImage(imageInfo.id)) {
-                map.addImage(imageInfo.id, image, imageInfo.options);
-              }
-            });
-          });
-        } else if (message.url) {
-          map.loadImage(message.url, function (error, image) {
+        const mapId = map.getContainer().id;
+
+        // Helper function to actually add the image
+        const doAddImage = function(imageId, url, options) {
+          // Register the image for re-adding after style changes
+          registerUserImageMapbox(mapId, imageId, url, options);
+
+          map.loadImage(url, function (error, image) {
             if (error) {
               console.error("Error loading image:", error);
               return;
             }
-            if (!map.hasImage(message.imageId)) {
-              map.addImage(message.imageId, image, message.options);
+            if (!map.hasImage(imageId)) {
+              map.addImage(imageId, image, options);
+              console.log("[MapGL Debug] Added image via proxy:", imageId);
             }
+          });
+        };
+
+        if (Array.isArray(message.images)) {
+          message.images.forEach(function (imageInfo) {
+            queueOrExecuteMapbox(mapId, function() {
+              doAddImage(imageInfo.id, imageInfo.url, imageInfo.options);
+            });
+          });
+        } else if (message.url) {
+          queueOrExecuteMapbox(mapId, function() {
+            doAddImage(message.imageId, message.url, message.options);
           });
         } else {
           console.error("Invalid image data:", message);

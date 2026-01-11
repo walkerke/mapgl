@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,18 +116,37 @@
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional named parameters to be passed to the Mapbox GL map.</p></dd>
+<dd><p>Additional named parameters to be passed to the Mapbox GL JS Map.
+See the Mapbox GL JS documentation for a full list of options:
+<a href="https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters" class="external-link">https://docs.mapbox.com/mapbox-gl-js/api/map/#map-parameters</a>.
+Common options include:</p><ul><li><p><code>minZoom</code> / <code>maxZoom</code>: Minimum and maximum zoom levels (0-24).</p></li>
+<li><p><code>maxBounds</code>: Restrict panning to a bounding box, specified as
+<code>list(c(sw_lng, sw_lat), c(ne_lng, ne_lat))</code>.</p></li>
+<li><p><code>dragRotate</code>: If <code>FALSE</code>, disables rotation via mouse drag (default <code>TRUE</code>).</p></li>
+<li><p><code>touchZoomRotate</code>: If <code>FALSE</code>, disables pinch-to-rotate on touch (default <code>TRUE</code>).</p></li>
+<li><p><code>scrollZoom</code>: If <code>FALSE</code>, disables scroll wheel zoom (default <code>TRUE</code>).</p></li>
+</ul></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An HTML widget for a Mapbox map.</p>
+    <p>An HTML widget for a Mapbox GL map.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Basic map</span></span></span>
 <span class="r-in"><span><span class="fu">mapboxgl</span><span class="op">(</span>projection <span class="op">=</span> <span class="st">"globe"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Constrained map with zoom limits and disabled rotation</span></span></span>
+<span class="r-in"><span><span class="fu">mapboxgl</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  bounds <span class="op">=</span> <span class="va">my_sf_object</span>,</span></span>
+<span class="r-in"><span>  minZoom <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  maxZoom <span class="op">=</span> <span class="fl">12</span>,</span></span>
+<span class="r-in"><span>  dragRotate <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>  touchZoomRotate <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
