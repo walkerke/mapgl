@@ -1,0 +1,189 @@
+/**
+ * Legend Interactivity Styles for mapgl
+ * Styles for interactive categorical and continuous legends
+ */
+
+/* Categorical legend items - clickable */
+.mapboxgl-legend[data-interactive="true"][data-legend-type="categorical"] .legend-item {
+    cursor: pointer;
+    transition: opacity 0.2s ease, background-color 0.15s ease;
+    user-select: none;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    border-radius: 4px;
+}
+
+.mapboxgl-legend[data-interactive="true"][data-legend-type="categorical"] .legend-item:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Disabled category styling */
+.mapboxgl-legend[data-interactive="true"] .legend-item[data-enabled="false"] {
+    opacity: 0.5;
+}
+
+.mapboxgl-legend[data-interactive="true"] .legend-item[data-enabled="false"] .legend-color {
+    filter: grayscale(100%);
+}
+
+.mapboxgl-legend[data-interactive="true"] .legend-item[data-enabled="false"] .legend-text {
+    text-decoration: line-through;
+    color: #888;
+}
+
+/* Continuous legend - range slider container */
+.legend-slider-container {
+    margin: 8px 0 4px 0;
+    position: relative;
+    height: 40px;
+    padding: 0 2px;
+}
+
+/* Base slider styling - make both sliders overlap */
+.legend-range-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: transparent;
+    position: absolute;
+    top: 8px;
+    left: 0;
+    pointer-events: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Slider track (only show on bottom slider) */
+.legend-range-slider.legend-range-min {
+    background: linear-gradient(to right, #ddd 0%, #ddd 100%);
+    border-radius: 3px;
+}
+
+.legend-range-slider.legend-range-max {
+    background: transparent;
+}
+
+/* Slider thumb styling - WebKit */
+.legend-range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #007bff;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.legend-range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.legend-range-slider::-webkit-slider-thumb:active {
+    transform: scale(1.15);
+    background: #f0f0f0;
+}
+
+/* Slider thumb styling - Firefox */
+.legend-range-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #007bff;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.legend-range-slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* Firefox track */
+.legend-range-slider::-moz-range-track {
+    background: transparent;
+    border: none;
+}
+
+/* Range track highlight (the colored portion between handles) */
+.legend-range-track {
+    position: absolute;
+    height: 6px;
+    background: #007bff;
+    border-radius: 3px;
+    top: 8px;
+    pointer-events: none;
+    transition: left 0.05s ease, width 0.05s ease;
+}
+
+/* Current range display */
+.legend-range-current {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 22px;
+    color: #555;
+    font-family: inherit;
+}
+
+/* Reset button for filters */
+.legend-reset-btn {
+    display: none;
+    margin-top: 10px;
+    padding: 5px 10px;
+    font-size: 11px;
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+    color: #333;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.legend-reset-btn:hover {
+    background: #e8e8e8;
+    border-color: #bbb;
+}
+
+.legend-reset-btn:active {
+    background: #ddd;
+}
+
+.legend-reset-btn.visible {
+    display: block;
+}
+
+/* Dark theme support - detect via background color */
+.mapboxgl-legend[style*="background-color: rgb(0, 0, 0)"] .legend-range-current,
+.mapboxgl-legend[style*="background-color: #000"] .legend-range-current,
+.mapboxgl-legend[style*="background-color: rgb(33, 33, 33)"] .legend-range-current,
+.mapboxgl-legend[style*="background-color: #212121"] .legend-range-current {
+    color: #ccc;
+}
+
+.mapboxgl-legend[style*="background-color: rgb(0, 0, 0)"] .legend-reset-btn,
+.mapboxgl-legend[style*="background-color: #000"] .legend-reset-btn,
+.mapboxgl-legend[style*="background-color: rgb(33, 33, 33)"] .legend-reset-btn,
+.mapboxgl-legend[style*="background-color: #212121"] .legend-reset-btn {
+    background: #333;
+    border-color: #555;
+    color: #eee;
+}
+
+.mapboxgl-legend[style*="background-color: rgb(0, 0, 0)"] .legend-reset-btn:hover,
+.mapboxgl-legend[style*="background-color: #000"] .legend-reset-btn:hover,
+.mapboxgl-legend[style*="background-color: rgb(33, 33, 33)"] .legend-reset-btn:hover,
+.mapboxgl-legend[style*="background-color: #212121"] .legend-reset-btn:hover {
+    background: #444;
+    border-color: #666;
+}
