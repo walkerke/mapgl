@@ -209,7 +209,8 @@ add_legend <- function(
   interactive = FALSE,
   filter_column = NULL,
   filter_values = NULL,
-  classification = NULL
+  classification = NULL,
+  breaks = NULL
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
@@ -897,13 +898,28 @@ add_continuous_legend <- function(
 
   num_values <- length(values)
 
+  # Format values for display (K/M notation for large numbers)
+  display_values <- sapply(values, function(val) {
+    if (is.na(val)) return(NA_character_)
+    abs_val <- abs(val)
+    if (abs_val >= 1e6) {
+      paste0(round(val / 1e6, 1), "M")
+    } else if (abs_val >= 1e3) {
+      paste0(round(val / 1e3, 1), "K")
+    } else if (abs_val >= 1) {
+      as.character(round(val, 1))
+    } else {
+      as.character(round(val, 2))
+    }
+  })
+
   value_labels <- paste0(
     '<div class="legend-labels">',
     paste0(
       '<span style="position: absolute; left: ',
       seq(0, 100, length.out = num_values),
       '%;">',
-      values,
+      display_values,
       "</span>",
       collapse = ""
     ),

@@ -32,7 +32,8 @@ add_legend(
   interactive = FALSE,
   filter_column = NULL,
   filter_values = NULL,
-  classification = NULL
+  classification = NULL,
+  breaks = NULL
 )
 
 add_categorical_legend(
