@@ -332,7 +332,12 @@ function initCategoricalLegend(map, mapId, legendElement, filterColumn, config) 
 }
 
 /**
- * Initialize continuous legend interactivity with dual-handle slider
+ * Initialize continuous legend interactivity with gradient-overlay handles
+ * Features:
+ * - Vertical line handles positioned on the gradient bar
+ * - Semi-transparent overlays on unselected regions
+ * - Draggable middle region to pan the selection
+ * - Piecewise linear interpolation for non-linear color ramps
  */
 function initContinuousLegend(map, mapId, legendElement, filterColumn, config) {
     var values = config.values.map(Number);
@@ -348,67 +353,157 @@ function initContinuousLegend(map, mapId, legendElement, filterColumn, config) {
     interactiveState.originalMin = minValue;
     interactiveState.originalMax = maxValue;
     interactiveState.filterColumn = filterColumn;
+    interactiveState.values = values; // Store all values for piecewise interpolation
 
-    // Create slider container
-    var sliderContainer = document.createElement("div");
-    sliderContainer.className = "legend-slider-container";
-
-    var sliderId = config.legendId + "-slider";
-
-    // Create two range inputs for dual-handle slider
-    var sliderHtml =
-        '<div class="legend-range-track" id="' + sliderId + '-track"></div>' +
-        '<input type="range" class="legend-range-slider legend-range-min" id="' + sliderId + '-min"' +
-        ' min="' + minValue + '" max="' + maxValue + '" value="' + minValue + '" step="any">' +
-        '<input type="range" class="legend-range-slider legend-range-max" id="' + sliderId + '-max"' +
-        ' min="' + minValue + '" max="' + maxValue + '" value="' + maxValue + '" step="any">' +
-        '<div class="legend-range-current" id="' + sliderId + '-current">' +
-        formatValue(minValue) + " - " + formatValue(maxValue) +
-        "</div>";
-
-    sliderContainer.innerHTML = sliderHtml;
-
-    // Insert after the gradient bar
+    // Find the gradient bar
     var gradientBar = legendElement.querySelector(".legend-gradient");
-    if (gradientBar) {
-        gradientBar.parentNode.insertBefore(sliderContainer, gradientBar.nextSibling);
+    if (!gradientBar) {
+        console.warn("No gradient bar found in legend for interactive continuous legend");
+        return;
+    }
+
+    // Create the interactive overlay container
+    var overlayContainer = document.createElement("div");
+    overlayContainer.className = "legend-gradient-overlay-container";
+
+    // Create left ghost overlay (unselected region)
+    var leftOverlay = document.createElement("div");
+    leftOverlay.className = "legend-gradient-ghost legend-gradient-ghost-left";
+
+    // Create right ghost overlay (unselected region)
+    var rightOverlay = document.createElement("div");
+    rightOverlay.className = "legend-gradient-ghost legend-gradient-ghost-right";
+
+    // Create left handle (min)
+    var leftHandle = document.createElement("div");
+    leftHandle.className = "legend-gradient-handle legend-gradient-handle-left";
+    leftHandle.title = "Drag to set minimum value";
+
+    // Create right handle (max)
+    var rightHandle = document.createElement("div");
+    rightHandle.className = "legend-gradient-handle legend-gradient-handle-right";
+    rightHandle.title = "Drag to set maximum value";
+
+    // Create middle draggable region
+    var middleRegion = document.createElement("div");
+    middleRegion.className = "legend-gradient-middle";
+    middleRegion.title = "Drag to pan the selected range";
+
+    overlayContainer.appendChild(leftOverlay);
+    overlayContainer.appendChild(rightOverlay);
+    overlayContainer.appendChild(leftHandle);
+    overlayContainer.appendChild(rightHandle);
+    overlayContainer.appendChild(middleRegion);
+
+    // Insert overlay container into gradient bar's parent (positioned over gradient)
+    gradientBar.style.position = "relative";
+    gradientBar.appendChild(overlayContainer);
+
+    // Create current range display below gradient
+    var rangeDisplay = document.createElement("div");
+    rangeDisplay.className = "legend-range-display";
+    rangeDisplay.textContent = formatValue(minValue) + " — " + formatValue(maxValue);
+
+    // Insert range display after gradient, before labels
+    var labelsEl = legendElement.querySelector(".legend-labels");
+    if (labelsEl) {
+        labelsEl.parentNode.insertBefore(rangeDisplay, labelsEl);
     } else {
-        legendElement.appendChild(sliderContainer);
+        gradientBar.parentNode.insertBefore(rangeDisplay, gradientBar.nextSibling);
     }
 
-    // Hide the original labels (replaced by slider display)
-    var originalLabels = legendElement.querySelector(".legend-labels");
-    if (originalLabels) {
-        originalLabels.style.display = "none";
+    // Current selection state (as percentages 0-100)
+    var selectionState = {
+        leftPercent: 0,
+        rightPercent: 100
+    };
+
+    /**
+     * Convert position percentage (0-100) to data value
+     * Uses piecewise linear interpolation for non-linear color ramps
+     */
+    function positionToValue(percent) {
+        if (values.length < 2) return values[0] || 0;
+
+        // Clamp percent
+        percent = Math.max(0, Math.min(100, percent));
+
+        var segmentCount = values.length - 1;
+        var segmentWidth = 100 / segmentCount;
+        var segmentIndex = Math.min(
+            Math.floor(percent / segmentWidth),
+            segmentCount - 1
+        );
+        var localPercent = percent - segmentIndex * segmentWidth;
+        var localFraction = localPercent / segmentWidth;
+
+        var startVal = values[segmentIndex];
+        var endVal = values[segmentIndex + 1];
+
+        return startVal + localFraction * (endVal - startVal);
     }
 
-    // Get slider elements
-    var minSlider = document.getElementById(sliderId + "-min");
-    var maxSlider = document.getElementById(sliderId + "-max");
-    var track = document.getElementById(sliderId + "-track");
-    var currentDisplay = document.getElementById(sliderId + "-current");
+    /**
+     * Convert data value to position percentage (0-100)
+     * Inverse of positionToValue
+     */
+    function valueToPosition(value) {
+        if (values.length < 2) return 0;
 
-    // Update track position
-    function updateTrack() {
-        var minVal = parseFloat(minSlider.value);
-        var maxVal = parseFloat(maxSlider.value);
-        var range = maxValue - minValue;
-        var minPercent = ((minVal - minValue) / range) * 100;
-        var maxPercent = ((maxVal - minValue) / range) * 100;
+        // Find which segment this value falls in
+        for (var i = 0; i < values.length - 1; i++) {
+            var startVal = values[i];
+            var endVal = values[i + 1];
+            var minSegVal = Math.min(startVal, endVal);
+            var maxSegVal = Math.max(startVal, endVal);
 
-        track.style.left = minPercent + "%";
-        track.style.width = maxPercent - minPercent + "%";
+            if (value >= minSegVal && value <= maxSegVal) {
+                var segmentCount = values.length - 1;
+                var segmentWidth = 100 / segmentCount;
+                var localFraction = (value - startVal) / (endVal - startVal);
+                return i * segmentWidth + localFraction * segmentWidth;
+            }
+        }
 
-        currentDisplay.textContent = formatValue(minVal) + " - " + formatValue(maxVal);
+        // Fallback: linear interpolation across full range
+        return ((value - minValue) / (maxValue - minValue)) * 100;
     }
 
-    // Debounced filter application
+    /**
+     * Update visual elements based on current selection
+     */
+    function updateVisuals() {
+        var left = selectionState.leftPercent;
+        var right = selectionState.rightPercent;
+
+        // Update ghost overlays
+        leftOverlay.style.width = left + "%";
+        rightOverlay.style.left = right + "%";
+        rightOverlay.style.width = (100 - right) + "%";
+
+        // Update handles
+        leftHandle.style.left = left + "%";
+        rightHandle.style.left = right + "%";
+
+        // Update middle region
+        middleRegion.style.left = left + "%";
+        middleRegion.style.width = (right - left) + "%";
+
+        // Update range display with actual values
+        var minVal = positionToValue(left);
+        var maxVal = positionToValue(right);
+        rangeDisplay.textContent = formatValue(minVal) + " — " + formatValue(maxVal);
+    }
+
+    /**
+     * Apply filter based on current selection
+     */
     var filterTimeout;
     function applyFilterDebounced() {
         clearTimeout(filterTimeout);
         filterTimeout = setTimeout(function () {
-            var minVal = parseFloat(minSlider.value);
-            var maxVal = parseFloat(maxSlider.value);
+            var minVal = positionToValue(selectionState.leftPercent);
+            var maxVal = positionToValue(selectionState.rightPercent);
 
             interactiveState.rangeMin = minVal;
             interactiveState.rangeMax = maxVal;
@@ -425,7 +520,8 @@ function initContinuousLegend(map, mapId, legendElement, filterColumn, config) {
 
             // Update reset button visibility
             var hasFilter =
-                minVal > minValue + 0.001 || maxVal < maxValue - 0.001;
+                selectionState.leftPercent > 0.5 ||
+                selectionState.rightPercent < 99.5;
             updateResetButton(legendElement, hasFilter);
 
             // Send to Shiny if applicable
@@ -442,31 +538,150 @@ function initContinuousLegend(map, mapId, legendElement, filterColumn, config) {
         }, 50);
     }
 
-    // Event listeners for sliders
-    minSlider.addEventListener("input", function () {
-        if (parseFloat(minSlider.value) > parseFloat(maxSlider.value)) {
-            minSlider.value = maxSlider.value;
+    /**
+     * Get mouse/touch position as percentage of gradient width
+     */
+    function getPositionPercent(e) {
+        var rect = gradientBar.getBoundingClientRect();
+        var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        var x = clientX - rect.left;
+        var percent = (x / rect.width) * 100;
+        return Math.max(0, Math.min(100, percent));
+    }
+
+    // Drag state
+    var dragState = {
+        active: false,
+        target: null, // 'left', 'right', or 'middle'
+        startX: 0,
+        startLeftPercent: 0,
+        startRightPercent: 0
+    };
+
+    /**
+     * Handle drag start
+     */
+    function onDragStart(e, target) {
+        e.preventDefault();
+        dragState.active = true;
+        dragState.target = target;
+        dragState.startX = e.touches ? e.touches[0].clientX : e.clientX;
+        dragState.startLeftPercent = selectionState.leftPercent;
+        dragState.startRightPercent = selectionState.rightPercent;
+
+        document.addEventListener("mousemove", onDragMove);
+        document.addEventListener("mouseup", onDragEnd);
+        document.addEventListener("touchmove", onDragMove);
+        document.addEventListener("touchend", onDragEnd);
+
+        // Add dragging class for visual feedback
+        overlayContainer.classList.add("dragging");
+    }
+
+    /**
+     * Handle drag movement
+     */
+    function onDragMove(e) {
+        if (!dragState.active) return;
+
+        var percent = getPositionPercent(e);
+        var deltaPercent =
+            percent - getPositionPercent({ clientX: dragState.startX });
+
+        if (dragState.target === "left") {
+            // Move left handle
+            var newLeft = Math.max(
+                0,
+                Math.min(selectionState.rightPercent - 2, percent)
+            );
+            selectionState.leftPercent = newLeft;
+        } else if (dragState.target === "right") {
+            // Move right handle
+            var newRight = Math.min(
+                100,
+                Math.max(selectionState.leftPercent + 2, percent)
+            );
+            selectionState.rightPercent = newRight;
+        } else if (dragState.target === "middle") {
+            // Pan both handles together
+            var rangeWidth =
+                dragState.startRightPercent - dragState.startLeftPercent;
+            var currentX = e.touches ? e.touches[0].clientX : e.clientX;
+            var rect = gradientBar.getBoundingClientRect();
+            var deltaX = currentX - dragState.startX;
+            var deltaPct = (deltaX / rect.width) * 100;
+
+            var newLeft = dragState.startLeftPercent + deltaPct;
+            var newRight = dragState.startRightPercent + deltaPct;
+
+            // Clamp to bounds
+            if (newLeft < 0) {
+                newLeft = 0;
+                newRight = rangeWidth;
+            }
+            if (newRight > 100) {
+                newRight = 100;
+                newLeft = 100 - rangeWidth;
+            }
+
+            selectionState.leftPercent = newLeft;
+            selectionState.rightPercent = newRight;
         }
-        updateTrack();
+
+        updateVisuals();
+        // Visual preview only during drag - filter applied on drag end
+    }
+
+    /**
+     * Handle drag end - apply filter on release
+     */
+    function onDragEnd() {
+        if (!dragState.active) return;
+
+        dragState.active = false;
+        dragState.target = null;
+
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onDragEnd);
+        document.removeEventListener("touchmove", onDragMove);
+        document.removeEventListener("touchend", onDragEnd);
+
+        overlayContainer.classList.remove("dragging");
+
+        // Apply filter now that drag is complete
         applyFilterDebounced();
+    }
+
+    // Attach event listeners
+    leftHandle.addEventListener("mousedown", function (e) {
+        onDragStart(e, "left");
+    });
+    leftHandle.addEventListener("touchstart", function (e) {
+        onDragStart(e, "left");
     });
 
-    maxSlider.addEventListener("input", function () {
-        if (parseFloat(maxSlider.value) < parseFloat(minSlider.value)) {
-            maxSlider.value = minSlider.value;
-        }
-        updateTrack();
-        applyFilterDebounced();
+    rightHandle.addEventListener("mousedown", function (e) {
+        onDragStart(e, "right");
+    });
+    rightHandle.addEventListener("touchstart", function (e) {
+        onDragStart(e, "right");
     });
 
-    // Initial track position
-    updateTrack();
+    middleRegion.addEventListener("mousedown", function (e) {
+        onDragStart(e, "middle");
+    });
+    middleRegion.addEventListener("touchstart", function (e) {
+        onDragStart(e, "middle");
+    });
+
+    // Initial visual update
+    updateVisuals();
 
     // Add reset button
     addResetButton(legendElement, function () {
-        minSlider.value = minValue;
-        maxSlider.value = maxValue;
-        updateTrack();
+        selectionState.leftPercent = 0;
+        selectionState.rightPercent = 100;
+        updateVisuals();
 
         interactiveState.rangeMin = minValue;
         interactiveState.rangeMax = maxValue;
