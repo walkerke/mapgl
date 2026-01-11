@@ -1,7 +1,33 @@
+# mapgl 0.4.4
+
+* Update Mapbox GL JS to v3.17.0 and MapLibre GL JS to v5.15.0.
+
+* **Interactive legends**: New opt-in interactivity for map legends enables direct data filtering from the legend:
+  - Categorical legends: Click legend items to toggle category visibility on the map. Disabled categories are visually indicated with reduced opacity and strikethrough text.
+  - Continuous legends: Drag dual handles on the gradient bar to filter data within a selected range. Ghost overlays indicate excluded regions, and the middle section can be dragged to pan the selection window.
+  - New parameters `interactive = TRUE`, `filter_column`, and `classification` in legend functions
+  - Smart number formatting with K/M notation for large values in legend labels
+  - New `interactive_legend` parameter in `maplibre_view()` and `mapboxgl_view()` for quick interactive visualizations
+  - Full Shiny integration with filter state available via input values
+  - Works with GeoJSON, vector tiles, and PMTiles sources
+
+* **Screenshot control**: New `add_screenshot_control()` function allows users to capture and download map screenshots as PNG images. Includes `image_scale` parameter for controlling output resolution.
+
+* **Globe projection for compare views**: Compare maps in MapLibre now properly respect globe projection when specified.
+
+* **Bug fixes and improvements**:
+  - Fixed draw control source handling for better feature management (#164)
+  - Fixed `step_expr()` to properly handle quoted column names (#148)
+  - Fixed layer visibility state synchronization on style changes (#159)
+  - Images added via `add_image()` now persist across `set_style()` calls
+  - Measurement display box properly removed when draw control is cleared
+  - Added warning when fill extrusion layers are used with MapLibre globe projection (unsupported)
+  - Improved categorical color palette usage in quickview functions
+
 # mapgl 0.4.3
 
-* Update Mapbox GL JS, MapLibre GL JS, and Turf.js versions 
-The `bounds` argument in `maplibre()` and `mapboxgl()` now accepts `sf::st_bbox()` output with automatic CRS transformation to EPSG:4326.
+* Update Mapbox GL JS, MapLibre GL JS, and Turf.js versions.
+* The `bounds` argument in `maplibre()` and `mapboxgl()` now accepts `sf::st_bbox()` output with automatic CRS transformation to EPSG:4326.
 * Fixed control duplication when `set_style()` is called in Shiny applications.
 * Fixed `clear_controls()` not properly removing controls.
 * Added `projection` argument to `maplibre()` for consistency with `mapboxgl()`.
