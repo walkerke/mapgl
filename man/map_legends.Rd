@@ -99,7 +99,12 @@ add_continuous_legend(
   margin_bottom = NULL,
   margin_left = NULL,
   style = NULL,
-  target = "compare"
+  target = "compare",
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  classification = NULL,
+  breaks = NULL
 )
 
 \method{add_legend}{maplibre_compare}(
@@ -121,7 +126,12 @@ add_continuous_legend(
   margin_bottom = NULL,
   margin_left = NULL,
   style = NULL,
-  target = "compare"
+  target = "compare",
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  classification = NULL,
+  breaks = NULL
 )
 }
 \arguments{
@@ -163,13 +173,15 @@ add_continuous_legend(
 
 \item{target}{For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare".}
 
-\item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE.}
+\item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.}
 
 \item{filter_column}{Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.}
 
 \item{filter_values}{For interactive legends, the actual data values to filter on. For categorical legends, use this when your display labels differ from the data values (e.g., values = c("Music", "Bar") for display, filter_values = c("music", "bar") for filtering). For continuous legends, provide numeric break values when using formatted display labels (e.g., values = get_legend_labels(scale), filter_values = get_breaks(scale)). If NULL (default), uses values.}
 
 \item{classification}{A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.}
+
+\item{breaks}{Numeric vector of break points for filtering with classification-based legends. Typically extracted automatically from the classification object. Only needed if you want to override the default breaks.}
 }
 \value{
 The updated map object with the legend added.

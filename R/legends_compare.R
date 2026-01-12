@@ -19,8 +19,22 @@ add_legend.mapboxgl_compare <- function(
   margin_bottom = NULL,
   margin_left = NULL,
   style = NULL,
-  target = "compare"
+  target = "compare",
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  classification = NULL,
+  breaks = NULL
 ) {
+
+  # Warn if interactive features are requested (not yet supported for compare maps)
+  if (interactive) {
+    warning(
+      "Interactive legends are not yet supported for compare maps. The legend will be displayed without interactivity.",
+      call. = FALSE
+    )
+  }
+
   # Store the legend information in the widget's x data
   if (is.null(map$x$compare_legends)) {
     map$x$compare_legends <- list()
