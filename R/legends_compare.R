@@ -24,7 +24,8 @@ add_legend.mapboxgl_compare <- function(
   filter_column = NULL,
   filter_values = NULL,
   classification = NULL,
-  breaks = NULL
+  breaks = NULL,
+  draggable = FALSE
 ) {
 
   # Warn if interactive features are requested (not yet supported for compare maps)

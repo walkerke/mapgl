@@ -33,7 +33,8 @@ add_legend(
   filter_column = NULL,
   filter_values = NULL,
   classification = NULL,
-  breaks = NULL
+  breaks = NULL,
+  draggable = FALSE
 )
 
 add_categorical_legend(
@@ -57,7 +58,8 @@ add_categorical_legend(
   interactive = FALSE,
   filter_column = NULL,
   filter_values = NULL,
-  breaks = NULL
+  breaks = NULL,
+  draggable = FALSE
 )
 
 add_continuous_legend(
@@ -77,7 +79,8 @@ add_continuous_legend(
   style = NULL,
   interactive = FALSE,
   filter_column = NULL,
-  filter_values = NULL
+  filter_values = NULL,
+  draggable = FALSE
 )
 
 \method{add_legend}{mapboxgl_compare}(
@@ -104,7 +107,8 @@ add_continuous_legend(
   filter_column = NULL,
   filter_values = NULL,
   classification = NULL,
-  breaks = NULL
+  breaks = NULL,
+  draggable = FALSE
 )
 
 \method{add_legend}{maplibre_compare}(
@@ -131,7 +135,8 @@ add_continuous_legend(
   filter_column = NULL,
   filter_values = NULL,
   classification = NULL,
-  breaks = NULL
+  breaks = NULL,
+  draggable = FALSE
 )
 }
 \arguments{
@@ -182,6 +187,8 @@ add_continuous_legend(
 \item{classification}{A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.}
 
 \item{breaks}{Numeric vector of break points for filtering with classification-based legends. Typically extracted automatically from the classification object. Only needed if you want to override the default breaks.}
+
+\item{draggable}{Logical, whether the legend can be dragged to a new position by the user. Default is FALSE.}
 }
 \value{
 The updated map object with the legend added.

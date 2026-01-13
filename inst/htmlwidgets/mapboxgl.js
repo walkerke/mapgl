@@ -1940,6 +1940,11 @@ HTMLWidgets.widget({
             });
           }
 
+          // Initialize draggable legends
+          if (typeof initializeDraggableLegends === "function") {
+            initializeDraggableLegends(el);
+          }
+
           // Add fullscreen control if enabled
           if (x.fullscreen_control && x.fullscreen_control.enabled) {
             const position = x.fullscreen_control.position || "top-right";

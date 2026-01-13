@@ -186,6 +186,7 @@
 #' @param filter_values For interactive legends, the actual data values to filter on. For categorical legends, use this when your display labels differ from the data values (e.g., values = c("Music", "Bar") for display, filter_values = c("music", "bar") for filtering). For continuous legends, provide numeric break values when using formatted display labels (e.g., values = get_legend_labels(scale), filter_values = get_breaks(scale)). If NULL (default), uses values.
 #' @param classification A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.
 #' @param breaks Numeric vector of break points for filtering with classification-based legends. Typically extracted automatically from the classification object. Only needed if you want to override the default breaks.
+#' @param draggable Logical, whether the legend can be dragged to a new position by the user. Default is FALSE.
 #' @export
 add_legend <- function(
   map,
@@ -211,7 +212,8 @@ add_legend <- function(
   filter_column = NULL,
   filter_values = NULL,
   classification = NULL,
-  breaks = NULL
+  breaks = NULL,
+  draggable = FALSE
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
@@ -263,7 +265,8 @@ if (is.null(values) || is.null(colors)) {
         style,
         interactive,
         filter_column,
-        filter_values
+        filter_values,
+        draggable
       )
     } else {
       add_categorical_legend(
@@ -287,7 +290,8 @@ if (is.null(values) || is.null(colors)) {
         interactive,
         filter_column,
         filter_values,
-        breaks
+        breaks,
+        draggable
       )
     }
   }
@@ -317,7 +321,8 @@ add_categorical_legend <- function(
   interactive = FALSE,
   filter_column = NULL,
   filter_values = NULL,
-  breaks = NULL
+  breaks = NULL,
+  draggable = FALSE
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -632,6 +637,9 @@ add_categorical_legend <- function(
     ""
   }
 
+  # Add draggable attribute if draggable is TRUE
+  draggable_attr <- if (draggable) ' data-draggable="true"' else ""
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
@@ -640,6 +648,7 @@ add_categorical_legend <- function(
     '"',
     layer_attr,
     interactive_attr,
+    draggable_attr,
     ">",
     "<h2>",
     legend_title,
@@ -887,7 +896,8 @@ add_continuous_legend <- function(
   style = NULL,
   interactive = FALSE,
   filter_column = NULL,
-  filter_values = NULL
+  filter_values = NULL,
+  draggable = FALSE
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
@@ -972,6 +982,9 @@ add_continuous_legend <- function(
     ""
   }
 
+  # Add draggable attribute if draggable is TRUE
+  draggable_attr <- if (draggable) ' data-draggable="true"' else ""
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
@@ -980,6 +993,7 @@ add_continuous_legend <- function(
     '"',
     layer_attr,
     interactive_attr,
+    draggable_attr,
     ">",
     "<h2>",
     legend_title,

@@ -891,3 +891,172 @@ function formatValue(value) {
         return value.toFixed(2);
     }
 }
+
+/**
+ * Initialize draggable functionality for legends
+ * Called automatically when legends are rendered
+ * @param {HTMLElement} container - The map container element
+ */
+function initializeDraggableLegends(container) {
+    var legends = container.querySelectorAll('.mapboxgl-legend[data-draggable="true"]');
+    legends.forEach(function(legend) {
+        // Skip if already initialized
+        if (legend._draggableInitialized) return;
+        legend._draggableInitialized = true;
+
+        makeLegendDraggable(legend);
+    });
+}
+
+/**
+ * Make a single legend element draggable
+ * @param {HTMLElement} legend - The legend element
+ */
+function makeLegendDraggable(legend) {
+    var isDragging = false;
+    var startX, startY;
+    var startLeft, startTop;
+
+    // Add draggable class for styling
+    legend.classList.add('legend-draggable');
+
+    // Get the map container (parent of legend)
+    var mapContainer = legend.closest('.mapboxgl-map, .maplibregl-map') || legend.parentElement;
+
+    function onMouseDown(e) {
+        // Don't start drag if clicking on interactive elements (including slider handles)
+        if (e.target.closest('.legend-item, .legend-reset-btn, .continuous-slider-container, .legend-gradient-handle, .legend-gradient-middle, .legend-gradient-overlay-container, input, button')) {
+            return;
+        }
+
+        isDragging = true;
+        legend.classList.add('legend-dragging');
+
+        startX = e.clientX;
+        startY = e.clientY;
+
+        // Get current position
+        var rect = legend.getBoundingClientRect();
+        var containerRect = mapContainer.getBoundingClientRect();
+
+        // Calculate position relative to container
+        startLeft = rect.left - containerRect.left;
+        startTop = rect.top - containerRect.top;
+
+        // Switch to absolute positioning with explicit coordinates
+        legend.style.position = 'absolute';
+        legend.style.left = startLeft + 'px';
+        legend.style.top = startTop + 'px';
+        legend.style.right = 'auto';
+        legend.style.bottom = 'auto';
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+        if (!isDragging) return;
+
+        var deltaX = e.clientX - startX;
+        var deltaY = e.clientY - startY;
+
+        var newLeft = startLeft + deltaX;
+        var newTop = startTop + deltaY;
+
+        // Constrain to container bounds
+        var containerRect = mapContainer.getBoundingClientRect();
+        var legendRect = legend.getBoundingClientRect();
+
+        var maxLeft = containerRect.width - legendRect.width;
+        var maxTop = containerRect.height - legendRect.height;
+
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+        legend.style.left = newLeft + 'px';
+        legend.style.top = newTop + 'px';
+
+        e.preventDefault();
+    }
+
+    function onMouseUp(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        legend.classList.remove('legend-dragging');
+
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    // Add touch support
+    function onTouchStart(e) {
+        if (e.touches.length !== 1) return;
+
+        var touch = e.touches[0];
+        // Don't start drag if touching interactive elements (including slider handles)
+        if (e.target.closest('.legend-item, .legend-reset-btn, .continuous-slider-container, .legend-gradient-handle, .legend-gradient-middle, .legend-gradient-overlay-container, input, button')) {
+            return;
+        }
+
+        isDragging = true;
+        legend.classList.add('legend-dragging');
+
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        var rect = legend.getBoundingClientRect();
+        var containerRect = mapContainer.getBoundingClientRect();
+
+        startLeft = rect.left - containerRect.left;
+        startTop = rect.top - containerRect.top;
+
+        legend.style.position = 'absolute';
+        legend.style.left = startLeft + 'px';
+        legend.style.top = startTop + 'px';
+        legend.style.right = 'auto';
+        legend.style.bottom = 'auto';
+
+        e.preventDefault();
+    }
+
+    function onTouchMove(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+
+        var touch = e.touches[0];
+        var deltaX = touch.clientX - startX;
+        var deltaY = touch.clientY - startY;
+
+        var newLeft = startLeft + deltaX;
+        var newTop = startTop + deltaY;
+
+        var containerRect = mapContainer.getBoundingClientRect();
+        var legendRect = legend.getBoundingClientRect();
+
+        var maxLeft = containerRect.width - legendRect.width;
+        var maxTop = containerRect.height - legendRect.height;
+
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+        legend.style.left = newLeft + 'px';
+        legend.style.top = newTop + 'px';
+
+        e.preventDefault();
+    }
+
+    function onTouchEnd(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        legend.classList.remove('legend-dragging');
+    }
+
+    legend.addEventListener('mousedown', onMouseDown);
+    legend.addEventListener('touchstart', onTouchStart, { passive: false });
+    legend.addEventListener('touchmove', onTouchMove, { passive: false });
+    legend.addEventListener('touchend', onTouchEnd);
+}
