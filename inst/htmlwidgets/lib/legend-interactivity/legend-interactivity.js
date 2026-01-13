@@ -822,10 +822,16 @@ function applyRangeFilter(
 ) {
     var layerState = window._mapglLayerState[mapId];
 
+    // Add small epsilon to handle floating-point precision issues
+    // This prevents edge values from being excluded due to tiny precision differences
+    var epsilon = Math.abs(max - min) * 1e-10;
+    var filterMin = min - epsilon;
+    var filterMax = max + epsilon;
+
     var interactiveFilter = [
         "all",
-        [">=", ["get", column], min],
-        ["<=", ["get", column], max]
+        [">=", ["get", column], filterMin],
+        ["<=", ["get", column], filterMax]
     ];
 
     // Combine with original filter if exists

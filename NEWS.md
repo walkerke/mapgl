@@ -5,17 +5,20 @@
 * **Interactive legends**: New opt-in interactivity for map legends enables direct data filtering from the legend:
   - Categorical legends: Click legend items to toggle category visibility on the map. Disabled categories are visually indicated with reduced opacity and strikethrough text.
   - Continuous legends: Drag dual handles on the gradient bar to filter data within a selected range. Ghost overlays indicate excluded regions, and the middle section can be dragged to pan the selection window.
-  - New parameters `interactive = TRUE`, `filter_column`, and `classification` in legend functions
+  - New parameters `interactive = TRUE`, `filter_column`, `filter_values`, and `classification` in legend functions
   - Smart number formatting with K/M notation for large values in legend labels
   - New `interactive_legend` parameter in `maplibre_view()` and `mapboxgl_view()` for quick interactive visualizations
   - Full Shiny integration with filter state available via input values
   - Works with GeoJSON, vector tiles, and PMTiles sources
+
+* **Draggable legends**: New `draggable = TRUE` parameter allows users to drag legends to any position on the map. Supports both mouse and touch interactions.
 
 * **Screenshot control**: New `add_screenshot_control()` function allows users to capture and download map screenshots as PNG images. Includes `image_scale` parameter for controlling output resolution.
 
 * **Globe projection for compare views**: Compare maps in MapLibre now properly respect globe projection when specified.
 
 * **Bug fixes and improvements**:
+  - Fixed floating-point precision issue in interactive legend filters that could exclude edge values
   - Fixed continuous legend error when values are pre-formatted character strings (e.g., from `get_legend_labels()`)
   - Fixed draw control source handling for better feature management (#164)
   - Fixed `step_expr()` to properly handle quoted column names (#148)
