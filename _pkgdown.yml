@@ -112,6 +112,8 @@ reference:
       - maptiler_style
       - carto_style
       - openfreemap_style
+      - esri_style
+      - esri_open_style
       - interpolate
       - match_expr
       - step_expr

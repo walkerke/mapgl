@@ -604,6 +604,306 @@ carto_style <- function(style_name) {
   return(style_url)
 }
 
+#' Get Esri ArcGIS Basemap Style URL
+#'
+#' Generates a style URL for the ArcGIS Basemap Styles Service (v2). These styles
+#' use authoritative Esri data sources (TomTom, Garmin, USGS, etc.). An ArcGIS
+#' access token is required.
+#'
+#' @param style_name The name of the style. Available styles: "navigation",
+#'   "navigation-night", "streets", "streets-night", "streets-relief",
+#'   "community", "outdoor", "topographic", "terrain", "imagery",
+#'   "light-gray", "dark-gray", "oceans", "hillshade", "human-geography",
+#'   "human-geography-dark", "charted-territory", "colored-pencil", "nova",
+#'   "modern-antique", "midcentury", "newspaper".
+#' @param variant An optional variant for the style. Not all styles support
+#'   variants. Use the style table in Details to see which variants are
+#'   available.
+#' @param token An ArcGIS access token. If not provided, the function will
+#'   attempt to use the \code{ARCGIS_TOKEN} environment variable.
+#' @param language An optional language code for map labels (e.g., "fr",
+#'   "zh-CN").
+#' @param worldview An optional worldview for boundary representation.
+#' @param places An optional POI visibility setting: "all", "attributed", or
+#'   "none".
+#'
+#' @details
+#' The following styles and variant options are available:
+#'
+#' \tabular{ll}{
+#'   \strong{Style} \tab \strong{Variants} \cr
+#'   navigation \tab (none) \cr
+#'   navigation-night \tab (none) \cr
+#'   streets \tab (none) \cr
+#'   streets-night \tab (none) \cr
+#'   streets-relief \tab base \cr
+#'   community \tab (none) \cr
+#'   outdoor \tab (none) \cr
+#'   topographic \tab base \cr
+#'   terrain \tab base, detail \cr
+#'   imagery \tab standard, labels \cr
+#'   light-gray \tab base, labels \cr
+#'   dark-gray \tab base, labels \cr
+#'   oceans \tab base, labels \cr
+#'   hillshade \tab light, dark \cr
+#'   human-geography \tab base, detail, labels \cr
+#'   human-geography-dark \tab base, detail, labels \cr
+#'   charted-territory \tab base \cr
+#'   colored-pencil \tab (none) \cr
+#'   nova \tab (none) \cr
+#'   modern-antique \tab base \cr
+#'   midcentury \tab (none) \cr
+#'   newspaper \tab (none) \cr
+#' }
+#'
+#' @return A style URL string for use with \code{\link{maplibre}}.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' maplibre(style = esri_style("streets"))
+#'
+#' # With a variant
+#' maplibre(style = esri_style("topographic", variant = "base"))
+#'
+#' # With language and places
+#' maplibre(style = esri_style("navigation", language = "fr", places = "all"))
+#' }
+esri_style <- function(
+  style_name,
+  variant = NULL,
+  token = NULL,
+  language = NULL,
+  worldview = NULL,
+  places = NULL
+) {
+  if (is.null(token) || !nzchar(token) || identical(token, NA) || identical(token, NA_character_)) {
+    token <- Sys.getenv("ARCGIS_TOKEN")
+    if (!nzchar(token)) {
+      rlang::abort(
+        "An ArcGIS access token is required. Supply it here or set it in your .Renviron file with 'ARCGIS_TOKEN'='YOUR_TOKEN_HERE'."
+      )
+    }
+  }
+
+  variant_support <- list(
+    "navigation" = character(0),
+    "navigation-night" = character(0),
+    "streets" = character(0),
+    "streets-night" = character(0),
+    "streets-relief" = "base",
+    "community" = character(0),
+    "outdoor" = character(0),
+    "topographic" = "base",
+    "terrain" = c("base", "detail"),
+    "imagery" = c("standard", "labels"),
+    "light-gray" = c("base", "labels"),
+    "dark-gray" = c("base", "labels"),
+    "oceans" = c("base", "labels"),
+    "hillshade" = c("light", "dark"),
+    "human-geography" = c("base", "detail", "labels"),
+    "human-geography-dark" = c("base", "detail", "labels"),
+    "charted-territory" = "base",
+    "colored-pencil" = character(0),
+    "nova" = character(0),
+    "modern-antique" = "base",
+    "midcentury" = character(0),
+    "newspaper" = character(0)
+  )
+
+  available_styles <- names(variant_support)
+
+  if (!style_name %in% available_styles) {
+    rlang::abort(paste0(
+      "Invalid style name '",
+      style_name,
+      "'. Available styles: ",
+      paste(available_styles, collapse = ", ")
+    ))
+  }
+
+  if (!is.null(variant)) {
+    supported_variants <- variant_support[[style_name]]
+    if (length(supported_variants) == 0) {
+      rlang::abort(paste0(
+        "Style '",
+        style_name,
+        "' does not support any variants."
+      ))
+    }
+    if (!variant %in% supported_variants) {
+      rlang::abort(paste0(
+        "Style '",
+        style_name,
+        "' does not support the '",
+        variant,
+        "' variant. Available variants: ",
+        paste(supported_variants, collapse = ", ")
+      ))
+    }
+  }
+
+  base_url <- "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/"
+  style_url <- paste0(base_url, style_name)
+
+  if (!is.null(variant)) {
+    style_url <- paste0(style_url, "/", variant)
+  }
+
+  params <- list(token = token)
+  if (!is.null(language)) params$language <- language
+  if (!is.null(worldview)) params$worldview <- worldview
+  if (!is.null(places)) params$places <- places
+
+  query_string <- paste(
+    names(params),
+    params,
+    sep = "=",
+    collapse = "&"
+  )
+
+  paste0(style_url, "?", query_string)
+}
+
+#' Get Esri Open Basemap Style URL
+#'
+#' Generates a style URL for the ArcGIS Open Basemap Styles. These styles use
+#' open data from Overture Maps and OpenStreetMap. An ArcGIS access token is
+#' required.
+#'
+#' @param style_name The name of the style. Available styles: "osm-style",
+#'   "osm-style-relief", "navigation", "navigation-dark", "streets",
+#'   "streets-relief", "streets-night", "hybrid", "light-gray", "dark-gray",
+#'   "blueprint".
+#' @param variant An optional variant for the style. Not all styles support
+#'   variants. Use the style table in Details to see which variants are
+#'   available.
+#' @param token An ArcGIS access token. If not provided, the function will
+#'   attempt to use the \code{ARCGIS_TOKEN} environment variable.
+#' @param language An optional language code for map labels (e.g., "fr",
+#'   "zh-CN").
+#' @param worldview An optional worldview for boundary representation.
+#' @param places An optional POI visibility setting: "all", "attributed", or
+#'   "none".
+#'
+#' @details
+#' The following styles and variant options are available:
+#'
+#' \tabular{ll}{
+#'   \strong{Style} \tab \strong{Variants} \cr
+#'   osm-style \tab (none) \cr
+#'   osm-style-relief \tab base \cr
+#'   navigation \tab (none) \cr
+#'   navigation-dark \tab (none) \cr
+#'   streets \tab (none) \cr
+#'   streets-relief \tab base \cr
+#'   streets-night \tab (none) \cr
+#'   hybrid \tab detail \cr
+#'   light-gray \tab base, labels \cr
+#'   dark-gray \tab base, labels \cr
+#'   blueprint \tab (none) \cr
+#' }
+#'
+#' @return A style URL string for use with \code{\link{maplibre}}.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' maplibre(style = esri_open_style("streets"))
+#'
+#' # With a variant
+#' maplibre(style = esri_open_style("light-gray", variant = "labels"))
+#'
+#' # Dark navigation style
+#' maplibre(style = esri_open_style("navigation-dark"))
+#' }
+esri_open_style <- function(
+  style_name,
+  variant = NULL,
+  token = NULL,
+  language = NULL,
+  worldview = NULL,
+  places = NULL
+) {
+  if (is.null(token) || !nzchar(token) || identical(token, NA) || identical(token, NA_character_)) {
+    token <- Sys.getenv("ARCGIS_TOKEN")
+    if (!nzchar(token)) {
+      rlang::abort(
+        "An ArcGIS access token is required. Supply it here or set it in your .Renviron file with 'ARCGIS_TOKEN'='YOUR_TOKEN_HERE'."
+      )
+    }
+  }
+
+  variant_support <- list(
+    "osm-style" = character(0),
+    "osm-style-relief" = "base",
+    "navigation" = character(0),
+    "navigation-dark" = character(0),
+    "streets" = character(0),
+    "streets-relief" = "base",
+    "streets-night" = character(0),
+    "hybrid" = "detail",
+    "light-gray" = c("base", "labels"),
+    "dark-gray" = c("base", "labels"),
+    "blueprint" = character(0)
+  )
+
+  available_styles <- names(variant_support)
+
+  if (!style_name %in% available_styles) {
+    rlang::abort(paste0(
+      "Invalid style name '",
+      style_name,
+      "'. Available styles: ",
+      paste(available_styles, collapse = ", ")
+    ))
+  }
+
+  if (!is.null(variant)) {
+    supported_variants <- variant_support[[style_name]]
+    if (length(supported_variants) == 0) {
+      rlang::abort(paste0(
+        "Style '",
+        style_name,
+        "' does not support any variants."
+      ))
+    }
+    if (!variant %in% supported_variants) {
+      rlang::abort(paste0(
+        "Style '",
+        style_name,
+        "' does not support the '",
+        variant,
+        "' variant. Available variants: ",
+        paste(supported_variants, collapse = ", ")
+      ))
+    }
+  }
+
+  base_url <- "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/open/"
+  style_url <- paste0(base_url, style_name)
+
+  if (!is.null(variant)) {
+    style_url <- paste0(style_url, "/", variant)
+  }
+
+  params <- list(token = token)
+  if (!is.null(language)) params$language <- language
+  if (!is.null(worldview)) params$worldview <- worldview
+  if (!is.null(places)) params$places <- places
+
+  query_string <- paste(
+    names(params),
+    params,
+    sep = "=",
+    collapse = "&"
+  )
+
+  paste0(style_url, "?", query_string)
+}
+
 #' Get OpenFreeMap Style URL
 #'
 #' @param style_name The name of the style (e.g., "bright", "positron", "liberty", "dark", or "fiord").
