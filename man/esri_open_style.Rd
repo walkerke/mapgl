@@ -23,8 +23,10 @@ esri_open_style(
 variants. Use the style table in Details to see which variants are
 available.}
 
-\item{token}{An ArcGIS access token. If not provided, the function will
-attempt to use the \code{ARCGIS_TOKEN} environment variable.}
+\item{token}{An ArcGIS access token (character) or an \code{httr2_token}
+object as returned by \code{arcgisutils::auth_user()} and similar
+functions. If not provided, the function will attempt to use the
+\code{ARCGIS_API_KEY} environment variable.}
 
 \item{language}{An optional language code for map labels (e.g., "fr",
 "zh-CN").}

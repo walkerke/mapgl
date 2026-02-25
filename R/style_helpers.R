@@ -619,8 +619,10 @@ carto_style <- function(style_name) {
 #' @param variant An optional variant for the style. Not all styles support
 #'   variants. Use the style table in Details to see which variants are
 #'   available.
-#' @param token An ArcGIS access token. If not provided, the function will
-#'   attempt to use the \code{ARCGIS_TOKEN} environment variable.
+#' @param token An ArcGIS access token (character) or an \code{httr2_token}
+#'   object as returned by \code{arcgisutils::auth_user()} and similar
+#'   functions. If not provided, the function will attempt to use the
+#'   \code{ARCGIS_API_KEY} environment variable.
 #' @param language An optional language code for map labels (e.g., "fr",
 #'   "zh-CN").
 #' @param worldview An optional worldview for boundary representation.
@@ -678,11 +680,15 @@ esri_style <- function(
   worldview = NULL,
   places = NULL
 ) {
+  if (inherits(token, "httr2_token")) {
+    token <- token$access_token
+  }
+
   if (is.null(token) || !nzchar(token) || identical(token, NA) || identical(token, NA_character_)) {
-    token <- Sys.getenv("ARCGIS_TOKEN")
+    token <- Sys.getenv("ARCGIS_API_KEY")
     if (!nzchar(token)) {
       rlang::abort(
-        "An ArcGIS access token is required. Supply it here or set it in your .Renviron file with 'ARCGIS_TOKEN'='YOUR_TOKEN_HERE'."
+        "An ArcGIS access token is required. Supply it here or set it in your .Renviron file with 'ARCGIS_API_KEY'='YOUR_KEY_HERE'."
       )
     }
   }
@@ -779,8 +785,10 @@ esri_style <- function(
 #' @param variant An optional variant for the style. Not all styles support
 #'   variants. Use the style table in Details to see which variants are
 #'   available.
-#' @param token An ArcGIS access token. If not provided, the function will
-#'   attempt to use the \code{ARCGIS_TOKEN} environment variable.
+#' @param token An ArcGIS access token (character) or an \code{httr2_token}
+#'   object as returned by \code{arcgisutils::auth_user()} and similar
+#'   functions. If not provided, the function will attempt to use the
+#'   \code{ARCGIS_API_KEY} environment variable.
 #' @param language An optional language code for map labels (e.g., "fr",
 #'   "zh-CN").
 #' @param worldview An optional worldview for boundary representation.
@@ -827,11 +835,15 @@ esri_open_style <- function(
   worldview = NULL,
   places = NULL
 ) {
+  if (inherits(token, "httr2_token")) {
+    token <- token$access_token
+  }
+
   if (is.null(token) || !nzchar(token) || identical(token, NA) || identical(token, NA_character_)) {
-    token <- Sys.getenv("ARCGIS_TOKEN")
+    token <- Sys.getenv("ARCGIS_API_KEY")
     if (!nzchar(token)) {
       rlang::abort(
-        "An ArcGIS access token is required. Supply it here or set it in your .Renviron file with 'ARCGIS_TOKEN'='YOUR_TOKEN_HERE'."
+        "An ArcGIS access token is required. Supply it here or set it in your .Renviron file with 'ARCGIS_API_KEY'='YOUR_KEY_HERE'."
       )
     }
   }
