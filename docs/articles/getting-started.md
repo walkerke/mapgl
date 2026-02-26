@@ -1,0 +1,164 @@
+# Getting started with mapgl
+
+### Using Mapbox GL JS
+
+Your gateway to Mapbox GL JS v3 in R is the
+[`mapboxgl()`](https://walker-data.com/mapgl/reference/mapboxgl.md)
+function. Run the function with no arguments to get an interactive globe
+using Mapbox’s Standard style:
+
+``` r
+library(mapgl)
+
+mapboxgl()
+```
+
+To use Mapbox maps, you will need a [Mapbox access
+token](https://docs.mapbox.com/help/getting-started/access-tokens/). If
+you are a user of the [mapboxapi](https://walker-data.com/mapboxapi)
+package and have installed your Mapbox access token,
+[`mapboxgl()`](https://walker-data.com/mapgl/reference/mapboxgl.md) will
+pick up your token for you. If you are new to my R packages, you’ll want
+to get a token from your Mapbox account, run
+[`usethis::edit_r_environ()`](https://usethis.r-lib.org/reference/edit.html),
+and set the environment variable
+`MAPBOX_PUBLIC_TOKEN="your_token_here"`. It’s important for you to know
+that Mapbox GL JS is a commercial product that charges you for map
+views; however, it does have a generous free tier.
+
+Mapbox’s default styles are accessible with the
+[`mapbox_style()`](https://walker-data.com/mapgl/reference/mapbox_style.md)
+function, and can be passed to the `style` parameter to change the style
+of your map. Mapbox GL JS also supports modifying map projections; here
+we use `projection = "winkelTripel"` for the Winkel Tripel global
+projection.
+
+``` r
+mapboxgl(
+  style = mapbox_style("satellite"),
+  projection = "winkelTripel")
+```
+
+To get a more local view in your map, you can use the `center`, `zoom`,
+`pitch`, and `bearing` arguments. In the example shown below, these
+arguments are incorporated into a “fly to” animation. **mapgl** supports
+several of these animated transitions. In Mapbox GL JS v3, the new
+Standard style includes custom-rendered buildings around the world, such
+as the American Airlines Center in Dallas.
+
+``` r
+mapboxgl(
+  center = c(-97.6, 25.4)
+) |> 
+  fly_to(
+    center = c(-96.810481, 32.790869),
+    zoom = 18.4,
+    pitch = 75,
+    bearing = 136.8
+  )
+```
+
+![](dallas.gif)
+
+### Using Maplibre GL JS
+
+Maplibre GL JS, a fork of the more permissively-licensed Mapbox GL JS
+1.0, is also available to R users in **mapgl**. The core function to
+initialize a MapLibre map is
+[`maplibre()`](https://walker-data.com/mapgl/reference/maplibre.md). The
+default tiles in
+[`maplibre()`](https://walker-data.com/mapgl/reference/maplibre.md) are
+CARTO’s Voyager tiles, which are usable without an API key.
+
+``` r
+library(mapgl)
+
+maplibre()
+```
+
+[MapTiler](https://www.maptiler.com/) tiles are also available via the
+[`maptiler_style()`](https://walker-data.com/mapgl/reference/maptiler_style.md)
+function. These styles work quite well with MapLibre, but do require an
+API key; set the environment variable `MAPTILER_API_KEY` in your
+.Renviron file to store your key. The example below uses the Bright
+MapTiler style, and adds a fullscreen control and a navigation control
+to the map.
+
+These controls and styles are available with
+[`mapboxgl()`](https://walker-data.com/mapgl/reference/mapboxgl.md) as
+well; **mapgl** aims to provide a consistent API to work with either
+Mapbox or MapLibre.
+
+``` r
+maplibre(
+  style = maptiler_style("bright"),
+  center = c(-43.23412, -22.91370),
+  zoom = 14
+) |> 
+  add_fullscreen_control(position = "top-left") |> 
+  add_navigation_control()
+```
+
+### Quick data visualization with view functions
+
+If you’re looking to quickly visualize spatial data without building
+layers from scratch, **mapgl** includes view functions that streamline
+the process.
+[`mapboxgl_view()`](https://walker-data.com/mapgl/reference/mapboxgl_view.md)
+and
+[`maplibre_view()`](https://walker-data.com/mapgl/reference/maplibre_view.md)
+automatically detect your data type and create appropriate
+visualizations with sensible defaults.
+
+These functions work with **sf** objects and **terra** rasters, and will
+automatically style your data based on geometry type. You can also
+specify a column for styling, and the functions will create appropriate
+color scales for you.
+
+``` r
+library(sf)
+```
+
+    ## Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
+
+``` r
+# Quick view of the North Carolina dataset
+nc <- st_read(system.file("shape/nc.shp", package="sf"))
+```
+
+    ## Reading layer `nc' from data source 
+    ##   `/Users/kylewalker/Library/R/arm64/4.5/library/sf/shape/nc.shp' 
+    ##   using driver `ESRI Shapefile'
+    ## Simple feature collection with 100 features and 14 fields
+    ## Geometry type: MULTIPOLYGON
+    ## Dimension:     XY
+    ## Bounding box:  xmin: -84.32385 ymin: 33.88199 xmax: -75.45698 ymax: 36.58965
+    ## Geodetic CRS:  NAD27
+
+``` r
+maplibre_view(nc, column = "AREA")
+```
+
+If you want to add additional layers on top of a view function, you can
+use the
+[`add_view()`](https://walker-data.com/mapgl/reference/add_view.md)
+function to stack layers. This gives you a middle ground between the
+quick view functions and the full layer-by-layer approach shown in the
+[layers overview
+vignette](https://walker-data.com/mapgl/articles/layers-overview.html).
+
+### Comparing map views
+
+**mapgl** includes a function
+[`compare()`](https://walker-data.com/mapgl/reference/compare.md) that
+allows users to create synced swipe maps that can compare two styles.
+This function works for either Mapbox or MapLibre maps.
+
+``` r
+m1 <- mapboxgl()
+m2 <- mapboxgl(mapbox_style("satellite-streets"))
+
+compare(m1, m2)
+```
+
+![](athens.gif)

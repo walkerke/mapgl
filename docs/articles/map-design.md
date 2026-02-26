@@ -1,0 +1,228 @@
+# Fundamentals of map design with mapgl
+
+The **mapgl** package aims to expose the powerful map design
+capabilities of Mapbox GL JS and Maplibre GL JS, while still feeling
+intuitive to R users. This means that map-making may require a little
+more code than other mapping packages - but it also gives you maximum
+flexibility in how you design your maps.
+
+Let’s grab some data from **tidycensus** on median age by Census tract
+in Florida and initialize an empty map focused on Florida.
+
+``` r
+library(tidycensus)
+library(mapgl)
+
+fl_age <- get_acs(
+  geography = "tract",
+  variables = "B01002_001",
+  state = "FL",
+  year = 2023,
+  geometry = TRUE
+)
+```
+
+    ## Getting data from the 2019-2023 5-year ACS
+
+    ##   |                                                                              |                                                                      |   0%  |                                                                              |=                                                                     |   1%  |                                                                              |=                                                                     |   2%  |                                                                              |==                                                                    |   3%  |                                                                              |===                                                                   |   4%  |                                                                              |===                                                                   |   5%  |                                                                              |====                                                                  |   5%  |                                                                              |====                                                                  |   6%  |                                                                              |=====                                                                 |   7%  |                                                                              |=====                                                                 |   8%  |                                                                              |======                                                                |   8%  |                                                                              |======                                                                |   9%  |                                                                              |=======                                                               |  10%  |                                                                              |========                                                              |  11%  |                                                                              |=========                                                             |  12%  |                                                                              |=========                                                             |  13%  |                                                                              |==========                                                            |  14%  |                                                                              |===========                                                           |  15%  |                                                                              |===========                                                           |  16%  |                                                                              |============                                                          |  17%  |                                                                              |=============                                                         |  18%  |                                                                              |=============                                                         |  19%  |                                                                              |==============                                                        |  20%  |                                                                              |===============                                                       |  21%  |                                                                              |===============                                                       |  22%  |                                                                              |================                                                      |  23%  |                                                                              |=================                                                     |  24%  |                                                                              |=================                                                     |  25%  |                                                                              |==================                                                    |  26%  |                                                                              |===================                                                   |  26%  |                                                                              |===================                                                   |  27%  |                                                                              |====================                                                  |  28%  |                                                                              |====================                                                  |  29%  |                                                                              |=====================                                                 |  29%  |                                                                              |=====================                                                 |  30%  |                                                                              |======================                                                |  31%  |                                                                              |======================                                                |  32%  |                                                                              |=======================                                               |  32%  |                                                                              |=======================                                               |  33%  |                                                                              |========================                                              |  34%  |                                                                              |========================                                              |  35%  |                                                                              |=========================                                             |  35%  |                                                                              |=========================                                             |  36%  |                                                                              |==========================                                            |  37%  |                                                                              |==========================                                            |  38%  |                                                                              |===========================                                           |  38%  |                                                                              |===========================                                           |  39%  |                                                                              |============================                                          |  40%  |                                                                              |=============================                                         |  41%  |                                                                              |==============================                                        |  42%  |                                                                              |==============================                                        |  43%  |                                                                              |===============================                                       |  44%  |                                                                              |================================                                      |  45%  |                                                                              |================================                                      |  46%  |                                                                              |=================================                                     |  47%  |                                                                              |==================================                                    |  48%  |                                                                              |==================================                                    |  49%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================                                  |  51%  |                                                                              |====================================                                  |  52%  |                                                                              |=====================================                                 |  53%  |                                                                              |======================================                                |  54%  |                                                                              |======================================                                |  55%  |                                                                              |=======================================                               |  56%  |                                                                              |========================================                              |  56%  |                                                                              |========================================                              |  57%  |                                                                              |=========================================                             |  58%  |                                                                              |=========================================                             |  59%  |                                                                              |==========================================                            |  59%  |                                                                              |==========================================                            |  60%  |                                                                              |===========================================                           |  61%  |                                                                              |===========================================                           |  62%  |                                                                              |============================================                          |  62%  |                                                                              |============================================                          |  63%  |                                                                              |=============================================                         |  64%  |                                                                              |=============================================                         |  65%  |                                                                              |==============================================                        |  65%  |                                                                              |==============================================                        |  66%  |                                                                              |===============================================                       |  67%  |                                                                              |===============================================                       |  68%  |                                                                              |================================================                      |  68%  |                                                                              |================================================                      |  69%  |                                                                              |=================================================                     |  70%  |                                                                              |==================================================                    |  71%  |                                                                              |===================================================                   |  72%  |                                                                              |===================================================                   |  73%  |                                                                              |====================================================                  |  74%  |                                                                              |=====================================================                 |  75%  |                                                                              |=====================================================                 |  76%  |                                                                              |======================================================                |  77%  |                                                                              |=======================================================               |  78%  |                                                                              |=======================================================               |  79%  |                                                                              |========================================================              |  80%  |                                                                              |=========================================================             |  81%  |                                                                              |=========================================================             |  82%  |                                                                              |==========================================================            |  83%  |                                                                              |===========================================================           |  84%  |                                                                              |===========================================================           |  85%  |                                                                              |============================================================          |  86%  |                                                                              |=============================================================         |  86%  |                                                                              |=============================================================         |  87%  |                                                                              |==============================================================        |  88%  |                                                                              |==============================================================        |  89%  |                                                                              |===============================================================       |  89%  |                                                                              |===============================================================       |  90%  |                                                                              |================================================================      |  91%  |                                                                              |================================================================      |  92%  |                                                                              |=================================================================     |  92%  |                                                                              |=================================================================     |  93%  |                                                                              |==================================================================    |  94%  |                                                                              |==================================================================    |  95%  |                                                                              |===================================================================   |  95%  |                                                                              |===================================================================   |  96%  |                                                                              |====================================================================  |  97%  |                                                                              |====================================================================  |  98%  |                                                                              |===================================================================== |  98%  |                                                                              |===================================================================== |  99%  |                                                                              |======================================================================| 100%
+
+``` r
+fl_map <- mapboxgl(mapbox_style("light"),
+                   bounds = fl_age)
+
+fl_map
+```
+
+### Continuous styling
+
+Styling in Mapbox GL JS and Maplibre GL JS is typically handled through
+*expressions*. Expressions allow for quite a bit of customization for
+map-makers, but can feel clunky for R users. **mapgl** includes several
+functions to help R users translate their code into expressions for use
+in their data visualizations.
+
+For continuous color scales, the
+[`interpolate_palette()`](https://walker-data.com/mapgl/reference/interpolate_palette.md)
+function automatically calculates appropriate break points and creates
+smooth color transitions. You can specify the classification method
+(“equal”, “quantile”, or “jenks”) and either a palette function or
+specific colors:
+
+``` r
+# Automatic continuous scale with equal breaks
+continuous_scale <- interpolate_palette(
+  data = fl_age,
+  column = "estimate",
+  method = "equal",
+  n = 5,
+  palette = viridisLite::plasma
+)
+
+fl_map |>
+  add_fill_layer(
+    id = "fl_tracts",
+    source = fl_age,
+    fill_color = continuous_scale$expression,
+    fill_opacity = 0.5
+  ) |>
+  add_legend(
+    "Median age in Florida",
+    values = get_legend_labels(continuous_scale, digits = 0),
+    colors = get_legend_colors(continuous_scale),
+    type = "continuous"
+  )
+```
+
+For lower-level control, the
+[`interpolate()`](https://walker-data.com/mapgl/reference/interpolate.md)
+function creates an `interpolate` expression where you manually specify
+values and stops. This gives you complete control over the color
+mapping:
+
+``` r
+fl_map |>
+  add_fill_layer(
+  id = "fl_tracts",
+  source = fl_age,
+  fill_color = interpolate(
+    column = "estimate",
+    values = c(20, 80),
+    stops = c("lightblue", "darkblue"),
+    na_color = "lightgrey"
+  ),
+  fill_opacity = 0.5
+ ) |>
+  add_legend(
+    "Median age in Florida",
+    values = c(20, 80),
+    colors = c("lightblue", "darkblue")
+  )
+```
+
+### Categorical styling
+
+Cartographers may prefer a binned method for visualizing their data
+rather than the continuous palette shown above. **mapgl** includes
+several classification functions that automate common choropleth
+workflows. The
+[`step_equal_interval()`](https://walker-data.com/mapgl/reference/step_classification.md)
+function creates equal interval breaks, while
+[`step_quantile()`](https://walker-data.com/mapgl/reference/step_classification.md)
+and
+[`step_jenks()`](https://walker-data.com/mapgl/reference/step_classification.md)
+create quantile and Jenks natural breaks respectively.
+
+These functions automatically calculate appropriate break points and
+generate step expressions. You can specify the number of classes and the
+color palette to use:
+
+``` r
+# Automatic quantile classification with 5 classes
+q_class <- step_quantile(
+  data = fl_age,
+  column = "estimate",
+  n = 5,
+  colors = RColorBrewer::brewer.pal(5, "PRGn")
+)
+
+fl_map |>
+  add_fill_layer(
+    id = "fl_tracts",
+    source = fl_age,
+    fill_color = q_class$expression,
+    fill_opacity = 0.5
+  ) |>
+  add_legend(
+    "Median age in Florida",
+    values = get_legend_labels(q_class, digits = 0, suffix = " years"),
+    colors = get_legend_colors(q_class),
+    type = "categorical"
+  )
+```
+
+For lower-level control, you can still use the
+[`step_expr()`](https://walker-data.com/mapgl/reference/step_expr.md)
+function directly. Step expressions require a `base` value followed by a
+series of `stops` and threshold `values`:
+
+``` r
+brewer_pal <- RColorBrewer::brewer.pal(5, "RdYlBu")
+
+fl_map |>
+  add_fill_layer(
+  id = "fl_tracts",
+  source = fl_age,
+  fill_color = step_expr(
+    column = "estimate",
+    base = brewer_pal[1],
+    stops = brewer_pal[2:5],
+    values = seq(25, 70, 15),
+    na_color = "white"
+  ),
+  fill_opacity = 0.5
+ ) |>
+  add_legend(
+    "Median age in Florida",
+    values = c(
+      "Under 25",
+      "25-40",
+      "40-55",
+      "55-70",
+      "Above 70"
+    ),
+    colors = brewer_pal,
+    type = "categorical"
+  )
+```
+
+### Pop-ups, tooltips, and highlighting
+
+Mapmakers will often want to expose some additional interactivity to
+their users in the form of on-click popups, hover tooltips, and other
+hover effects. In native JavaScript, this can be tricky to set up as it
+requires knowledge of events, queries, and feature states in these
+libraries. **mapgl** wraps this functionality to make these features
+accessible to R users.
+
+The `popup` and `tooltip` arguments take a string as input representing
+the name of the column to display on click or on hover. Both arguments
+accommodate HTML, so the best way to set this up is to create a column
+of values to display in the popup or tooltip, then use this column when
+adding the layer.
+
+Hover effects can be set with the `hover_options` argument. This
+argument takes a list of key-value pairs where the keys are arguments
+for a given layer type (in this case, the fill layer) and arguments are
+the desired values on hover. In the example shown here, we tell Mapbox
+GL JS to change a Census tract’s fill to yellow and fill opacity to 1
+when the users hovers over the tract.
+
+``` r
+fl_age$popup <- glue::glue(
+  "<strong>GEOID: </strong>{fl_age$GEOID}<br><strong>Median age: </strong>{fl_age$estimate}"
+)
+
+fl_map |>
+  add_fill_layer(
+  id = "fl_tracts",
+  source = fl_age,
+  fill_color = interpolate(
+    column = "estimate",
+    values = c(20, 80),
+    stops = c("lightblue", "darkblue"),
+    na_color = "lightgrey"
+  ),
+  fill_opacity = 0.5,
+  popup = "popup",
+  tooltip = "estimate",
+  hover_options = list(
+    fill_color = "yellow",
+    fill_opacity = 1
+  )
+ ) |>
+  add_legend(
+    "Median age in Florida",
+    values = c(20, 80),
+    colors = c("lightblue", "darkblue")
+  )
+```

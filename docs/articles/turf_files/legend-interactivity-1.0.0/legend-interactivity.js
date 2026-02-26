@@ -508,20 +508,31 @@ function initContinuousLegend(map, mapId, legendElement, filterColumn, config) {
             interactiveState.rangeMin = minVal;
             interactiveState.rangeMax = maxVal;
 
-            applyRangeFilter(
-                map,
-                mapId,
-                config.layerId,
-                filterColumn,
-                minVal,
-                maxVal,
-                interactiveState.originalFilter
-            );
+            // Check if at full range (within tolerance) - if so, clear filter instead
+            // This handles cases where legend breaks are rounded but data has more precision
+            var isAtFullRange =
+                selectionState.leftPercent <= 0.5 &&
+                selectionState.rightPercent >= 99.5;
+
+            if (isAtFullRange) {
+                // Restore original filter (no range constraint)
+                map.setFilter(config.layerId, interactiveState.originalFilter);
+                var layerState = window._mapglLayerState[mapId];
+                layerState.filters[config.layerId] = interactiveState.originalFilter;
+            } else {
+                applyRangeFilter(
+                    map,
+                    mapId,
+                    config.layerId,
+                    filterColumn,
+                    minVal,
+                    maxVal,
+                    interactiveState.originalFilter
+                );
+            }
 
             // Update reset button visibility
-            var hasFilter =
-                selectionState.leftPercent > 0.5 ||
-                selectionState.rightPercent < 99.5;
+            var hasFilter = !isAtFullRange;
             updateResetButton(legendElement, hasFilter);
 
             // Send to Shiny if applicable
@@ -772,6 +783,13 @@ function applyRangeBasedCategoricalFilter(
 ) {
     var layerState = window._mapglLayerState[mapId];
 
+    // Calculate epsilon for floating-point precision and rounding issues
+    // Use a larger epsilon (0.1% of range) to account for rounded legend breaks
+    var overallMin = breaks[0];
+    var overallMax = breaks[breaks.length - 1];
+    var range = Math.abs(overallMax - overallMin);
+    var epsilon = range > 0 ? range * 0.001 : 0.001;
+
     var interactiveFilter;
     if (enabledIndices.size === 0) {
         // No categories enabled - hide all features
@@ -785,10 +803,13 @@ function applyRangeBasedCategoricalFilter(
                 var maxVal = breaks[i + 1];
                 // Each bin: value >= min AND value < max (except last bin uses <=)
                 var isLastBin = (i === breaks.length - 2);
+                // Apply epsilon adjustment for edge values to handle floating-point precision
+                var filterMin = (i === 0) ? minVal - epsilon : minVal;
+                var filterMax = isLastBin ? maxVal + epsilon : maxVal;
                 var binCondition = [
                     "all",
-                    [">=", ["get", column], minVal],
-                    isLastBin ? ["<=", ["get", column], maxVal] : ["<", ["get", column], maxVal]
+                    [">=", ["get", column], filterMin],
+                    isLastBin ? ["<=", ["get", column], filterMax] : ["<", ["get", column], filterMax]
                 ];
                 rangeConditions.push(binCondition);
             }
@@ -822,10 +843,18 @@ function applyRangeFilter(
 ) {
     var layerState = window._mapglLayerState[mapId];
 
+    // Add epsilon to handle floating-point precision and rounding issues
+    // Use a larger epsilon (0.1% of range) to account for rounded legend breaks
+    // that may not exactly match data values
+    var range = Math.abs(max - min);
+    var epsilon = range > 0 ? range * 0.001 : 0.001;
+    var filterMin = min - epsilon;
+    var filterMax = max + epsilon;
+
     var interactiveFilter = [
         "all",
-        [">=", ["get", column], min],
-        ["<=", ["get", column], max]
+        [">=", ["get", column], filterMin],
+        ["<=", ["get", column], filterMax]
     ];
 
     // Combine with original filter if exists
@@ -890,4 +919,173 @@ function formatValue(value) {
     } else {
         return value.toFixed(2);
     }
+}
+
+/**
+ * Initialize draggable functionality for legends
+ * Called automatically when legends are rendered
+ * @param {HTMLElement} container - The map container element
+ */
+function initializeDraggableLegends(container) {
+    var legends = container.querySelectorAll('.mapboxgl-legend[data-draggable="true"]');
+    legends.forEach(function(legend) {
+        // Skip if already initialized
+        if (legend._draggableInitialized) return;
+        legend._draggableInitialized = true;
+
+        makeLegendDraggable(legend);
+    });
+}
+
+/**
+ * Make a single legend element draggable
+ * @param {HTMLElement} legend - The legend element
+ */
+function makeLegendDraggable(legend) {
+    var isDragging = false;
+    var startX, startY;
+    var startLeft, startTop;
+
+    // Add draggable class for styling
+    legend.classList.add('legend-draggable');
+
+    // Get the map container (parent of legend)
+    var mapContainer = legend.closest('.mapboxgl-map, .maplibregl-map') || legend.parentElement;
+
+    function onMouseDown(e) {
+        // Don't start drag if clicking on interactive elements (including slider handles)
+        if (e.target.closest('.legend-item, .legend-reset-btn, .continuous-slider-container, .legend-gradient-handle, .legend-gradient-middle, .legend-gradient-overlay-container, input, button')) {
+            return;
+        }
+
+        isDragging = true;
+        legend.classList.add('legend-dragging');
+
+        startX = e.clientX;
+        startY = e.clientY;
+
+        // Get current position
+        var rect = legend.getBoundingClientRect();
+        var containerRect = mapContainer.getBoundingClientRect();
+
+        // Calculate position relative to container
+        startLeft = rect.left - containerRect.left;
+        startTop = rect.top - containerRect.top;
+
+        // Switch to absolute positioning with explicit coordinates
+        legend.style.position = 'absolute';
+        legend.style.left = startLeft + 'px';
+        legend.style.top = startTop + 'px';
+        legend.style.right = 'auto';
+        legend.style.bottom = 'auto';
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    function onMouseMove(e) {
+        if (!isDragging) return;
+
+        var deltaX = e.clientX - startX;
+        var deltaY = e.clientY - startY;
+
+        var newLeft = startLeft + deltaX;
+        var newTop = startTop + deltaY;
+
+        // Constrain to container bounds
+        var containerRect = mapContainer.getBoundingClientRect();
+        var legendRect = legend.getBoundingClientRect();
+
+        var maxLeft = containerRect.width - legendRect.width;
+        var maxTop = containerRect.height - legendRect.height;
+
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+        legend.style.left = newLeft + 'px';
+        legend.style.top = newTop + 'px';
+
+        e.preventDefault();
+    }
+
+    function onMouseUp(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        legend.classList.remove('legend-dragging');
+
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    // Add touch support
+    function onTouchStart(e) {
+        if (e.touches.length !== 1) return;
+
+        var touch = e.touches[0];
+        // Don't start drag if touching interactive elements (including slider handles)
+        if (e.target.closest('.legend-item, .legend-reset-btn, .continuous-slider-container, .legend-gradient-handle, .legend-gradient-middle, .legend-gradient-overlay-container, input, button')) {
+            return;
+        }
+
+        isDragging = true;
+        legend.classList.add('legend-dragging');
+
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        var rect = legend.getBoundingClientRect();
+        var containerRect = mapContainer.getBoundingClientRect();
+
+        startLeft = rect.left - containerRect.left;
+        startTop = rect.top - containerRect.top;
+
+        legend.style.position = 'absolute';
+        legend.style.left = startLeft + 'px';
+        legend.style.top = startTop + 'px';
+        legend.style.right = 'auto';
+        legend.style.bottom = 'auto';
+
+        e.preventDefault();
+    }
+
+    function onTouchMove(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+
+        var touch = e.touches[0];
+        var deltaX = touch.clientX - startX;
+        var deltaY = touch.clientY - startY;
+
+        var newLeft = startLeft + deltaX;
+        var newTop = startTop + deltaY;
+
+        var containerRect = mapContainer.getBoundingClientRect();
+        var legendRect = legend.getBoundingClientRect();
+
+        var maxLeft = containerRect.width - legendRect.width;
+        var maxTop = containerRect.height - legendRect.height;
+
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+        legend.style.left = newLeft + 'px';
+        legend.style.top = newTop + 'px';
+
+        e.preventDefault();
+    }
+
+    function onTouchEnd(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        legend.classList.remove('legend-dragging');
+    }
+
+    legend.addEventListener('mousedown', onMouseDown);
+    legend.addEventListener('touchstart', onTouchStart, { passive: false });
+    legend.addEventListener('touchmove', onTouchMove, { passive: false });
+    legend.addEventListener('touchend', onTouchEnd);
 }

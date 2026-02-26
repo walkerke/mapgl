@@ -1,0 +1,391 @@
+# mapgl
+
+The **mapgl** R package makes the latest versions of [Mapbox GL
+JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [MapLibre GL
+JS](https://maplibre.org/maplibre-gl-js/docs/) available to R users. The
+package interface is designed to make the powerful capabilities of both
+libraries available in R mapping projects, but also feel similar to
+users coming from other R mapping packages.
+
+Install from CRAN:
+
+``` r
+install.packages("mapgl")
+```
+
+Or, install the development version from GitHub:
+
+``` r
+remotes::install_github("walkerke/mapgl")
+```
+
+Read through these vignettes to learn how to use the package:
+
+- [Getting started with
+  **mapgl**](https://walker-data.com/mapgl/articles/getting-started.html)
+
+- [Using layers: an
+  overview](https://walker-data.com/mapgl/articles/layers-overview.html)
+
+- [Fundamentals of map design with
+  **mapgl**](https://walker-data.com/mapgl/articles/map-design.html)
+
+- [Using **mapgl** with
+  Shiny](https://walker-data.com/mapgl/articles/shiny.html)
+
+- [Client-side geospatial analysis with
+  turf.js](https://walker-data.com/mapgl/articles/turf.html)
+
+- [Building story maps with
+  **mapgl**](https://walker-data.com/mapgl/articles/story-maps.html)
+
+## Recommended training and how to learn more
+
+If you find this project useful in your work and would like to ensure
+continued development of the package, you can provide support in the
+following ways:
+
+- [Purchase the official **mapgl** workshop series, hosted by
+  **mapgl**’s author, Kyle
+  Walker](https://walkerdata.gumroad.com/l/mapgl-bundle);
+- [Chip in some funds to support package development via
+  PayPal](https://www.paypal.com/paypalme/walkerdata/);
+- Set up a consulting engagement or workshop though Walker Data to help
+  you implement **mapgl** in your project. Send a note to
+  <kyle@walker-data.com> if you are interested;
+- File an issue - or even better, a pull request - at
+  <https://github.com/walkerke/mapgl/issues>.
+
+To stay on top of package updates / new features and to get information
+about **mapgl** trainings, [be sure to sign up for the Walker Data
+mailing list
+here](https://walker-data.us15.list-manage.com/subscribe?u=1829a68a5eda3d301119fdcd6&id=c4a53d2961).
+
+# Package index
+
+## Creating Maps
+
+Functions to initialize Mapbox GL and MapLibre GL maps
+
+- [`mapboxgl()`](https://walker-data.com/mapgl/reference/mapboxgl.md) :
+  Initialize a Mapbox GL Map
+- [`maplibre()`](https://walker-data.com/mapgl/reference/maplibre.md) :
+  Initialize a Maplibre GL Map
+- [`mapboxgl_view()`](https://walker-data.com/mapgl/reference/mapboxgl_view.md)
+  : Quick visualization of geometries with Mapbox GL
+- [`maplibre_view()`](https://walker-data.com/mapgl/reference/maplibre_view.md)
+  : Quick visualization of geometries with MapLibre GL
+
+## Adding Layers
+
+Functions to add various types of visualization layers to your map
+
+- [`add_layer()`](https://walker-data.com/mapgl/reference/add_layer.md)
+  : Add a layer to a map from a source
+- [`add_fill_layer()`](https://walker-data.com/mapgl/reference/add_fill_layer.md)
+  : Add a fill layer to a map
+- [`add_line_layer()`](https://walker-data.com/mapgl/reference/add_line_layer.md)
+  : Add a line layer to a map
+- [`add_circle_layer()`](https://walker-data.com/mapgl/reference/add_circle_layer.md)
+  : Add a circle layer to a Mapbox GL map
+- [`add_heatmap_layer()`](https://walker-data.com/mapgl/reference/add_heatmap_layer.md)
+  : Add a heatmap layer to a Mapbox GL map
+- [`add_fill_extrusion_layer()`](https://walker-data.com/mapgl/reference/add_fill_extrusion_layer.md)
+  : Add a fill-extrusion layer to a Mapbox GL map
+- [`add_raster_layer()`](https://walker-data.com/mapgl/reference/add_raster_layer.md)
+  : Add a raster layer to a Mapbox GL map
+- [`add_symbol_layer()`](https://walker-data.com/mapgl/reference/add_symbol_layer.md)
+  : Add a symbol layer to a map
+- [`add_view()`](https://walker-data.com/mapgl/reference/add_view.md) :
+  Add a visualization layer to an existing map
+
+## Data Sources
+
+Functions to add different types of data sources
+
+- [`add_source()`](https://walker-data.com/mapgl/reference/add_source.md)
+  : Add a GeoJSON or sf source to a Mapbox GL or Maplibre GL map
+- [`add_vector_source()`](https://walker-data.com/mapgl/reference/add_vector_source.md)
+  : Add a vector tile source to a Mapbox GL or Maplibre GL map
+- [`add_raster_source()`](https://walker-data.com/mapgl/reference/add_raster_source.md)
+  : Add a raster tile source to a Mapbox GL or Maplibre GL map
+- [`add_raster_dem_source()`](https://walker-data.com/mapgl/reference/add_raster_dem_source.md)
+  : Add a raster DEM source to a Mapbox GL or Maplibre GL map
+- [`add_image_source()`](https://walker-data.com/mapgl/reference/add_image_source.md)
+  : Add an image source to a Mapbox GL or Maplibre GL map
+- [`add_video_source()`](https://walker-data.com/mapgl/reference/add_video_source.md)
+  : Add a video source to a Mapbox GL or Maplibre GL map
+- [`add_h3j_source()`](https://walker-data.com/mapgl/reference/add_h3j_source.md)
+  : Add a hexagon source from the H3 geospatial indexing system.
+- [`add_pmtiles_source()`](https://walker-data.com/mapgl/reference/add_pmtiles_source.md)
+  : Add a PMTiles source to a Mapbox GL or Maplibre GL map
+
+## Map Controls
+
+Functions to add interactive controls to your map
+
+- [`add_navigation_control()`](https://walker-data.com/mapgl/reference/add_navigation_control.md)
+  : Add a navigation control to a map
+- [`add_fullscreen_control()`](https://walker-data.com/mapgl/reference/add_fullscreen_control.md)
+  : Add a fullscreen control to a map
+- [`add_scale_control()`](https://walker-data.com/mapgl/reference/add_scale_control.md)
+  : Add a scale control to a map
+- [`add_layers_control()`](https://walker-data.com/mapgl/reference/add_layers_control.md)
+  : Add a layers control to the map
+- [`add_draw_control()`](https://walker-data.com/mapgl/reference/add_draw_control.md)
+  : Add a draw control to a map
+- [`add_geocoder_control()`](https://walker-data.com/mapgl/reference/add_geocoder_control.md)
+  : Add a geocoder control to a map
+- [`add_reset_control()`](https://walker-data.com/mapgl/reference/add_reset_control.md)
+  : Add a reset control to a map
+- [`add_geolocate_control()`](https://walker-data.com/mapgl/reference/add_geolocate_control.md)
+  : Add a geolocate control to a map
+- [`add_globe_control()`](https://walker-data.com/mapgl/reference/add_globe_control.md)
+  : Add a globe control to a map
+- [`add_screenshot_control()`](https://walker-data.com/mapgl/reference/add_screenshot_control.md)
+  : Add a screenshot control to a map
+- [`add_control()`](https://walker-data.com/mapgl/reference/add_control.md)
+  : Add a custom control to a map
+- [`clear_controls()`](https://walker-data.com/mapgl/reference/clear_controls.md)
+  : Clear controls from a Mapbox GL or Maplibre GL map in a Shiny app
+
+## Legends
+
+Functions for adding and managing map legends with customizable styling
+
+- [`add_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)
+  [`add_categorical_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)
+  [`add_continuous_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)
+  : Add legends to Mapbox GL and MapLibre GL maps
+- [`legend_style()`](https://walker-data.com/mapgl/reference/legend_style.md)
+  : Create custom styling for map legends
+- [`clear_legend()`](https://walker-data.com/mapgl/reference/clear_legend.md)
+  : Clear legends from a map
+
+## Markers
+
+Functions for adding and managing markers
+
+- [`add_markers()`](https://walker-data.com/mapgl/reference/add_markers.md)
+  : Add markers to a Mapbox GL or Maplibre GL map
+- [`clear_markers()`](https://walker-data.com/mapgl/reference/clear_markers.md)
+  : Clear markers from a map in a Shiny session
+
+## Styling Helpers
+
+Functions to help with map styling and expressions
+
+- [`mapbox_style()`](https://walker-data.com/mapgl/reference/mapbox_style.md)
+  : Get Mapbox Style URL
+- [`maptiler_style()`](https://walker-data.com/mapgl/reference/maptiler_style.md)
+  : Get MapTiler Style URL
+- [`carto_style()`](https://walker-data.com/mapgl/reference/carto_style.md)
+  : Get CARTO Style URL
+- [`openfreemap_style()`](https://walker-data.com/mapgl/reference/openfreemap_style.md)
+  : Get OpenFreeMap Style URL
+- [`esri_style()`](https://walker-data.com/mapgl/reference/esri_style.md)
+  : Get Esri ArcGIS Basemap Style URL
+- [`esri_open_style()`](https://walker-data.com/mapgl/reference/esri_open_style.md)
+  : Get Esri Open Basemap Style URL
+- [`interpolate()`](https://walker-data.com/mapgl/reference/interpolate.md)
+  : Create an interpolation expression
+- [`match_expr()`](https://walker-data.com/mapgl/reference/match_expr.md)
+  : Create a match expression
+- [`step_expr()`](https://walker-data.com/mapgl/reference/step_expr.md)
+  : Create a step expression
+- [`get_column()`](https://walker-data.com/mapgl/reference/get_column.md)
+  : Get column or property for use in mapping
+- [`concat()`](https://walker-data.com/mapgl/reference/concat.md) :
+  Create a concatenation expression
+- [`number_format()`](https://walker-data.com/mapgl/reference/number_format.md)
+  : Create a number formatting expression
+- [`cluster_options()`](https://walker-data.com/mapgl/reference/cluster_options.md)
+  : Prepare cluster options for circle layers
+- [`palette_to_lut()`](https://walker-data.com/mapgl/reference/palette_to_lut.md)
+  : Convert R color palette to mapgl LUT
+
+## Data Classification
+
+Functions for automatic data classification and choropleth styling
+
+- [`step_equal_interval()`](https://walker-data.com/mapgl/reference/step_classification.md)
+  [`step_quantile()`](https://walker-data.com/mapgl/reference/step_classification.md)
+  [`step_jenks()`](https://walker-data.com/mapgl/reference/step_classification.md)
+  : Step expressions with automatic classification
+- [`interpolate_palette()`](https://walker-data.com/mapgl/reference/interpolate_palette.md)
+  : Create an interpolation expression with automatic palette and break
+  calculation
+- [`get_legend_labels()`](https://walker-data.com/mapgl/reference/classification_helpers.md)
+  [`get_legend_colors()`](https://walker-data.com/mapgl/reference/classification_helpers.md)
+  [`get_breaks()`](https://walker-data.com/mapgl/reference/classification_helpers.md)
+  [`print(`*`<mapgl_classification>`*`)`](https://walker-data.com/mapgl/reference/classification_helpers.md)
+  [`print(`*`<mapgl_continuous_scale>`*`)`](https://walker-data.com/mapgl/reference/classification_helpers.md)
+  : Extract information from classification and continuous scale objects
+
+## Camera and View
+
+Functions to control map camera and viewport
+
+- [`fit_bounds()`](https://walker-data.com/mapgl/reference/fit_bounds.md)
+  : Fit the map to a bounding box
+- [`fly_to()`](https://walker-data.com/mapgl/reference/fly_to.md) : Fly
+  to a given view
+- [`ease_to()`](https://walker-data.com/mapgl/reference/ease_to.md) :
+  Ease to a given view
+- [`jump_to()`](https://walker-data.com/mapgl/reference/jump_to.md) :
+  Jump to a given view
+- [`set_view()`](https://walker-data.com/mapgl/reference/set_view.md) :
+  Set the map center and zoom level
+
+## Map Configuration
+
+Functions to configure map appearance and behavior
+
+- [`set_style()`](https://walker-data.com/mapgl/reference/set_style.md)
+  : Update the style of a map
+- [`set_projection()`](https://walker-data.com/mapgl/reference/set_projection.md)
+  : Set Projection for a Mapbox/Maplibre Map
+- [`set_terrain()`](https://walker-data.com/mapgl/reference/set_terrain.md)
+  : Set terrain properties on a map
+- [`set_fog()`](https://walker-data.com/mapgl/reference/set_fog.md) :
+  Set fog on a Mapbox GL map
+- [`set_rain()`](https://walker-data.com/mapgl/reference/set_rain.md) :
+  Set rain effect on a Mapbox GL map
+- [`set_snow()`](https://walker-data.com/mapgl/reference/set_snow.md) :
+  Set snow effect on a Mapbox GL map
+- [`set_config_property()`](https://walker-data.com/mapgl/reference/set_config_property.md)
+  : Set a configuration property for a Mapbox GL map
+
+## Layer Management
+
+Functions to modify and manage existing layers
+
+- [`set_filter()`](https://walker-data.com/mapgl/reference/set_filter.md)
+  : Set a filter on a map layer
+- [`set_paint_property()`](https://walker-data.com/mapgl/reference/set_paint_property.md)
+  : Set a paint property on a map layer
+- [`set_layout_property()`](https://walker-data.com/mapgl/reference/set_layout_property.md)
+  : Set a layout property on a map layer
+- [`set_tooltip()`](https://walker-data.com/mapgl/reference/set_tooltip.md)
+  : Set tooltip on a map layer
+- [`set_popup()`](https://walker-data.com/mapgl/reference/set_popup.md)
+  : Set popup on a map layer
+- [`set_source()`](https://walker-data.com/mapgl/reference/set_source.md)
+  : Set source of a map layer
+- [`clear_layer()`](https://walker-data.com/mapgl/reference/clear_layer.md)
+  : Clear layers from a map using a proxy
+- [`move_layer()`](https://walker-data.com/mapgl/reference/move_layer.md)
+  : Move a layer to a different z-position
+
+## Shiny Integration
+
+Functions for using mapgl in Shiny applications
+
+- [`mapboxglOutput()`](https://walker-data.com/mapgl/reference/mapboxglOutput.md)
+  : Create a Mapbox GL output element for Shiny
+- [`maplibreOutput()`](https://walker-data.com/mapgl/reference/maplibreOutput.md)
+  : Create a Maplibre GL output element for Shiny
+- [`renderMapboxgl()`](https://walker-data.com/mapgl/reference/renderMapboxgl.md)
+  : Render a Mapbox GL output element in Shiny
+- [`renderMaplibre()`](https://walker-data.com/mapgl/reference/renderMaplibre.md)
+  : Render a Maplibre GL output element in Shiny
+- [`mapboxgl_proxy()`](https://walker-data.com/mapgl/reference/mapboxgl_proxy.md)
+  : Create a proxy object for a Mapbox GL map in Shiny
+- [`maplibre_proxy()`](https://walker-data.com/mapgl/reference/maplibre_proxy.md)
+  : Create a proxy object for a Maplibre GL map in Shiny
+- [`mapboxglCompareOutput()`](https://walker-data.com/mapgl/reference/mapboxglCompareOutput.md)
+  : Create a Mapbox GL Compare output element for Shiny
+- [`maplibreCompareOutput()`](https://walker-data.com/mapgl/reference/maplibreCompareOutput.md)
+  : Create a Maplibre GL Compare output element for Shiny
+- [`renderMapboxglCompare()`](https://walker-data.com/mapgl/reference/renderMapboxglCompare.md)
+  : Render a Mapbox GL Compare output element in Shiny
+- [`renderMaplibreCompare()`](https://walker-data.com/mapgl/reference/renderMaplibreCompare.md)
+  : Render a Maplibre GL Compare output element in Shiny
+- [`mapboxgl_compare_proxy()`](https://walker-data.com/mapgl/reference/mapboxgl_compare_proxy.md)
+  : Create a proxy object for a Mapbox GL Compare widget in Shiny
+- [`maplibre_compare_proxy()`](https://walker-data.com/mapgl/reference/maplibre_compare_proxy.md)
+  : Create a proxy object for a Maplibre GL Compare widget in Shiny
+- [`enable_shiny_hover()`](https://walker-data.com/mapgl/reference/enable_shiny_hover.md)
+  : Enable hover events for Shiny applications
+
+## Turf.js Spatial Operations
+
+Client-side geospatial analysis functions using turf.js
+
+- [`turf_buffer()`](https://walker-data.com/mapgl/reference/turf_buffer.md)
+  : Turf.js Geospatial Operations for mapgl
+- [`turf_union()`](https://walker-data.com/mapgl/reference/turf_union.md)
+  : Union geometries
+- [`turf_intersect()`](https://walker-data.com/mapgl/reference/turf_intersect.md)
+  : Find intersection of two geometries
+- [`turf_difference()`](https://walker-data.com/mapgl/reference/turf_difference.md)
+  : Find difference between two geometries
+- [`turf_filter()`](https://walker-data.com/mapgl/reference/turf_filter.md)
+  : Spatial filter features by predicate
+- [`turf_convex_hull()`](https://walker-data.com/mapgl/reference/turf_convex_hull.md)
+  : Create convex hull
+- [`turf_concave_hull()`](https://walker-data.com/mapgl/reference/turf_concave_hull.md)
+  : Create concave hull
+- [`turf_voronoi()`](https://walker-data.com/mapgl/reference/turf_voronoi.md)
+  : Create Voronoi diagram
+- [`turf_centroid()`](https://walker-data.com/mapgl/reference/turf_centroid.md)
+  : Calculate centroid of geometries
+- [`turf_center_of_mass()`](https://walker-data.com/mapgl/reference/turf_center_of_mass.md)
+  : Calculate center of mass
+- [`turf_distance()`](https://walker-data.com/mapgl/reference/turf_distance.md)
+  : Calculate distance between two features
+- [`turf_area()`](https://walker-data.com/mapgl/reference/turf_area.md)
+  : Calculate area of geometries
+
+## Advanced Features
+
+Functions for advanced mapping features
+
+- [`compare()`](https://walker-data.com/mapgl/reference/compare.md) :
+  Create a Compare widget
+- [`add_globe_minimap()`](https://walker-data.com/mapgl/reference/add_globe_minimap.md)
+  : Add a Globe Minimap to a map
+- [`add_image()`](https://walker-data.com/mapgl/reference/add_image.md)
+  : Add an image to the map
+- [`get_drawn_features()`](https://walker-data.com/mapgl/reference/get_drawn_features.md)
+  : Get drawn features from the map
+- [`add_features_to_draw()`](https://walker-data.com/mapgl/reference/add_features_to_draw.md)
+  : Add features to an existing draw control
+- [`clear_drawn_features()`](https://walker-data.com/mapgl/reference/clear_drawn_features.md)
+  : Clear all drawn features from a map
+- [`query_rendered_features()`](https://walker-data.com/mapgl/reference/query_rendered_features.md)
+  : Query rendered features on a map in a Shiny session
+- [`get_queried_features()`](https://walker-data.com/mapgl/reference/get_queried_features.md)
+  : Get queried features from a map as an sf object
+
+## Story Maps
+
+Functions for creating scrollytelling story maps
+
+- [`story_map()`](https://walker-data.com/mapgl/reference/story_map.md)
+  : Create a scrollytelling story map
+- [`story_maplibre()`](https://walker-data.com/mapgl/reference/story_maplibre.md)
+  : Create a scrollytelling story map with MapLibre
+- [`story_leaflet()`](https://walker-data.com/mapgl/reference/story_leaflet.md)
+  : Create a scrollytelling story map with Leaflet
+- [`story_section()`](https://walker-data.com/mapgl/reference/story_section.md)
+  : Create a story section for story maps
+- [`on_section()`](https://walker-data.com/mapgl/reference/on_section.md)
+  : Observe events on story map section transitions
+
+# Articles
+
+### All vignettes
+
+- [Getting started with
+  mapgl](https://walker-data.com/mapgl/articles/getting-started.md):
+- [Layers
+  overview](https://walker-data.com/mapgl/articles/layers-overview.md):
+- [Fundamentals of map design with
+  mapgl](https://walker-data.com/mapgl/articles/map-design.md):
+- [Using mapgl with
+  Shiny](https://walker-data.com/mapgl/articles/shiny.md):
+- [Building story maps with
+  mapgl](https://walker-data.com/mapgl/articles/story-maps.md):
+- [Client-side geospatial analysis with
+  turf.js](https://walker-data.com/mapgl/articles/turf.md):

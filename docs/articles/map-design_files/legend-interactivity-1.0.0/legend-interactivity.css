@@ -203,3 +203,45 @@
     background: #444;
     border-color: #666;
 }
+
+/* ===========================================
+   Draggable Legends
+   =========================================== */
+
+/* Draggable legend styling */
+.mapboxgl-legend.legend-draggable {
+    cursor: grab;
+}
+
+.mapboxgl-legend.legend-draggable h2 {
+    cursor: grab;
+}
+
+/* While dragging */
+.mapboxgl-legend.legend-dragging {
+    cursor: grabbing;
+    opacity: 0.9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 2000 !important;
+}
+
+.mapboxgl-legend.legend-dragging h2 {
+    cursor: grabbing;
+}
+
+/* Allow clicking on interactive elements without starting drag */
+.mapboxgl-legend.legend-draggable .legend-item {
+    cursor: pointer;
+}
+
+.mapboxgl-legend.legend-draggable .legend-gradient-handle {
+    cursor: ew-resize;
+}
+
+.mapboxgl-legend.legend-draggable .legend-gradient-middle {
+    cursor: grab;
+}
+
+.mapboxgl-legend.legend-dragging .legend-gradient-middle {
+    cursor: grabbing;
+}

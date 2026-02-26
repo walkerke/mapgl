@@ -1,0 +1,158 @@
+# Add a layers control to the map
+
+Add a layers control to the map
+
+## Usage
+
+``` r
+add_layers_control(
+  map,
+  position = "top-left",
+  layers = NULL,
+  collapsible = TRUE,
+  use_icon = TRUE,
+  background_color = NULL,
+  active_color = NULL,
+  hover_color = NULL,
+  active_text_color = NULL,
+  inactive_text_color = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL
+)
+```
+
+## Arguments
+
+- map:
+
+  A map object.
+
+- position:
+
+  The position of the control on the map (one of "top-left",
+  "top-right", "bottom-left", "bottom-right").
+
+- layers:
+
+  Either a character vector of layer IDs to include in the control, a
+  named list/vector where names are labels and values are layer IDs, or
+  a named list where values can be vectors to group multiple layers
+  together. If NULL, all layers will be included.
+
+- collapsible:
+
+  Whether the control should be collapsible.
+
+- use_icon:
+
+  Whether to use a stacked layers icon instead of the "Layers" text when
+  collapsed. Only applies when collapsible = TRUE.
+
+- background_color:
+
+  The background color for the layers control; this will be the color
+  used for inactive layer items.
+
+- active_color:
+
+  The background color for active layer items.
+
+- hover_color:
+
+  The background color for layer items when hovered.
+
+- active_text_color:
+
+  The text color for active layer items.
+
+- inactive_text_color:
+
+  The text color for inactive layer items.
+
+- margin_top:
+
+  Custom top margin in pixels, allowing for fine control over control
+  positioning to avoid overlaps. Default is NULL (uses standard
+  positioning).
+
+- margin_right:
+
+  Custom right margin in pixels. Default is NULL.
+
+- margin_bottom:
+
+  Custom bottom margin in pixels. Default is NULL.
+
+- margin_left:
+
+  Custom left margin in pixels. Default is NULL.
+
+## Value
+
+The modified map object with the layers control added.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+library(tigris)
+options(tigris_use_cache = TRUE)
+
+rds <- roads("TX", "Tarrant")
+tr <- tracts("TX", "Tarrant", cb = TRUE)
+cty <- counties("TX", cb = TRUE)
+
+maplibre() |>
+    fit_bounds(rds) |>
+    add_fill_layer(
+        id = "Census tracts",
+        source = tr,
+        fill_color = "purple",
+        fill_opacity = 0.6
+    ) |>
+    add_line_layer(
+        "Local roads",
+        source = rds,
+        line_color = "pink"
+    ) |>
+    add_layers_control(
+        position = "top-left",
+        background_color = "#ffffff",
+        active_color = "#4a90e2"
+    )
+
+# With custom labels
+maplibre() |>
+    add_fill_layer(id = "tract-fill", source = tr) |>
+    add_line_layer(id = "tract-line", source = tr) |>
+    add_layers_control(
+        layers = list(
+            "Census Tracts" = "tract-fill",
+            "Tract Borders" = "tract-line"
+        )
+    )
+
+# Group multiple layers together
+maplibre(bounds = cty) |>
+    add_fill_layer(id = "county-fill", source = cty, fill_opacity = 0.3) |>
+    add_line_layer(
+        id = "county-outline",
+        source = cty,
+        line_color = "yellow",
+        line_width = 3
+    ) |>
+    add_line_layer(
+        id = "roads-layer",
+        source = rds,
+        line_color = "blue"
+    ) |>
+    add_layers_control(
+        layers = list(
+            "Counties" = c("county-fill", "county-outline"),
+            "Roads" = "roads-layer"
+        )
+    )
+} # }
+```
