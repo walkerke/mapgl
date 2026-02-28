@@ -45,7 +45,7 @@ download.file(
 
 # PMTiles:
 download.file(
-  "https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js",
+  "https://unpkg.com/pmtiles@4.4.0/dist/pmtiles.js",
   destfile = "inst/htmlwidgets/lib/pmtiles/pmtiles.js"
 )
 
