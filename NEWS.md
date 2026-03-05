@@ -1,3 +1,19 @@
+# mapgl 0.4.5
+
+* **Esri styles support**: New `esri_style()` function provides access to Esri basemap styles for use with MapLibre maps, with support for ArcGIS API key authentication.
+
+* **MLT format support**: Updated PMTiles implementation to support the MapLibre Tiles (MLT) format.
+
+* Update Mapbox GL JS to v3.19.1 and MapLibre GL JS to v5.19.0.
+
+* **Bug fixes and improvements**:
+  - Fixed interactive legend edge case where max value could disappear when adjusting the low-end slider (#167)
+  - Fixed control stacking issue when reactives are used in map initialization functions
+  - Improved `add_reset_control()` button to match the visual style of other navigation controls (#168)
+  - Fixed trailing slash in Mapbox GL JS CDN URLs that could cause 404 errors on library load (#176)
+  - Geocoder control now properly hidden when using screenshot control (#169)
+  - Documentation updates (#175)
+
 # mapgl 0.4.4
 
 * Update Mapbox GL JS to v3.17.0 and MapLibre GL JS to v5.15.0.
