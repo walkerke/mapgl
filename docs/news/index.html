@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,22 @@
       <small>Source: <a href="https://github.com/walkerke/mapgl/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.5" id="mapgl-045">mapgl 0.4.5<a class="anchor" aria-label="anchor" href="#mapgl-045"></a></h2>
+<ul><li><p><strong>Esri styles support</strong>: New <code><a href="../reference/esri_style.html">esri_style()</a></code> function provides access to Esri basemap styles for use with MapLibre maps, with support for ArcGIS API key authentication.</p></li>
+<li><p><strong>MLT format support</strong>: Updated PMTiles implementation to support the MapLibre Tiles (MLT) format.</p></li>
+<li><p>Update Mapbox GL JS to v3.19.1 and MapLibre GL JS to v5.19.0.</p></li>
+<li>
+<p><strong>Bug fixes and improvements</strong>:</p>
+<ul><li>Fixed interactive legend edge case where max value could disappear when adjusting the low-end slider (<a href="https://github.com/walkerke/mapgl/issues/167" class="external-link">#167</a>)</li>
+<li>Fixed control stacking issue when reactives are used in map initialization functions</li>
+<li>Improved <code><a href="../reference/add_reset_control.html">add_reset_control()</a></code> button to match the visual style of other navigation controls (<a href="https://github.com/walkerke/mapgl/issues/168" class="external-link">#168</a>)</li>
+<li>Fixed trailing slash in Mapbox GL JS CDN URLs that could cause 404 errors on library load (<a href="https://github.com/walkerke/mapgl/issues/176" class="external-link">#176</a>)</li>
+<li>Geocoder control now properly hidden when using screenshot control (<a href="https://github.com/walkerke/mapgl/issues/169" class="external-link">#169</a>)</li>
+<li>Fixed <code><a href="../reference/set_source.html">set_source()</a></code> not working with <code><a href="../reference/maplibre_compare_proxy.html">maplibre_compare_proxy()</a></code> and <code><a href="../reference/mapboxgl_compare_proxy.html">mapboxgl_compare_proxy()</a></code> (<a href="https://github.com/walkerke/mapgl/issues/171" class="external-link">#171</a>)</li>
+<li>Documentation updates (<a href="https://github.com/walkerke/mapgl/issues/175" class="external-link">#175</a>)</li>
+</ul></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.4" id="mapgl-044">mapgl 0.4.4<a class="anchor" aria-label="anchor" href="#mapgl-044"></a></h2><p class="text-muted">CRAN release: 2026-01-12</p>
 <ul><li><p>Update Mapbox GL JS to v3.17.0 and MapLibre GL JS to v5.15.0.</p></li>

@@ -12,6 +12,7 @@
   - Improved `add_reset_control()` button to match the visual style of other navigation controls (#168)
   - Fixed trailing slash in Mapbox GL JS CDN URLs that could cause 404 errors on library load (#176)
   - Geocoder control now properly hidden when using screenshot control (#169)
+  - Fixed `set_source()` not working with `maplibre_compare_proxy()` and `mapboxgl_compare_proxy()` (#171)
   - Documentation updates (#175)
 
 # mapgl 0.4.4

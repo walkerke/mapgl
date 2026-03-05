@@ -1,5 +1,43 @@
 # Changelog
 
+## mapgl 0.4.5
+
+- **Esri styles support**: New
+  [`esri_style()`](https://walker-data.com/mapgl/reference/esri_style.md)
+  function provides access to Esri basemap styles for use with MapLibre
+  maps, with support for ArcGIS API key authentication.
+
+- **MLT format support**: Updated PMTiles implementation to support the
+  MapLibre Tiles (MLT) format.
+
+- Update Mapbox GL JS to v3.19.1 and MapLibre GL JS to v5.19.0.
+
+- **Bug fixes and improvements**:
+
+  - Fixed interactive legend edge case where max value could disappear
+    when adjusting the low-end slider
+    ([\#167](https://github.com/walkerke/mapgl/issues/167))
+  - Fixed control stacking issue when reactives are used in map
+    initialization functions
+  - Improved
+    [`add_reset_control()`](https://walker-data.com/mapgl/reference/add_reset_control.md)
+    button to match the visual style of other navigation controls
+    ([\#168](https://github.com/walkerke/mapgl/issues/168))
+  - Fixed trailing slash in Mapbox GL JS CDN URLs that could cause 404
+    errors on library load
+    ([\#176](https://github.com/walkerke/mapgl/issues/176))
+  - Geocoder control now properly hidden when using screenshot control
+    ([\#169](https://github.com/walkerke/mapgl/issues/169))
+  - Fixed
+    [`set_source()`](https://walker-data.com/mapgl/reference/set_source.md)
+    not working with
+    [`maplibre_compare_proxy()`](https://walker-data.com/mapgl/reference/maplibre_compare_proxy.md)
+    and
+    [`mapboxgl_compare_proxy()`](https://walker-data.com/mapgl/reference/mapboxgl_compare_proxy.md)
+    ([\#171](https://github.com/walkerke/mapgl/issues/171))
+  - Documentation updates
+    ([\#175](https://github.com/walkerke/mapgl/issues/175))
+
 ## mapgl 0.4.4
 
 CRAN release: 2026-01-12
