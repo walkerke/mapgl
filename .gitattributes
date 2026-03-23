@@ -1,1 +1,6 @@
-docs/* linguist-documentation
+docs/** linguist-documentation
+man/** linguist-documentation
+pkgdown/** linguist-documentation
+tools/readme/** linguist-documentation
+vignettes/** linguist-documentation
+inst/htmlwidgets/lib/** linguist-vendored
