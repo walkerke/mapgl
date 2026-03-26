@@ -164,7 +164,7 @@ add_continuous_legend(
 
 \item{width}{The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.}
 
-\item{layer_id}{The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.}
+\item{layer_id}{The ID of the layer (or a character vector of layer IDs) that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled. When multiple layer IDs are provided with \code{interactive = TRUE}, the legend will filter all specified layers simultaneously.}
 
 \item{margin_top}{Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).}
 

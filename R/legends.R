@@ -18,7 +18,7 @@
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
 #' @param unique_id Optional. A unique identifier for the legend. If not provided, a random ID will be generated.
 #' @param width The width of the legend. Can be specified in pixels (e.g., "250px") or as "auto". Default is NULL, which uses the built-in default.
-#' @param layer_id The ID of the layer that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled.
+#' @param layer_id The ID of the layer (or a character vector of layer IDs) that this legend is associated with. If provided, the legend will be shown/hidden when the layer visibility is toggled. When multiple layer IDs are provided with \code{interactive = TRUE}, the legend will filter all specified layers simultaneously.
 #' @param margin_top Custom top margin in pixels, allowing for fine control over legend positioning. Default is NULL (uses standard positioning).
 #' @param margin_left Custom left margin in pixels. Default is NULL.
 #' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
@@ -625,7 +625,7 @@ add_categorical_legend <- function(
 
   # Add data-layer-id attribute if layer_id is provided
   layer_attr <- if (!is.null(layer_id)) {
-    paste0(' data-layer-id="', layer_id, '"')
+    paste0(' data-layer-id="', paste(layer_id, collapse = " "), '"')
   } else {
     ""
   }
@@ -966,7 +966,7 @@ add_continuous_legend <- function(
 
   # Add data-layer-id attribute if layer_id is provided
   layer_attr <- if (!is.null(layer_id)) {
-    paste0(' data-layer-id="', layer_id, '"')
+    paste0(' data-layer-id="', paste(layer_id, collapse = " "), '"')
   } else {
     ""
   }
