@@ -38,8 +38,35 @@ function initializeLegendInteractivity(map, mapId, config) {
 
     var layerState = window._mapglLayerState[mapId];
 
+    // Ensure interactiveFilters exists (state object may have been created
+    // by map init code without this property)
+    if (!layerState.interactiveFilters) {
+        layerState.interactiveFilters = {};
+    }
+
     // Normalize layerId to array for multi-layer support
     var layerIds = Array.isArray(config.layerId) ? config.layerId : [config.layerId];
+
+    // Defer if style isn't loaded or any specified layer doesn't exist yet
+    // (handles race conditions in Shiny where layers are added via proxy)
+    var allLayersExist = map.isStyleLoaded() && layerIds.every(function(lid) {
+        return !lid || map.getLayer(lid);
+    });
+    if (!allLayersExist) {
+        var retryCount = config._retryCount || 0;
+        if (retryCount < 10) {
+            config._retryCount = retryCount + 1;
+            map.once('idle', function() {
+                initializeLegendInteractivity(map, mapId, config);
+            });
+        } else {
+            console.warn(
+                "Legend interactivity: not all layers found after retries. " +
+                "Missing layers for legend: " + config.legendId
+            );
+        }
+        return;
+    }
 
     // Initialize interactive filter state for each layer
     layerIds.forEach(function(lid) {
