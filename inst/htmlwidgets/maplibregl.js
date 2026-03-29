@@ -878,7 +878,7 @@ async function captureMapScreenshot(map, options) {
     const canvas = await html2canvas(container, {
       useCORS: true,
       allowTaint: true,
-      backgroundColor: null,
+      backgroundColor: options.background_color || null,
       logging: false,
       scale: options.image_scale || 1,
       onclone: function(clonedDoc, clonedElement) {
