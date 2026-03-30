@@ -108,6 +108,15 @@ Functions for adding and managing markers
 - [`clear_markers()`](https://walker-data.com/mapgl/reference/clear_markers.md)
   : Clear markers from a map in a Shiny session
 
+## Static Map Export
+
+Functions to render maps as static PNG images
+
+- [`save_map()`](https://walker-data.com/mapgl/reference/save_map.md) :
+  Save a map as a static PNG image
+- [`print_map()`](https://walker-data.com/mapgl/reference/print_map.md)
+  : Render a map as a static image
+
 ## Styling Helpers
 
 Functions to help with map styling and expressions
@@ -124,6 +133,8 @@ Functions to help with map styling and expressions
   : Get Esri ArcGIS Basemap Style URL
 - [`esri_open_style()`](https://walker-data.com/mapgl/reference/esri_open_style.md)
   : Get Esri Open Basemap Style URL
+- [`basemap_style()`](https://walker-data.com/mapgl/reference/basemap_style.md)
+  : Create a blank basemap style
 - [`interpolate()`](https://walker-data.com/mapgl/reference/interpolate.md)
   : Create an interpolation expression
 - [`match_expr()`](https://walker-data.com/mapgl/reference/match_expr.md)

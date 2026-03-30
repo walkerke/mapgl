@@ -282,13 +282,17 @@ print_map <- function(
 #' Create a blank basemap style
 #'
 #' @description
-#' Creates a minimal map style with only a solid background color and no
-#' basemap tiles. Useful when you want to display data layers without any
-#' underlying map features.
+#' Creates a minimal map style with only a solid background color (or pattern)
+#' and no basemap tiles. Useful when you want to display data layers without
+#' any underlying map features.
 #'
 #' @param color Character string. The background color. Default `"white"`.
 #'   Accepts any CSS color value (e.g., `"#f0f0f0"`, `"lightgrey"`,
-#'   `"rgba(0,0,0,0)"`).
+#'   `"rgba(0,0,0,0)"`). Also used as a fallback behind transparent areas of
+#'   a `pattern`.
+#' @param pattern Character string or `NULL`. The ID of an image to use as a
+#'   repeating background pattern. The image must be loaded with [add_image()]
+#'   before it can be referenced. Default `NULL` (solid color only).
 #'
 #' @return A list representing a minimal map style, suitable for passing to
 #'   the `style` parameter of [maplibre()] or [mapboxgl()].
@@ -299,14 +303,29 @@ print_map <- function(
 #' \dontrun{
 #' library(mapgl)
 #'
+#' # Solid color background
 #' maplibre(style = basemap_style("lightgrey")) |>
 #'   add_fill_layer(
 #'     id = "data",
 #'     source = my_sf_data,
 #'     fill_color = "steelblue"
 #'   )
+#'
+#' # Background pattern (image must be loaded with add_image())
+#' maplibre(style = basemap_style(pattern = "parchment")) |>
+#'   add_image("parchment", "parchment.jpg") |>
+#'   add_line_layer(
+#'     id = "borders",
+#'     source = my_sf_data,
+#'     line_color = "#2c1810"
+#'   )
 #' }
-basemap_style <- function(color = "white") {
+basemap_style <- function(color = "white", pattern = NULL) {
+  paint <- list(`background-color` = color)
+  if (!is.null(pattern)) {
+    paint[["background-pattern"]] <- pattern
+  }
+
   list(
     version = 8L,
     sources = structure(list(), names = character(0)),
@@ -314,9 +333,7 @@ basemap_style <- function(color = "white") {
       list(
         id = "background",
         type = "background",
-        paint = list(
-          `background-color` = color
-        )
+        paint = paint
       )
     )
   )

@@ -14,6 +14,7 @@ add_screenshot_control(
   include_legend = TRUE,
   hide_controls = TRUE,
   include_scale_bar = TRUE,
+  basemap_color = NULL,
   image_scale = 1,
   button_title = "Capture screenshot"
 )

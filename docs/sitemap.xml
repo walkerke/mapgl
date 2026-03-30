@@ -45,6 +45,7 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_vector_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_video_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_view.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/basemap_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/carto_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/classification_helpers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_controls.html</loc></url>
@@ -92,11 +93,13 @@
 <url><loc>https://walker-data.com/mapgl/reference/on_section.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/openfreemap_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/palette_to_lut.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/print_map.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/query_rendered_features.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMapboxgl.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMapboxglCompare.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMaplibre.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/renderMaplibreCompare.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/save_map.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_config_property.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_filter.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/set_fog.html</loc></url>

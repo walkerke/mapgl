@@ -207,8 +207,11 @@ add_legend(
 
 - layer_id:
 
-  The ID of the layer that this legend is associated with. If provided,
-  the legend will be shown/hidden when the layer visibility is toggled.
+  The ID of the layer (or a character vector of layer IDs) that this
+  legend is associated with. If provided, the legend will be
+  shown/hidden when the layer visibility is toggled. When multiple layer
+  IDs are provided with `interactive = TRUE`, the legend will filter all
+  specified layers simultaneously.
 
 - margin_top:
 
