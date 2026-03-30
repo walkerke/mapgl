@@ -105,6 +105,12 @@ reference:
       - add_markers
       - clear_markers
 
+  - title: "Static Map Export"
+    desc: "Functions to render maps as static PNG images"
+    contents:
+      - save_map
+      - print_map
+
   - title: "Styling Helpers"
     desc: "Functions to help with map styling and expressions"
     contents:
@@ -114,6 +120,7 @@ reference:
       - openfreemap_style
       - esri_style
       - esri_open_style
+      - basemap_style
       - interpolate
       - match_expr
       - step_expr

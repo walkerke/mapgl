@@ -2,6 +2,8 @@
 
 ## mapgl 0.4.5
 
+CRAN release: 2026-03-06
+
 - **Esri styles support**: New
   [`esri_style()`](https://walker-data.com/mapgl/reference/esri_style.md)
   function provides access to Esri basemap styles for use with MapLibre
