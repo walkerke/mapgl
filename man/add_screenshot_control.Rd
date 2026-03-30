@@ -36,6 +36,11 @@ the screenshot when \code{hide_controls = TRUE}. Default is TRUE. The scale
 bar is the only interactive control that renders correctly and provides
 useful context in static images.}
 
+\item{basemap_color}{Character string or \code{NULL}. If specified, basemap tiles
+are removed from the screenshot and replaced with this background color
+(e.g., \code{"white"}, \code{"lightgrey"}, \code{"#f0f0f0"}). Use \code{"transparent"} for
+no background. Default \code{NULL} (keep basemap).}
+
 \item{image_scale}{Numeric, the scale factor for the output image resolution.
 Default is 1. Higher values (2 or 3) produce sharper text and legend
 elements but increase file size. Scale 2 produces 4x larger files,

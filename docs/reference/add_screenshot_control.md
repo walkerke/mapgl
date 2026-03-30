@@ -53,6 +53,13 @@ add_screenshot_control(
   interactive control that renders correctly and provides useful context
   in static images.
 
+- basemap_color:
+
+  Character string or `NULL`. If specified, basemap tiles are removed
+  from the screenshot and replaced with this background color (e.g.,
+  `"white"`, `"lightgrey"`, `"#f0f0f0"`). Use `"transparent"` for no
+  background. Default `NULL` (keep basemap).
+
 - image_scale:
 
   Numeric, the scale factor for the output image resolution. Default

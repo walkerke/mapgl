@@ -1633,6 +1633,10 @@ add_control <- function(
 #'   the screenshot when `hide_controls = TRUE`. Default is TRUE. The scale
 #'   bar is the only interactive control that renders correctly and provides
 #'   useful context in static images.
+#' @param basemap_color Character string or `NULL`. If specified, basemap tiles
+#'   are removed from the screenshot and replaced with this background color
+#'   (e.g., `"white"`, `"lightgrey"`, `"#f0f0f0"`). Use `"transparent"` for
+#'   no background. Default `NULL` (keep basemap).
 #' @param image_scale Numeric, the scale factor for the output image resolution.
 #'   Default is 1. Higher values (2 or 3) produce sharper text and legend
 #'   elements but increase file size. Scale 2 produces 4x larger files,
