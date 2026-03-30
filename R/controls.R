@@ -1689,6 +1689,7 @@ add_screenshot_control <- function(
     include_legend = TRUE,
     hide_controls = TRUE,
     include_scale_bar = TRUE,
+    basemap_color = NULL,
     image_scale = 1,
     button_title = "Capture screenshot"
 ) {
@@ -1701,6 +1702,9 @@ add_screenshot_control <- function(
     image_scale = image_scale,
     button_title = button_title
   )
+  if (!is.null(basemap_color)) {
+    screenshot_control$basemap_color <- basemap_color
+  }
 
   if (
     inherits(map, "mapboxgl_proxy") ||

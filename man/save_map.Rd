@@ -12,6 +12,7 @@ save_map(
   include_legend = TRUE,
   hide_controls = TRUE,
   include_scale_bar = TRUE,
+  basemap_color = NULL,
   image_scale = 1,
   background = "white",
   delay = NULL
@@ -36,11 +37,18 @@ Default \code{TRUE}.}
 
 \item{include_scale_bar}{Logical. Include the scale bar? Default \code{TRUE}.}
 
+\item{basemap_color}{Character string or \code{NULL}. If specified, basemap tiles
+are removed and replaced with this background color (e.g., \code{"white"},
+\code{"lightgrey"}, \code{"#f0f0f0"}). Use \code{"transparent"} for no background.
+Default \code{NULL} (keep basemap).}
+
 \item{image_scale}{Numeric. Scale factor for the output image. Use \code{2} for
 retina/HiDPI output. Default \code{1}.}
 
 \item{background}{Character string or \code{NULL}. Background color for the output
-image. Default \code{"white"}. Set to \code{NULL} for a transparent background.}
+image. Default \code{"white"}. Set to \code{NULL} for a transparent background.
+Ignored when \code{basemap_color} is set (basemap_color controls the background
+in that case).}
 
 \item{delay}{Numeric or \code{NULL}. Additional delay in seconds to wait after the
 map reports idle, before capturing. Useful for maps with complex rendering.
@@ -79,5 +87,8 @@ map <- maplibre(
 
 save_map(map, "us_map.png")
 save_map(map, "us_map_retina.png", image_scale = 2)
+
+# Remove basemap, keep only data layers on white
+save_map(map, "data_only.png", basemap_color = "white")
 }
 }

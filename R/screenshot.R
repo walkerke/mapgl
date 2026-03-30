@@ -16,10 +16,16 @@
 #' @param hide_controls Logical. Hide navigation and other interactive controls?
 #'   Default `TRUE`.
 #' @param include_scale_bar Logical. Include the scale bar? Default `TRUE`.
+#' @param basemap_color Character string or `NULL`. If specified, basemap tiles
+#'   are removed and replaced with this background color (e.g., `"white"`,
+#'   `"lightgrey"`, `"#f0f0f0"`). Use `"transparent"` for no background.
+#'   Default `NULL` (keep basemap).
 #' @param image_scale Numeric. Scale factor for the output image. Use `2` for
 #'   retina/HiDPI output. Default `1`.
 #' @param background Character string or `NULL`. Background color for the output
 #'   image. Default `"white"`. Set to `NULL` for a transparent background.
+#'   Ignored when `basemap_color` is set (basemap_color controls the background
+#'   in that case).
 #' @param delay Numeric or `NULL`. Additional delay in seconds to wait after the
 #'   map reports idle, before capturing. Useful for maps with complex rendering.
 #'   Default `NULL` (no extra delay).
@@ -51,6 +57,9 @@
 #'
 #' save_map(map, "us_map.png")
 #' save_map(map, "us_map_retina.png", image_scale = 2)
+#'
+#' # Remove basemap, keep only data layers on white
+#' save_map(map, "data_only.png", basemap_color = "white")
 #' }
 save_map <- function(
     map,
@@ -60,6 +69,7 @@ save_map <- function(
     include_legend = TRUE,
     hide_controls = TRUE,
     include_scale_bar = TRUE,
+    basemap_color = NULL,
     image_scale = 1,
     background = "white",
     delay = NULL
@@ -90,6 +100,9 @@ save_map <- function(
     include_scale_bar = include_scale_bar,
     image_scale = image_scale
   )
+  if (!is.null(basemap_color)) {
+    opts$basemap_color <- basemap_color
+  }
   if (!is.null(background)) {
     opts$background_color <- background
   }
@@ -217,6 +230,7 @@ print_map <- function(
     include_legend = TRUE,
     hide_controls = TRUE,
     include_scale_bar = TRUE,
+    basemap_color = NULL,
     image_scale = 1,
     background = "white",
     delay = NULL
@@ -234,6 +248,7 @@ print_map <- function(
       include_legend = include_legend,
       hide_controls = hide_controls,
       include_scale_bar = include_scale_bar,
+      basemap_color = basemap_color,
       image_scale = image_scale,
       background = background,
       delay = delay
@@ -251,6 +266,7 @@ print_map <- function(
       include_legend = include_legend,
       hide_controls = hide_controls,
       include_scale_bar = include_scale_bar,
+      basemap_color = basemap_color,
       image_scale = image_scale,
       background = background,
       delay = delay
@@ -260,4 +276,48 @@ print_map <- function(
     grid::grid.raster(img)
     invisible(tmp_file)
   }
+}
+
+
+#' Create a blank basemap style
+#'
+#' @description
+#' Creates a minimal map style with only a solid background color and no
+#' basemap tiles. Useful when you want to display data layers without any
+#' underlying map features.
+#'
+#' @param color Character string. The background color. Default `"white"`.
+#'   Accepts any CSS color value (e.g., `"#f0f0f0"`, `"lightgrey"`,
+#'   `"rgba(0,0,0,0)"`).
+#'
+#' @return A list representing a minimal map style, suitable for passing to
+#'   the `style` parameter of [maplibre()] or [mapboxgl()].
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' maplibre(style = basemap_style("lightgrey")) |>
+#'   add_fill_layer(
+#'     id = "data",
+#'     source = my_sf_data,
+#'     fill_color = "steelblue"
+#'   )
+#' }
+basemap_style <- function(color = "white") {
+  list(
+    version = 8L,
+    sources = structure(list(), names = character(0)),
+    layers = list(
+      list(
+        id = "background",
+        type = "background",
+        paint = list(
+          `background-color` = color
+        )
+      )
+    )
+  )
 }
