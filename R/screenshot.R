@@ -109,56 +109,106 @@ save_map <- function(
   options_json <- jsonlite::toJSON(opts, auto_unbox = TRUE)
 
   delay_ms <- if (!is.null(delay)) as.integer(delay * 1000) else 0L
+  is_linux <- identical(tolower(Sys.info()[["sysname"]] %||% ""), "linux")
 
-  capture_js <- sprintf(
+  if (is_linux) {
+    capture_js <- sprintf(
+      '
+      new Promise((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject("Screenshot timed out after 30 seconds"),
+          30000
+        );
+
+        function tryPrepare() {
+          const el = document.querySelector("[id^=\\"htmlwidget-\\"]");
+          if (!el || !el.map) {
+            setTimeout(tryPrepare, 100);
+            return;
+          }
+          const map = el.map;
+          const opts = %s;
+          Promise.resolve()
+            .then(() => prepareMapForNativeScreenshot(map, opts))
+            .then(() => {
+              if (%d > 0) {
+                return new Promise(resolveDelay => setTimeout(resolveDelay, %d));
+              }
+            })
+            .then(() => {
+              clearTimeout(timeout);
+              resolve(true);
+            })
+            .catch(err => {
+              clearTimeout(timeout);
+              reject(err.message || String(err));
+            });
+        }
+
+        tryPrepare();
+      })
+      ',
+      options_json,
+      delay_ms,
+      delay_ms
+    )
+
+    restore_js <- '
+      (() => {
+        const el = document.querySelector("[id^=\"htmlwidget-\"]");
+        if (el && el.map && typeof restoreMapAfterNativeScreenshot === "function") {
+          restoreMapAfterNativeScreenshot(el.map);
+        }
+        return true;
+      })()
     '
-    new Promise((resolve, reject) => {
-      const timeout = setTimeout(
-        () => reject("Screenshot timed out after 30 seconds"),
-        30000
-      );
+  } else {
+    capture_js <- sprintf(
+      '
+      new Promise((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject("Screenshot timed out after 30 seconds"),
+          30000
+        );
 
-      function tryCapture() {
-        const el = document.querySelector("[id^=\\"htmlwidget-\\"]");
-        if (!el || !el.map) {
-          setTimeout(tryCapture, 100);
-          return;
-        }
-        const map = el.map;
-        const opts = %s;
-
-        function doCapture() {
-          function capture() {
-            captureMapScreenshot(map, opts)
-              .then(canvas => {
-                clearTimeout(timeout);
-                resolve(canvas.toDataURL("image/png"));
-              })
-              .catch(err => {
-                clearTimeout(timeout);
-                reject(err.message || String(err));
-              });
+        function tryCapture() {
+          const el = document.querySelector("[id^=\\"htmlwidget-\\"]");
+          if (!el || !el.map) {
+            setTimeout(tryCapture, 100);
+            return;
           }
-          if (%d > 0) {
-            setTimeout(capture, %d);
-          } else {
-            capture();
-          }
+          const map = el.map;
+          const opts = %s;
+          Promise.resolve()
+            .then(() => {
+              if (!map.loaded()) {
+                return new Promise(resolveIdle => map.once("idle", resolveIdle));
+              }
+            })
+            .then(() => {
+              if (%d > 0) {
+                return new Promise(resolveDelay => setTimeout(resolveDelay, %d));
+              }
+            })
+            .then(() => captureMapScreenshot(map, opts))
+            .then(canvas => {
+              clearTimeout(timeout);
+              resolve(canvas.toDataURL("image/png"));
+            })
+            .catch(err => {
+              clearTimeout(timeout);
+              reject(err.message || String(err));
+            });
         }
 
-        map.once("idle", doCapture);
-        if (map.loaded()) {
-          map.triggerRepaint();
-        }
-      }
-
-      tryCapture();
-    })
-    ',
-    options_json,
-    delay_ms,
-    delay_ms
-  )
+        tryCapture();
+      })
+      ',
+      options_json,
+      delay_ms,
+      delay_ms
+    )
+  }
 
   # Launch headless Chrome and capture
   b <- chromote::ChromoteSession$new(
@@ -167,8 +217,21 @@ save_map <- function(
   )
   on.exit(b$close(), add = TRUE)
 
+  p_load <- b$Page$loadEventFired(wait_ = FALSE)
   b$Page$navigate(paste0("file://", normalizePath(tmp_html)))
-  b$Page$loadEventFired()
+  b$wait_for(p_load)
+
+  if (is_linux && !identical(image_scale, 1)) {
+    try(
+      b$Emulation$setDeviceMetricsOverride(
+        width = as.integer(width),
+        height = as.integer(height),
+        deviceScaleFactor = image_scale,
+        mobile = FALSE
+      ),
+      silent = TRUE
+    )
+  }
 
   result <- b$Runtime$evaluate(capture_js, awaitPromise = TRUE)
 
@@ -181,10 +244,16 @@ save_map <- function(
     )
   }
 
-  data_url <- result$result$value
-  base64_data <- sub("^data:image/png;base64,", "", data_url)
-  raw_png <- base64enc::base64decode(base64_data)
-  writeBin(raw_png, filename)
+  if (is_linux) {
+    on.exit(try(b$Runtime$evaluate(restore_js), silent = TRUE), add = TRUE)
+    b$screenshot(filename)
+    try(b$Runtime$evaluate(restore_js), silent = TRUE)
+  } else {
+    data_url <- result$result$value
+    base64_data <- sub("^data:image/png;base64,", "", data_url)
+    raw_png <- base64enc::base64decode(base64_data)
+    writeBin(raw_png, filename)
+  }
 
   message("Map saved to ", filename)
   invisible(filename)

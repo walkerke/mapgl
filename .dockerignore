@@ -1,0 +1,6 @@
+.git
+.Rproj.user
+docs
+pkgdown
+tmp/site-report-demo.qmd
+tmp/site-report-demo.pdf

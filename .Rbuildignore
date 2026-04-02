@@ -18,3 +18,5 @@ LICENSE.md
 CLAUDE.md
 .claude
 .DS_Store
+^tools/check-save-map-integration\.R$
+^tmp$
