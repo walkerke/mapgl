@@ -109,9 +109,10 @@ save_map <- function(
   options_json <- jsonlite::toJSON(opts, auto_unbox = TRUE)
 
   delay_ms <- if (!is.null(delay)) as.integer(delay * 1000) else 0L
-  is_linux <- identical(tolower(Sys.info()[["sysname"]] %||% ""), "linux")
+  sysname <- tolower(Sys.info()[["sysname"]] %||% "")
+  use_native_screenshot <- sysname %in% c("linux", "windows")
 
-  if (is_linux) {
+  if (use_native_screenshot) {
     capture_js <- sprintf(
       '
       new Promise((resolve, reject) => {
@@ -221,7 +222,7 @@ save_map <- function(
   b$Page$navigate(paste0("file://", normalizePath(tmp_html)))
   b$wait_for(p_load)
 
-  if (is_linux && !identical(image_scale, 1)) {
+  if (use_native_screenshot && !identical(image_scale, 1)) {
     try(
       b$Emulation$setDeviceMetricsOverride(
         width = as.integer(width),
@@ -244,7 +245,7 @@ save_map <- function(
     )
   }
 
-  if (is_linux) {
+  if (use_native_screenshot) {
     on.exit(try(b$Runtime$evaluate(restore_js), silent = TRUE), add = TRUE)
     b$screenshot(filename)
     try(b$Runtime$evaluate(restore_js), silent = TRUE)
