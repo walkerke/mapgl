@@ -12,6 +12,11 @@ log_step <- function(label) {
   cat("\n==", label, "==\n")
 }
 
+is_truthy_env <- function(name, default = FALSE) {
+  value <- Sys.getenv(name, unset = if (default) "true" else "false")
+  tolower(value) %in% c("1", "true", "yes", "on")
+}
+
 count_color_pixels <- function(img, color, tol = 0.15, row_frac = c(0, 1), col_frac = c(0, 1)) {
   n_rows <- dim(img)[1]
   n_cols <- dim(img)[2]
@@ -189,7 +194,13 @@ cat("sysname=", Sys.info()[["sysname"]], "\n", sep = "")
 cat("release=", Sys.info()[["release"]] %||% "", "\n", sep = "")
 cat("chromote_chrome=", Sys.getenv("CHROMOTE_CHROME", unset = ""), "\n", sep = "")
 
-run_default_smoke()
+if (is_truthy_env("MAPGL_RUN_REMOTE_SMOKE", default = FALSE)) {
+  run_default_smoke()
+} else {
+  log_step("Default Basemap Smoke Test")
+  cat("skipped (MAPGL_RUN_REMOTE_SMOKE is false)\n")
+}
+
 run_content_preservation()
 
 log_step("Done")

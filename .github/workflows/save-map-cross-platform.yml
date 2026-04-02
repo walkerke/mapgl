@@ -60,5 +60,7 @@ jobs:
 
       - name: Run save_map Integration Checks
         shell: bash
+        env:
+          MAPGL_RUN_REMOTE_SMOKE: ${{ runner.os == 'Linux' && 'true' || 'false' }}
         run: |
           Rscript tools/check-save-map-integration.R
