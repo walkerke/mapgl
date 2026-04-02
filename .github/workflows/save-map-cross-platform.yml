@@ -44,13 +44,42 @@ jobs:
             libxml2-dev
 
       - name: Setup Chrome
+        if: runner.os != 'Windows'
         id: chrome
         uses: browser-actions/setup-chrome@v1
 
       - name: Export Chrome Path
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           echo "CHROMOTE_CHROME=${{ steps.chrome.outputs.chrome-path }}" >> "$GITHUB_ENV"
+
+      - name: Detect Windows Browser
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "$Env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${Env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$Env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+            "${Env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+          )
+
+          foreach ($path in $candidates) {
+            if (Test-Path $path) {
+              "CHROMOTE_CHROME=$path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              Write-Host "Using browser: $path"
+              exit 0
+            }
+          }
+
+          throw "No suitable Windows browser found for CHROMOTE_CHROME"
+
+      - name: Report Browser
+        shell: bash
+        run: |
+          echo "CHROMOTE_CHROME=$CHROMOTE_CHROME"
+          "$CHROMOTE_CHROME" --version
 
       - name: Install R Dependencies
         shell: bash
