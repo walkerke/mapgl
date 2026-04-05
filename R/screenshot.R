@@ -75,6 +75,7 @@ save_map <- function(
     delay = NULL
 ) {
   check_installed("chromote", reason = "to render static map screenshots")
+  check_installed("httpuv", reason = "to serve the map HTML over HTTP")
 
   if (!grepl("\\.png$", filename, ignore.case = TRUE)) {
     filename <- paste0(filename, ".png")
@@ -211,7 +212,38 @@ save_map <- function(
     )
   }
 
-  # Launch headless Chrome and capture
+  # Find a free port
+  port <- httpuv::randomPort()
+
+  # Serve the temp directory over HTTP
+  server <- httpuv::startServer(
+    host = "127.0.0.1",
+    port = port,
+    app = list(
+      call = function(req) {
+        if (req$PATH_INFO == "/") {
+          list(
+            status = 302L,
+            headers = list(Location = "/map.html"),
+            body = ""
+          )
+        } else {
+          list(
+            status = 404L,
+            headers = list(),
+            body = "Not found"
+          )
+        }
+      },
+      staticPaths = list(
+        "/" = httpuv::staticPath(tmp_dir, indexhtml = FALSE)
+      )
+    )
+  )
+  on.exit(server$stop(), add = TRUE)
+
+  url <- paste0("http://127.0.0.1:", port, "/map.html")
+
   b <- chromote::ChromoteSession$new(
     width = as.integer(width),
     height = as.integer(height)
@@ -219,7 +251,7 @@ save_map <- function(
   on.exit(b$close(), add = TRUE)
 
   p_load <- b$Page$loadEventFired(wait_ = FALSE)
-  b$Page$navigate(paste0("file://", normalizePath(tmp_html)))
+  b$Page$navigate(url)
   b$wait_for(p_load)
 
   if (use_native_screenshot && !identical(image_scale, 1)) {
