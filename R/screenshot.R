@@ -33,8 +33,9 @@
 #' @return The output file path, invisibly.
 #'
 #' @details
-#' This function requires the \pkg{chromote} package and a Chrome or Chromium
-#' browser installation. Install chromote with `install.packages("chromote")`.
+#' This function requires the \pkg{chromote} and \pkg{httpuv} packages.
+#' Install them with `install.packages(c("chromote", "httpuv"))`. \pkg{chromote}
+#' also requires a Chrome or Chromium browser installation.
 #'
 #' The function works by:
 #' 1. Saving the map widget to a temporary HTML file
@@ -212,35 +213,67 @@ save_map <- function(
     )
   }
 
-  # Find a free port
-  port <- httpuv::randomPort()
-
-  # Serve the temp directory over HTTP
-  server <- httpuv::startServer(
-    host = "127.0.0.1",
-    port = port,
-    app = list(
-      call = function(req) {
-        if (req$PATH_INFO == "/") {
-          list(
-            status = 302L,
-            headers = list(Location = "/map.html"),
-            body = ""
-          )
-        } else {
-          list(
-            status = 404L,
-            headers = list(),
-            body = "Not found"
-          )
-        }
-      },
-      staticPaths = list(
-        "/" = httpuv::staticPath(tmp_dir, indexhtml = FALSE)
-      )
+  app <- list(
+    call = function(req) {
+      if (req$PATH_INFO == "/") {
+        list(
+          status = 302L,
+          headers = list(Location = "/map.html"),
+          body = ""
+        )
+      } else {
+        list(
+          status = 404L,
+          headers = list(),
+          body = "Not found"
+        )
+      }
+    },
+    staticPaths = list(
+      "/" = httpuv::staticPath(tmp_dir, indexhtml = FALSE)
     )
   )
-  on.exit(server$stop(), add = TRUE)
+
+  # Start the server with retries to avoid races between randomPort()
+  # and startServer() when multiple processes run in parallel.
+  server <- NULL
+  last_start_error <- NULL
+  max_start_attempts <- 5L
+
+  for (attempt in seq_len(max_start_attempts)) {
+    port <- httpuv::randomPort()
+    server <- tryCatch(
+      httpuv::startServer(
+        host = "127.0.0.1",
+        port = port,
+        app = app
+      ),
+      error = function(err) {
+        last_start_error <<- err
+        NULL
+      }
+    )
+
+    if (!is.null(server)) {
+      break
+    }
+
+    if (attempt < max_start_attempts) {
+      Sys.sleep(0.05)
+    }
+  }
+
+  if (is.null(server)) {
+    stop(
+      sprintf(
+        "Failed to start temporary HTTP server after %d attempts: %s",
+        max_start_attempts,
+        conditionMessage(last_start_error)
+      ),
+      call. = FALSE
+    )
+  }
+  on.exit(try(httpuv::stopServer(server), silent = TRUE), add = TRUE)
 
   url <- paste0("http://127.0.0.1:", port, "/map.html")
 
