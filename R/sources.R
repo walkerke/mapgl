@@ -398,6 +398,12 @@ add_image_source <- function(
         }
       }
 
+      # Ensure index 0 (used for NA) is always transparent
+      lut_r[1] <- 0L
+      lut_g[1] <- 0L
+      lut_b[1] <- 0L
+      lut_a[1] <- 0L
+
       # Map NA to index 0 (transparent)
       vals[is.na(vals)] <- 0L
       idx <- vals + 1L
