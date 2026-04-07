@@ -1032,7 +1032,7 @@ add_circle_layer <- function(
 #' @param raster_fade_duration The duration of the fade-in/fade-out effect.
 #' @param raster_hue_rotate Rotates hues around the color wheel.
 #' @param raster_opacity The opacity at which the raster will be drawn.
-#' @param raster_resampling The resampling/interpolation method to use for overscaling.
+#' @param raster_resampling The resampling/interpolation method to use for overscaling. Options are `"linear"` (bilinear, the MapLibre/Mapbox default) and `"nearest"` (nearest-neighbor). Use `"nearest"` for categorical or classified rasters (e.g. land cover) to preserve crisp category boundaries when zooming.
 #' @param raster_saturation Increase or reduce the saturation of the image.
 #' @param visibility Whether this layer is displayed.
 #' @param slot An optional slot for layer order.
