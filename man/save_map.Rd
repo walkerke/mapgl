@@ -25,9 +25,11 @@ save_map(
 \code{"map.png"}. If the filename does not end in \code{.png}, the extension is
 appended automatically.}
 
-\item{width}{Integer. The width of the map viewport in pixels.}
+\item{width}{Integer. The width of the map viewport in pixels. Always
+overrides any \code{width} configured when the map widget was created.}
 
-\item{height}{Integer. The height of the map viewport in pixels.}
+\item{height}{Integer. The height of the map viewport in pixels. Always
+overrides any \code{height} configured when the map widget was created.}
 
 \item{include_legend}{Logical. Include the legend in the output? Default
 \code{TRUE}.}

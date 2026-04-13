@@ -9,8 +9,10 @@
 #' @param filename Character string. The output file path. Defaults to
 #'   `"map.png"`. If the filename does not end in `.png`, the extension is
 #'   appended automatically.
-#' @param width Integer. The width of the map viewport in pixels.
-#' @param height Integer. The height of the map viewport in pixels.
+#' @param width Integer. The width of the map viewport in pixels. Always
+#'   overrides any `width` configured when the map widget was created.
+#' @param height Integer. The height of the map viewport in pixels. Always
+#'   overrides any `height` configured when the map widget was created.
 #' @param include_legend Logical. Include the legend in the output? Default
 #'   `TRUE`.
 #' @param hide_controls Logical. Hide navigation and other interactive controls?
@@ -87,6 +89,10 @@ save_map <- function(
     map$x$additional_params <- list()
   }
   map$x$additional_params$preserveDrawingBuffer <- TRUE
+
+  # Always override widget dimensions used by saveWidget()
+  map$width <- as.integer(width) |> paste0("px")
+  map$height <- as.integer(height) |> paste0("px")
 
   # Save widget to temp directory
   tmp_dir <- tempfile("mapgl_")
