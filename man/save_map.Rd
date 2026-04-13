@@ -63,8 +63,9 @@ via the chromote package. Uses the same html2canvas-based screenshot
 infrastructure as \code{\link[=add_screenshot_control]{add_screenshot_control()}}.
 }
 \details{
-This function requires the \pkg{chromote} package and a Chrome or Chromium
-browser installation. Install chromote with \code{install.packages("chromote")}.
+This function requires the \pkg{chromote} and \pkg{httpuv} packages.
+Install them with \code{install.packages(c("chromote", "httpuv"))}. \pkg{chromote}
+also requires a Chrome or Chromium browser installation.
 
 The function works by:
 \enumerate{

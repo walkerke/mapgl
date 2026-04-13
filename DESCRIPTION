@@ -33,6 +33,7 @@ Imports:
   jsonlite
 Suggests:
   chromote,
+  httpuv,
   knitr,
   mapboxapi,
   usethis,
