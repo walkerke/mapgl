@@ -11,7 +11,11 @@ add_raster_layer(
   source_layer = NULL,
   raster_brightness_max = NULL,
   raster_brightness_min = NULL,
+  raster_color = NULL,
+  raster_color_mix = NULL,
+  raster_color_range = NULL,
   raster_contrast = NULL,
+  raster_emissive_strength = NULL,
   raster_fade_duration = NULL,
   raster_hue_rotate = NULL,
   raster_opacity = NULL,
@@ -37,7 +41,20 @@ add_raster_layer(
 
 \item{raster_brightness_min}{The minimum brightness of the image.}
 
+\item{raster_color}{Defines a color map for colorizing single-band raster data, parameterized by
+\verb{["raster-value"]}. Use an interpolate expression over \code{raster-value} to define the color ramp.
+Requires \code{raster_color_range} to be set.}
+
+\item{raster_color_mix}{Specifies the combination of source RGB channels used to compute the raster
+value when \code{raster_color} is active. A numeric vector of length 4: \code{c(r, g, b, offset)}.
+Defaults to \code{c(0.2126, 0.7152, 0.0722, 0)} (RGB luminosity).}
+
+\item{raster_color_range}{Specifies the value range over which \code{raster_color} is tabulated.
+A numeric vector of length 2: \code{c(min, max)}.}
+
 \item{raster_contrast}{Increase or reduce the brightness of the image.}
+
+\item{raster_emissive_strength}{Controls the intensity of light emitted on the source features. Requires 3D lights.}
 
 \item{raster_fade_duration}{The duration of the fade-in/fade-out effect.}
 
@@ -45,7 +62,7 @@ add_raster_layer(
 
 \item{raster_opacity}{The opacity at which the raster will be drawn.}
 
-\item{raster_resampling}{The resampling/interpolation method to use for overscaling.}
+\item{raster_resampling}{The resampling/interpolation method to use for overscaling. Options are \code{"linear"} (bilinear, the MapLibre/Mapbox default) and \code{"nearest"} (nearest-neighbor). Use \code{"nearest"} for categorical or classified rasters (e.g. land cover) to preserve crisp category boundaries when zooming.}
 
 \item{raster_saturation}{Increase or reduce the saturation of the image.}
 

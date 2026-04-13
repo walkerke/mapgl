@@ -193,6 +193,7 @@ add_layer <- function(
 #' @param fill_opacity The opacity of the entire fill layer.
 #' @param fill_outline_color The outline color of the fill.
 #' @param fill_pattern Name of image in sprite to use for drawing image fills.
+#' @param fill_pattern_cross_fade Controls the transition progress between image variants of `fill_pattern`. Value between 0 and 1.
 #' @param fill_sort_key Sorts features in ascending order based on this value.
 #' @param fill_translate The geometry's offset. Values are `c(x, y)` where negatives indicate left and up.
 #' @param fill_translate_anchor Controls the frame of reference for `fill-translate`.
@@ -247,6 +248,7 @@ add_fill_layer <- function(
   fill_opacity = NULL,
   fill_outline_color = NULL,
   fill_pattern = NULL,
+  fill_pattern_cross_fade = NULL,
   fill_sort_key = NULL,
   fill_translate = NULL,
   fill_translate_anchor = "map",
@@ -272,6 +274,8 @@ add_fill_layer <- function(
   if (!is.null(fill_outline_color))
     paint[["fill-outline-color"]] <- fill_outline_color
   if (!is.null(fill_pattern)) paint[["fill-pattern"]] <- fill_pattern
+  if (!is.null(fill_pattern_cross_fade))
+    paint[["fill-pattern-cross-fade"]] <- fill_pattern_cross_fade
   if (!is.null(fill_translate)) paint[["fill-translate"]] <- fill_translate
   if (!is.null(fill_translate_anchor))
     paint[["fill-translate-anchor"]] <- fill_translate_anchor
@@ -314,6 +318,11 @@ add_fill_layer <- function(
 #' @param line_color The color with which the line will be drawn.
 #' @param line_dasharray Specifies the lengths of the alternating dashes and
 #'   gaps that form the dash pattern.
+#' @param line_elevation_ground_scale Controls how much the elevation of lines
+#'   scales with terrain exaggeration when `line_elevation_reference` is `"sea"`.
+#'   Value between 0 and 1; 0 keeps the line at fixed altitude, 1 scales proportionally.
+#' @param line_elevation_reference Selects the base of line elevation. One of
+#'   `"none"`, `"sea"`, `"ground"`, or `"hd-road-markup"`.
 #' @param line_emissive_strength Controls the intensity of light emitted on the
 #'   source features.
 #' @param line_gap_width Draws a line casing outside of a line's actual path.
@@ -328,6 +337,7 @@ add_fill_layer <- function(
 #' @param line_offset The line's offset.
 #' @param line_opacity The opacity at which the line will be drawn.
 #' @param line_pattern Name of image in sprite to use for drawing image lines.
+#' @param line_pattern_cross_fade Controls the transition progress between image variants of `line_pattern`. Value between 0 and 1.
 #' @param line_round_limit Used to automatically convert round joins to miter
 #'   joins for shallow angles.
 #' @param line_sort_key Sorts features in ascending order based on this value.
@@ -382,6 +392,8 @@ add_line_layer <- function(
   line_cap = NULL,
   line_color = NULL,
   line_dasharray = NULL,
+  line_elevation_ground_scale = NULL,
+  line_elevation_reference = NULL,
   line_emissive_strength = NULL,
   line_gap_width = NULL,
   line_gradient = NULL,
@@ -391,6 +403,7 @@ add_line_layer <- function(
   line_offset = NULL,
   line_opacity = NULL,
   line_pattern = NULL,
+  line_pattern_cross_fade = NULL,
   line_round_limit = NULL,
   line_sort_key = NULL,
   line_translate = NULL,
@@ -425,6 +438,8 @@ add_line_layer <- function(
   if (!is.null(line_offset)) paint[["line-offset"]] <- line_offset
   if (!is.null(line_opacity)) paint[["line-opacity"]] <- line_opacity
   if (!is.null(line_pattern)) paint[["line-pattern"]] <- line_pattern
+  if (!is.null(line_pattern_cross_fade))
+    paint[["line-pattern-cross-fade"]] <- line_pattern_cross_fade
   if (!is.null(line_translate)) paint[["line-translate"]] <- line_translate
   if (!is.null(line_translate_anchor))
     paint[["line-translate-anchor"]] <- line_translate_anchor
@@ -436,6 +451,10 @@ add_line_layer <- function(
   if (!is.null(line_width)) paint[["line-width"]] <- line_width
 
   if (!is.null(line_cap)) layout[["line-cap"]] <- line_cap
+  if (!is.null(line_elevation_ground_scale))
+    layout[["line-elevation-ground-scale"]] <- line_elevation_ground_scale
+  if (!is.null(line_elevation_reference))
+    layout[["line-elevation-reference"]] <- line_elevation_reference
   if (!is.null(line_join)) layout[["line-join"]] <- line_join
   if (!is.null(line_miter_limit))
     layout[["line-miter-limit"]] <- line_miter_limit
@@ -577,13 +596,19 @@ add_heatmap_layer <- function(
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
+#' @param fill_extrusion_ambient_occlusion_intensity Controls the intensity of ambient occlusion shading. Value between 0 and 1; around 0.3 provides the most plausible results for buildings.
+#' @param fill_extrusion_ambient_occlusion_radius Shades area near ground and concave angles between walls. Default 3.0 corresponds to one floor height.
 #' @param fill_extrusion_base The base height of the fill extrusion.
+#' @param fill_extrusion_cast_shadows If `TRUE` (the default), the fill extrusion casts shadows.
 #' @param fill_extrusion_color The color of the fill extrusion.
+#' @param fill_extrusion_cutoff_fade_range Defines the fade-out range before automatic content cutoff on pitched views. Value between 0 and 1; 0 disables cutoff.
+#' @param fill_extrusion_emissive_strength Controls the intensity of light emitted on the source features. Requires 3D lights.
 #' @param fill_extrusion_height The height of the fill extrusion.
 #' @param fill_extrusion_opacity The opacity of the fill extrusion.
 #' @param fill_extrusion_pattern Name of image in sprite to use for drawing image fills.
 #' @param fill_extrusion_translate The geometry's offset. Values are `c(x, y)` where negatives indicate left and up.
 #' @param fill_extrusion_translate_anchor Controls the frame of reference for `fill-extrusion-translate`.
+#' @param fill_extrusion_vertical_gradient If `TRUE` (the default), sides will be shaded slightly darker farther down.
 #' @param visibility Whether this layer is displayed.
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
@@ -640,13 +665,19 @@ add_fill_extrusion_layer <- function(
   id,
   source,
   source_layer = NULL,
+  fill_extrusion_ambient_occlusion_intensity = NULL,
+  fill_extrusion_ambient_occlusion_radius = NULL,
   fill_extrusion_base = NULL,
+  fill_extrusion_cast_shadows = NULL,
   fill_extrusion_color = NULL,
+  fill_extrusion_cutoff_fade_range = NULL,
+  fill_extrusion_emissive_strength = NULL,
   fill_extrusion_height = NULL,
   fill_extrusion_opacity = NULL,
   fill_extrusion_pattern = NULL,
   fill_extrusion_translate = NULL,
   fill_extrusion_translate_anchor = "map",
+  fill_extrusion_vertical_gradient = NULL,
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
@@ -672,10 +703,28 @@ add_fill_extrusion_layer <- function(
   paint <- list()
   layout <- list()
 
+  if (!is.null(fill_extrusion_ambient_occlusion_intensity))
+    paint[[
+      "fill-extrusion-ambient-occlusion-intensity"
+    ]] <- fill_extrusion_ambient_occlusion_intensity
+  if (!is.null(fill_extrusion_ambient_occlusion_radius))
+    paint[[
+      "fill-extrusion-ambient-occlusion-radius"
+    ]] <- fill_extrusion_ambient_occlusion_radius
   if (!is.null(fill_extrusion_base))
     paint[["fill-extrusion-base"]] <- fill_extrusion_base
+  if (!is.null(fill_extrusion_cast_shadows))
+    paint[["fill-extrusion-cast-shadows"]] <- fill_extrusion_cast_shadows
   if (!is.null(fill_extrusion_color))
     paint[["fill-extrusion-color"]] <- fill_extrusion_color
+  if (!is.null(fill_extrusion_cutoff_fade_range))
+    paint[[
+      "fill-extrusion-cutoff-fade-range"
+    ]] <- fill_extrusion_cutoff_fade_range
+  if (!is.null(fill_extrusion_emissive_strength))
+    paint[[
+      "fill-extrusion-emissive-strength"
+    ]] <- fill_extrusion_emissive_strength
   if (!is.null(fill_extrusion_height))
     paint[["fill-extrusion-height"]] <- fill_extrusion_height
   if (!is.null(fill_extrusion_opacity))
@@ -688,6 +737,10 @@ add_fill_extrusion_layer <- function(
     paint[[
       "fill-extrusion-translate-anchor"
     ]] <- fill_extrusion_translate_anchor
+  if (!is.null(fill_extrusion_vertical_gradient))
+    paint[[
+      "fill-extrusion-vertical-gradient"
+    ]] <- fill_extrusion_vertical_gradient
 
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
@@ -779,7 +832,10 @@ cluster_options <- function(
 #' @param source_layer The source layer (for vector sources).
 #' @param circle_blur Amount to blur the circle.
 #' @param circle_color The color of the circle.
+#' @param circle_emissive_strength Controls the intensity of light emitted on the source features. Requires 3D lights.
 #' @param circle_opacity The opacity at which the circle will be drawn.
+#' @param circle_pitch_alignment Orientation of circles when the map is pitched. One of `"map"` or `"viewport"`.
+#' @param circle_pitch_scale Controls the scaling behavior of circles when the map is pitched. One of `"map"` (scaled by distance) or `"viewport"` (not scaled).
 #' @param circle_radius Circle radius.
 #' @param circle_sort_key Sorts features in ascending order based on this value.
 #' @param circle_stroke_color The color of the circle's stroke.
@@ -878,7 +934,10 @@ add_circle_layer <- function(
   source_layer = NULL,
   circle_blur = NULL,
   circle_color = NULL,
+  circle_emissive_strength = NULL,
   circle_opacity = NULL,
+  circle_pitch_alignment = NULL,
+  circle_pitch_scale = NULL,
   circle_radius = NULL,
   circle_sort_key = NULL,
   circle_stroke_color = NULL,
@@ -902,7 +961,13 @@ add_circle_layer <- function(
 
   if (!is.null(circle_blur)) paint[["circle-blur"]] <- circle_blur
   if (!is.null(circle_color)) paint[["circle-color"]] <- circle_color
+  if (!is.null(circle_emissive_strength))
+    paint[["circle-emissive-strength"]] <- circle_emissive_strength
   if (!is.null(circle_opacity)) paint[["circle-opacity"]] <- circle_opacity
+  if (!is.null(circle_pitch_alignment))
+    paint[["circle-pitch-alignment"]] <- circle_pitch_alignment
+  if (!is.null(circle_pitch_scale))
+    paint[["circle-pitch-scale"]] <- circle_pitch_scale
   if (!is.null(circle_radius)) paint[["circle-radius"]] <- circle_radius
   if (!is.null(circle_stroke_color))
     paint[["circle-stroke-color"]] <- circle_stroke_color
@@ -1028,7 +1093,16 @@ add_circle_layer <- function(
 #' @param source_layer The source layer (for vector sources).
 #' @param raster_brightness_max The maximum brightness of the image.
 #' @param raster_brightness_min The minimum brightness of the image.
+#' @param raster_color Defines a color map for colorizing single-band raster data, parameterized by
+#'   `["raster-value"]`. Use an interpolate expression over `raster-value` to define the color ramp.
+#'   Requires `raster_color_range` to be set.
+#' @param raster_color_mix Specifies the combination of source RGB channels used to compute the raster
+#'   value when `raster_color` is active. A numeric vector of length 4: `c(r, g, b, offset)`.
+#'   Defaults to `c(0.2126, 0.7152, 0.0722, 0)` (RGB luminosity).
+#' @param raster_color_range Specifies the value range over which `raster_color` is tabulated.
+#'   A numeric vector of length 2: `c(min, max)`.
 #' @param raster_contrast Increase or reduce the brightness of the image.
+#' @param raster_emissive_strength Controls the intensity of light emitted on the source features. Requires 3D lights.
 #' @param raster_fade_duration The duration of the fade-in/fade-out effect.
 #' @param raster_hue_rotate Rotates hues around the color wheel.
 #' @param raster_opacity The opacity at which the raster will be drawn.
@@ -1073,7 +1147,11 @@ add_raster_layer <- function(
   source_layer = NULL,
   raster_brightness_max = NULL,
   raster_brightness_min = NULL,
+  raster_color = NULL,
+  raster_color_mix = NULL,
+  raster_color_range = NULL,
   raster_contrast = NULL,
+  raster_emissive_strength = NULL,
   raster_fade_duration = NULL,
   raster_hue_rotate = NULL,
   raster_opacity = NULL,
@@ -1092,7 +1170,14 @@ add_raster_layer <- function(
     paint[["raster-brightness-max"]] <- raster_brightness_max
   if (!is.null(raster_brightness_min))
     paint[["raster-brightness-min"]] <- raster_brightness_min
+  if (!is.null(raster_color)) paint[["raster-color"]] <- raster_color
+  if (!is.null(raster_color_mix))
+    paint[["raster-color-mix"]] <- raster_color_mix
+  if (!is.null(raster_color_range))
+    paint[["raster-color-range"]] <- raster_color_range
   if (!is.null(raster_contrast)) paint[["raster-contrast"]] <- raster_contrast
+  if (!is.null(raster_emissive_strength))
+    paint[["raster-emissive-strength"]] <- raster_emissive_strength
   if (!is.null(raster_fade_duration))
     paint[["raster-fade-duration"]] <- raster_fade_duration
   if (!is.null(raster_hue_rotate))
@@ -1146,6 +1231,7 @@ add_raster_layer <- function(
 #'        Images can also be loaded with the `add_image()` function which should precede the `add_symbol_layer()` function.
 #' @param icon_image_cross_fade The cross-fade parameter for the icon image.
 #' @param icon_keep_upright If TRUE, the icon will be kept upright.
+#' @param icon_occlusion_opacity The opacity at which the icon will be drawn when occluded by 3D objects. Value between 0 and 1; 0 hides occluded icons.
 #' @param icon_offset Offset distance of icon.
 #' @param icon_opacity The opacity at which the icon will be drawn.
 #' @param icon_optional If TRUE, the icon will be optional.
@@ -1185,6 +1271,7 @@ add_raster_layer <- function(
 #' @param text_line_height Height of the text lines.
 #' @param text_max_angle Maximum angle of the text.
 #' @param text_max_width Maximum width of the text.
+#' @param text_occlusion_opacity The opacity at which the text will be drawn when occluded by 3D objects. Value between 0 and 1; 0 hides occluded text.
 #' @param text_offset Offset distance of text.
 #' @param text_opacity The opacity at which the text will be drawn.
 #' @param text_optional If TRUE, the text will be optional.
@@ -1280,6 +1367,7 @@ add_symbol_layer <- function(
   icon_image = NULL,
   icon_image_cross_fade = NULL,
   icon_keep_upright = NULL,
+  icon_occlusion_opacity = NULL,
   icon_offset = NULL,
   icon_opacity = NULL,
   icon_optional = NULL,
@@ -1315,6 +1403,7 @@ add_symbol_layer <- function(
   text_line_height = NULL,
   text_max_angle = NULL,
   text_max_width = NULL,
+  text_occlusion_opacity = NULL,
   text_offset = NULL,
   text_opacity = NULL,
   text_optional = NULL,
@@ -1368,6 +1457,8 @@ add_symbol_layer <- function(
   if (!is.null(icon_keep_upright))
     layout[["icon-keep-upright"]] <- icon_keep_upright
   if (!is.null(icon_offset)) layout[["icon-offset"]] <- icon_offset
+  if (!is.null(icon_occlusion_opacity))
+    paint[["icon-occlusion-opacity"]] <- icon_occlusion_opacity
   if (!is.null(icon_opacity)) paint[["icon-opacity"]] <- icon_opacity
   if (!is.null(icon_optional)) layout[["icon-optional"]] <- icon_optional
   if (!is.null(icon_padding)) layout[["icon-padding"]] <- icon_padding
@@ -1418,6 +1509,8 @@ add_symbol_layer <- function(
   if (!is.null(text_max_angle)) layout[["text-max-angle"]] <- text_max_angle
   if (!is.null(text_max_width)) layout[["text-max-width"]] <- text_max_width
   if (!is.null(text_offset)) layout[["text-offset"]] <- text_offset
+  if (!is.null(text_occlusion_opacity))
+    paint[["text-occlusion-opacity"]] <- text_occlusion_opacity
   if (!is.null(text_opacity)) paint[["text-opacity"]] <- text_opacity
   if (!is.null(text_optional)) layout[["text-optional"]] <- text_optional
   if (!is.null(text_padding)) layout[["text-padding"]] <- text_padding

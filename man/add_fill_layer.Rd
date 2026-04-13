@@ -15,6 +15,7 @@ add_fill_layer(
   fill_opacity = NULL,
   fill_outline_color = NULL,
   fill_pattern = NULL,
+  fill_pattern_cross_fade = NULL,
   fill_sort_key = NULL,
   fill_translate = NULL,
   fill_translate_anchor = "map",
@@ -50,6 +51,8 @@ add_fill_layer(
 \item{fill_outline_color}{The outline color of the fill.}
 
 \item{fill_pattern}{Name of image in sprite to use for drawing image fills.}
+
+\item{fill_pattern_cross_fade}{Controls the transition progress between image variants of \code{fill_pattern}. Value between 0 and 1.}
 
 \item{fill_sort_key}{Sorts features in ascending order based on this value.}
 

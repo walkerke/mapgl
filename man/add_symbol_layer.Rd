@@ -24,6 +24,7 @@ add_symbol_layer(
   icon_image = NULL,
   icon_image_cross_fade = NULL,
   icon_keep_upright = NULL,
+  icon_occlusion_opacity = NULL,
   icon_offset = NULL,
   icon_opacity = NULL,
   icon_optional = NULL,
@@ -59,6 +60,7 @@ add_symbol_layer(
   text_line_height = NULL,
   text_max_angle = NULL,
   text_max_width = NULL,
+  text_occlusion_opacity = NULL,
   text_offset = NULL,
   text_opacity = NULL,
   text_optional = NULL,
@@ -125,6 +127,8 @@ Images can also be loaded with the \code{add_image()} function which should prec
 \item{icon_image_cross_fade}{The cross-fade parameter for the icon image.}
 
 \item{icon_keep_upright}{If TRUE, the icon will be kept upright.}
+
+\item{icon_occlusion_opacity}{The opacity at which the icon will be drawn when occluded by 3D objects. Value between 0 and 1; 0 hides occluded icons.}
 
 \item{icon_offset}{Offset distance of icon.}
 
@@ -199,6 +203,8 @@ Requires \code{symbol_placement} to be set to \code{"point"} and \code{symbol-z-
 \item{text_max_angle}{Maximum angle of the text.}
 
 \item{text_max_width}{Maximum width of the text.}
+
+\item{text_occlusion_opacity}{The opacity at which the text will be drawn when occluded by 3D objects. Value between 0 and 1; 0 hides occluded text.}
 
 \item{text_offset}{Offset distance of text.}
 

@@ -728,12 +728,26 @@ add_pmtiles_source <- function(
     inherits(map, "mapboxgl_compare_proxy")
 
   if (is_mapbox) {
-    # For Mapbox GL JS, use the custom PMTiles source type
-    source <- list(
-      id = id,
-      type = "pmtile-source", # Custom source type from mapbox-pmtiles
-      url = url # No pmtiles:// prefix needed
-    )
+    # Mapbox GL JS v3.21.0+ has native PMTiles support for vector tiles
+    if (source_type == "raster") {
+      # Raster PMTiles still require the custom source type
+      source <- list(
+        id = id,
+        type = "pmtile-source",
+        url = url
+      )
+    } else {
+      # Vector PMTiles use native TileProvider API (auto-detects .pmtiles URLs)
+      source <- list(
+        id = id,
+        type = "vector",
+        url = url
+      )
+
+      if (!is.null(promote_id)) {
+        source$promoteId <- promote_id
+      }
+    }
   } else {
     # For MapLibre GL JS
     if (source_type == "raster") {

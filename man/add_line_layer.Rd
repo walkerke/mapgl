@@ -13,6 +13,8 @@ add_line_layer(
   line_cap = NULL,
   line_color = NULL,
   line_dasharray = NULL,
+  line_elevation_ground_scale = NULL,
+  line_elevation_reference = NULL,
   line_emissive_strength = NULL,
   line_gap_width = NULL,
   line_gradient = NULL,
@@ -22,6 +24,7 @@ add_line_layer(
   line_offset = NULL,
   line_opacity = NULL,
   line_pattern = NULL,
+  line_pattern_cross_fade = NULL,
   line_round_limit = NULL,
   line_sort_key = NULL,
   line_translate = NULL,
@@ -62,6 +65,13 @@ converted to a GeoJSON source) or a named list that specifies \code{type} and
 \item{line_dasharray}{Specifies the lengths of the alternating dashes and
 gaps that form the dash pattern.}
 
+\item{line_elevation_ground_scale}{Controls how much the elevation of lines
+scales with terrain exaggeration when \code{line_elevation_reference} is \code{"sea"}.
+Value between 0 and 1; 0 keeps the line at fixed altitude, 1 scales proportionally.}
+
+\item{line_elevation_reference}{Selects the base of line elevation. One of
+\code{"none"}, \code{"sea"}, \code{"ground"}, or \code{"hd-road-markup"}.}
+
 \item{line_emissive_strength}{Controls the intensity of light emitted on the
 source features.}
 
@@ -84,6 +94,8 @@ occluded by 3D objects.}
 \item{line_opacity}{The opacity at which the line will be drawn.}
 
 \item{line_pattern}{Name of image in sprite to use for drawing image lines.}
+
+\item{line_pattern_cross_fade}{Controls the transition progress between image variants of \code{line_pattern}. Value between 0 and 1.}
 
 \item{line_round_limit}{Used to automatically convert round joins to miter
 joins for shallow angles.}

@@ -11,7 +11,10 @@ add_circle_layer(
   source_layer = NULL,
   circle_blur = NULL,
   circle_color = NULL,
+  circle_emissive_strength = NULL,
   circle_opacity = NULL,
+  circle_pitch_alignment = NULL,
+  circle_pitch_scale = NULL,
   circle_radius = NULL,
   circle_sort_key = NULL,
   circle_stroke_color = NULL,
@@ -44,7 +47,13 @@ add_circle_layer(
 
 \item{circle_color}{The color of the circle.}
 
+\item{circle_emissive_strength}{Controls the intensity of light emitted on the source features. Requires 3D lights.}
+
 \item{circle_opacity}{The opacity at which the circle will be drawn.}
+
+\item{circle_pitch_alignment}{Orientation of circles when the map is pitched. One of \code{"map"} or \code{"viewport"}.}
+
+\item{circle_pitch_scale}{Controls the scaling behavior of circles when the map is pitched. One of \code{"map"} (scaled by distance) or \code{"viewport"} (not scaled).}
 
 \item{circle_radius}{Circle radius.}
 

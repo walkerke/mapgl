@@ -9,13 +9,19 @@ add_fill_extrusion_layer(
   id,
   source,
   source_layer = NULL,
+  fill_extrusion_ambient_occlusion_intensity = NULL,
+  fill_extrusion_ambient_occlusion_radius = NULL,
   fill_extrusion_base = NULL,
+  fill_extrusion_cast_shadows = NULL,
   fill_extrusion_color = NULL,
+  fill_extrusion_cutoff_fade_range = NULL,
+  fill_extrusion_emissive_strength = NULL,
   fill_extrusion_height = NULL,
   fill_extrusion_opacity = NULL,
   fill_extrusion_pattern = NULL,
   fill_extrusion_translate = NULL,
   fill_extrusion_translate_anchor = "map",
+  fill_extrusion_vertical_gradient = NULL,
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
@@ -36,9 +42,19 @@ add_fill_extrusion_layer(
 
 \item{source_layer}{The source layer (for vector sources).}
 
+\item{fill_extrusion_ambient_occlusion_intensity}{Controls the intensity of ambient occlusion shading. Value between 0 and 1; around 0.3 provides the most plausible results for buildings.}
+
+\item{fill_extrusion_ambient_occlusion_radius}{Shades area near ground and concave angles between walls. Default 3.0 corresponds to one floor height.}
+
 \item{fill_extrusion_base}{The base height of the fill extrusion.}
 
+\item{fill_extrusion_cast_shadows}{If \code{TRUE} (the default), the fill extrusion casts shadows.}
+
 \item{fill_extrusion_color}{The color of the fill extrusion.}
+
+\item{fill_extrusion_cutoff_fade_range}{Defines the fade-out range before automatic content cutoff on pitched views. Value between 0 and 1; 0 disables cutoff.}
+
+\item{fill_extrusion_emissive_strength}{Controls the intensity of light emitted on the source features. Requires 3D lights.}
 
 \item{fill_extrusion_height}{The height of the fill extrusion.}
 
@@ -49,6 +65,8 @@ add_fill_extrusion_layer(
 \item{fill_extrusion_translate}{The geometry's offset. Values are \code{c(x, y)} where negatives indicate left and up.}
 
 \item{fill_extrusion_translate_anchor}{Controls the frame of reference for \code{fill-extrusion-translate}.}
+
+\item{fill_extrusion_vertical_gradient}{If \code{TRUE} (the default), sides will be shaded slightly darker farther down.}
 
 \item{visibility}{Whether this layer is displayed.}
 

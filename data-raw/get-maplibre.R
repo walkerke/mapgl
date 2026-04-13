@@ -3,11 +3,11 @@
 
 # Main assets:
 download.file(
-  "https://unpkg.com/maplibre-gl@5.19.0/dist/maplibre-gl.js",
+  "https://unpkg.com/maplibre-gl@5.22.0/dist/maplibre-gl.js",
   destfile = "inst/htmlwidgets/lib/maplibre-gl/maplibre-gl.js"
 )
 download.file(
-  "https://unpkg.com/maplibre-gl@5.19.0/dist/maplibre-gl.css",
+  "https://unpkg.com/maplibre-gl@5.22.0/dist/maplibre-gl.css",
   destfile = "inst/htmlwidgets/lib/maplibre-gl/maplibre-gl.css"
 )
 
@@ -24,11 +24,11 @@ download.file(
 
 # Draw control:
 download.file(
-  "https://www.unpkg.com/@mapbox/mapbox-gl-draw@1.5.0/dist/mapbox-gl-draw.js",
+  "https://unpkg.com/@mapbox/mapbox-gl-draw@1.5.1/dist/mapbox-gl-draw.js",
   destfile = "inst/htmlwidgets/lib/mapbox-gl-draw/mapbox-gl-draw.js"
 )
 download.file(
-  "https://www.unpkg.com/@mapbox/mapbox-gl-draw@1.5.0/dist/mapbox-gl-draw.css",
+  "https://unpkg.com/@mapbox/mapbox-gl-draw@1.5.1/dist/mapbox-gl-draw.css",
   destfile = "inst/htmlwidgets/lib/mapbox-gl-draw/mapbox-gl-draw.css"
 )
 
