@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,13 +53,19 @@
 <span>  <span class="va">id</span>,</span>
 <span>  <span class="va">source</span>,</span>
 <span>  source_layer <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill_extrusion_ambient_occlusion_intensity <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill_extrusion_ambient_occlusion_radius <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_extrusion_base <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill_extrusion_cast_shadows <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_extrusion_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill_extrusion_cutoff_fade_range <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill_extrusion_emissive_strength <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_extrusion_height <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_extrusion_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_extrusion_pattern <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_extrusion_translate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_extrusion_translate_anchor <span class="op">=</span> <span class="st">"map"</span>,</span>
+<span>  fill_extrusion_vertical_gradient <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  visibility <span class="op">=</span> <span class="st">"visible"</span>,</span>
 <span>  slot <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_zoom <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -92,12 +98,32 @@
 <dd><p>The source layer (for vector sources).</p></dd>
 
 
+<dt id="arg-fill-extrusion-ambient-occlusion-intensity">fill_extrusion_ambient_occlusion_intensity<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-ambient-occlusion-intensity"></a></dt>
+<dd><p>Controls the intensity of ambient occlusion shading. Value between 0 and 1; around 0.3 provides the most plausible results for buildings.</p></dd>
+
+
+<dt id="arg-fill-extrusion-ambient-occlusion-radius">fill_extrusion_ambient_occlusion_radius<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-ambient-occlusion-radius"></a></dt>
+<dd><p>Shades area near ground and concave angles between walls. Default 3.0 corresponds to one floor height.</p></dd>
+
+
 <dt id="arg-fill-extrusion-base">fill_extrusion_base<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-base"></a></dt>
 <dd><p>The base height of the fill extrusion.</p></dd>
 
 
+<dt id="arg-fill-extrusion-cast-shadows">fill_extrusion_cast_shadows<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-cast-shadows"></a></dt>
+<dd><p>If <code>TRUE</code> (the default), the fill extrusion casts shadows.</p></dd>
+
+
 <dt id="arg-fill-extrusion-color">fill_extrusion_color<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-color"></a></dt>
 <dd><p>The color of the fill extrusion.</p></dd>
+
+
+<dt id="arg-fill-extrusion-cutoff-fade-range">fill_extrusion_cutoff_fade_range<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-cutoff-fade-range"></a></dt>
+<dd><p>Defines the fade-out range before automatic content cutoff on pitched views. Value between 0 and 1; 0 disables cutoff.</p></dd>
+
+
+<dt id="arg-fill-extrusion-emissive-strength">fill_extrusion_emissive_strength<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-emissive-strength"></a></dt>
+<dd><p>Controls the intensity of light emitted on the source features. Requires 3D lights.</p></dd>
 
 
 <dt id="arg-fill-extrusion-height">fill_extrusion_height<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-height"></a></dt>
@@ -118,6 +144,10 @@
 
 <dt id="arg-fill-extrusion-translate-anchor">fill_extrusion_translate_anchor<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-translate-anchor"></a></dt>
 <dd><p>Controls the frame of reference for <code>fill-extrusion-translate</code>.</p></dd>
+
+
+<dt id="arg-fill-extrusion-vertical-gradient">fill_extrusion_vertical_gradient<a class="anchor" aria-label="anchor" href="#arg-fill-extrusion-vertical-gradient"></a></dt>
+<dd><p>If <code>TRUE</code> (the default), sides will be shaded slightly darker farther down.</p></dd>
 
 
 <dt id="arg-visibility">visibility<a class="anchor" aria-label="anchor" href="#arg-visibility"></a></dt>

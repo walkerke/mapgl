@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,6 +68,7 @@
 <span>  icon_image <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  icon_image_cross_fade <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  icon_keep_upright <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  icon_occlusion_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  icon_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  icon_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  icon_optional <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -103,6 +104,7 @@
 <span>  text_line_height <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_max_angle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_max_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  text_occlusion_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  text_optional <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -210,6 +212,10 @@ Images can also be loaded with the <code><a href="add_image.html">add_image()</a
 
 <dt id="arg-icon-keep-upright">icon_keep_upright<a class="anchor" aria-label="anchor" href="#arg-icon-keep-upright"></a></dt>
 <dd><p>If TRUE, the icon will be kept upright.</p></dd>
+
+
+<dt id="arg-icon-occlusion-opacity">icon_occlusion_opacity<a class="anchor" aria-label="anchor" href="#arg-icon-occlusion-opacity"></a></dt>
+<dd><p>The opacity at which the icon will be drawn when occluded by 3D objects. Value between 0 and 1; 0 hides occluded icons.</p></dd>
 
 
 <dt id="arg-icon-offset">icon_offset<a class="anchor" aria-label="anchor" href="#arg-icon-offset"></a></dt>
@@ -354,6 +360,10 @@ Requires <code>symbol_placement</code> to be set to <code>"point"</code> and <co
 
 <dt id="arg-text-max-width">text_max_width<a class="anchor" aria-label="anchor" href="#arg-text-max-width"></a></dt>
 <dd><p>Maximum width of the text.</p></dd>
+
+
+<dt id="arg-text-occlusion-opacity">text_occlusion_opacity<a class="anchor" aria-label="anchor" href="#arg-text-occlusion-opacity"></a></dt>
+<dd><p>The opacity at which the text will be drawn when occluded by 3D objects. Value between 0 and 1; 0 hides occluded text.</p></dd>
 
 
 <dt id="arg-text-offset">text_offset<a class="anchor" aria-label="anchor" href="#arg-text-offset"></a></dt>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,6 +57,8 @@
 <span>  line_cap <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_dasharray <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_elevation_ground_scale <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_elevation_reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_emissive_strength <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_gap_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_gradient <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -66,6 +68,7 @@
 <span>  line_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_pattern <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  line_pattern_cross_fade <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_round_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_sort_key <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  line_translate <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -126,6 +129,17 @@ converted to a GeoJSON source) or a named list that specifies <code>type</code> 
 gaps that form the dash pattern.</p></dd>
 
 
+<dt id="arg-line-elevation-ground-scale">line_elevation_ground_scale<a class="anchor" aria-label="anchor" href="#arg-line-elevation-ground-scale"></a></dt>
+<dd><p>Controls how much the elevation of lines
+scales with terrain exaggeration when <code>line_elevation_reference</code> is <code>"sea"</code>.
+Value between 0 and 1; 0 keeps the line at fixed altitude, 1 scales proportionally.</p></dd>
+
+
+<dt id="arg-line-elevation-reference">line_elevation_reference<a class="anchor" aria-label="anchor" href="#arg-line-elevation-reference"></a></dt>
+<dd><p>Selects the base of line elevation. One of
+<code>"none"</code>, <code>"sea"</code>, <code>"ground"</code>, or <code>"hd-road-markup"</code>.</p></dd>
+
+
 <dt id="arg-line-emissive-strength">line_emissive_strength<a class="anchor" aria-label="anchor" href="#arg-line-emissive-strength"></a></dt>
 <dd><p>Controls the intensity of light emitted on the
 source features.</p></dd>
@@ -165,6 +179,10 @@ occluded by 3D objects.</p></dd>
 
 <dt id="arg-line-pattern">line_pattern<a class="anchor" aria-label="anchor" href="#arg-line-pattern"></a></dt>
 <dd><p>Name of image in sprite to use for drawing image lines.</p></dd>
+
+
+<dt id="arg-line-pattern-cross-fade">line_pattern_cross_fade<a class="anchor" aria-label="anchor" href="#arg-line-pattern-cross-fade"></a></dt>
+<dd><p>Controls the transition progress between image variants of <code>line_pattern</code>. Value between 0 and 1.</p></dd>
 
 
 <dt id="arg-line-round-limit">line_round_limit<a class="anchor" aria-label="anchor" href="#arg-line-round-limit"></a></dt>

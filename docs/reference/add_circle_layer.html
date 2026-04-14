@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,10 @@
 <span>  source_layer <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  circle_blur <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  circle_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  circle_emissive_strength <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  circle_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  circle_pitch_alignment <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  circle_pitch_scale <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  circle_radius <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  circle_sort_key <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  circle_stroke_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -104,8 +107,20 @@
 <dd><p>The color of the circle.</p></dd>
 
 
+<dt id="arg-circle-emissive-strength">circle_emissive_strength<a class="anchor" aria-label="anchor" href="#arg-circle-emissive-strength"></a></dt>
+<dd><p>Controls the intensity of light emitted on the source features. Requires 3D lights.</p></dd>
+
+
 <dt id="arg-circle-opacity">circle_opacity<a class="anchor" aria-label="anchor" href="#arg-circle-opacity"></a></dt>
 <dd><p>The opacity at which the circle will be drawn.</p></dd>
+
+
+<dt id="arg-circle-pitch-alignment">circle_pitch_alignment<a class="anchor" aria-label="anchor" href="#arg-circle-pitch-alignment"></a></dt>
+<dd><p>Orientation of circles when the map is pitched. One of <code>"map"</code> or <code>"viewport"</code>.</p></dd>
+
+
+<dt id="arg-circle-pitch-scale">circle_pitch_scale<a class="anchor" aria-label="anchor" href="#arg-circle-pitch-scale"></a></dt>
+<dd><p>Controls the scaling behavior of circles when the map is pitched. One of <code>"map"</code> (scaled by distance) or <code>"viewport"</code> (not scaled).</p></dd>
 
 
 <dt id="arg-circle-radius">circle_radius<a class="anchor" aria-label="anchor" href="#arg-circle-radius"></a></dt>

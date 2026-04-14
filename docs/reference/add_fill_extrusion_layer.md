@@ -10,13 +10,19 @@ add_fill_extrusion_layer(
   id,
   source,
   source_layer = NULL,
+  fill_extrusion_ambient_occlusion_intensity = NULL,
+  fill_extrusion_ambient_occlusion_radius = NULL,
   fill_extrusion_base = NULL,
+  fill_extrusion_cast_shadows = NULL,
   fill_extrusion_color = NULL,
+  fill_extrusion_cutoff_fade_range = NULL,
+  fill_extrusion_emissive_strength = NULL,
   fill_extrusion_height = NULL,
   fill_extrusion_opacity = NULL,
   fill_extrusion_pattern = NULL,
   fill_extrusion_translate = NULL,
   fill_extrusion_translate_anchor = "map",
+  fill_extrusion_vertical_gradient = NULL,
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
@@ -49,13 +55,37 @@ add_fill_extrusion_layer(
 
   The source layer (for vector sources).
 
+- fill_extrusion_ambient_occlusion_intensity:
+
+  Controls the intensity of ambient occlusion shading. Value between 0
+  and 1; around 0.3 provides the most plausible results for buildings.
+
+- fill_extrusion_ambient_occlusion_radius:
+
+  Shades area near ground and concave angles between walls. Default 3.0
+  corresponds to one floor height.
+
 - fill_extrusion_base:
 
   The base height of the fill extrusion.
 
+- fill_extrusion_cast_shadows:
+
+  If `TRUE` (the default), the fill extrusion casts shadows.
+
 - fill_extrusion_color:
 
   The color of the fill extrusion.
+
+- fill_extrusion_cutoff_fade_range:
+
+  Defines the fade-out range before automatic content cutoff on pitched
+  views. Value between 0 and 1; 0 disables cutoff.
+
+- fill_extrusion_emissive_strength:
+
+  Controls the intensity of light emitted on the source features.
+  Requires 3D lights.
 
 - fill_extrusion_height:
 
@@ -77,6 +107,11 @@ add_fill_extrusion_layer(
 - fill_extrusion_translate_anchor:
 
   Controls the frame of reference for `fill-extrusion-translate`.
+
+- fill_extrusion_vertical_gradient:
+
+  If `TRUE` (the default), sides will be shaded slightly darker farther
+  down.
 
 - visibility:
 

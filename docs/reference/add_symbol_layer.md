@@ -25,6 +25,7 @@ add_symbol_layer(
   icon_image = NULL,
   icon_image_cross_fade = NULL,
   icon_keep_upright = NULL,
+  icon_occlusion_opacity = NULL,
   icon_offset = NULL,
   icon_opacity = NULL,
   icon_optional = NULL,
@@ -60,6 +61,7 @@ add_symbol_layer(
   text_line_height = NULL,
   text_max_angle = NULL,
   text_max_width = NULL,
+  text_occlusion_opacity = NULL,
   text_offset = NULL,
   text_opacity = NULL,
   text_optional = NULL,
@@ -175,6 +177,11 @@ add_symbol_layer(
 - icon_keep_upright:
 
   If TRUE, the icon will be kept upright.
+
+- icon_occlusion_opacity:
+
+  The opacity at which the icon will be drawn when occluded by 3D
+  objects. Value between 0 and 1; 0 hides occluded icons.
 
 - icon_offset:
 
@@ -324,6 +331,11 @@ add_symbol_layer(
 - text_max_width:
 
   Maximum width of the text.
+
+- text_occlusion_opacity:
+
+  The opacity at which the text will be drawn when occluded by 3D
+  objects. Value between 0 and 1; 0 hides occluded text.
 
 - text_offset:
 

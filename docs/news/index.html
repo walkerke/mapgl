@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,16 @@
       <small>Source: <a href="https://github.com/walkerke/mapgl/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.6" id="mapgl-046">mapgl 0.4.6<a class="anchor" aria-label="anchor" href="#mapgl-046"></a></h2>
+<ul><li><p>New <code><a href="../reference/save_map.html">save_map()</a></code> function renders a map widget to a static PNG file using headless Chrome via the chromote package. Supports options for hiding controls, including/excluding legends and scale bars, replacing the basemap with a solid color, and retina-quality output with <code>image_scale</code>. New <code><a href="../reference/print_map.html">print_map()</a></code> function provides the same capability for use in Quarto and R Markdown documents.</p></li>
+<li><p>Update MapLibre GL JS to v5.22.0 and Mapbox GL JS to v3.21.0.</p></li>
+<li><p>Mapbox GL JS v3.21.0 adds native PMTiles support via the TileProvider API. <code><a href="../reference/add_pmtiles_source.html">add_pmtiles_source()</a></code> now uses the native vector tile path for Mapbox, removing the need for the custom PMTiles source implementation for vector tiles.</p></li>
+<li><p>Support for color tables and categorical rasters in <code><a href="../reference/add_image_source.html">add_image_source()</a></code> (<a href="https://github.com/walkerke/mapgl/issues/21" class="external-link">#21</a>).</p></li>
+<li><p>New layer properties: <code>circle_emissive_strength</code>, <code>circle_pitch_alignment</code>, <code>circle_pitch_scale</code>, <code>fill_pattern_cross_fade</code>, <code>line_elevation_reference</code>, <code>line_elevation_ground_scale</code>, <code>line_pattern_cross_fade</code>, <code>fill_extrusion_emissive_strength</code>, <code>fill_extrusion_ambient_occlusion_intensity</code>, <code>fill_extrusion_ambient_occlusion_radius</code>, <code>fill_extrusion_cast_shadows</code>, <code>fill_extrusion_cutoff_fade_range</code>, <code>fill_extrusion_vertical_gradient</code>, <code>raster_color</code>, <code>raster_color_mix</code>, <code>raster_color_range</code>, <code>raster_emissive_strength</code>, <code>icon_occlusion_opacity</code>, <code>text_occlusion_opacity</code>.</p></li>
+<li><p><code>sfc</code> geometry vectors are now accepted wherever <code>sf</code> objects are accepted, including layer functions, quickview functions, and the <code>bounds</code> parameter (<a href="https://github.com/walkerke/mapgl/issues/177" class="external-link">#177</a>).</p></li>
+<li><p>Various bug fixes and performance improvements (see GitHub issues for full list).</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.5" id="mapgl-045">mapgl 0.4.5<a class="anchor" aria-label="anchor" href="#mapgl-045"></a></h2><p class="text-muted">CRAN release: 2026-03-06</p>
 <ul><li><p><strong>Esri styles support</strong>: New <code><a href="../reference/esri_style.html">esri_style()</a></code> function provides access to Esri basemap styles for use with MapLibre maps, with support for ArcGIS API key authentication.</p></li>

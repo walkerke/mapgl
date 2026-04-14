@@ -1,3 +1,19 @@
+# mapgl 0.4.6
+
+* New `save_map()` function renders a map widget to a static PNG file using headless Chrome via the chromote package. Supports options for hiding controls, including/excluding legends and scale bars, replacing the basemap with a solid color, and retina-quality output with `image_scale`. New `print_map()` function provides the same capability for use in Quarto and R Markdown documents.
+
+* Update MapLibre GL JS to v5.22.0 and Mapbox GL JS to v3.21.0.
+
+* Mapbox GL JS v3.21.0 adds native PMTiles support via the TileProvider API. `add_pmtiles_source()` now uses the native vector tile path for Mapbox, removing the need for the custom PMTiles source implementation for vector tiles.
+
+* Support for color tables and categorical rasters in `add_image_source()` (#21).
+
+* New layer properties: `circle_emissive_strength`, `circle_pitch_alignment`, `circle_pitch_scale`, `fill_pattern_cross_fade`, `line_elevation_reference`, `line_elevation_ground_scale`, `line_pattern_cross_fade`, `fill_extrusion_emissive_strength`, `fill_extrusion_ambient_occlusion_intensity`, `fill_extrusion_ambient_occlusion_radius`, `fill_extrusion_cast_shadows`, `fill_extrusion_cutoff_fade_range`, `fill_extrusion_vertical_gradient`, `raster_color`, `raster_color_mix`, `raster_color_range`, `raster_emissive_strength`, `icon_occlusion_opacity`, `text_occlusion_opacity`.
+
+* `sfc` geometry vectors are now accepted wherever `sf` objects are accepted, including layer functions, quickview functions, and the `bounds` parameter (#177).
+
+* Various bug fixes and performance improvements (see GitHub issues for full list).
+
 # mapgl 0.4.5
 
 * **Esri styles support**: New `esri_style()` function provides access to Esri basemap styles for use with MapLibre maps, with support for ArcGIS API key authentication.

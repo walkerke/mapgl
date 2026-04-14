@@ -14,6 +14,8 @@ add_line_layer(
   line_cap = NULL,
   line_color = NULL,
   line_dasharray = NULL,
+  line_elevation_ground_scale = NULL,
+  line_elevation_reference = NULL,
   line_emissive_strength = NULL,
   line_gap_width = NULL,
   line_gradient = NULL,
@@ -23,6 +25,7 @@ add_line_layer(
   line_offset = NULL,
   line_opacity = NULL,
   line_pattern = NULL,
+  line_pattern_cross_fade = NULL,
   line_round_limit = NULL,
   line_sort_key = NULL,
   line_translate = NULL,
@@ -81,6 +84,17 @@ add_line_layer(
   Specifies the lengths of the alternating dashes and gaps that form the
   dash pattern.
 
+- line_elevation_ground_scale:
+
+  Controls how much the elevation of lines scales with terrain
+  exaggeration when `line_elevation_reference` is `"sea"`. Value between
+  0 and 1; 0 keeps the line at fixed altitude, 1 scales proportionally.
+
+- line_elevation_reference:
+
+  Selects the base of line elevation. One of `"none"`, `"sea"`,
+  `"ground"`, or `"hd-road-markup"`.
+
 - line_emissive_strength:
 
   Controls the intensity of light emitted on the source features.
@@ -119,6 +133,11 @@ add_line_layer(
 - line_pattern:
 
   Name of image in sprite to use for drawing image lines.
+
+- line_pattern_cross_fade:
+
+  Controls the transition progress between image variants of
+  `line_pattern`. Value between 0 and 1.
 
 - line_round_limit:
 

@@ -16,6 +16,7 @@ add_fill_layer(
   fill_opacity = NULL,
   fill_outline_color = NULL,
   fill_pattern = NULL,
+  fill_pattern_cross_fade = NULL,
   fill_sort_key = NULL,
   fill_translate = NULL,
   fill_translate_anchor = "map",
@@ -75,6 +76,11 @@ add_fill_layer(
 - fill_pattern:
 
   Name of image in sprite to use for drawing image fills.
+
+- fill_pattern_cross_fade:
+
+  Controls the transition progress between image variants of
+  `fill_pattern`. Value between 0 and 1.
 
 - fill_sort_key:
 

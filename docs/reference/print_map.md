@@ -34,11 +34,13 @@ print_map(
 
 - width:
 
-  Integer. The width of the map viewport in pixels.
+  Integer. The width of the map viewport in pixels. Always overrides any
+  `width` configured when the map widget was created.
 
 - height:
 
-  Integer. The height of the map viewport in pixels.
+  Integer. The height of the map viewport in pixels. Always overrides
+  any `height` configured when the map widget was created.
 
 - include_legend:
 

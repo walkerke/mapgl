@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,11 @@
 <span>  source_layer <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raster_brightness_max <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raster_brightness_min <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  raster_color <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  raster_color_mix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  raster_color_range <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raster_contrast <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  raster_emissive_strength <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raster_fade_duration <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raster_hue_rotate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raster_opacity <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -97,8 +101,29 @@
 <dd><p>The minimum brightness of the image.</p></dd>
 
 
+<dt id="arg-raster-color">raster_color<a class="anchor" aria-label="anchor" href="#arg-raster-color"></a></dt>
+<dd><p>Defines a color map for colorizing single-band raster data, parameterized by
+<code>["raster-value"]</code>. Use an interpolate expression over <code>raster-value</code> to define the color ramp.
+Requires <code>raster_color_range</code> to be set.</p></dd>
+
+
+<dt id="arg-raster-color-mix">raster_color_mix<a class="anchor" aria-label="anchor" href="#arg-raster-color-mix"></a></dt>
+<dd><p>Specifies the combination of source RGB channels used to compute the raster
+value when <code>raster_color</code> is active. A numeric vector of length 4: <code>c(r, g, b, offset)</code>.
+Defaults to <code>c(0.2126, 0.7152, 0.0722, 0)</code> (RGB luminosity).</p></dd>
+
+
+<dt id="arg-raster-color-range">raster_color_range<a class="anchor" aria-label="anchor" href="#arg-raster-color-range"></a></dt>
+<dd><p>Specifies the value range over which <code>raster_color</code> is tabulated.
+A numeric vector of length 2: <code>c(min, max)</code>.</p></dd>
+
+
 <dt id="arg-raster-contrast">raster_contrast<a class="anchor" aria-label="anchor" href="#arg-raster-contrast"></a></dt>
 <dd><p>Increase or reduce the brightness of the image.</p></dd>
+
+
+<dt id="arg-raster-emissive-strength">raster_emissive_strength<a class="anchor" aria-label="anchor" href="#arg-raster-emissive-strength"></a></dt>
+<dd><p>Controls the intensity of light emitted on the source features. Requires 3D lights.</p></dd>
 
 
 <dt id="arg-raster-fade-duration">raster_fade_duration<a class="anchor" aria-label="anchor" href="#arg-raster-fade-duration"></a></dt>
@@ -114,7 +139,7 @@
 
 
 <dt id="arg-raster-resampling">raster_resampling<a class="anchor" aria-label="anchor" href="#arg-raster-resampling"></a></dt>
-<dd><p>The resampling/interpolation method to use for overscaling.</p></dd>
+<dd><p>The resampling/interpolation method to use for overscaling. Options are <code>"linear"</code> (bilinear, the MapLibre/Mapbox default) and <code>"nearest"</code> (nearest-neighbor). Use <code>"nearest"</code> for categorical or classified rasters (e.g. land cover) to preserve crisp category boundaries when zooming.</p></dd>
 
 
 <dt id="arg-raster-saturation">raster_saturation<a class="anchor" aria-label="anchor" href="#arg-raster-saturation"></a></dt>

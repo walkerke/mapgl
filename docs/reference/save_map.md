@@ -39,11 +39,13 @@ save_map(
 
 - width:
 
-  Integer. The width of the map viewport in pixels.
+  Integer. The width of the map viewport in pixels. Always overrides any
+  `width` configured when the map widget was created.
 
 - height:
 
-  Integer. The height of the map viewport in pixels.
+  Integer. The height of the map viewport in pixels. Always overrides
+  any `height` configured when the map widget was created.
 
 - include_legend:
 
@@ -89,9 +91,9 @@ The output file path, invisibly.
 
 ## Details
 
-This function requires the chromote package and a Chrome or Chromium
-browser installation. Install chromote with
-`install.packages("chromote")`.
+This function requires the chromote and httpuv packages. Install them
+with `install.packages(c("chromote", "httpuv"))`. chromote also requires
+a Chrome or Chromium browser installation.
 
 The function works by:
 

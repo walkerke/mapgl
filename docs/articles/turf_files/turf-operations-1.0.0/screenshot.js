@@ -1,10 +1,77 @@
 // Shared screenshot capture module for mapgl widgets
 // Used by both maplibregl.js and mapboxgl.js
 
-async function captureMapScreenshot(map, options) {
+function waitForMapEvent(map, eventName, timeout = 5000, trigger = null) {
+  return new Promise(resolve => {
+    let settled = false;
+
+    function finish(status) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(status);
+    }
+
+    const timer = setTimeout(() => finish('timeout'), timeout);
+
+    map.once(eventName, () => finish(eventName));
+
+    if (typeof trigger === 'function') {
+      try {
+        trigger();
+      } catch (e) {
+        finish('trigger-error');
+      }
+    }
+  });
+}
+
+function waitForInitialStyleSetup(map, timeout = 10000) {
+  return new Promise(resolve => {
+    if (!map || map._initialStyleLoaded === true) {
+      resolve('ready');
+      return;
+    }
+
+    let settled = false;
+
+    function finish(status) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      clearInterval(poller);
+      map.off('styledata', checkReady);
+      map.off('idle', checkReady);
+      map.off('render', checkReady);
+      resolve(status);
+    }
+
+    function checkReady() {
+      if (map._initialStyleLoaded === true) {
+        finish('ready');
+      }
+    }
+
+    const poller = setInterval(checkReady, 50);
+    const timer = setTimeout(() => finish('timeout'), timeout);
+
+    map.on('styledata', checkReady);
+    map.on('idle', checkReady);
+    map.on('render', checkReady);
+  });
+}
+
+function applyMapScreenshotOptions(map, options) {
   const container = map.getContainer();
   const hiddenElements = [];
   const hiddenBasemapLayers = [];
+  const root = document.documentElement;
+  const body = document.body;
+  const originalBackgrounds = {
+    container: container.style.backgroundColor,
+    body: body ? body.style.backgroundColor : '',
+    root: root ? root.style.backgroundColor : ''
+  };
 
   // Hide controls (nav, fullscreen, screenshot, etc.) but keep legends/attribution based on options
   if (options.hide_controls) {
@@ -50,42 +117,92 @@ async function captureMapScreenshot(map, options) {
     effectiveBgColor = options.basemap_color === 'transparent' ? null : options.basemap_color;
   }
 
-  // Attribution is always included to comply with map provider TOS
-
-  function restore() {
-    hiddenElements.forEach(item => item.element.style.display = item.display);
-    hiddenBasemapLayers.forEach(item => {
-      try {
-        map.setLayoutProperty(item.id, 'visibility', item.visibility);
-      } catch (e) {}
-    });
+  if (effectiveBgColor !== null) {
+    container.style.backgroundColor = effectiveBgColor;
+    if (body) body.style.backgroundColor = effectiveBgColor;
+    if (root) root.style.backgroundColor = effectiveBgColor;
+  } else {
+    container.style.backgroundColor = 'transparent';
+    if (body) body.style.backgroundColor = 'transparent';
+    if (root) root.style.backgroundColor = 'transparent';
   }
 
+  return {
+    container,
+    effectiveBgColor,
+    hiddenElements,
+    hiddenBasemapLayers,
+    originalBackgrounds
+  };
+}
+
+function restoreMapScreenshotOptions(map, state) {
+  state.hiddenElements.forEach(item => item.element.style.display = item.display);
+  state.hiddenBasemapLayers.forEach(item => {
+    try {
+      map.setLayoutProperty(item.id, 'visibility', item.visibility);
+    } catch (e) {}
+  });
+
+  state.container.style.backgroundColor = state.originalBackgrounds.container;
+  if (document.body) {
+    document.body.style.backgroundColor = state.originalBackgrounds.body;
+  }
+  if (document.documentElement) {
+    document.documentElement.style.backgroundColor = state.originalBackgrounds.root;
+  }
+}
+
+async function prepareMapForScreenshot(map, options) {
+  let state;
+
   try {
-    // Wait for map to be idle
+    // Wait until the widget's initial style setup is complete.
+    // This is important when PMTiles sources are present because source
+    // metadata checks are async and controls may be added later.
+    await waitForInitialStyleSetup(map, 10000);
+
+    state = applyMapScreenshotOptions(map, options);
+
+    // Attribution is always included to comply with map provider TOS
+
+    // Wait briefly for the map to settle, but don't block indefinitely.
+    // Some Linux/headless browser combinations never report a fully idle map
+    // for remote basemap styles even though the canvas is renderable.
     if (!map.loaded()) {
-      await new Promise(resolve => map.once('idle', resolve));
+      await waitForMapEvent(map, 'idle', 5000);
     }
 
     // If basemap layers were hidden, wait for re-render
-    if (hiddenBasemapLayers.length > 0) {
-      map.triggerRepaint();
-      await new Promise(resolve => map.once('render', resolve));
+    if (state.hiddenBasemapLayers.length > 0) {
+      await waitForMapEvent(map, 'render', 1000, () => map.triggerRepaint());
     }
 
     // Force render and capture
-    map.triggerRepaint();
-    await new Promise(resolve => map.once('render', resolve));
+    await waitForMapEvent(map, 'render', 1000, () => map.triggerRepaint());
 
-    const canvas = await html2canvas(container, {
+    return state;
+  } catch (error) {
+    if (state) {
+      restoreMapScreenshotOptions(map, state);
+    }
+    throw error;
+  }
+}
+
+async function captureMapScreenshot(map, options) {
+  const state = await prepareMapForScreenshot(map, options);
+
+  try {
+    const canvas = await html2canvas(state.container, {
       useCORS: true,
       allowTaint: true,
-      backgroundColor: effectiveBgColor,
+      backgroundColor: state.effectiveBgColor,
       logging: false,
       scale: options.image_scale || 1,
       onclone: function(clonedDoc, clonedElement) {
         // Copy WebGL canvas content to cloned canvas
-        const originalCanvas = container.querySelector('canvas.maplibregl-canvas, canvas.mapboxgl-canvas');
+        const originalCanvas = state.container.querySelector('canvas.maplibregl-canvas, canvas.mapboxgl-canvas');
         const clonedCanvas = clonedElement.querySelector('canvas.maplibregl-canvas, canvas.mapboxgl-canvas');
         if (originalCanvas && clonedCanvas) {
           const ctx = clonedCanvas.getContext('2d');
@@ -96,12 +213,24 @@ async function captureMapScreenshot(map, options) {
       }
     });
 
-    restore();
+    restoreMapScreenshotOptions(map, state);
     return canvas;
 
   } catch (error) {
-    restore();
+    restoreMapScreenshotOptions(map, state);
     throw error;
+  }
+}
+
+async function prepareMapForNativeScreenshot(map, options) {
+  window.__mapglScreenshotState = await prepareMapForScreenshot(map, options);
+  return true;
+}
+
+function restoreMapAfterNativeScreenshot(map) {
+  if (window.__mapglScreenshotState) {
+    restoreMapScreenshotOptions(map, window.__mapglScreenshotState);
+    window.__mapglScreenshotState = null;
   }
 }
 

@@ -12,7 +12,11 @@ add_raster_layer(
   source_layer = NULL,
   raster_brightness_max = NULL,
   raster_brightness_min = NULL,
+  raster_color = NULL,
+  raster_color_mix = NULL,
+  raster_color_range = NULL,
   raster_contrast = NULL,
+  raster_emissive_strength = NULL,
   raster_fade_duration = NULL,
   raster_hue_rotate = NULL,
   raster_opacity = NULL,
@@ -52,9 +56,33 @@ add_raster_layer(
 
   The minimum brightness of the image.
 
+- raster_color:
+
+  Defines a color map for colorizing single-band raster data,
+  parameterized by `["raster-value"]`. Use an interpolate expression
+  over `raster-value` to define the color ramp. Requires
+  `raster_color_range` to be set.
+
+- raster_color_mix:
+
+  Specifies the combination of source RGB channels used to compute the
+  raster value when `raster_color` is active. A numeric vector of length
+  4: `c(r, g, b, offset)`. Defaults to `c(0.2126, 0.7152, 0.0722, 0)`
+  (RGB luminosity).
+
+- raster_color_range:
+
+  Specifies the value range over which `raster_color` is tabulated. A
+  numeric vector of length 2: `c(min, max)`.
+
 - raster_contrast:
 
   Increase or reduce the brightness of the image.
+
+- raster_emissive_strength:
+
+  Controls the intensity of light emitted on the source features.
+  Requires 3D lights.
 
 - raster_fade_duration:
 
@@ -70,7 +98,11 @@ add_raster_layer(
 
 - raster_resampling:
 
-  The resampling/interpolation method to use for overscaling.
+  The resampling/interpolation method to use for overscaling. Options
+  are `"linear"` (bilinear, the MapLibre/Mapbox default) and `"nearest"`
+  (nearest-neighbor). Use `"nearest"` for categorical or classified
+  rasters (e.g. land cover) to preserve crisp category boundaries when
+  zooming.
 
 - raster_saturation:
 
