@@ -8,6 +8,10 @@
 #' @return The modified map object with the new source added.
 #' @export
 add_source <- function(map, id, data, ...) {
+  if (inherits(data, "sfc")) {
+    data <- sf::st_as_sf(data)
+    data$id <- seq_len(nrow(data))
+  }
   if (inherits(data, "sf")) {
     if (sf::st_crs(data) != 4326) {
       data <- sf::st_transform(data, crs = 4326)

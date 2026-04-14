@@ -68,6 +68,10 @@ add_markers <- function(map, data, color = "red", rotation = 0, popup = NULL, ma
   options <- list(...)
   options$draggable <- draggable
 
+  if (inherits(data, "sfc")) {
+    data <- sf::st_as_sf(data)
+    data$id <- seq_len(nrow(data))
+  }
   if (inherits(data, "sf") && sf::st_geometry_type(data, FALSE)[1] == "POINT") {
     coordinates <- sf::st_coordinates(data)
     properties <- sf::st_drop_geometry(data)

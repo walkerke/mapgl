@@ -104,6 +104,10 @@ mapboxgl_view <- function(
   interactive_legend = FALSE,
   ...
 ) {
+  if (inherits(data, "sfc")) {
+    data <- sf::st_as_sf(data)
+    data$id <- seq_len(nrow(data))
+  }
   if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
     stop("data must be an sf object, SpatRaster, or RasterLayer")
   }
@@ -712,6 +716,10 @@ maplibre_view <- function(
   interactive_legend = FALSE,
   ...
 ) {
+  if (inherits(data, "sfc")) {
+    data <- sf::st_as_sf(data)
+    data$id <- seq_len(nrow(data))
+  }
   if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
     stop("data must be an sf object, SpatRaster, or RasterLayer")
   }
@@ -1326,6 +1334,10 @@ add_view <- function(
     stop("map must be a mapboxgl or maplibregl map object")
   }
 
+  if (inherits(data, "sfc")) {
+    data <- sf::st_as_sf(data)
+    data$id <- seq_len(nrow(data))
+  }
   if (!inherits(data, c("sf", "SpatRaster", "RasterLayer"))) {
     stop("data must be an sf object, SpatRaster, or RasterLayer")
   }

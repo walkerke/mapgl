@@ -55,6 +55,9 @@ maplibre <- function(
   additional_params <- list(...)
 
   if (!is.null(bounds)) {
+    if (inherits(bounds, "sfc")) {
+      bounds <- sf::st_as_sf(bounds)
+    }
     if (inherits(bounds, "sf")) {
       bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
     } else if (inherits(bounds, "bbox")) {

@@ -78,7 +78,11 @@ add_layer <- function(
     layout <- NULL
   }
 
-  # Convert sf objects to GeoJSON source
+  # Convert sfc/sf objects to GeoJSON source
+  if (inherits(source, "sfc")) {
+    source <- sf::st_as_sf(source)
+    source$id <- seq_len(nrow(source))
+  }
   if (inherits(source, "sf")) {
     if (sf::st_crs(source) != 4326) {
       source <- sf::st_transform(source, crs = 4326)

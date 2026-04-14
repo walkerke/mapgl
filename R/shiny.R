@@ -643,7 +643,11 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
     stop("layer_id is required")
   }
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
-    # Convert sf objects to GeoJSON source
+    # Convert sfc/sf objects to GeoJSON source
+    if (inherits(source, "sfc")) {
+      source <- sf::st_as_sf(source)
+      source$id <- seq_len(nrow(source))
+    }
     if (inherits(source, "sf")) {
       source <- geojsonsf::sf_geojson(sf::st_transform(
         source,
