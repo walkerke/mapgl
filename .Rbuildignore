@@ -20,3 +20,4 @@ CLAUDE.md
 .DS_Store
 ^tools/check-save-map-integration\.R$
 ^tmp$
+^\.dockerignore$
