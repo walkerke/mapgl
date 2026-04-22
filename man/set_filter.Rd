@@ -19,3 +19,36 @@ The updated map object.
 \description{
 This function sets a filter on a map layer, working with both regular map objects and proxy objects.
 }
+\section{Clustered layers}{
+
+A layer created via the \code{cluster_options} shortcut in \code{\link[=add_circle_layer]{add_circle_layer()}}
+or \code{\link[=add_symbol_layer]{add_symbol_layer()}} is actually three layers over one source
+(\code{"id"}, \code{"id-clusters"}, \code{"id-cluster-count"}). \code{set_filter()} targets
+exactly one of them, so:
+\itemize{
+\item Calling \code{set_filter("id", ...)} applies only to the unclustered
+sub-layer. Cluster circles still show the pre-filter counts.
+\item Cluster points are synthetic (their only properties are
+\code{point_count}, \code{cluster_id}, etc.), so a filter that reads a
+feature property like \code{"year"} cannot be meaningfully applied to
+the \code{-clusters} layer — it would evaluate to \code{FALSE} and hide all
+clusters.
+}
+
+For the common "filter my data" case on a clustered map, use
+\code{\link[=set_source]{set_source()}} instead. It replaces the source's data and
+Mapbox/MapLibre re-cluster automatically:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{mapboxgl_proxy("map") |>
+  set_source(layer_id = "circles", source = filtered())
+}\if{html}{\out{</div>}}
+
+\code{set_filter()} is still the right tool for cluster-aware filters
+that read cluster-point properties, e.g. hiding clusters below a
+count threshold:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{mapboxgl_proxy("map") |>
+  set_filter("circles-clusters", list(">=", get_column("point_count"), 10))
+}\if{html}{\out{</div>}}
+}
+
