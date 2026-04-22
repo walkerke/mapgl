@@ -35,7 +35,7 @@ add_circle_layer(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
 \item{id}{A unique ID for the layer.}
 
@@ -87,7 +87,7 @@ add_circle_layer(
 
 \item{filter}{An optional filter expression to subset features in the layer.}
 
-\item{cluster_options}{A list of options for clustering circles, created by the \code{cluster_options()} function.}
+\item{cluster_options}{A list of options for clustering circles, created by the \code{cluster_options()} function. Two input shapes are supported: pass an \code{sf}/\code{sfc} object as \code{source} for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from \code{add_pmtiles_source()}) along with \code{source_layer} to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via \code{\link[=number_format]{number_format()}}.}
 }
 \value{
 The modified map object with the new circle layer added.

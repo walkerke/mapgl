@@ -491,7 +491,7 @@ add_line_layer <- function(
 
 #' Add a heatmap layer to a Mapbox GL map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
@@ -596,7 +596,7 @@ add_heatmap_layer <- function(
 
 #' Add a fill-extrusion layer to a Mapbox GL map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
@@ -693,9 +693,11 @@ add_fill_extrusion_layer <- function(
   filter = NULL
 ) {
   # Check if using MapLibre with globe projection and warn
-  if (inherits(map, "maplibregl") &&
+  if (
+    inherits(map, "maplibregl") &&
       !is.null(map$x$projection) &&
-      map$x$projection == "globe") {
+      map$x$projection == "globe"
+  ) {
     warning(
       "Fill-extrusion layers may have rendering artifacts in globe projection. ",
       "Consider using projection = \"mercator\" in maplibre() for better performance. ",
@@ -811,8 +813,10 @@ cluster_options <- function(
   circle_stroke_color = NULL,
   circle_stroke_opacity = NULL,
   circle_stroke_width = NULL,
-  text_color = "black"
+  text_color = "black",
+  count_format = c("abbreviated", "grouped", "raw")
 ) {
+  count_format <- match.arg(count_format)
   list(
     max_zoom = max_zoom,
     cluster_radius = cluster_radius,
@@ -824,13 +828,73 @@ cluster_options <- function(
     circle_stroke_color = circle_stroke_color,
     circle_stroke_opacity = circle_stroke_opacity,
     circle_stroke_width = circle_stroke_width,
-    text_color = text_color
+    text_color = text_color,
+    count_format = count_format
+  )
+}
+
+# Build a Mapbox/MapLibre expression that abbreviates a numeric count
+# property the same way native `point_count_abbreviated` does, with a
+# millions extension tacked on:
+#   <1000:        "42"
+#   1000-9999:    "1.2k"
+#   10000-999999: "12k"
+#   >=1000000:    "1.2M"
+# Used by the precomputed cluster path because GL's `number-format`
+# expression supports only locale/currency/min-/max-fraction-digits —
+# the Intl.NumberFormat `notation = "compact"` option is silently
+# ignored, so we can't rely on `number_format()` for this.
+# Resolve the count-label expression for a given format + backend.
+# is_native=TRUE uses the native `point_count_abbreviated` property
+# when available; precomputed tiles get the case-expression fallback.
+.cluster_count_label <- function(count_format, is_native) {
+  switch(
+    count_format,
+    abbreviated = if (is_native) {
+      get_column("point_count_abbreviated")
+    } else {
+      .cluster_count_label_expr("point_count")
+    },
+    grouped = number_format(column = "point_count"),
+    raw     = list("to-string", list("get", "point_count"))
+  )
+}
+
+.cluster_count_label_expr <- function(column = "point_count") {
+  col <- list("get", column)
+  list(
+    "case",
+    list(">=", col, 1000000),
+    list(
+      "concat",
+      list(
+        "to-string",
+        list("/", list("floor", list("/", col, 100000)), 10)
+      ),
+      "M"
+    ),
+    list(">=", col, 10000),
+    list(
+      "concat",
+      list("to-string", list("floor", list("/", col, 1000))),
+      "k"
+    ),
+    list(">=", col, 1000),
+    list(
+      "concat",
+      list(
+        "to-string",
+        list("/", list("floor", list("/", col, 100)), 10)
+      ),
+      "k"
+    ),
+    list("to-string", col)
   )
 }
 
 #' Add a circle layer to a Mapbox GL map
 #'
-#' @param map A map object created by the `mapboxgl` function.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
 #' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
@@ -856,7 +920,7 @@ cluster_options <- function(
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
-#' @param cluster_options A list of options for clustering circles, created by the `cluster_options()` function.
+#' @param cluster_options A list of options for clustering circles, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via [number_format()].
 #'
 #' @return The modified map object with the new circle layer added.
 #' @export
@@ -988,14 +1052,44 @@ add_circle_layer <- function(
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
   if (!is.null(cluster_options)) {
-    # Add clustering to the source
-    map <- add_source(
-      map,
-      id = id,
-      data = source,
-      cluster = TRUE,
-      clusterMaxZoom = cluster_options$max_zoom,
-      clusterRadius = cluster_options$cluster_radius
+    # Dispatch on source shape. sf/sfc takes precedence so existing
+    # calls that incidentally pass `source_layer` alongside sf data
+    # (silently ignored today) don't regress.
+    if (inherits(source, c("sf", "sfc"))) {
+      # Native live clustering: inject a clustered GeoJSON source.
+      map <- add_source(
+        map,
+        id = id,
+        data = source,
+        cluster = TRUE,
+        clusterMaxZoom = cluster_options$max_zoom,
+        clusterRadius = cluster_options$cluster_radius
+      )
+      cluster_source <- id
+      cluster_source_layer <- NULL
+      is_native_cluster <- TRUE
+    } else if (
+      is.character(source) &&
+        length(source) == 1 &&
+        !is.null(source_layer)
+    ) {
+      # Pre-clustered vector tiles (e.g. PMTiles from the freestiler
+      # package, or tippecanoe-clustered tiles). Use the source as-is.
+      cluster_source <- source
+      cluster_source_layer <- source_layer
+      is_native_cluster <- FALSE
+    } else {
+      rlang::abort(c(
+        "`cluster_options` requires one of the following shapes:",
+        i = "`source` = an sf/sfc object (live clustering is applied automatically), or",
+        i = "`source` = an existing source id (string) + `source_layer` = the source-layer name, for pre-clustered vector tiles.",
+        i = "To cluster against a pre-registered clustered GeoJSON source referenced by id, build the three cluster layers manually with `add_layer()`."
+      ))
+    }
+
+    count_label_expr <- .cluster_count_label(
+      cluster_options$count_format %||% "abbreviated",
+      is_native_cluster
     )
 
     # Add clustered circles layer
@@ -1003,7 +1097,8 @@ add_circle_layer <- function(
       map,
       id = paste0(id, "-clusters"),
       type = "circle",
-      source = id,
+      source = cluster_source,
+      source_layer = cluster_source_layer,
       filter = c("has", "point_count"),
       paint = list(
         "circle-color" = step_expr(
@@ -1042,9 +1137,10 @@ add_circle_layer <- function(
     map <- add_symbol_layer(
       map,
       id = paste0(id, "-cluster-count"),
-      source = id,
+      source = cluster_source,
+      source_layer = cluster_source_layer,
       filter = c("has", "point_count"),
-      text_field = get_column("point_count_abbreviated"),
+      text_field = count_label_expr,
       text_size = 12,
       text_color = cluster_options$text_color
     )
@@ -1054,7 +1150,8 @@ add_circle_layer <- function(
       map,
       id = id,
       type = "circle",
-      source = id,
+      source = cluster_source,
+      source_layer = cluster_source_layer,
       filter = list("!", c("has", "point_count")),
       paint = paint,
       layout = layout,
@@ -1299,7 +1396,7 @@ add_raster_layer <- function(
 #' @param hover_options A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
-#' @param cluster_options A list of options for clustering symbols, created by the `cluster_options()` function.
+#' @param cluster_options A list of options for clustering symbols, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via [number_format()].
 #'
 #' @return The modified map object with the new symbol layer added.
 #' @export
@@ -1538,14 +1635,39 @@ add_symbol_layer <- function(
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
   if (!is.null(cluster_options)) {
-    # Add clustering to the source
-    map <- add_source(
-      map,
-      id = id,
-      data = source,
-      cluster = TRUE,
-      clusterMaxZoom = cluster_options$max_zoom,
-      clusterRadius = cluster_options$cluster_radius
+    # Dispatch on source shape. See add_circle_layer() for notes.
+    if (inherits(source, c("sf", "sfc"))) {
+      map <- add_source(
+        map,
+        id = id,
+        data = source,
+        cluster = TRUE,
+        clusterMaxZoom = cluster_options$max_zoom,
+        clusterRadius = cluster_options$cluster_radius
+      )
+      cluster_source <- id
+      cluster_source_layer <- NULL
+      is_native_cluster <- TRUE
+    } else if (
+      is.character(source) &&
+        length(source) == 1 &&
+        !is.null(source_layer)
+    ) {
+      cluster_source <- source
+      cluster_source_layer <- source_layer
+      is_native_cluster <- FALSE
+    } else {
+      rlang::abort(c(
+        "`cluster_options` requires one of the following shapes:",
+        i = "`source` = an sf/sfc object (live clustering is applied automatically), or",
+        i = "`source` = an existing source id (string) + `source_layer` = the source-layer name, for pre-clustered vector tiles.",
+        i = "To cluster against a pre-registered clustered GeoJSON source referenced by id, build the three cluster layers manually with `add_layer()`."
+      ))
+    }
+
+    count_label_expr <- .cluster_count_label(
+      cluster_options$count_format %||% "abbreviated",
+      is_native_cluster
     )
 
     # Add clustered symbols layer
@@ -1553,7 +1675,8 @@ add_symbol_layer <- function(
       map,
       id = paste0(id, "-clusters"),
       type = "circle",
-      source = id,
+      source = cluster_source,
+      source_layer = cluster_source_layer,
       filter = c("has", "point_count"),
       paint = list(
         "circle-color" = step_expr(
@@ -1592,9 +1715,10 @@ add_symbol_layer <- function(
     map <- add_symbol_layer(
       map,
       id = paste0(id, "-cluster-count"),
-      source = id,
+      source = cluster_source,
+      source_layer = cluster_source_layer,
       filter = c("has", "point_count"),
-      text_field = get_column("point_count_abbreviated"),
+      text_field = count_label_expr,
       text_size = 12,
       text_color = cluster_options$text_color
     )
@@ -1604,7 +1728,8 @@ add_symbol_layer <- function(
       map,
       id = id,
       type = "symbol",
-      source = id,
+      source = cluster_source,
+      source_layer = cluster_source_layer,
       filter = list("!", c("has", "point_count")),
       paint = paint,
       layout = layout,

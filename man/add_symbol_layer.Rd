@@ -252,7 +252,7 @@ Requires \code{symbol_placement} to be set to \code{"point"} and \code{symbol-z-
 
 \item{filter}{An optional filter expression to subset features in the layer.}
 
-\item{cluster_options}{A list of options for clustering symbols, created by the \code{cluster_options()} function.}
+\item{cluster_options}{A list of options for clustering symbols, created by the \code{cluster_options()} function. Two input shapes are supported: pass an \code{sf}/\code{sfc} object as \code{source} for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from \code{add_pmtiles_source()}) along with \code{source_layer} to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via \code{\link[=number_format]{number_format()}}.}
 }
 \value{
 The modified map object with the new symbol layer added.

@@ -1,3 +1,61 @@
+// Attach cluster-click + cursor handlers to a "-clusters" layer.
+// Auto-branches on source capability:
+//   - live-clustered GeoJSON  -> getClusterExpansionZoom
+//   - precomputed vector tiles -> easeTo with zoom + 2
+// Idempotent: handler refs are stored per layer id so remove_layer can
+// tear them down, and re-calling attach on the same layer is a no-op.
+function _mapglAttachClusterHandlers(map, layerId, sourceId) {
+  if (!map._mapglClusterHandlers) map._mapglClusterHandlers = {};
+  if (map._mapglClusterHandlers[layerId]) return;
+
+  const click = (e) => {
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: [layerId],
+    });
+    if (!features.length) return;
+    const feature = features[0];
+    const source = map.getSource(sourceId);
+
+    if (source && typeof source.getClusterExpansionZoom === "function") {
+      // Native live-clustered GeoJSON source.
+      const clusterId = feature.properties.cluster_id;
+      source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        map.easeTo({ center: feature.geometry.coordinates, zoom });
+      });
+    } else {
+      // Pre-clustered vector tiles: no source-side cluster tree, so
+      // step the zoom up by one. Tiles re-cluster at every level, so
+      // +2 would traverse an intermediate level mid-ease and flash a
+      // second regrouping — +1 gives a clean single break-apart.
+      map.easeTo({
+        center: feature.geometry.coordinates,
+        zoom: Math.min(map.getZoom() + 1, 20),
+      });
+    }
+  };
+  const mouseenter = () => {
+    map.getCanvas().style.cursor = "pointer";
+  };
+  const mouseleave = () => {
+    map.getCanvas().style.cursor = "";
+  };
+
+  map.on("click", layerId, click);
+  map.on("mouseenter", layerId, mouseenter);
+  map.on("mouseleave", layerId, mouseleave);
+  map._mapglClusterHandlers[layerId] = { click, mouseenter, mouseleave };
+}
+
+function _mapglDetachClusterHandlers(map, layerId) {
+  if (!map._mapglClusterHandlers || !map._mapglClusterHandlers[layerId]) return;
+  const h = map._mapglClusterHandlers[layerId];
+  map.off("click", layerId, h.click);
+  map.off("mouseenter", layerId, h.mouseenter);
+  map.off("mouseleave", layerId, h.mouseleave);
+  delete map._mapglClusterHandlers[layerId];
+}
+
 // Measurement functionality
 function createMeasurementBox(map) {
   const box = document.createElement("div");
@@ -2287,32 +2345,11 @@ HTMLWidgets.widget({
             map._initialStyleLoaded = true;
           }
 
-          // If clusters are present, add event handling
+          // If clusters are present, attach event handling. Helper
+          // auto-branches on source capability (native vs precomputed).
           map.getStyle().layers.forEach((layer) => {
             if (layer.id.includes("-clusters")) {
-              map.on("click", layer.id, (e) => {
-                const features = map.queryRenderedFeatures(e.point, {
-                  layers: [layer.id],
-                });
-                const clusterId = features[0].properties.cluster_id;
-                map
-                  .getSource(layer.source)
-                  .getClusterExpansionZoom(clusterId, (err, zoom) => {
-                    if (err) return;
-
-                    map.easeTo({
-                      center: features[0].geometry.coordinates,
-                      zoom: zoom,
-                    });
-                  });
-              });
-
-              map.on("mouseenter", layer.id, () => {
-                map.getCanvas().style.cursor = "pointer";
-              });
-              map.on("mouseleave", layer.id, () => {
-                map.getCanvas().style.cursor = "";
-              });
+              _mapglAttachClusterHandlers(map, layer.id, layer.source);
             }
           });
 
@@ -2644,6 +2681,18 @@ if (HTMLWidgets.shinyMode) {
             map.addLayer(message.layer);
           }
 
+          // Cluster click/cursor parity for layers added via proxy.
+          if (
+            message.layer.id &&
+            message.layer.id.includes("-clusters")
+          ) {
+            _mapglAttachClusterHandlers(
+              map,
+              message.layer.id,
+              message.layer.source,
+            );
+          }
+
           // Add popups or tooltips if provided
           if (message.layer.popup) {
             // Initialize popup tracking if it doesn't exist
@@ -2831,6 +2880,9 @@ if (HTMLWidgets.shinyMode) {
             );
             delete window._mapboxClickHandlers[message.layer];
           }
+
+          // Tear down cluster click/cursor handlers if any were attached.
+          _mapglDetachClusterHandlers(map, message.layer);
 
           // Remove the layer
           map.removeLayer(message.layer);

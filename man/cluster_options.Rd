@@ -15,7 +15,8 @@ cluster_options(
   circle_stroke_color = NULL,
   circle_stroke_opacity = NULL,
   circle_stroke_width = NULL,
-  text_color = "black"
+  text_color = "black",
+  count_format = c("abbreviated", "grouped", "raw")
 )
 }
 \arguments{
