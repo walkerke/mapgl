@@ -187,6 +187,24 @@
 #' @param classification A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.
 #' @param breaks Numeric vector of break points for filtering with classification-based legends. Typically extracted automatically from the classification object. Only needed if you want to override the default breaks.
 #' @param draggable Logical, whether the legend can be dragged to a new position by the user. Default is FALSE.
+#' @param collapsible Logical, whether to render a toggle button that collapses the legend to a header-only view. Default is FALSE. Most useful for categorical legends with tall bodies on small viewports.
+#' @param collapsed Logical, whether the legend starts in the collapsed state. Only applies when \code{collapsible = TRUE}. Default is FALSE.
+#'
+#' @details
+#' \strong{Collapsible legends.} When \code{collapsible = TRUE}, a 26x26px toggle
+#' button is rendered in the legend's top-right corner. Collapsed, only the
+#' title heading and the toggle button remain visible; every other direct
+#' child of the legend (subtitles, swatches, item labels, the reset-filter
+#' button from interactive legends, any user-appended source footers) is
+#' hidden via CSS. The toggle button inherits \code{border_color} and
+#' \code{text_color} from \code{\link{legend_style}()} so it picks up your
+#' legend theme.
+#'
+#' If you inject your own title block via \code{htmlwidgets::onRender()} --
+#' for example, to add a styled heading above the default title -- mark that
+#' element with \code{class="mapgl-legend-title"} so it stays visible when
+#' collapsed.
+#'
 #' @export
 add_legend <- function(
   map,
@@ -213,7 +231,9 @@ add_legend <- function(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
@@ -266,7 +286,9 @@ if (is.null(values) || is.null(colors)) {
         interactive,
         filter_column,
         filter_values,
-        draggable
+        draggable,
+        collapsible = collapsible,
+        collapsed = collapsed
       )
     } else {
       add_categorical_legend(
@@ -291,7 +313,9 @@ if (is.null(values) || is.null(colors)) {
         filter_column,
         filter_values,
         breaks,
-        draggable
+        draggable,
+        collapsible = collapsible,
+        collapsed = collapsed
       )
     }
   }
@@ -322,7 +346,9 @@ add_categorical_legend <- function(
   filter_column = NULL,
   filter_values = NULL,
   breaks = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -640,19 +666,40 @@ add_categorical_legend <- function(
   # Add draggable attribute if draggable is TRUE
   draggable_attr <- if (draggable) ' data-draggable="true"' else ""
 
+  # Collapsible pieces
+  collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
+  collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
+  collapse_btn_html <- if (collapsible) {
+    paste0(
+      '<button type="button" class="mapgl-legend-collapse-btn" ',
+      'aria-label="',
+      if (collapsed) "Expand legend" else "Collapse legend",
+      '" aria-expanded="',
+      if (collapsed) "false" else "true",
+      '">',
+      if (collapsed) "+" else "\u2013",
+      "</button>"
+    )
+  } else {
+    ""
+  }
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
     '" class="mapboxgl-legend ',
     position,
+    collapsed_class,
     '"',
     layer_attr,
     interactive_attr,
     draggable_attr,
+    collapsible_attr,
     ">",
-    "<h2>",
+    '<h2 class="mapgl-legend-title">',
     legend_title,
     "</h2>",
+    collapse_btn_html,
     paste0(legend_items, collapse = ""),
     "</div>"
   )
@@ -897,7 +944,9 @@ add_continuous_legend <- function(
   interactive = FALSE,
   filter_column = NULL,
   filter_values = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
@@ -985,19 +1034,40 @@ add_continuous_legend <- function(
   # Add draggable attribute if draggable is TRUE
   draggable_attr <- if (draggable) ' data-draggable="true"' else ""
 
+  # Collapsible pieces
+  collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
+  collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
+  collapse_btn_html <- if (collapsible) {
+    paste0(
+      '<button type="button" class="mapgl-legend-collapse-btn" ',
+      'aria-label="',
+      if (collapsed) "Expand legend" else "Collapse legend",
+      '" aria-expanded="',
+      if (collapsed) "false" else "true",
+      '">',
+      if (collapsed) "+" else "\u2013",
+      "</button>"
+    )
+  } else {
+    ""
+  }
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
     '" class="mapboxgl-legend ',
     position,
+    collapsed_class,
     '"',
     layer_attr,
     interactive_attr,
     draggable_attr,
+    collapsible_attr,
     ">",
-    "<h2>",
+    '<h2 class="mapgl-legend-title">',
     legend_title,
     "</h2>",
+    collapse_btn_html,
     '<div class="legend-gradient" style="background:',
     color_gradient,
     '"></div>',

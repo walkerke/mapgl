@@ -430,6 +430,31 @@
     )
   }
 
+  # Collapse toggle button — inherit legend theme when styled
+  collapse_btn_styles <- character(0)
+  if (!is.null(style$border_color)) {
+    collapse_btn_styles <- c(
+      collapse_btn_styles,
+      sprintf("border-color: %s !important;", style$border_color)
+    )
+  }
+  if (!is.null(style$text_color)) {
+    collapse_btn_styles <- c(
+      collapse_btn_styles,
+      sprintf("color: %s !important;", style$text_color)
+    )
+  }
+  if (length(collapse_btn_styles) > 0) {
+    css_rules <- c(
+      css_rules,
+      sprintf(
+        "#%s .mapgl-legend-collapse-btn {\n  %s\n}",
+        unique_id,
+        paste(collapse_btn_styles, collapse = "\n  ")
+      )
+    )
+  }
+
   if (length(css_rules) > 0) {
     return(paste0("\n", paste(css_rules, collapse = "\n"), "\n"))
   } else {

@@ -25,7 +25,9 @@ add_legend.mapboxgl_compare <- function(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 ) {
 
   # Warn if interactive features are requested (not yet supported for compare maps)
@@ -49,16 +51,18 @@ add_legend.mapboxgl_compare <- function(
   
   if (type == "continuous") {
     legend_data <- build_continuous_legend(
-      legend_title, values, colors, position, unique_id, 
-      width, layer_id, margin_top, margin_right, 
-      margin_bottom, margin_left, style
+      legend_title, values, colors, position, unique_id,
+      width, layer_id, margin_top, margin_right,
+      margin_bottom, margin_left, style,
+      collapsible = collapsible, collapsed = collapsed
     )
   } else {
     legend_data <- build_categorical_legend(
-      legend_title, values, colors, circular_patches, 
-      patch_shape, position, unique_id, sizes, width, 
-      layer_id, margin_top, margin_right, margin_bottom, 
-      margin_left, style
+      legend_title, values, colors, circular_patches,
+      patch_shape, position, unique_id, sizes, width,
+      layer_id, margin_top, margin_right, margin_bottom,
+      margin_left, style,
+      collapsible = collapsible, collapsed = collapsed
     )
   }
   
@@ -98,7 +102,9 @@ build_continuous_legend <- function(
   margin_right = NULL,
   margin_bottom = NULL,
   margin_left = NULL,
-  style = NULL
+  style = NULL,
+  collapsible = FALSE,
+  collapsed = FALSE
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
@@ -132,17 +138,38 @@ build_continuous_legend <- function(
     ""
   }
 
+  # Collapsible pieces
+  collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
+  collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
+  collapse_btn_html <- if (collapsible) {
+    paste0(
+      '<button type="button" class="mapgl-legend-collapse-btn" ',
+      'aria-label="',
+      if (collapsed) "Expand legend" else "Collapse legend",
+      '" aria-expanded="',
+      if (collapsed) "false" else "true",
+      '">',
+      if (collapsed) "+" else "\u2013",
+      "</button>"
+    )
+  } else {
+    ""
+  }
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
     '" class="mapboxgl-legend ',
     position,
+    collapsed_class,
     '"',
     layer_attr,
+    collapsible_attr,
     ">",
-    "<h2>",
+    '<h2 class="mapgl-legend-title">',
     legend_title,
     "</h2>",
+    collapse_btn_html,
     '<div class="legend-gradient" style="background:',
     color_gradient,
     '"></div>',
@@ -276,7 +303,9 @@ build_categorical_legend <- function(
   margin_right = NULL,
   margin_bottom = NULL,
   margin_left = NULL,
-  style = NULL
+  style = NULL,
+  collapsible = FALSE,
+  collapsed = FALSE
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -577,17 +606,38 @@ build_categorical_legend <- function(
     ""
   }
 
+  # Collapsible pieces
+  collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
+  collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
+  collapse_btn_html <- if (collapsible) {
+    paste0(
+      '<button type="button" class="mapgl-legend-collapse-btn" ',
+      'aria-label="',
+      if (collapsed) "Expand legend" else "Collapse legend",
+      '" aria-expanded="',
+      if (collapsed) "false" else "true",
+      '">',
+      if (collapsed) "+" else "\u2013",
+      "</button>"
+    )
+  } else {
+    ""
+  }
+
   legend_html <- paste0(
     '<div id="',
     unique_id,
     '" class="mapboxgl-legend ',
     position,
+    collapsed_class,
     '"',
     layer_attr,
+    collapsible_attr,
     ">",
-    "<h2>",
+    '<h2 class="mapgl-legend-title">',
     legend_title,
     "</h2>",
+    collapse_btn_html,
     paste0(legend_items, collapse = ""),
     "</div>"
   )
