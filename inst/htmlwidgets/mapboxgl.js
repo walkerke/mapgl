@@ -2854,6 +2854,20 @@ if (HTMLWidgets.shinyMode) {
           delete window._mapboxPopups[message.layer];
         }
 
+        // Cascade: if this layer is the parent of a cluster_options
+        // shortcut (siblings `-clusters` and `-cluster-count` exist),
+        // remove those too. The shared source drops with the parent
+        // layer below. Siblings don't have popup/tooltip handlers of
+        // their own; the cluster click handlers are torn down by
+        // _mapglDetachClusterHandlers.
+        ["-clusters", "-cluster-count"].forEach((suffix) => {
+          const siblingId = message.layer + suffix;
+          if (map.getLayer(siblingId)) {
+            _mapglDetachClusterHandlers(map, siblingId);
+            map.removeLayer(siblingId);
+          }
+        });
+
         if (map.getLayer(message.layer)) {
           // Remove tooltip handlers
           if (window._mapboxHandlers && window._mapboxHandlers[message.layer]) {
