@@ -786,6 +786,7 @@ add_fill_extrusion_layer <- function(
 #' @param circle_stroke_opacity The opacity of the circle's stroke.
 #' @param circle_stroke_width The width of the circle's stroke.
 #' @param text_color The color to use for labels on the cluster circles.
+#' @param count_format The formatting of the text labels on the cluster circles to represent the counts. `"abbreviated"` (the default) will use shortened notation, e.g. "11k". `"grouped"` will show comma-separated numbers, e.g. "11,000".  `"raw"` shows the raw value.
 #'
 #' @return A list of cluster options.
 #' @export
@@ -844,6 +845,37 @@ cluster_options <- function(
 # expression supports only locale/currency/min-/max-fraction-digits —
 # the Intl.NumberFormat `notation = "compact"` option is silently
 # ignored, so we can't rely on `number_format()` for this.
+# Warn when a Mapbox GL JS map is rendering a pre-clustered vector
+# tile source via cluster_options(). Mapbox GL JS v3.21.0's native
+# TileProvider PMTiles path currently renders features from multiple
+# source zooms simultaneously at fractional camera zooms, which
+# produces duplicate cluster labels during transitions. MapLibre
+# (via the `pmtiles://` protocol handler) is unaffected. This helper
+# only fires a warning — the feature still works, just with the
+# visual artifact documented upstream.
+.warn_mapbox_pmtiles_cluster <- function(map) {
+  is_mapbox <- inherits(
+    map,
+    c(
+      "mapboxgl",
+      "mapboxgl_proxy",
+      "mapboxgl_compare",
+      "mapboxgl_compare_proxy"
+    )
+  )
+  if (!is_mapbox) return(invisible())
+  rlang::warn(
+    c(
+      "Clustered vector tile sources render with visual artifacts in Mapbox GL JS.",
+      i = "Mapbox GL JS v3.21.0's native PMTiles path can display features from adjacent source zooms at the same time, producing duplicate cluster labels at fractional camera zooms.",
+      i = "MapLibre (via `maplibre()`) renders the same tiles correctly; switching to it avoids the artifact.",
+      i = "See `?cluster_options` for details."
+    ),
+    .frequency = "regularly",
+    .frequency_id = "mapgl_mapbox_pmtiles_cluster"
+  )
+}
+
 # Resolve the count-label expression for a given format + backend.
 # is_native=TRUE uses the native `point_count_abbreviated` property
 # when available; precomputed tiles get the case-expression fallback.
@@ -856,7 +888,7 @@ cluster_options <- function(
       .cluster_count_label_expr("point_count")
     },
     grouped = number_format(column = "point_count"),
-    raw     = list("to-string", list("get", "point_count"))
+    raw = list("to-string", list("get", "point_count"))
   )
 }
 
@@ -1080,6 +1112,7 @@ add_circle_layer <- function(
       cluster_source <- source
       cluster_source_layer <- source_layer
       is_native_cluster <- FALSE
+      .warn_mapbox_pmtiles_cluster(map)
     } else {
       rlang::abort(c(
         "`cluster_options` requires one of the following shapes:",
@@ -1662,6 +1695,7 @@ add_symbol_layer <- function(
       cluster_source <- source
       cluster_source_layer <- source_layer
       is_native_cluster <- FALSE
+      .warn_mapbox_pmtiles_cluster(map)
     } else {
       rlang::abort(c(
         "`cluster_options` requires one of the following shapes:",
