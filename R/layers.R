@@ -1113,7 +1113,8 @@ add_circle_layer <- function(
           stops = cluster_options$radius_stops[-1],
           values = cluster_options$count_stops[-1]
         )
-      )
+      ),
+      layout = list(visibility = visibility)
     )
 
     # Add optional paint properties if they are not NULL
@@ -1142,7 +1143,8 @@ add_circle_layer <- function(
       filter = c("has", "point_count"),
       text_field = count_label_expr,
       text_size = 12,
-      text_color = cluster_options$text_color
+      text_color = cluster_options$text_color,
+      visibility = visibility
     )
 
     # Add unclustered points
@@ -1691,7 +1693,8 @@ add_symbol_layer <- function(
           stops = cluster_options$radius_stops[-1],
           values = cluster_options$count_stops[-1]
         )
-      )
+      ),
+      layout = list(visibility = visibility)
     )
 
     # Add optional paint properties if they are not NULL
@@ -1720,7 +1723,8 @@ add_symbol_layer <- function(
       filter = c("has", "point_count"),
       text_field = count_label_expr,
       text_size = 12,
-      text_color = cluster_options$text_color
+      text_color = cluster_options$text_color,
+      visibility = visibility
     )
 
     # Add unclustered symbols
