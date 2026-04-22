@@ -41,6 +41,8 @@ cluster_options(
 \item{circle_stroke_width}{The width of the circle's stroke.}
 
 \item{text_color}{The color to use for labels on the cluster circles.}
+
+\item{count_format}{The formatting of the text labels on the cluster circles to represent the counts. \code{"abbreviated"} (the default) will use shortened notation, e.g. "11k". \code{"grouped"} will show comma-separated numbers, e.g. "11,000".  \code{"raw"} shows the raw value.}
 }
 \value{
 A list of cluster options.
