@@ -87,7 +87,9 @@ add_circle_layer(
 
 \item{filter}{An optional filter expression to subset features in the layer.}
 
-\item{cluster_options}{A list of options for clustering circles, created by the \code{cluster_options()} function. Two input shapes are supported: pass an \code{sf}/\code{sfc} object as \code{source} for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from \code{add_pmtiles_source()}) along with \code{source_layer} to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via \code{\link[=number_format]{number_format()}}.}
+\item{cluster_options}{A list of options for clustering circles, created by the \code{cluster_options()} function. Two input shapes are supported: pass an \code{sf}/\code{sfc} object as \code{source} for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from \code{add_pmtiles_source()}) along with \code{source_layer} to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via \code{\link[=number_format]{number_format()}}.
+
+\strong{Updating a clustered layer in Shiny:} the shortcut creates three layers (\code{"id"}, \code{"id-clusters"}, \code{"id-cluster-count"}) on top of one source. For reactive data updates the recommended pattern is \code{\link[=set_source]{set_source()}}, which replaces the source's data and lets Mapbox/MapLibre re-cluster automatically without tearing down the layers: \code{mapboxgl_proxy("map") |> set_source(layer_id = "circles", source = filtered())}. If you need to remove a clustered layer entirely (e.g. before switching backends), pass the full trio to \code{\link[=clear_layer]{clear_layer()}}: \code{clear_layer(proxy, c("circles", "circles-clusters", "circles-cluster-count"))}.}
 }
 \value{
 The modified map object with the new circle layer added.

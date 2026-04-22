@@ -922,6 +922,8 @@ cluster_options <- function(
 #' @param filter An optional filter expression to subset features in the layer.
 #' @param cluster_options A list of options for clustering circles, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via [number_format()].
 #'
+#'   **Updating a clustered layer in Shiny:** the shortcut creates three layers (`"id"`, `"id-clusters"`, `"id-cluster-count"`) on top of one source. For reactive data updates the recommended pattern is [set_source()], which replaces the source's data and lets Mapbox/MapLibre re-cluster automatically without tearing down the layers: `mapboxgl_proxy("map") |> set_source(layer_id = "circles", source = filtered())`. If you need to remove a clustered layer entirely (e.g. before switching backends), pass the full trio to [clear_layer()]: `clear_layer(proxy, c("circles", "circles-clusters", "circles-cluster-count"))`.
+#'
 #' @return The modified map object with the new circle layer added.
 #' @export
 #'
@@ -1399,6 +1401,8 @@ add_raster_layer <- function(
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
 #' @param cluster_options A list of options for clustering symbols, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via [number_format()].
+#'
+#'   **Updating a clustered layer in Shiny:** the shortcut creates three layers (`"id"`, `"id-clusters"`, `"id-cluster-count"`) on top of one source. For reactive data updates the recommended pattern is [set_source()], which replaces the source's data and lets Mapbox/MapLibre re-cluster automatically without tearing down the layers: `mapboxgl_proxy("map") |> set_source(layer_id = "pts", source = filtered())`. If you need to remove a clustered layer entirely (e.g. before switching backends), pass the full trio to [clear_layer()]: `clear_layer(proxy, c("pts", "pts-clusters", "pts-cluster-count"))`.
 #'
 #' @return The modified map object with the new symbol layer added.
 #' @export
