@@ -7,13 +7,22 @@
 get_drawn_features(map)
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} function, or a mapboxgl proxy.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or
+a map proxy.}
 }
 \value{
-An sf object containing the drawn features.
+An sf object containing the drawn features. Feature properties are
+preserved as columns and the CRS is EPSG:4326. If the drawn features do not
+include an \code{id} property, an integer \code{id} column is added. If no features are
+available, a 0-row sf object with an \code{id} column is returned.
 }
 \description{
 Get drawn features from the map
+}
+\details{
+In non-Shiny sessions, retrieval requires a map that was built by piping the
+original widget object through \code{add_draw_control()}. Non-Shiny proxy updates
+and compare widgets are not yet supported.
 }
 \examples{
 \dontrun{

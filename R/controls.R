@@ -655,6 +655,19 @@ add_draw_control <- function(
 
   options <- list(...)
 
+  is_proxy <- inherits(map, "mapboxgl_proxy") ||
+    inherits(map, "maplibre_proxy")
+
+  if (!is_proxy) {
+    map$x$mapgl_id <- map$x$mapgl_id %||% .mapgl_new_id()
+
+    if (!shiny::isRunning() &&
+      is.null(shiny::getDefaultReactiveDomain()) &&
+      interactive()) {
+      map$x$sync_url <- .mapgl_draw_sync_url(map$x$mapgl_id)
+    }
+  }
+
   # Handle source if provided
   draw_source <- NULL
   if (!is.null(source)) {
@@ -691,10 +704,7 @@ add_draw_control <- function(
     )
   )
 
-  if (
-    inherits(map, "mapboxgl_proxy") ||
-      inherits(map, "maplibre_proxy")
-  ) {
+  if (is_proxy) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
         inherits(map, "maplibre_compare_proxy")
@@ -778,9 +788,19 @@ add_draw_control <- function(
 
 #' Get drawn features from the map
 #'
-#' @param map A map object created by the `mapboxgl` function, or a mapboxgl proxy.
+#' @param map A map object created by the `mapboxgl` or `maplibre` function, or
+#'   a map proxy.
 #'
-#' @return An sf object containing the drawn features.
+#' @return An sf object containing the drawn features. Feature properties are
+#'   preserved as columns and the CRS is EPSG:4326. If the drawn features do not
+#'   include an `id` property, an integer `id` column is added. If no features are
+#'   available, a 0-row sf object with an `id` column is returned.
+#'
+#' @details
+#' In non-Shiny sessions, retrieval requires a map that was built by piping the
+#' original widget object through `add_draw_control()`. Non-Shiny proxy updates
+#' and compare widgets are not yet supported.
+#'
 #' @export
 #'
 #' @examples
@@ -834,21 +854,33 @@ get_drawn_features <- function(map) {
   }
 
   # Determine if we're in a Shiny session
-  in_shiny <- shiny::isRunning()
+  session <- shiny::getDefaultReactiveDomain()
+  in_shiny <- shiny::isRunning() || !is.null(session)
 
   if (!in_shiny) {
-    warning(
-      "Getting drawn features outside of a Shiny context is not supported. Please use this function within a Shiny application."
-    )
-    return(sf::st_sf(geometry = sf::st_sfc())) # Return an empty sf object
+    mapgl_id <- map$x$mapgl_id
+    if (is.null(mapgl_id)) {
+      rlang::abort(
+        "Non-Shiny retrieval requires a map built with add_draw_control()."
+      )
+    }
+
+    return(.mapgl_coerce_drawn_features(.mapgl_draw_sync_get(mapgl_id)))
   }
 
   # Get the session object
-  session <- shiny::getDefaultReactiveDomain()
+  if (is.null(session)) {
+    rlang::abort("get_drawn_features() must be called from a Shiny session.")
+  }
 
   if (inherits(map, "mapboxgl") || inherits(map, "maplibregl")) {
     # Initial map object in Shiny
     map_id <- map$elementId
+    if (is.null(map_id)) {
+      rlang::abort(
+        "Use a map proxy, such as mapboxgl_proxy(), when retrieving drawn features from a Shiny output."
+      )
+    }
   } else if (
     inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")
   ) {
@@ -858,65 +890,16 @@ get_drawn_features <- function(map) {
     stop("Unexpected map object type.")
   }
 
-  # Send message to get drawn features
-  if (
-    inherits(map, "mapboxgl_compare_proxy") ||
-      inherits(map, "maplibre_compare_proxy")
-  ) {
-    # For compare proxies
-    proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
-      "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
-    session$sendCustomMessage(
-      proxy_class,
-      list(
-        id = map_id,
-        message = list(
-          type = "get_drawn_features",
-          map = map$map_side
-        )
-      )
-    )
-  } else {
-    # For regular proxies
-    proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
-      "maplibre-proxy"
-    session$sendCustomMessage(
-      proxy_class,
-      list(
-        id = map_id,
-        message = list(type = "get_drawn_features")
-      )
-    )
-  }
-
   # Trim any module namespacing off to index the session proxy inputs
   map_drawn_id <- sub(
     pattern = session$ns(""),
     replacement = "",
     x = paste0(map_id, "_drawn_features")
   )
-  # Wait for response
-  features_json <- NULL
-  wait_time <- 0
-  while (
-    is.null(features_json) &&
-      wait_time < 3
-  ) {
-    # Wait up to 3 seconds
-    features_json <- session$input[[map_drawn_id]]
-    Sys.sleep(0.1)
-    wait_time <- wait_time + 0.1
-  }
 
-  if (
-    !is.null(features_json) &&
-      features_json != "null" &&
-      nchar(features_json) > 0
-  ) {
-    sf::st_make_valid(sf::st_read(features_json, quiet = TRUE))
-  } else {
-    sf::st_sf(geometry = sf::st_sfc()) # Return an empty sf object if no features
-  }
+  .mapgl_coerce_drawn_features(
+    .mapgl_shiny_input_value(session, map_drawn_id)
+  )
 }
 
 #' Add features to an existing draw control

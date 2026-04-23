@@ -56,6 +56,50 @@ function _mapglDetachClusterHandlers(map, layerId) {
   delete map._mapglClusterHandlers[layerId];
 }
 
+function _mapglPostDrawnFeatures(syncUrl, mapglId, features) {
+  if (!syncUrl || !mapglId || typeof fetch !== "function") return;
+
+  fetch(syncUrl, {
+    method: "POST",
+    body: JSON.stringify(features),
+  }).catch((e) => {
+    if (typeof console !== "undefined" && console.debug) {
+      console.debug("mapgl draw sync failed", e);
+    }
+  });
+}
+
+function _mapglSyncDrawnFeatures(options) {
+  const drawControl = options.drawControl;
+  if (!drawControl) return;
+
+  const drawnFeatures = drawControl.getAll();
+  const widget = options.widget;
+
+  if (HTMLWidgets.shinyMode && typeof Shiny !== "undefined") {
+    Shiny.setInputValue(options.inputId + "_drawn_features", drawnFeatures, {
+      priority: "event",
+    });
+  } else if (options.syncUrl && options.mapglId) {
+    if (options.debounce && widget) {
+      clearTimeout(widget._mapglDrawSyncTimer);
+      widget._mapglDrawSyncTimer = setTimeout(() => {
+        _mapglPostDrawnFeatures(
+          options.syncUrl,
+          options.mapglId,
+          drawnFeatures,
+        );
+      }, 150);
+    } else {
+      _mapglPostDrawnFeatures(options.syncUrl, options.mapglId, drawnFeatures);
+    }
+  }
+
+  if (widget) {
+    widget.drawFeatures = drawnFeatures;
+  }
+}
+
 // Measurement functionality
 function createMeasurementBox(map) {
   const box = document.createElement("div");
@@ -1671,9 +1715,9 @@ HTMLWidgets.widget({
             }
 
             // Add event listeners
-            map.on("draw.create", updateDrawnFeatures);
-            map.on("draw.delete", updateDrawnFeatures);
-            map.on("draw.update", updateDrawnFeatures);
+            map.on("draw.create", () => updateDrawnFeatures(false));
+            map.on("draw.delete", () => updateDrawnFeatures(false));
+            map.on("draw.update", () => updateDrawnFeatures(true));
 
             // Add measurement functionality if enabled
             if (x.draw_control.show_measurements) {
@@ -1687,6 +1731,7 @@ HTMLWidgets.widget({
             // Add initial features if provided
             if (x.draw_control.source) {
               addSourceFeaturesToDraw(draw, x.draw_control.source, map);
+              updateDrawnFeatures(false);
             }
 
             // Process any queued features
@@ -1854,23 +1899,15 @@ HTMLWidgets.widget({
             }
           }
 
-          function updateDrawnFeatures() {
-            if (draw) {
-              var drawnFeatures = draw.getAll();
-              if (HTMLWidgets.shinyMode) {
-                Shiny.setInputValue(
-                  el.id + "_drawn_features",
-                  JSON.stringify(drawnFeatures),
-                );
-              }
-              // Store drawn features in the widget's data
-              if (el.querySelector) {
-                var widget = HTMLWidgets.find("#" + el.id);
-                if (widget) {
-                  widget.drawFeatures = drawnFeatures;
-                }
-              }
-            }
+          function updateDrawnFeatures(debounce) {
+            _mapglSyncDrawnFeatures({
+              inputId: el.id,
+              drawControl: draw,
+              widget: HTMLWidgets.find("#" + el.id),
+              syncUrl: x.sync_url,
+              mapglId: x.mapgl_id,
+              debounce: debounce,
+            });
           }
 
           if (!x.add) {
@@ -2499,21 +2536,14 @@ if (HTMLWidgets.shinyMode) {
       const layerState = window._mapglLayerState[mapId];
 
       // Helper function to update drawn features
-      function updateDrawnFeatures() {
+      function updateDrawnFeatures(debounce) {
         var drawControl = widget.drawControl || widget.getDraw();
-        if (drawControl) {
-          var drawnFeatures = drawControl.getAll();
-          if (HTMLWidgets.shinyMode) {
-            Shiny.setInputValue(
-              data.id + "_drawn_features",
-              JSON.stringify(drawnFeatures),
-            );
-          }
-          // Store drawn features in the widget's data
-          if (widget) {
-            widget.drawFeatures = drawnFeatures;
-          }
-        }
+        _mapglSyncDrawnFeatures({
+          inputId: data.id,
+          drawControl: drawControl,
+          widget: widget,
+          debounce: debounce,
+        });
       }
       if (message.type === "set_filter") {
         map.setFilter(message.layer, message.filter);
@@ -3631,9 +3661,9 @@ if (HTMLWidgets.shinyMode) {
         }
 
         // Add event listeners
-        map.on("draw.create", updateDrawnFeatures);
-        map.on("draw.delete", updateDrawnFeatures);
-        map.on("draw.update", updateDrawnFeatures);
+        map.on("draw.create", () => updateDrawnFeatures(false));
+        map.on("draw.delete", () => updateDrawnFeatures(false));
+        map.on("draw.update", () => updateDrawnFeatures(true));
 
         // Add measurement functionality if enabled
         if (message.show_measurements) {
@@ -3643,6 +3673,7 @@ if (HTMLWidgets.shinyMode) {
         // Add initial features if provided
         if (message.source) {
           addSourceFeaturesToDraw(drawControl, message.source, map);
+          updateDrawnFeatures(false);
         }
 
         // Add rectangle and radius buttons if enabled
@@ -3800,15 +3831,13 @@ if (HTMLWidgets.shinyMode) {
         var drawControl = widget.drawControl || widget.getDraw();
         if (drawControl) {
           const features = drawControl.getAll();
-          Shiny.setInputValue(
-            data.id + "_drawn_features",
-            JSON.stringify(features),
-          );
+          Shiny.setInputValue(data.id + "_drawn_features", features, {
+            priority: "event",
+          });
         } else {
-          Shiny.setInputValue(
-            data.id + "_drawn_features",
-            JSON.stringify(null),
-          );
+          Shiny.setInputValue(data.id + "_drawn_features", null, {
+            priority: "event",
+          });
         }
       } else if (message.type === "clear_drawn_features") {
         var drawControl = widget.drawControl || widget.getDraw();
