@@ -12,11 +12,23 @@ get_drawn_features(map)
 
 - map:
 
-  A map object created by the `mapboxgl` function, or a mapboxgl proxy.
+  A map object created by the `mapboxgl` or `maplibre` function, or a
+  map proxy.
 
 ## Value
 
-An sf object containing the drawn features.
+An sf object containing the drawn features. Feature properties are
+preserved as columns and the CRS is EPSG:4326. If the drawn features do
+not include an `id` property, an integer `id` column is added. If no
+features are available, a 0-row sf object with an `id` column is
+returned.
+
+## Details
+
+In non-Shiny sessions, retrieval requires a map that was built by piping
+the original widget object through
+[`add_draw_control()`](https://walker-data.com/mapgl/reference/add_draw_control.md).
+Non-Shiny proxy updates and compare widgets are not yet supported.
 
 ## Examples
 

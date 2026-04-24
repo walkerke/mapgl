@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,12 +56,22 @@
 
 
 <dl><dt id="arg-map">map<a class="anchor" aria-label="anchor" href="#arg-map"></a></dt>
-<dd><p>A map object created by the <code>mapboxgl</code> function, or a mapboxgl proxy.</p></dd>
+<dd><p>A map object created by the <code>mapboxgl</code> or <code>maplibre</code> function, or
+a map proxy.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An sf object containing the drawn features.</p>
+    <p>An sf object containing the drawn features. Feature properties are
+preserved as columns and the CRS is EPSG:4326. If the drawn features do not
+include an <code>id</code> property, an integer <code>id</code> column is added. If no features are
+available, a 0-row sf object with an <code>id</code> column is returned.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>In non-Shiny sessions, retrieval requires a map that was built by piping the
+original widget object through <code><a href="add_draw_control.html">add_draw_control()</a></code>. Non-Shiny proxy updates
+and compare widgets are not yet supported.</p>
     </div>
 
     <div class="section level2">

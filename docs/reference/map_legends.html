@@ -9,7 +9,7 @@ to customize appearance and clear_legend() to remove legends."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,9 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  filter_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  classification <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsible <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsed <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">add_categorical_legend</span><span class="op">(</span></span>
@@ -101,7 +103,9 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  filter_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsible <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsed <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">add_continuous_legend</span><span class="op">(</span></span>
@@ -122,7 +126,9 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  interactive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  filter_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsible <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsed <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mapboxgl_compare'</span></span>
@@ -151,7 +157,9 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  filter_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  classification <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsible <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsed <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'maplibre_compare'</span></span>
@@ -180,7 +188,9 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <span>  filter_values <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  classification <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  draggable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsible <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  collapsed <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -287,10 +297,33 @@ to customize appearance and <code><a href="clear_legend.html">clear_legend()</a>
 <dt id="arg-draggable">draggable<a class="anchor" aria-label="anchor" href="#arg-draggable"></a></dt>
 <dd><p>Logical, whether the legend can be dragged to a new position by the user. Default is FALSE.</p></dd>
 
+
+<dt id="arg-collapsible">collapsible<a class="anchor" aria-label="anchor" href="#arg-collapsible"></a></dt>
+<dd><p>Logical, whether to render a toggle button that collapses the legend to a header-only view. Default is FALSE. Most useful for categorical legends with tall bodies on small viewports.</p></dd>
+
+
+<dt id="arg-collapsed">collapsed<a class="anchor" aria-label="anchor" href="#arg-collapsed"></a></dt>
+<dd><p>Logical, whether the legend starts in the collapsed state. Only applies when <code>collapsible = TRUE</code>. Default is FALSE.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The updated map object with the legend added.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><strong>Collapsible legends.</strong> When <code>collapsible = TRUE</code>, a 26x26px toggle
+button is rendered in the legend's top-right corner. Collapsed, only the
+title heading and the toggle button remain visible; every other direct
+child of the legend (subtitles, swatches, item labels, the reset-filter
+button from interactive legends, any user-appended source footers) is
+hidden via CSS. The toggle button inherits <code>border_color</code> and
+<code>text_color</code> from <code><a href="legend_style.html">legend_style()</a></code> so it picks up your
+legend theme.</p>
+<p>If you inject your own title block via <code><a href="https://rdrr.io/pkg/htmlwidgets/man/onRender.html" class="external-link">htmlwidgets::onRender()</a></code> –
+for example, to add a styled heading above the default title – mark that
+element with <code>class="mapgl-legend-title"</code> so it stays visible when
+collapsed.</p>
     </div>
 
     <div class="section level2">

@@ -437,7 +437,27 @@ add_symbol_layer(
 
   A list of options for clustering symbols, created by the
   [`cluster_options()`](https://walker-data.com/mapgl/reference/cluster_options.md)
-  function.
+  function. Two input shapes are supported: pass an `sf`/`sfc` object as
+  `source` for native live clustering (a GeoJSON source is injected
+  automatically), or pass the id of an already-registered vector source
+  (e.g. from
+  [`add_pmtiles_source()`](https://walker-data.com/mapgl/reference/add_pmtiles_source.md))
+  along with `source_layer` to use pre-clustered vector tiles such as
+  those produced by the freestiler package. In the latter case the
+  cluster-count label is abbreviated client-side via
+  [`number_format()`](https://walker-data.com/mapgl/reference/number_format.md).
+
+  **Updating a clustered layer in Shiny:** the shortcut creates three
+  layers (`"id"`, `"id-clusters"`, `"id-cluster-count"`) on top of one
+  source. For reactive data updates the recommended pattern is
+  [`set_source()`](https://walker-data.com/mapgl/reference/set_source.md),
+  which replaces the source's data and lets Mapbox/MapLibre re-cluster
+  automatically without tearing down the layers:
+  `mapboxgl_proxy("map") |> set_source(layer_id = "pts", source = filtered())`.
+  If you need to remove a clustered layer entirely (e.g. before
+  switching backends), pass the full trio to
+  [`clear_layer()`](https://walker-data.com/mapgl/reference/clear_layer.md):
+  `clear_layer(proxy, c("pts", "pts-clusters", "pts-cluster-count"))`.
 
 ## Value
 
