@@ -134,6 +134,8 @@ Functions to add interactive controls to your map
   : Add a layers control to the map
 - [`add_draw_control()`](https://walker-data.com/mapgl/reference/add_draw_control.md)
   : Add a draw control to a map
+- [`draw_attribute()`](https://walker-data.com/mapgl/reference/draw_attribute.md)
+  : Define an editable draw attribute
 - [`add_geocoder_control()`](https://walker-data.com/mapgl/reference/add_geocoder_control.md)
   : Add a geocoder control to a map
 - [`add_reset_control()`](https://walker-data.com/mapgl/reference/add_reset_control.md)

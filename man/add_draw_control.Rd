@@ -11,8 +11,11 @@ add_draw_control(
   simplify_freehand = FALSE,
   rectangle = FALSE,
   radius = FALSE,
+  bezier = FALSE,
+  bezier_polygon = FALSE,
   orientation = "vertical",
   source = NULL,
+  attributes = NULL,
   point_color = "#3bb2d0",
   line_color = "#3bb2d0",
   fill_color = "#3bb2d0",
@@ -41,11 +44,18 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 
 \item{radius}{Logical, whether to enable radius/circle drawing mode. Default is FALSE.}
 
+\item{bezier}{Logical, whether to enable Bezier curve drawing mode. Default is FALSE.}
+
+\item{bezier_polygon}{Logical, whether to enable Bezier polygon drawing mode. Default is FALSE.}
+
 \item{orientation}{A string specifying the orientation of the draw control.
 Either "vertical" (default) or "horizontal".}
 
 \item{source}{A character string specifying a source ID to add to the draw control.
 Default is NULL.}
+
+\item{attributes}{Optional named list defining editable feature attributes.
+Use \code{\link[=draw_attribute]{draw_attribute()}} to define fields.}
 
 \item{point_color}{Color for point features. Default is "#3bb2d0" (light blue).}
 
@@ -76,6 +86,30 @@ The modified map object with the draw control added.
 }
 \description{
 Add a draw control to a map
+}
+\details{
+Bezier drawing modes are supported when the draw control is added to the
+original map widget or later through a regular Shiny map proxy. Compare
+widgets and compare proxies are not yet supported for Bezier modes.
+
+To draw Bezier curves, click the Bezier button, then use \strong{Alt + left-drag}
+to create nodes with handles. A plain left-click creates nodes without
+handles. Press Enter, or click the last node, to finish the curve. In direct
+select mode, select a node and drag its handles to edit the curve; use
+\strong{Alt + drag} on a handle to break handle symmetry.
+
+Retrieved Bezier features are returned to R as standard sf geometries using
+the rendered curved coordinates: Bezier curves become LineString features and
+Bezier polygons become Polygon features. The Bezier control metadata is also
+preserved in feature-property columns so the browser widget can continue to
+edit those features as Bezier objects.
+
+When \code{attributes} is supplied, selecting exactly one drawn feature opens a
+small attribute editor. Click Save to write values to the feature properties;
+\code{get_drawn_features()} returns those properties as sf columns. The editor
+works for newly drawn features and features loaded into the draw control with
+\code{source} or \code{add_features_to_draw()}. Compare widgets are not yet supported
+for attribute editing.
 }
 \examples{
 \dontrun{
@@ -115,12 +149,37 @@ mapboxgl() |>
 mapboxgl() |>
     add_draw_control(radius = TRUE)
 
+# Enable Bezier curve drawing mode
+mapboxgl() |>
+    add_draw_control(bezier = TRUE)
+
+# Add an attribute editor for classification workflows
+mapboxgl() |>
+    add_draw_control(
+        attributes = list(
+            class = draw_attribute(
+                "select",
+                choices = c("forest", "water", "urban"),
+                required = TRUE
+            ),
+            notes = draw_attribute("textarea"),
+            confidence = draw_attribute(
+                "numeric",
+                min = 0,
+                max = 1,
+                step = 0.1,
+                default = 1
+            )
+        )
+    )
+
 # Enable multiple drawing modes
 mapboxgl() |>
     add_draw_control(
         freehand = TRUE,
         rectangle = TRUE,
-        radius = TRUE
+        radius = TRUE,
+        bezier = TRUE
     )
 }
 }

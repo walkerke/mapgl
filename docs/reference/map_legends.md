@@ -34,7 +34,9 @@ add_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 )
 
 add_categorical_legend(
@@ -59,7 +61,9 @@ add_categorical_legend(
   filter_column = NULL,
   filter_values = NULL,
   breaks = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 )
 
 add_continuous_legend(
@@ -80,7 +84,9 @@ add_continuous_legend(
   interactive = FALSE,
   filter_column = NULL,
   filter_values = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 )
 
 # S3 method for class 'mapboxgl_compare'
@@ -109,7 +115,9 @@ add_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 )
 
 # S3 method for class 'maplibre_compare'
@@ -138,7 +146,9 @@ add_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
-  draggable = FALSE
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
 )
 ```
 
@@ -286,9 +296,38 @@ add_legend(
   Logical, whether the legend can be dragged to a new position by the
   user. Default is FALSE.
 
+- collapsible:
+
+  Logical, whether to render a toggle button that collapses the legend
+  to a header-only view. Default is FALSE. Most useful for categorical
+  legends with tall bodies on small viewports.
+
+- collapsed:
+
+  Logical, whether the legend starts in the collapsed state. Only
+  applies when `collapsible = TRUE`. Default is FALSE.
+
 ## Value
 
 The updated map object with the legend added.
+
+## Details
+
+**Collapsible legends.** When `collapsible = TRUE`, a 26x26px toggle
+button is rendered in the legend's top-right corner. Collapsed, only the
+title heading and the toggle button remain visible; every other direct
+child of the legend (subtitles, swatches, item labels, the reset-filter
+button from interactive legends, any user-appended source footers) is
+hidden via CSS. The toggle button inherits `border_color` and
+`text_color` from
+[`legend_style()`](https://walker-data.com/mapgl/reference/legend_style.md)
+so it picks up your legend theme.
+
+If you inject your own title block via
+[`htmlwidgets::onRender()`](https://rdrr.io/pkg/htmlwidgets/man/onRender.html)
+– for example, to add a styled heading above the default title – mark
+that element with `class="mapgl-legend-title"` so it stays visible when
+collapsed.
 
 ## Examples
 

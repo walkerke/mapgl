@@ -2,6 +2,8 @@
 
 ## mapgl 0.4.6
 
+CRAN release: 2026-04-14
+
 - New
   [`save_map()`](https://walker-data.com/mapgl/reference/save_map.md)
   function renders a map widget to a static PNG file using headless

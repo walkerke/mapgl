@@ -28,7 +28,7 @@ add_heatmap_layer(
 
 - map:
 
-  A map object created by the `mapboxgl` function.
+  A map object created by the `mapboxgl` or `maplibre` functions.
 
 - id:
 

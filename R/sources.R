@@ -348,7 +348,8 @@ add_image_source <- function(
       data <- terra::rast(data)
     }
 
-    is_categorical <- terra::has.colors(data) || terra::is.factor(data)
+    is_categorical <- any(terra::has.colors(data)) ||
+      any(terra::is.factor(data))
 
     if (is_categorical) {
       # Categorical/color-table raster path
@@ -471,9 +472,72 @@ add_image_source <- function(
       data_wgs84 <- terra::project(data_mercator, "EPSG:4326")
 
       if (terra::nlyr(data) == 3) {
-        # For RGB raster - write the mercator version to PNG
+        # For RGB rasters, encode values explicitly so high bit-depth
+        # satellite imagery does not get clamped to white in PNG output.
+        nr <- terra::nrow(data_mercator)
+        nc <- terra::ncol(data_mercator)
+        vals <- terra::values(data_mercator, mat = TRUE)
+
+        scale_channel <- function(x) {
+          na_mask <- is.na(x)
+          if (all(na_mask)) {
+            return(rep(0, length(x)))
+          }
+
+          x_min <- min(x, na.rm = TRUE)
+          x_max <- max(x, na.rm = TRUE)
+
+          if (x_min >= 0 && x_max <= 1) {
+            out <- x
+          } else if (x_min >= 0 && x_max <= 255) {
+            out <- x / 255
+          } else {
+            limits <- stats::quantile(
+              x,
+              probs = c(0.02, 0.98),
+              na.rm = TRUE,
+              names = FALSE
+            )
+
+            if (!is.finite(limits[1]) ||
+              !is.finite(limits[2]) ||
+              limits[1] == limits[2]) {
+              limits <- c(x_min, x_max)
+            }
+
+            if (!is.finite(limits[1]) ||
+              !is.finite(limits[2]) ||
+              limits[1] == limits[2]) {
+              out <- rep(0.5, length(x))
+            } else {
+              out <- (x - limits[1]) / (limits[2] - limits[1])
+            }
+          }
+
+          out[is.na(out)] <- 0
+          pmin(pmax(out, 0), 1)
+        }
+
+        img <- array(0, dim = c(nr, nc, 4))
+        for (i in 1:3) {
+          img[, , i] <- matrix(
+            scale_channel(vals[, i]),
+            nrow = nr,
+            ncol = nc,
+            byrow = TRUE
+          )
+        }
+
+        alpha <- !is.na(vals[, 1]) & !is.na(vals[, 2]) & !is.na(vals[, 3])
+        img[, , 4] <- matrix(
+          as.numeric(alpha),
+          nrow = nr,
+          ncol = nc,
+          byrow = TRUE
+        )
+
         png_path <- tempfile(fileext = ".png")
-        terra::writeRaster(data_mercator, png_path, overwrite = TRUE)
+        png::writePNG(img, png_path)
         url <- base64enc::dataURI(file = png_path, mime = "image/png")
       } else {
         # For single band continuous data

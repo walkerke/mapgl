@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -459,7 +459,8 @@ Requires <code>symbol_placement</code> to be set to <code>"point"</code> and <co
 
 
 <dt id="arg-cluster-options">cluster_options<a class="anchor" aria-label="anchor" href="#arg-cluster-options"></a></dt>
-<dd><p>A list of options for clustering symbols, created by the <code><a href="cluster_options.html">cluster_options()</a></code> function.</p></dd>
+<dd><p>A list of options for clustering symbols, created by the <code><a href="cluster_options.html">cluster_options()</a></code> function. Two input shapes are supported: pass an <code>sf</code>/<code>sfc</code> object as <code>source</code> for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from <code><a href="add_pmtiles_source.html">add_pmtiles_source()</a></code>) along with <code>source_layer</code> to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via <code><a href="number_format.html">number_format()</a></code>.</p>
+<p><strong>Updating a clustered layer in Shiny:</strong> the shortcut creates three layers (<code>"id"</code>, <code>"id-clusters"</code>, <code>"id-cluster-count"</code>) on top of one source. For reactive data updates the recommended pattern is <code><a href="set_source.html">set_source()</a></code>, which replaces the source's data and lets Mapbox/MapLibre re-cluster automatically without tearing down the layers: <code>mapboxgl_proxy("map") |&gt; set_source(layer_id = "pts", source = filtered())</code>. If you need to remove a clustered layer entirely (e.g. before switching backends), pass the full trio to <code><a href="clear_layer.html">clear_layer()</a></code>: <code>clear_layer(proxy, c("pts", "pts-clusters", "pts-cluster-count"))</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

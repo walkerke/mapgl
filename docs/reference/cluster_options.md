@@ -16,7 +16,8 @@ cluster_options(
   circle_stroke_color = NULL,
   circle_stroke_opacity = NULL,
   circle_stroke_width = NULL,
-  text_color = "black"
+  text_color = "black",
+  count_format = c("abbreviated", "grouped", "raw")
 )
 ```
 
@@ -65,6 +66,13 @@ cluster_options(
 - text_color:
 
   The color to use for labels on the cluster circles.
+
+- count_format:
+
+  The formatting of the text labels on the cluster circles to represent
+  the counts. `"abbreviated"` (the default) will use shortened notation,
+  e.g. "11k". `"grouped"` will show comma-separated numbers, e.g.
+  "11,000". `"raw"` shows the raw value.
 
 ## Value
 
@@ -116,5 +124,8 @@ cluster_options(
 #> 
 #> $text_color
 #> [1] "black"
+#> 
+#> $count_format
+#> [1] "abbreviated"
 #> 
 ```
