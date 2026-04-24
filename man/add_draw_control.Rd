@@ -11,6 +11,8 @@ add_draw_control(
   simplify_freehand = FALSE,
   rectangle = FALSE,
   radius = FALSE,
+  bezier = FALSE,
+  bezier_polygon = FALSE,
   orientation = "vertical",
   source = NULL,
   point_color = "#3bb2d0",
@@ -40,6 +42,10 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 \item{rectangle}{Logical, whether to enable rectangle drawing mode. Default is FALSE.}
 
 \item{radius}{Logical, whether to enable radius/circle drawing mode. Default is FALSE.}
+
+\item{bezier}{Logical, whether to enable Bezier curve drawing mode. Default is FALSE.}
+
+\item{bezier_polygon}{Logical, whether to enable Bezier polygon drawing mode. Default is FALSE.}
 
 \item{orientation}{A string specifying the orientation of the draw control.
 Either "vertical" (default) or "horizontal".}
@@ -76,6 +82,23 @@ The modified map object with the draw control added.
 }
 \description{
 Add a draw control to a map
+}
+\details{
+Bezier drawing modes are supported when the draw control is added to the
+original map widget or later through a regular Shiny map proxy. Compare
+widgets and compare proxies are not yet supported for Bezier modes.
+
+To draw Bezier curves, click the Bezier button, then use \strong{Alt + left-drag}
+to create nodes with handles. A plain left-click creates nodes without
+handles. Press Enter, or click the last node, to finish the curve. In direct
+select mode, select a node and drag its handles to edit the curve; use
+\strong{Alt + drag} on a handle to break handle symmetry.
+
+Retrieved Bezier features are returned to R as standard sf geometries using
+the rendered curved coordinates: Bezier curves become LineString features and
+Bezier polygons become Polygon features. The Bezier control metadata is also
+preserved in feature-property columns so the browser widget can continue to
+edit those features as Bezier objects.
 }
 \examples{
 \dontrun{
@@ -115,12 +138,17 @@ mapboxgl() |>
 mapboxgl() |>
     add_draw_control(radius = TRUE)
 
+# Enable Bezier curve drawing mode
+mapboxgl() |>
+    add_draw_control(bezier = TRUE)
+
 # Enable multiple drawing modes
 mapboxgl() |>
     add_draw_control(
         freehand = TRUE,
         rectangle = TRUE,
-        radius = TRUE
+        radius = TRUE,
+        bezier = TRUE
     )
 }
 }

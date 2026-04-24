@@ -561,6 +561,8 @@ add_scale_control <- function(
 #' @param simplify_freehand Logical, whether to apply simplification to freehand drawings. Default is FALSE.
 #' @param rectangle Logical, whether to enable rectangle drawing mode. Default is FALSE.
 #' @param radius Logical, whether to enable radius/circle drawing mode. Default is FALSE.
+#' @param bezier Logical, whether to enable Bezier curve drawing mode. Default is FALSE.
+#' @param bezier_polygon Logical, whether to enable Bezier polygon drawing mode. Default is FALSE.
 #' @param orientation A string specifying the orientation of the draw control.
 #'        Either "vertical" (default) or "horizontal".
 #' @param source A character string specifying a source ID to add to the draw control.
@@ -579,6 +581,24 @@ add_scale_control <- function(
 #' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
 #'
 #' @return The modified map object with the draw control added.
+#'
+#' @details
+#' Bezier drawing modes are supported when the draw control is added to the
+#' original map widget or later through a regular Shiny map proxy. Compare
+#' widgets and compare proxies are not yet supported for Bezier modes.
+#'
+#' To draw Bezier curves, click the Bezier button, then use **Alt + left-drag**
+#' to create nodes with handles. A plain left-click creates nodes without
+#' handles. Press Enter, or click the last node, to finish the curve. In direct
+#' select mode, select a node and drag its handles to edit the curve; use
+#' **Alt + drag** on a handle to break handle symmetry.
+#'
+#' Retrieved Bezier features are returned to R as standard sf geometries using
+#' the rendered curved coordinates: Bezier curves become LineString features and
+#' Bezier polygons become Polygon features. The Bezier control metadata is also
+#' preserved in feature-property columns so the browser widget can continue to
+#' edit those features as Bezier objects.
+#'
 #' @export
 #'
 #' @examples
@@ -619,12 +639,17 @@ add_scale_control <- function(
 #' mapboxgl() |>
 #'     add_draw_control(radius = TRUE)
 #'
+#' # Enable Bezier curve drawing mode
+#' mapboxgl() |>
+#'     add_draw_control(bezier = TRUE)
+#'
 #' # Enable multiple drawing modes
 #' mapboxgl() |>
 #'     add_draw_control(
 #'         freehand = TRUE,
 #'         rectangle = TRUE,
-#'         radius = TRUE
+#'         radius = TRUE,
+#'         bezier = TRUE
 #'     )
 #' }
 add_draw_control <- function(
@@ -634,6 +659,8 @@ add_draw_control <- function(
   simplify_freehand = FALSE,
   rectangle = FALSE,
   radius = FALSE,
+  bezier = FALSE,
+  bezier_polygon = FALSE,
   orientation = "vertical",
   source = NULL,
   point_color = "#3bb2d0",
@@ -657,6 +684,16 @@ add_draw_control <- function(
 
   is_proxy <- inherits(map, "mapboxgl_proxy") ||
     inherits(map, "maplibre_proxy")
+
+  if ((inherits(map, "mapboxgl_compare") ||
+    inherits(map, "maplibregl_compare") ||
+    inherits(map, "mapboxgl_compare_proxy") ||
+    inherits(map, "maplibre_compare_proxy")) &&
+    (bezier || bezier_polygon)) {
+    rlang::abort(
+      "Bezier drawing modes are not yet supported for compare widgets or compare widget proxies."
+    )
+  }
 
   if (!is_proxy) {
     map$x$mapgl_id <- map$x$mapgl_id %||% .mapgl_new_id()
@@ -686,6 +723,8 @@ add_draw_control <- function(
     simplify_freehand = simplify_freehand,
     rectangle = rectangle,
     radius = radius,
+    bezier = bezier,
+    bezier_polygon = bezier_polygon,
     orientation = orientation,
     options = options,
     source = draw_source,
@@ -724,6 +763,8 @@ add_draw_control <- function(
             simplify_freehand = simplify_freehand,
             rectangle = rectangle,
             radius = radius,
+            bezier = bezier,
+            bezier_polygon = bezier_polygon,
             orientation = orientation,
             source = draw_source,
             download_button = download_button,
@@ -762,6 +803,8 @@ add_draw_control <- function(
             simplify_freehand = simplify_freehand,
             rectangle = rectangle,
             radius = radius,
+            bezier = bezier,
+            bezier_polygon = bezier_polygon,
             orientation = orientation,
             source = draw_source,
             download_button = download_button,

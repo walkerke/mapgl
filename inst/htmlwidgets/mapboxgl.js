@@ -825,6 +825,156 @@ function generateDrawStyles(styling) {
   ];
 }
 
+function addBezierDrawStyles(styles, styling) {
+  const activeColor = styling && styling.active_color ? styling.active_color : "#fbb03b";
+  const baseStyles = styles || (MapboxDraw.lib && MapboxDraw.lib.theme) || [];
+  const bezierStyles = [
+    {
+      id: "gl-draw-bezier-handle-line-active",
+      type: "line",
+      filter: [
+        "all",
+        ["==", "$type", "LineString"],
+        ["==", "meta2", "handle-line"],
+      ],
+      layout: {
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": activeColor,
+        "line-width": 1,
+      },
+    },
+    {
+      id: "gl-draw-bezier-handle-stroke-inactive",
+      type: "circle",
+      filter: [
+        "all",
+        ["==", "meta", "vertex"],
+        ["==", "meta2", "handle"],
+        ["==", "$type", "Point"],
+        ["!=", "mode", "static"],
+      ],
+      paint: {
+        "circle-radius": 5,
+        "circle-color": "#fff",
+      },
+    },
+    {
+      id: "gl-draw-bezier-handle-inactive",
+      type: "circle",
+      filter: [
+        "all",
+        ["==", "meta", "vertex"],
+        ["==", "meta2", "handle"],
+        ["==", "$type", "Point"],
+        ["!=", "mode", "static"],
+      ],
+      paint: {
+        "circle-radius": 4,
+        "circle-color": activeColor,
+      },
+    },
+  ];
+
+  return baseStyles.concat(bezierStyles);
+}
+
+function enableBezierDrawMode(drawOptions, styling) {
+  if (!window.MapglBezierDraw) {
+    console.warn("Bezier draw mode dependency is not available.");
+    return drawOptions;
+  }
+
+  drawOptions.modes = Object.assign({}, drawOptions.modes || MapboxDraw.modes, {
+    simple_select: window.MapglBezierDraw.SimpleSelectModeBezierOverride,
+    direct_select: window.MapglBezierDraw.DirectModeBezierOverride,
+    draw_bezier_curve: window.MapglBezierDraw.DrawBezierCurve,
+  });
+  drawOptions.userProperties = true;
+  drawOptions.styles = addBezierDrawStyles(drawOptions.styles, styling);
+
+  return drawOptions;
+}
+
+function addBezierButtonStyles() {
+  if (document.querySelector("#mapgl-bezier-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "mapgl-bezier-styles";
+  style.textContent = `
+    .mapbox-gl-draw_bezier {
+      background: transparent;
+      background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Cpath d="M3 15 C7 3, 13 17, 17 5" fill="none" stroke="%23000000" stroke-width="2" stroke-linecap="round"/%3E%3Ccircle cx="3" cy="15" r="1.5" fill="%23000000"/%3E%3Ccircle cx="17" cy="5" r="1.5" fill="%23000000"/%3E%3C/svg%3E') !important;
+      background-repeat: no-repeat !important;
+      background-position: center !important;
+    }
+    .mapbox-gl-draw_bezier_polygon {
+      background: transparent;
+      background-image: url('data:image/svg+xml;utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Cpath d="M4 14 C5 4, 15 4, 16 14 C12 17, 8 17, 4 14 Z" fill="none" stroke="%23000000" stroke-width="2" stroke-linejoin="round"/%3E%3C/svg%3E') !important;
+      background-repeat: no-repeat !important;
+      background-position: center !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function addBezierButtons(map, drawControl, options) {
+  if (!drawControl || !(options.bezier || options.bezierPolygon)) return;
+
+  addBezierButtonStyles();
+
+  setTimeout(() => {
+    const drawControlGroup = map
+      .getContainer()
+      .querySelector(options.controlGroupSelector);
+    if (!drawControlGroup) return;
+
+    const trashBtn = drawControlGroup.querySelector(".mapbox-gl-draw_trash");
+    const iconClass = options.iconClass || "";
+
+    const addButton = (className, title, modeOptions) => {
+      if (drawControlGroup.querySelector("." + className)) return;
+
+      const button = document.createElement("button");
+      button.className = `${className} ${iconClass}`.trim();
+      button.title = title;
+      button.type = "button";
+      button.addEventListener("click", () => {
+        drawControlGroup
+          .querySelectorAll(".active")
+          .forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+        drawControl.changeMode("draw_bezier_curve", modeOptions || {});
+      });
+
+      if (trashBtn) {
+        drawControlGroup.insertBefore(button, trashBtn);
+      } else {
+        drawControlGroup.appendChild(button);
+      }
+    };
+
+    if (options.bezier) {
+      addButton("mapbox-gl-draw_bezier", "Bezier curve tool", {});
+    }
+    if (options.bezierPolygon) {
+      addButton("mapbox-gl-draw_bezier_polygon", "Bezier polygon tool", {
+        isPolygon: true,
+      });
+    }
+
+    map.on("draw.modechange", (e) => {
+      if (!e || e.mode !== "draw_bezier_curve") {
+        drawControlGroup
+          .querySelectorAll(".mapbox-gl-draw_bezier.active, .mapbox-gl-draw_bezier_polygon.active")
+          .forEach((btn) => btn.classList.remove("active"));
+      }
+    });
+  }, 100);
+}
+
 // Helper function to add features from a source to draw
 function addSourceFeaturesToDraw(draw, sourceId, map) {
   const mapId = map.getContainer().id;
@@ -1626,6 +1776,13 @@ HTMLWidgets.widget({
               drawOptions.modes.draw_radius = MapboxDraw.modes.draw_radius;
             }
 
+            if (x.draw_control.bezier || x.draw_control.bezier_polygon) {
+              drawOptions = enableBezierDrawMode(
+                drawOptions,
+                x.draw_control.styling,
+              );
+            }
+
             draw = new MapboxDraw(drawOptions);
             map.addControl(draw, x.draw_control.position);
             map.controls.push(draw);
@@ -1713,6 +1870,13 @@ HTMLWidgets.widget({
                 document.head.appendChild(style);
               }
             }
+
+            addBezierButtons(map, draw, {
+              bezier: x.draw_control.bezier,
+              bezierPolygon: x.draw_control.bezier_polygon,
+              controlGroupSelector:
+                ".mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)",
+            });
 
             // Add event listeners
             map.on("draw.create", () => updateDrawnFeatures(false));
@@ -3568,6 +3732,10 @@ if (HTMLWidgets.shinyMode) {
           );
         }
 
+        if (message.bezier || message.bezier_polygon) {
+          drawOptions = enableBezierDrawMode(drawOptions, message.styling);
+        }
+
         // Create the draw control
         var drawControl = new MapboxDraw(drawOptions);
         map.addControl(drawControl, message.position);
@@ -3659,6 +3827,14 @@ if (HTMLWidgets.shinyMode) {
             document.head.appendChild(style);
           }
         }
+
+        addBezierButtons(map, drawControl, {
+          bezier: message.bezier,
+          bezierPolygon: message.bezier_polygon,
+          controlGroupSelector:
+            ".mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)",
+          iconClass: "mapboxgl-ctrl-icon",
+        });
 
         // Add event listeners
         map.on("draw.create", () => updateDrawnFeatures(false));
