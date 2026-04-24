@@ -84,6 +84,7 @@ reference:
       - add_scale_control
       - add_layers_control
       - add_draw_control
+      - draw_attribute
       - add_geocoder_control
       - add_reset_control
       - add_geolocate_control
