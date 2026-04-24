@@ -100,6 +100,352 @@ function _mapglSyncDrawnFeatures(options) {
   }
 }
 
+function _mapglHasDrawAttributes(attributes) {
+  return Array.isArray(attributes) && attributes.length > 0;
+}
+
+function _mapglAttributeDefaultValue(field) {
+  if (Object.prototype.hasOwnProperty.call(field, "default")) {
+    return field.default;
+  }
+  return undefined;
+}
+
+function _mapglEnsureDrawAttributeStyles() {
+  if (document.querySelector("#mapgl-draw-attribute-editor-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "mapgl-draw-attribute-editor-styles";
+  style.textContent = `
+    .mapgl-draw-attribute-editor {
+      position: absolute;
+      z-index: 2;
+      width: 260px;
+      max-width: calc(100% - 20px);
+      background: #ffffff;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.28);
+      color: #222;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 12px;
+      display: none;
+      overflow: hidden;
+    }
+    .mapgl-draw-attribute-editor.mapgl-draw-attribute-editor-visible {
+      display: block;
+    }
+    .mapgl-draw-attribute-editor-header {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e2e2e2;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .mapgl-draw-attribute-editor-body {
+      padding: 10px;
+    }
+    .mapgl-draw-attribute-field {
+      margin-bottom: 10px;
+    }
+    .mapgl-draw-attribute-field label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .mapgl-draw-attribute-field input,
+    .mapgl-draw-attribute-field select,
+    .mapgl-draw-attribute-field textarea {
+      box-sizing: border-box;
+      width: 100%;
+      border: 1px solid #cfcfcf;
+      border-radius: 3px;
+      padding: 6px 7px;
+      font: inherit;
+    }
+    .mapgl-draw-attribute-field input[type="checkbox"] {
+      width: auto;
+      margin-right: 6px;
+    }
+    .mapgl-draw-attribute-checkbox-label {
+      display: flex !important;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 0 !important;
+    }
+    .mapgl-draw-attribute-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 2px;
+    }
+    .mapgl-draw-attribute-save {
+      border: 0;
+      border-radius: 3px;
+      background: #1f2937;
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+      padding: 6px 10px;
+    }
+    .mapgl-draw-attribute-message {
+      color: #666;
+      font-size: 11px;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function _mapglEditorPositionStyle(position) {
+  const style = {};
+  const vertical = position && position.indexOf("bottom") !== -1 ? "bottom" : "top";
+  const horizontal = position && position.indexOf("right") !== -1 ? "left" : "right";
+  style[vertical] = "10px";
+  style[horizontal] = "10px";
+  return style;
+}
+
+function _mapglApplyStyle(element, style) {
+  Object.keys(style).forEach((key) => {
+    element.style[key] = style[key];
+  });
+}
+
+function _mapglCurrentFieldValue(feature, field) {
+  const properties = (feature && feature.properties) || {};
+  if (Object.prototype.hasOwnProperty.call(properties, field.name)) {
+    return properties[field.name];
+  }
+  const defaultValue = _mapglAttributeDefaultValue(field);
+  if (defaultValue !== undefined) {
+    return defaultValue;
+  }
+  return field.type === "checkbox" ? false : "";
+}
+
+function _mapglApplyAttributeDefaults(drawControl, feature, attributes) {
+  const featureId = feature && feature.id;
+  if (!featureId) return;
+
+  const properties = feature.properties || {};
+  attributes.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(properties, field.name)) return;
+    const defaultValue = _mapglAttributeDefaultValue(field);
+    if (defaultValue !== undefined) {
+      drawControl.setFeatureProperty(featureId, field.name, defaultValue);
+    }
+  });
+}
+
+function _mapglCreateAttributeInput(field, value) {
+  let input;
+
+  if (field.type === "textarea") {
+    input = document.createElement("textarea");
+    input.rows = 3;
+    input.value = value == null ? "" : value;
+  } else if (field.type === "select") {
+    input = document.createElement("select");
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "";
+    input.appendChild(emptyOption);
+    (field.choices || []).forEach((choice, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = choice.label == null ? String(choice.value) : choice.label;
+      option.dataset.mapglValue = JSON.stringify(choice.value);
+      if (value === choice.value || String(value) === String(choice.value)) {
+        option.selected = true;
+      }
+      input.appendChild(option);
+    });
+  } else if (field.type === "number") {
+    input = document.createElement("input");
+    input.type = "number";
+    input.value = value == null ? "" : value;
+    ["min", "max", "step"].forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(field, key)) {
+        input.setAttribute(key, field[key]);
+      }
+    });
+  } else if (field.type === "checkbox") {
+    input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = value === true || value === "true" || value === 1;
+  } else {
+    input = document.createElement("input");
+    input.type = "text";
+    input.value = value == null ? "" : value;
+  }
+
+  if (field.placeholder && field.type !== "select" && field.type !== "checkbox") {
+    input.placeholder = field.placeholder;
+  }
+  if (field.required) {
+    input.required = true;
+  }
+  input.dataset.fieldName = field.name;
+  input.dataset.fieldType = field.type;
+  return input;
+}
+
+function _mapglInputValue(input, field) {
+  if (field.type === "checkbox") {
+    return input.checked;
+  }
+  if (field.type === "number") {
+    return input.value === "" ? null : Number(input.value);
+  }
+  if (field.type === "select") {
+    if (input.value === "") return null;
+    const selected = input.options[input.selectedIndex];
+    return selected && selected.dataset.mapglValue
+      ? JSON.parse(selected.dataset.mapglValue)
+      : input.value;
+  }
+  return input.value;
+}
+
+function initializeDrawAttributeEditor(map, drawControl, options) {
+  const attributes = options.attributes || [];
+  if (!_mapglHasDrawAttributes(attributes)) return null;
+
+  _mapglEnsureDrawAttributeStyles();
+
+  const container = document.createElement("div");
+  container.className = "mapgl-draw-attribute-editor";
+  _mapglApplyStyle(container, _mapglEditorPositionStyle(options.position));
+
+  const header = document.createElement("div");
+  header.className = "mapgl-draw-attribute-editor-header";
+  header.textContent = "Feature attributes";
+
+  const body = document.createElement("form");
+  body.className = "mapgl-draw-attribute-editor-body";
+
+  container.appendChild(header);
+  container.appendChild(body);
+  map.getContainer().appendChild(container);
+
+  let selectedFeatureId = null;
+
+  const hide = () => {
+    selectedFeatureId = null;
+    container.classList.remove("mapgl-draw-attribute-editor-visible");
+    body.innerHTML = "";
+  };
+
+  const show = (feature) => {
+    selectedFeatureId = feature && feature.id;
+    if (!selectedFeatureId) {
+      hide();
+      return;
+    }
+
+    const currentFeature = drawControl.get(selectedFeatureId) || feature;
+    body.innerHTML = "";
+
+    attributes.forEach((field) => {
+      const value = _mapglCurrentFieldValue(currentFeature, field);
+      const wrapper = document.createElement("div");
+      wrapper.className = "mapgl-draw-attribute-field";
+      const input = _mapglCreateAttributeInput(field, value);
+
+      if (field.type === "checkbox") {
+        const label = document.createElement("label");
+        label.className = "mapgl-draw-attribute-checkbox-label";
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(field.label || field.name));
+        wrapper.appendChild(label);
+      } else {
+        const label = document.createElement("label");
+        label.textContent = field.label || field.name;
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+      }
+
+      body.appendChild(wrapper);
+    });
+
+    const actions = document.createElement("div");
+    actions.className = "mapgl-draw-attribute-actions";
+
+    const save = document.createElement("button");
+    save.type = "submit";
+    save.className = "mapgl-draw-attribute-save";
+    save.textContent = "Save";
+
+    const message = document.createElement("span");
+    message.className = "mapgl-draw-attribute-message";
+
+    actions.appendChild(save);
+    actions.appendChild(message);
+    body.appendChild(actions);
+    container.classList.add("mapgl-draw-attribute-editor-visible");
+  };
+
+  body.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!selectedFeatureId) return;
+    if (typeof body.reportValidity === "function" && !body.reportValidity()) {
+      return;
+    }
+
+    attributes.forEach((field) => {
+      const input = Array.from(
+        body.querySelectorAll("[data-field-name]"),
+      ).find((element) => element.dataset.fieldName === field.name);
+      if (!input) return;
+      drawControl.setFeatureProperty(
+        selectedFeatureId,
+        field.name,
+        _mapglInputValue(input, field),
+      );
+    });
+
+    const message = body.querySelector(".mapgl-draw-attribute-message");
+    if (message) {
+      message.textContent = "Saved";
+      setTimeout(() => {
+        message.textContent = "";
+      }, 1200);
+    }
+
+    if (typeof options.onChange === "function") {
+      options.onChange(false);
+    }
+  });
+
+  map.on("draw.create", (e) => {
+    if (e.features) {
+      e.features.forEach((feature) => {
+        _mapglApplyAttributeDefaults(drawControl, feature, attributes);
+      });
+    }
+    if (e.features && e.features.length === 1) {
+      show(e.features[0]);
+    }
+  });
+
+  map.on("draw.selectionchange", (e) => {
+    if (e.features && e.features.length === 1) {
+      show(e.features[0]);
+    } else {
+      hide();
+    }
+  });
+
+  map.on("draw.delete", hide);
+
+  return {
+    hide: hide,
+    show: show,
+  };
+}
+
 // Measurement functionality
 function createMeasurementBox(map) {
   const box = document.createElement("div");
@@ -1783,6 +2129,12 @@ HTMLWidgets.widget({
               );
             }
 
+            if (_mapglHasDrawAttributes(x.draw_control.attributes)) {
+              drawOptions = Object.assign({}, drawOptions, {
+                userProperties: true,
+              });
+            }
+
             draw = new MapboxDraw(drawOptions);
             map.addControl(draw, x.draw_control.position);
             map.controls.push(draw);
@@ -1878,6 +2230,12 @@ HTMLWidgets.widget({
                 ".mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)",
             });
 
+            initializeDrawAttributeEditor(map, draw, {
+              attributes: x.draw_control.attributes,
+              position: x.draw_control.position,
+              onChange: updateDrawnFeatures,
+            });
+
             // Add event listeners
             map.on("draw.create", () => updateDrawnFeatures(false));
             map.on("draw.delete", () => updateDrawnFeatures(false));
@@ -1906,6 +2264,7 @@ HTMLWidgets.widget({
                 }
                 addSourceFeaturesToDraw(draw, data.source, map);
               });
+              updateDrawnFeatures(false);
             }
 
             // Add custom mode buttons
@@ -3736,6 +4095,12 @@ if (HTMLWidgets.shinyMode) {
           drawOptions = enableBezierDrawMode(drawOptions, message.styling);
         }
 
+        if (_mapglHasDrawAttributes(message.attributes)) {
+          drawOptions = Object.assign({}, drawOptions, {
+            userProperties: true,
+          });
+        }
+
         // Create the draw control
         var drawControl = new MapboxDraw(drawOptions);
         map.addControl(drawControl, message.position);
@@ -3834,6 +4199,12 @@ if (HTMLWidgets.shinyMode) {
           controlGroupSelector:
             ".mapboxgl-ctrl-group:has(.mapbox-gl-draw_polygon)",
           iconClass: "mapboxgl-ctrl-icon",
+        });
+
+        initializeDrawAttributeEditor(map, drawControl, {
+          attributes: message.attributes,
+          position: message.position,
+          onChange: updateDrawnFeatures,
         });
 
         // Add event listeners

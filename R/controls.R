@@ -567,6 +567,8 @@ add_scale_control <- function(
 #'        Either "vertical" (default) or "horizontal".
 #' @param source A character string specifying a source ID to add to the draw control.
 #'        Default is NULL.
+#' @param attributes Optional named list defining editable feature attributes.
+#'   Use [draw_attribute()] to define fields.
 #' @param point_color Color for point features. Default is "#3bb2d0" (light blue).
 #' @param line_color Color for line features. Default is "#3bb2d0" (light blue).
 #' @param fill_color Fill color for polygon features. Default is "#3bb2d0" (light blue).
@@ -598,6 +600,13 @@ add_scale_control <- function(
 #' Bezier polygons become Polygon features. The Bezier control metadata is also
 #' preserved in feature-property columns so the browser widget can continue to
 #' edit those features as Bezier objects.
+#'
+#' When `attributes` is supplied, selecting exactly one drawn feature opens a
+#' small attribute editor. Click Save to write values to the feature properties;
+#' `get_drawn_features()` returns those properties as sf columns. The editor
+#' works for newly drawn features and features loaded into the draw control with
+#' `source` or `add_features_to_draw()`. Compare widgets are not yet supported
+#' for attribute editing.
 #'
 #' @export
 #'
@@ -643,6 +652,26 @@ add_scale_control <- function(
 #' mapboxgl() |>
 #'     add_draw_control(bezier = TRUE)
 #'
+#' # Add an attribute editor for classification workflows
+#' mapboxgl() |>
+#'     add_draw_control(
+#'         attributes = list(
+#'             class = draw_attribute(
+#'                 "select",
+#'                 choices = c("forest", "water", "urban"),
+#'                 required = TRUE
+#'             ),
+#'             notes = draw_attribute("textarea"),
+#'             confidence = draw_attribute(
+#'                 "numeric",
+#'                 min = 0,
+#'                 max = 1,
+#'                 step = 0.1,
+#'                 default = 1
+#'             )
+#'         )
+#'     )
+#'
 #' # Enable multiple drawing modes
 #' mapboxgl() |>
 #'     add_draw_control(
@@ -663,6 +692,7 @@ add_draw_control <- function(
   bezier_polygon = FALSE,
   orientation = "vertical",
   source = NULL,
+  attributes = NULL,
   point_color = "#3bb2d0",
   line_color = "#3bb2d0",
   fill_color = "#3bb2d0",
@@ -681,6 +711,7 @@ add_draw_control <- function(
   # }
 
   options <- list(...)
+  attributes <- .mapgl_normalize_draw_attributes(attributes)
 
   is_proxy <- inherits(map, "mapboxgl_proxy") ||
     inherits(map, "maplibre_proxy")
@@ -692,6 +723,16 @@ add_draw_control <- function(
     (bezier || bezier_polygon)) {
     rlang::abort(
       "Bezier drawing modes are not yet supported for compare widgets or compare widget proxies."
+    )
+  }
+
+  if ((inherits(map, "mapboxgl_compare") ||
+    inherits(map, "maplibregl_compare") ||
+    inherits(map, "mapboxgl_compare_proxy") ||
+    inherits(map, "maplibre_compare_proxy")) &&
+    !is.null(attributes)) {
+    rlang::abort(
+      "Draw attribute editing is not yet supported for compare widgets or compare widget proxies."
     )
   }
 
@@ -728,6 +769,7 @@ add_draw_control <- function(
     orientation = orientation,
     options = options,
     source = draw_source,
+    attributes = attributes,
     download_button = download_button,
     download_filename = download_filename,
     show_measurements = show_measurements,
@@ -767,6 +809,7 @@ add_draw_control <- function(
             bezier_polygon = bezier_polygon,
             orientation = orientation,
             source = draw_source,
+            attributes = attributes,
             download_button = download_button,
             download_filename = download_filename,
             show_measurements = show_measurements,
@@ -807,6 +850,7 @@ add_draw_control <- function(
             bezier_polygon = bezier_polygon,
             orientation = orientation,
             source = draw_source,
+            attributes = attributes,
             download_button = download_button,
             download_filename = download_filename,
             show_measurements = show_measurements,
@@ -827,6 +871,164 @@ add_draw_control <- function(
   }
 
   map
+}
+
+#' Define an editable draw attribute
+#'
+#' This helper creates one field definition for the `attributes` argument in
+#' [add_draw_control()]. The field name comes from the name used in the
+#' `attributes` list.
+#'
+#' @param type Input type for the editor. Supported values are `"text"`,
+#'   `"textarea"`, `"select"`, `"number"`, and `"checkbox"`. `"numeric"` is an
+#'   alias for `"number"`; `"logical"`, `"bool"`, and `"boolean"` are aliases
+#'   for `"checkbox"`. If `NULL`, the type is inferred from `choices` or
+#'   `default`.
+#' @param label Optional label shown in the editor. Defaults to the field name.
+#' @param choices Values for `"select"` fields. Names, if present, are used as
+#'   labels and values are written to feature properties.
+#' @param default Optional default value. Defaults are applied to newly drawn
+#'   features only; existing feature properties are preserved.
+#' @param required Logical; whether the browser should require a value before
+#'   saving.
+#' @param placeholder Optional placeholder for text, textarea, and number
+#'   inputs.
+#' @param min,max,step Optional numeric input constraints for `"number"` fields.
+#'
+#' @return A list suitable for one entry in `add_draw_control(attributes = )`.
+#' @export
+#'
+#' @examples
+#' draw_attribute("select", choices = c("candidate", "active", "rejected"))
+#' draw_attribute("textarea", label = "Notes")
+#' draw_attribute("numeric", min = 0, max = 1, step = 0.1, default = 1)
+#'
+#' mapboxgl() |>
+#'   add_draw_control(
+#'     attributes = list(
+#'       status = draw_attribute(
+#'         "select",
+#'         choices = c(Candidate = "candidate", Active = "active")
+#'       ),
+#'       notes = draw_attribute("textarea"),
+#'       value = draw_attribute("numeric")
+#'     )
+#'   )
+draw_attribute <- function(
+  type = NULL,
+  label = NULL,
+  choices = NULL,
+  default = NULL,
+  required = FALSE,
+  placeholder = NULL,
+  min = NULL,
+  max = NULL,
+  step = NULL
+) {
+  list(
+    type = type,
+    label = label,
+    choices = choices,
+    default = default,
+    required = required,
+    placeholder = placeholder,
+    min = min,
+    max = max,
+    step = step
+  )
+}
+
+.mapgl_normalize_draw_attributes <- function(attributes) {
+  if (is.null(attributes)) {
+    return(NULL)
+  }
+
+  if (!is.list(attributes) || length(attributes) == 0 || is.null(names(attributes)) ||
+    any(!nzchar(names(attributes)))) {
+    rlang::abort("`attributes` must be a named list of field definitions.")
+  }
+
+  lapply(names(attributes), function(field_name) {
+    spec <- attributes[[field_name]]
+    if (!is.list(spec) || is.data.frame(spec)) {
+      spec <- if (length(spec) > 1) {
+        list(type = "select", choices = spec)
+      } else {
+        list(type = spec)
+      }
+    }
+
+    type <- spec$type %||% NULL
+    if (is.null(type)) {
+      type <- if (!is.null(spec$choices)) {
+        "select"
+      } else if (is.logical(spec$default %||% NULL)) {
+        "checkbox"
+      } else if (is.numeric(spec$default %||% NULL)) {
+        "number"
+      } else {
+        "text"
+      }
+    }
+
+    if (!is.character(type) || length(type) != 1) {
+      rlang::abort(sprintf("Attribute `%s` must have a single `type` value.", field_name))
+    }
+
+    type <- tolower(type)
+    type <- switch(type,
+      numeric = "number",
+      logical = "checkbox",
+      bool = "checkbox",
+      boolean = "checkbox",
+      type
+    )
+
+    if (!type %in% c("text", "textarea", "select", "number", "checkbox")) {
+      rlang::abort(sprintf(
+        "Attribute `%s` has unsupported type `%s`.",
+        field_name,
+        type
+      ))
+    }
+
+    choices <- spec$choices %||% NULL
+    if (type == "select") {
+      if (is.null(choices) || length(choices) == 0) {
+        rlang::abort(sprintf("Select attribute `%s` must define `choices`.", field_name))
+      }
+      choice_names <- names(choices)
+      choices <- lapply(seq_along(choices), function(i) {
+        value <- choices[[i]]
+        if (length(value) != 1 || is.list(value)) {
+          rlang::abort(sprintf("Choices for attribute `%s` must be scalar values.", field_name))
+        }
+        label <- if (!is.null(choice_names) && nzchar(choice_names[[i]])) {
+          choice_names[[i]]
+        } else {
+          as.character(value)
+        }
+        list(value = value, label = label)
+      })
+    } else {
+      choices <- NULL
+    }
+
+    field <- list(
+      name = field_name,
+      type = type,
+      label = spec$label %||% field_name,
+      default = spec$default %||% NULL,
+      choices = choices,
+      required = isTRUE(spec$required),
+      placeholder = spec$placeholder %||% NULL,
+      min = spec$min %||% NULL,
+      max = spec$max %||% NULL,
+      step = spec$step %||% NULL
+    )
+
+    field[!vapply(field, is.null, logical(1))]
+  })
 }
 
 #' Get drawn features from the map
