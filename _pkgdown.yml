@@ -90,6 +90,7 @@ reference:
       - add_geolocate_control
       - add_globe_control
       - add_screenshot_control
+      - add_coordinates_control
       - add_control
       - clear_controls
 

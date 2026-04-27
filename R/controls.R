@@ -552,6 +552,125 @@ add_scale_control <- function(
   return(map)
 }
 
+#' Add a coordinates control to a map
+#'
+#' This function adds a compact control that displays the cursor position as
+#' longitude and latitude in WGS84 coordinates.
+#'
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
+#' @param position The position of the control. Can be one of "top-left",
+#'   "top-right", "bottom-left", or "bottom-right". Default is "bottom-right".
+#' @param format Coordinate display format. One of `"decimal"` for decimal
+#'   degrees or `"dms"` for degrees, minutes, and seconds.
+#' @param precision Number of decimal places to display. If `NULL`, defaults to
+#'   5 for decimal degrees and 1 for DMS seconds. For `format = "dms"`, this
+#'   controls decimal places for seconds.
+#' @param label Optional label shown above the coordinates. Default is `NULL`.
+#' @param empty_text Text shown before the cursor enters the map, and after it
+#'   leaves the map.
+#' @param wrap Logical. If `TRUE`, longitudes are wrapped to the standard
+#'   `[-180, 180]` range. Default is `TRUE`.
+#'
+#' @return The modified map object with the coordinates control added.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' maplibre() |>
+#'   add_coordinates_control()
+#'
+#' mapboxgl() |>
+#'   add_coordinates_control(
+#'     position = "bottom-left",
+#'     format = "dms",
+#'     precision = 2,
+#'     label = "Longitude, latitude"
+#'   )
+#' }
+add_coordinates_control <- function(
+  map,
+  position = "bottom-right",
+  format = c("decimal", "dms"),
+  precision = NULL,
+  label = NULL,
+  empty_text = "Move cursor over map",
+  wrap = TRUE
+) {
+  format <- match.arg(format)
+
+  if (is.null(precision)) {
+    precision <- if (format == "dms") 1 else 5
+  }
+
+  if (
+    !is.numeric(precision) ||
+      length(precision) != 1 ||
+      !is.finite(precision) ||
+      precision < 0 ||
+      precision > 20
+  ) {
+    rlang::abort("`precision` must be a single number between 0 and 20.")
+  }
+
+  coordinates_control <- list(
+    position = position,
+    format = format,
+    precision = as.integer(precision),
+    label = label,
+    empty_text = empty_text,
+    wrap = isTRUE(wrap)
+  )
+
+  if (
+    inherits(map, "mapboxgl_proxy") ||
+      inherits(map, "maplibre_proxy")
+  ) {
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy")) {
+        "mapboxgl-compare-proxy"
+      } else {
+        "maplibre-compare-proxy"
+      }
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_coordinates_control",
+            options = coordinates_control,
+            map = map$map_side
+          )
+        )
+      )
+    } else {
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) {
+        "mapboxgl-proxy"
+      } else {
+        "maplibre-proxy"
+      }
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = list(
+            type = "add_coordinates_control",
+            options = coordinates_control
+          )
+        )
+      )
+    }
+  } else {
+    map$x$coordinates_control <- coordinates_control
+  }
+
+  return(map)
+}
+
 #' Add a draw control to a map
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
