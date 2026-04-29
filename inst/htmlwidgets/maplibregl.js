@@ -1351,6 +1351,71 @@ function addBezierDrawStyles(styles, styling) {
   return baseStyles.concat(bezierStyles);
 }
 
+function sanitizeBezierDisplayFeature(feature) {
+  if (!feature || !feature.properties) return feature;
+
+  const sanitized = {
+    type: feature.type,
+    properties: {},
+    geometry: feature.geometry,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(feature, "id")) {
+    sanitized.id = feature.id;
+  }
+
+  Object.keys(feature.properties).forEach((key) => {
+    if (
+      key === "bezierGroup" ||
+      key === "user_bezierGroup" ||
+      key === "bezierCurve"
+    ) {
+      return;
+    }
+    sanitized.properties[key] = feature.properties[key];
+  });
+
+  return sanitized;
+}
+
+function wrapBezierDisplayModeForMapLibre(mode) {
+  if (!mode || typeof mode.toDisplayFeatures !== "function") return mode;
+
+  const wrappedMode = Object.assign({}, mode);
+  const originalToDisplayFeatures = mode.toDisplayFeatures;
+  wrappedMode.toDisplayFeatures = function (state, geojson, display) {
+    return originalToDisplayFeatures.call(
+      this,
+      state,
+      geojson,
+      function (feature) {
+        display(sanitizeBezierDisplayFeature(feature));
+      },
+    );
+  };
+
+  return wrappedMode;
+}
+
+function wrapBezierToolbarMode(mode) {
+  if (!mode || typeof mode.onSetup !== "function") return mode;
+
+  const wrappedMode = Object.assign({}, mode);
+  const originalOnSetup = mode.onSetup;
+  wrappedMode.onSetup = function (options) {
+    const activateUIButton = this.activateUIButton;
+    this.activateUIButton = function () {};
+
+    try {
+      return originalOnSetup.call(this, options);
+    } finally {
+      this.activateUIButton = activateUIButton;
+    }
+  };
+
+  return wrappedMode;
+}
+
 function enableBezierDrawMode(drawOptions, styling) {
   if (!window.MapglBezierDraw) {
     console.warn("Bezier draw mode dependency is not available.");
@@ -1358,9 +1423,15 @@ function enableBezierDrawMode(drawOptions, styling) {
   }
 
   drawOptions.modes = Object.assign({}, drawOptions.modes || MapboxDraw.modes, {
-    simple_select: window.MapglBezierDraw.SimpleSelectModeBezierOverride,
-    direct_select: window.MapglBezierDraw.DirectModeBezierOverride,
-    draw_bezier_curve: window.MapglBezierDraw.DrawBezierCurve,
+    simple_select: wrapBezierDisplayModeForMapLibre(
+      window.MapglBezierDraw.SimpleSelectModeBezierOverride,
+    ),
+    direct_select: wrapBezierDisplayModeForMapLibre(
+      window.MapglBezierDraw.DirectModeBezierOverride,
+    ),
+    draw_bezier_curve: wrapBezierDisplayModeForMapLibre(
+      wrapBezierToolbarMode(window.MapglBezierDraw.DrawBezierCurve),
+    ),
   });
   drawOptions.userProperties = true;
   drawOptions.styles = addBezierDrawStyles(drawOptions.styles, styling);
@@ -1386,8 +1457,36 @@ function addBezierButtonStyles() {
       background-repeat: no-repeat !important;
       background-position: center !important;
     }
+    .mapbox-gl-draw_bezier:hover,
+    .mapbox-gl-draw_bezier_polygon:hover,
+    .mapbox-gl-draw_bezier.active,
+    .mapbox-gl-draw_bezier_polygon.active {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
   `;
   document.head.appendChild(style);
+}
+
+function setActiveBezierButton(drawControlGroup, className) {
+  if (!drawControlGroup || !className) return;
+
+  drawControlGroup
+    .querySelectorAll(".active")
+    .forEach((btn) => btn.classList.remove("active"));
+
+  const button = drawControlGroup.querySelector("." + className);
+  if (button) button.classList.add("active");
+}
+
+function clearActiveBezierButton(drawControlGroup) {
+  if (!drawControlGroup) return;
+
+  drawControlGroup._mapglActiveBezierButton = null;
+  drawControlGroup
+    .querySelectorAll(
+      ".mapbox-gl-draw_bezier.active, .mapbox-gl-draw_bezier_polygon.active",
+    )
+    .forEach((btn) => btn.classList.remove("active"));
 }
 
 function addBezierButtons(map, drawControl, options) {
@@ -1404,6 +1503,24 @@ function addBezierButtons(map, drawControl, options) {
     const trashBtn = drawControlGroup.querySelector(".mapbox-gl-draw_trash");
     const iconClass = options.iconClass || "";
 
+    if (!drawControlGroup._mapglBezierNativeClickHandler) {
+      drawControlGroup._mapglBezierNativeClickHandler = (e) => {
+        if (
+          e.target.closest(
+            ".mapbox-gl-draw_bezier, .mapbox-gl-draw_bezier_polygon",
+          )
+        ) {
+          return;
+        }
+        clearActiveBezierButton(drawControlGroup);
+      };
+      drawControlGroup.addEventListener(
+        "click",
+        drawControlGroup._mapglBezierNativeClickHandler,
+        true,
+      );
+    }
+
     const addButton = (className, title, modeOptions) => {
       if (drawControlGroup.querySelector("." + className)) return;
 
@@ -1412,11 +1529,14 @@ function addBezierButtons(map, drawControl, options) {
       button.title = title;
       button.type = "button";
       button.addEventListener("click", () => {
-        drawControlGroup
-          .querySelectorAll(".active")
-          .forEach((btn) => btn.classList.remove("active"));
-        button.classList.add("active");
+        drawControlGroup._mapglActiveBezierButton = className;
         drawControl.changeMode("draw_bezier_curve", modeOptions || {});
+        setActiveBezierButton(drawControlGroup, className);
+        requestAnimationFrame(() => {
+          if (drawControlGroup._mapglActiveBezierButton === className) {
+            setActiveBezierButton(drawControlGroup, className);
+          }
+        });
       });
 
       if (trashBtn) {
@@ -1436,10 +1556,13 @@ function addBezierButtons(map, drawControl, options) {
     }
 
     map.on("draw.modechange", (e) => {
-      if (!e || e.mode !== "draw_bezier_curve") {
-        drawControlGroup
-          .querySelectorAll(".mapbox-gl-draw_bezier.active, .mapbox-gl-draw_bezier_polygon.active")
-          .forEach((btn) => btn.classList.remove("active"));
+      if (e && e.mode === "draw_bezier_curve") {
+        setActiveBezierButton(
+          drawControlGroup,
+          drawControlGroup._mapglActiveBezierButton,
+        );
+      } else {
+        clearActiveBezierButton(drawControlGroup);
       }
     });
   }, 100);
