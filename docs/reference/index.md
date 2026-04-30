@@ -83,6 +83,8 @@ Functions to add interactive controls to your map
   : Add a globe control to a map
 - [`add_screenshot_control()`](https://walker-data.com/mapgl/reference/add_screenshot_control.md)
   : Add a screenshot control to a map
+- [`add_coordinates_control()`](https://walker-data.com/mapgl/reference/add_coordinates_control.md)
+  : Add a coordinates control to a map
 - [`add_control()`](https://walker-data.com/mapgl/reference/add_control.md)
   : Add a custom control to a map
 - [`clear_controls()`](https://walker-data.com/mapgl/reference/clear_controls.md)
