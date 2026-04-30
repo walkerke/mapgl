@@ -1,3 +1,7 @@
+// build marker for bbest/mapgl feat/add-h3t-source — bump on every JS change
+window.__mapgl_h3t_build = "2026-04-22g";
+console.log("[mapgl] maplibregl_compare.js build:", window.__mapgl_h3t_build);
+
 function evaluateExpression(expression, properties) {
   if (!Array.isArray(expression)) {
     return expression;
@@ -3176,6 +3180,20 @@ HTMLWidgets.widget({
               });
             });
           }
+          // Process H3T (tiled h3j) sources if provided
+          if (mapData.h3t_sources) {
+            mapData.h3t_sources.forEach(function (source) {
+              map.addH3TSource(source.id, {
+                tiles: source.tiles,
+                sourcelayer: source.sourcelayer,
+                geometry_type: source.geometry_type,
+                minzoom: source.minzoom,
+                maxzoom: source.maxzoom,
+                promoteId: source.promoteId,
+                debug: source.debug,
+              });
+            });
+          }
 
           if (mapData.markers) {
             if (!window.maplibreglMarkers) {
@@ -4372,12 +4390,18 @@ HTMLWidgets.widget({
                 link.setAttribute("data-layer-ids", JSON.stringify(layerIds));
                 link.setAttribute("data-layer-type", config.type);
 
-                // Check if the first layer's visibility is set to "none" initially
+                // Check if the first layer's visibility is set to "none" initially.
+                // In a compare widget each side only has its own layers, but a single
+                // layers_control can reference ids from both sides (e.g. "sp" and "env")
+                // so the toggle can fire on both maps. If the first id isn't present on
+                // this map, fall back to "visible". We pre-check with getLayer() because
+                // getLayoutProperty() on a missing layer fires an error event (not a
+                // throw), which try/catch cannot silence.
                 const firstLayerId = layerIds[0];
-                const initialVisibility = map.getLayoutProperty(
-                  firstLayerId,
-                  "visibility",
-                );
+                let initialVisibility = "visible";
+                if (map.getLayer(firstLayerId)) {
+                  initialVisibility = map.getLayoutProperty(firstLayerId, "visibility") || "visible";
+                }
                 link.className = initialVisibility === "none" ? "" : "active";
 
                 // Show or hide layer(s) when the toggle is clicked
@@ -4389,17 +4413,22 @@ HTMLWidgets.widget({
                   const layerIds = JSON.parse(
                     this.getAttribute("data-layer-ids"),
                   );
+                  // read visibility from whichever map actually has this layer
+                  // (pre-check with getLayer() — getLayoutProperty fires an error
+                  // event on missing layers and try/catch cannot silence it)
                   const firstLayerId = layerIds[0];
-                  const visibility = map.getLayoutProperty(
-                    firstLayerId,
-                    "visibility",
-                  );
-
-                  const newVis = visibility === "visible" ? "none" : "visible";
+                  let visibility;
+                  for (const m of [map, beforeMap, afterMap]) {
+                    if (!m || !m.getLayer(firstLayerId)) continue;
+                    visibility = m.getLayoutProperty(firstLayerId, "visibility");
+                    if (visibility !== undefined) break;
+                  }
+                  const newVis = (visibility || "visible") === "visible" ? "none" : "visible";
                   const allMaps = [beforeMap, afterMap];
                   layerIds.forEach((layerId) => {
                     allMaps.forEach((m) => {
-                      try { m.setLayoutProperty(layerId, "visibility", newVis); } catch(err) {}
+                      if (!m || !m.getLayer(layerId)) return;
+                      m.setLayoutProperty(layerId, "visibility", newVis);
                     });
                   });
                   this.className = newVis === "visible" ? "active" : "";
