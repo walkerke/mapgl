@@ -25,6 +25,13 @@ add_legend.mapboxgl_compare <- function(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE
@@ -48,14 +55,71 @@ add_legend.mapboxgl_compare <- function(
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
   }
+
+  if (type == "continuous" && inherits(colors, "mapgl_continuous_scale")) {
+    scale <- colors
+    if (missing(values) || is.null(values)) {
+      values <- get_legend_labels(scale)
+    }
+    if (is.null(filter_values)) {
+      filter_values <- get_breaks(scale)
+    }
+    if (is.null(color_ramps)) {
+      color_ramps <- scale$color_ramps
+    }
+    if (is.null(selected_ramp)) {
+      selected_ramp <- scale$selected_ramp
+    }
+    if (is.null(color_column)) {
+      color_column <- scale$column
+    }
+    if (is.null(na_color)) {
+      na_color <- scale$na_color
+    }
+    colors <- scale$colors
+  }
+
+  interactivity_config <- NULL
   
   if (type == "continuous") {
     legend_data <- build_continuous_legend(
       legend_title, values, colors, position, unique_id,
       width, layer_id, margin_top, margin_right,
       margin_bottom, margin_left, style,
+      color_ramps = color_ramps,
+      selected_ramp = selected_ramp,
+      ramp_picker = ramp_picker,
+      ramp_labels = ramp_labels,
       collapsible = collapsible, collapsed = collapsed
     )
+
+    if (ramp_picker) {
+      if (is.null(layer_id)) {
+        rlang::abort("ramp_picker requires layer_id so mapgl knows which layer(s) to restyle.")
+      }
+      numeric_values <- if (!is.null(filter_values)) {
+        filter_values
+      } else if (is.numeric(values)) {
+        values
+      } else {
+        rlang::abort("Continuous ramp restyling requires numeric values or filter_values.")
+      }
+      interactivity_config <- list(
+        legendId = unique_id,
+        layerId = layer_id,
+        type = "continuous",
+        values = numeric_values,
+        colors = legend_data$colors,
+        filterColumn = filter_column,
+        filter = FALSE,
+        rampPicker = TRUE,
+        colorRamps = legend_data$color_ramps,
+        selectedRamp = legend_data$selected_ramp,
+        colorColumn = color_column,
+        colorProperty = color_property,
+        naColor = na_color
+      )
+    }
   } else {
     legend_data <- build_categorical_legend(
       legend_title, values, colors, circular_patches,
@@ -71,7 +135,8 @@ add_legend.mapboxgl_compare <- function(
     html = legend_data$html,
     css = legend_data$css,
     target = target,
-    add = add
+    add = add,
+    interactivity = interactivity_config
   )
   
   if (!add && target == "compare") {
@@ -103,11 +168,21 @@ build_continuous_legend <- function(
   margin_bottom = NULL,
   margin_left = NULL,
   style = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
   collapsible = FALSE,
   collapsed = FALSE
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
+  }
+
+  color_ramps <- normalize_color_ramps(color_ramps, selected_ramp, length(colors))
+  if (!is.null(color_ramps)) {
+    selected_ramp <- attr(color_ramps, "selected_ramp", exact = TRUE)
+    colors <- color_ramps[[selected_ramp]]
   }
 
   color_gradient <- paste0(
@@ -133,12 +208,15 @@ build_continuous_legend <- function(
 
   # Add data-layer-id attribute if layer_id is provided
   layer_attr <- if (!is.null(layer_id)) {
-    paste0(' data-layer-id="', layer_id, '"')
+    paste0(' data-layer-id="', paste(layer_id, collapse = " "), '"')
   } else {
     ""
   }
 
   # Collapsible pieces
+  ramp_picker_attr <- if (ramp_picker) ' data-ramp-picker="true"' else ""
+  ramp_picker_html <- if (ramp_picker) build_ramp_picker_html(color_ramps, selected_ramp, ramp_labels) else ""
+  gradient_picker_attr <- if (ramp_picker) ' role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Change color ramp"' else ""
   collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
   collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
   collapse_btn_html <- if (collapsible) {
@@ -164,15 +242,20 @@ build_continuous_legend <- function(
     collapsed_class,
     '"',
     layer_attr,
+    ramp_picker_attr,
     collapsible_attr,
     ">",
     '<h2 class="mapgl-legend-title">',
     legend_title,
     "</h2>",
     collapse_btn_html,
-    '<div class="legend-gradient" style="background:',
+    ramp_picker_html,
+    '<div class="legend-gradient" ',
+    gradient_picker_attr,
+    ' style="background:',
     color_gradient,
     '"></div>',
+    ramp_picker_html,
     '<div class="legend-labels" style="position: relative; height: 20px;">',
     value_labels,
     "</div>",
@@ -259,6 +342,102 @@ build_continuous_legend <- function(
     " .legend-gradient {
       height: 20px;
       margin: 5px 10px 5px 10px;
+      border-radius: 3px;
+    }
+
+    #",
+    unique_id,
+    "[data-ramp-picker='true'] .legend-gradient {
+      cursor: pointer;
+      outline: 1px solid rgba(17, 24, 39, 0.16);
+      outline-offset: 0;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker {
+      position: relative;
+      height: 0;
+      margin: 0 10px;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-swatch {
+      display: inline-block;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid rgba(17, 24, 39, 0.16);
+      flex: 1 1 auto;
+      min-width: 64px;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-label {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-no-labels .mapgl-ramp-picker-swatch {
+      min-width: 100%;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-no-labels .mapgl-ramp-picker-option {
+      padding: 6px;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-menu {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      right: 0;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px;
+      border: 1px solid rgba(17, 24, 39, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+      z-index: 1004;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker.mapgl-ramp-picker-open .mapgl-ramp-picker-menu {
+      display: flex;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      padding: 5px 6px;
+      text-align: left;
+    }
+
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-option:hover,
+    #",
+    unique_id,
+    " .mapgl-ramp-picker-option[data-selected='true'] {
+      background: rgba(15, 23, 42, 0.08);
     }
 
     #",
@@ -284,8 +463,14 @@ build_continuous_legend <- function(
   # Add custom style CSS if provided
   custom_style_css <- .translate_style_to_css(style, unique_id)
   legend_css <- paste0(legend_css, custom_style_css)
-  
-  list(html = legend_html, css = legend_css)
+
+  list(
+    html = legend_html,
+    css = legend_css,
+    colors = colors,
+    color_ramps = color_ramps,
+    selected_ramp = selected_ramp
+  )
 }
 
 build_categorical_legend <- function(

@@ -36,5 +36,7 @@ Suggests:
   chromote,
   knitr,
   mapboxapi,
+  testthat (>= 3.0.0),
   usethis,
   leaflet
+Config/testthat/edition: 3

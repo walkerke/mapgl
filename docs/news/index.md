@@ -1,5 +1,36 @@
 # Changelog
 
+## mapgl 0.5.0
+
+- New bivariate mapping support with
+  [`bivariate_scale()`](https://walker-data.com/mapgl/reference/bivariate_scale.md),
+  [`bivariate_palettes()`](https://walker-data.com/mapgl/reference/bivariate_palettes.md),
+  and
+  [`add_bivariate_legend()`](https://walker-data.com/mapgl/reference/add_bivariate_legend.md).
+  Bivariate scales use 3-by-3 palettes, support custom 3-by-3 color
+  matrices, optional `x_breaks` and `y_breaks` for stable bins, and
+  explicit `na_color` handling
+  ([\#181](https://github.com/walkerke/mapgl/issues/181)).
+
+- Continuous legends can now expose an opt-in color-ramp picker. Use
+  `color_ramps`, `selected_ramp`, and `ramp_picker = TRUE` with
+  continuous legends to let readers switch palettes directly from the
+  legend; named ramps display labels by default, and
+  `ramp_labels = FALSE` creates a compact picker.
+
+- [`interpolate_palette()`](https://walker-data.com/mapgl/reference/interpolate_palette.md)
+  now carries additional scale metadata for downstream legends,
+  including the source column, missing-value color, available color
+  ramps, and selected ramp.
+
+- Compare maps now initialize legend interactivity assets so supported
+  dynamic legend features can be used in compare views.
+
+- GitHub source archives are now slimmed with
+  `.gitattributes export-ignore` rules for generated site and vignette
+  assets. This preserves GitHub Pages content in the repository while
+  avoiding large downloads during GitHub-based package installs.
+
 ## mapgl 0.4.6
 
 CRAN release: 2026-04-14

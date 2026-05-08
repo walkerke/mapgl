@@ -19,6 +19,54 @@ wrap_in_literal <- function(x) {
   x
 }
 
+normalize_color_ramps <- function(color_ramps, selected_ramp = NULL, n = NULL) {
+  if (is.null(color_ramps)) {
+    return(NULL)
+  }
+
+  if (!is.list(color_ramps) || length(color_ramps) == 0) {
+    rlang::abort("color_ramps must be a non-empty list of color vectors.")
+  }
+
+  ramp_names <- names(color_ramps)
+  generated_names <- paste("Ramp", seq_along(color_ramps))
+  if (is.null(ramp_names)) {
+    ramp_names <- generated_names
+  } else {
+    ramp_names[ramp_names == ""] <- generated_names[ramp_names == ""]
+  }
+
+  normalized <- lapply(color_ramps, function(ramp) {
+    if (!is.character(ramp) || length(ramp) < 2) {
+      rlang::abort("Each color ramp must be a character vector with at least two colors.")
+    }
+    ramp <- trim_hex_colors(ramp)
+    if (!is.null(n) && length(ramp) != n) {
+      ramp <- grDevices::colorRampPalette(ramp)(n)
+    }
+    ramp
+  })
+
+  names(normalized) <- ramp_names
+
+  if (is.null(selected_ramp)) {
+    selected_ramp <- names(normalized)[1]
+  } else if (is.numeric(selected_ramp) && length(selected_ramp) == 1) {
+    if (selected_ramp < 1 || selected_ramp > length(normalized) || selected_ramp != as.integer(selected_ramp)) {
+      rlang::abort("selected_ramp must be a valid ramp name or index.")
+    }
+    selected_ramp <- names(normalized)[[selected_ramp]]
+  } else if (!is.character(selected_ramp) || length(selected_ramp) != 1 || !selected_ramp %in% names(normalized)) {
+    rlang::abort(paste0(
+      "selected_ramp must be one of: ",
+      paste(names(normalized), collapse = ", ")
+    ))
+  }
+
+  attr(normalized, "selected_ramp") <- selected_ramp
+  normalized
+}
+
 #' Create an interpolation expression
 #'
 #' This function generates an interpolation expression that can be used to style your data.
@@ -416,6 +464,11 @@ maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
 #'   will be interpolated to match the number of breaks if needed. Either palette
 #'   or colors should be provided, but not both.
 #' @param na_color The color to use for missing values. Defaults to "grey".
+#' @param color_ramps Optional list of color vectors for downstream legend
+#'   color-ramp pickers. Ramps are interpolated to the calculated breaks.
+#'   Named lists use the names as picker labels; unnamed lists get generated
+#'   labels.
+#' @param selected_ramp Optional name or index of the initially selected ramp.
 #'
 #' @return A list of class "mapgl_continuous_scale" containing the interpolation expression and metadata.
 #' @export
@@ -450,7 +503,9 @@ interpolate_palette <- function(
   n = 5,
   palette = NULL,
   colors = NULL,
-  na_color = "grey"
+  na_color = "grey",
+  color_ramps = NULL,
+  selected_ramp = NULL
 ) {
   # Handle new data + column interface
   if (!is.null(data) && is.null(data_values)) {
@@ -530,6 +585,16 @@ interpolate_palette <- function(
     rlang::abort("method must be one of 'equal', 'quantile', or 'jenks'")
   }
 
+  color_ramps <- normalize_color_ramps(color_ramps, selected_ramp, length(breaks))
+
+  if (!is.null(color_ramps)) {
+    if (!is.null(palette) || !is.null(colors)) {
+      rlang::abort("Please specify only one of 'palette', 'colors', or 'color_ramps'.")
+    }
+    selected_ramp <- attr(color_ramps, "selected_ramp", exact = TRUE)
+    colors <- color_ramps[[selected_ramp]]
+  }
+
   # Handle palette vs colors parameter
   if (!is.null(palette) && !is.null(colors)) {
     rlang::abort("Please specify either 'palette' or 'colors', not both")
@@ -569,11 +634,248 @@ interpolate_palette <- function(
     expression = expr,
     breaks = breaks,
     colors = colors,
+    column = column,
+    na_color = na_color,
+    color_ramps = color_ramps,
+    selected_ramp = selected_ramp,
     method = paste0("interpolate_", method),
     n_breaks = length(breaks)
   )
 
   class(result) <- "mapgl_continuous_scale"
+  result
+}
+
+bivariate_palette_matrix <- function(colors) {
+  matrix(colors, nrow = 3, byrow = TRUE)
+}
+
+#' Bivariate color palettes
+#'
+#' @param palette Optional palette name. If NULL, returns all palettes.
+#'
+#' @return A named list of 3 by 3 color matrices, or one matrix if `palette` is provided.
+#' @export
+bivariate_palettes <- function(palette = NULL) {
+  palettes <- bivariate_builtin_palettes()
+  if (is.null(palette)) {
+    return(palettes)
+  }
+  selected <- palettes[[palette]]
+  if (is.null(selected)) {
+    rlang::abort(paste0(
+      "Unknown bivariate palette. Available palettes: ",
+      paste(names(palettes), collapse = ", ")
+    ))
+  }
+  selected
+}
+
+bivariate_builtin_palettes <- function() {
+  list(
+    blue_pink = bivariate_palette_matrix(c(
+        "#e8e8e8", "#ace4e4", "#5ac8c8",
+        "#dfb0d6", "#a5add3", "#5698b9",
+        "#be64ac", "#8c62aa", "#3b4994"
+    )),
+    blue_red = bivariate_palette_matrix(c(
+      "#e8e8e8", "#e4acac", "#c85a5a",
+      "#b0d5df", "#ad9ea5", "#985356",
+      "#64acbe", "#627f8c", "#574249"
+    )),
+    green_blue = bivariate_palette_matrix(c(
+      "#e8e8e8", "#b5c0da", "#6c83b5",
+      "#b8d6be", "#90b2b3", "#567994",
+      "#73ae80", "#5a9178", "#2a5a5b"
+    )),
+    purple_orange = bivariate_palette_matrix(c(
+      "#f2f2f2", "#fddbc7", "#f4a582",
+      "#d1e5f0", "#b3a2c7", "#b35806",
+      "#67a9cf", "#8073ac", "#542788"
+    )),
+    brown_green = bivariate_palette_matrix(c(
+      "#f5f5f5", "#c7eae5", "#80cdc1",
+      "#dfc27d", "#a6b88f", "#35978f",
+      "#bf812d", "#8c6d31", "#01665e"
+    ))
+  )
+}
+
+normalize_bivariate_colors <- function(colors = NULL, palette = "blue_pink") {
+  if (is.null(colors)) {
+    colors <- bivariate_palettes(palette)
+  }
+
+  if (is.matrix(colors)) {
+    if (!all(dim(colors) == c(3, 3))) {
+      rlang::abort("Bivariate color matrices must be 3 by 3.")
+    }
+    return(apply(colors, 2, trim_hex_colors))
+  }
+
+  if (is.character(colors) && length(colors) == 9) {
+    return(matrix(trim_hex_colors(colors), nrow = 3, byrow = TRUE))
+  }
+
+  rlang::abort("colors must be a 3 by 3 matrix or a 9-color character vector.")
+}
+
+quantile_bivariate_breaks <- function(values, label) {
+  if (!is.numeric(values)) {
+    rlang::abort(paste0(label, " values must be numeric."))
+  }
+  clean_values <- values[!is.na(values)]
+  if (length(clean_values) == 0) {
+    rlang::abort(paste0("No non-missing ", label, " values found."))
+  }
+  breaks <- unique(stats::quantile(clean_values, probs = seq(0, 1, length.out = 4), na.rm = TRUE))
+  if (length(breaks) != 4) {
+    rlang::abort(paste0(
+      "Bivariate mapping requires four unique ", label,
+      " quantile breaks for a 3-class scale."
+    ))
+  }
+  as.numeric(breaks)
+}
+
+validate_bivariate_breaks <- function(breaks, label) {
+  if (!is.numeric(breaks) || length(breaks) != 4 || any(is.na(breaks)) || any(!is.finite(breaks))) {
+    rlang::abort(paste0(label, "_breaks must be a numeric vector of four finite values."))
+  }
+  if (any(diff(breaks) <= 0)) {
+    rlang::abort(paste0(label, "_breaks must be strictly increasing."))
+  }
+  as.numeric(breaks)
+}
+
+bivariate_condition <- function(column, breaks, idx) {
+  min_val <- breaks[idx]
+  max_val <- breaks[idx + 1]
+  column_value <- list("to-number", list("get", column), NULL)
+  if (idx == 1) {
+    lower <- list(">=", column_value, min_val)
+  } else {
+    lower <- list(">=", column_value, min_val)
+  }
+  upper_op <- if (idx == 3) "<=" else "<"
+  upper <- list(upper_op, column_value, max_val)
+  list("all", lower, upper)
+}
+
+bivariate_missing_condition <- function(x, y) {
+  list(
+    "any",
+    list("!", list("has", x)),
+    list("!", list("has", y)),
+    list("==", list("get", x), NULL),
+    list("==", list("get", y), NULL)
+  )
+}
+
+#' Create a bivariate color scale
+#'
+#' @param data A data frame or sf object containing the variables.
+#' @param x The name of the first numeric column.
+#' @param y The name of the second numeric column.
+#' @param x_values Optional numeric vector for the first variable.
+#' @param y_values Optional numeric vector for the second variable.
+#' @param x_breaks Optional numeric vector of four increasing break values for
+#'   the x variable. If NULL, breaks are computed from `x_values`.
+#' @param y_breaks Optional numeric vector of four increasing break values for
+#'   the y variable. If NULL, breaks are computed from `y_values`.
+#' @param method Classification method. The MVP supports `"quantile"`.
+#' @param colors A 3 by 3 matrix or 9-color vector. If NULL, a built-in palette is used.
+#' @param palette Built-in palette name. Defaults to `"blue_pink"`. Use
+#'   `bivariate_palettes()` to inspect available palettes.
+#' @param na_color Color for missing values. Defaults to `"lightgrey"`.
+#'
+#' @return A `mapgl_bivariate_scale` object.
+#' @export
+bivariate_scale <- function(
+  data = NULL,
+  x,
+  y,
+  x_values = NULL,
+  y_values = NULL,
+  x_breaks = NULL,
+  y_breaks = NULL,
+  method = "quantile",
+  colors = NULL,
+  palette = "blue_pink",
+  na_color = "lightgrey"
+) {
+  if (method != "quantile") {
+    rlang::abort("The bivariate MVP currently supports method = 'quantile' only.")
+  }
+
+  if (!is.null(data)) {
+    if (is.null(x_values)) {
+      if (!x %in% names(data)) rlang::abort(paste0("Column '", x, "' not found in data."))
+      x_values <- data[[x]]
+    }
+    if (is.null(y_values)) {
+      if (!y %in% names(data)) rlang::abort(paste0("Column '", y, "' not found in data."))
+      y_values <- data[[y]]
+    }
+  }
+
+  if (is.null(x_values) || is.null(y_values)) {
+    rlang::abort("Either 'data' or both 'x_values' and 'y_values' must be provided.")
+  }
+  if (length(x_values) != length(y_values)) {
+    rlang::abort("x_values and y_values must have the same length.")
+  }
+
+  colors <- normalize_bivariate_colors(colors, palette)
+  custom_breaks <- !is.null(x_breaks) || !is.null(y_breaks)
+  x_breaks <- if (is.null(x_breaks)) {
+    quantile_bivariate_breaks(x_values, "x")
+  } else {
+    validate_bivariate_breaks(x_breaks, "x")
+  }
+  y_breaks <- if (is.null(y_breaks)) {
+    quantile_bivariate_breaks(y_values, "y")
+  } else {
+    validate_bivariate_breaks(y_breaks, "y")
+  }
+
+  na_color <- trim_hex_colors(na_color)
+
+  expr <- list("case", bivariate_missing_condition(x, y), na_color)
+  for (y_idx in seq_len(3)) {
+    for (x_idx in seq_len(3)) {
+      expr <- c(
+        expr,
+        list(list(
+          "all",
+          bivariate_condition(x, x_breaks, x_idx),
+          bivariate_condition(y, y_breaks, y_idx)
+        )),
+        list(colors[y_idx, x_idx])
+      )
+    }
+  }
+  expr <- c(expr, list(na_color))
+
+  labels <- list(
+    x = c("Low", "Medium", "High"),
+    y = c("Low", "Medium", "High")
+  )
+
+  result <- list(
+    expression = expr,
+    x = x,
+    y = y,
+    x_breaks = x_breaks,
+    y_breaks = y_breaks,
+    colors = colors,
+    labels = labels,
+    method = if (custom_breaks) "custom" else method,
+    palette = palette,
+    na_color = na_color,
+    n = 3
+  )
+  class(result) <- "mapgl_bivariate_scale"
   result
 }
 
