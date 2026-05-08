@@ -12,7 +12,9 @@ interpolate_palette(
   n = 5,
   palette = NULL,
   colors = NULL,
-  na_color = "grey"
+  na_color = "grey",
+  color_ramps = NULL,
+  selected_ramp = NULL
 )
 }
 \arguments{
@@ -37,6 +39,13 @@ will be interpolated to match the number of breaks if needed. Either palette
 or colors should be provided, but not both.}
 
 \item{na_color}{The color to use for missing values. Defaults to "grey".}
+
+\item{color_ramps}{Optional list of color vectors for downstream legend
+color-ramp pickers. Ramps are interpolated to the calculated breaks.
+Named lists use the names as picker labels; unnamed lists get generated
+labels.}
+
+\item{selected_ramp}{Optional name or index of the initially selected ramp.}
 }
 \value{
 A list of class "mapgl_continuous_scale" containing the interpolation expression and metadata.

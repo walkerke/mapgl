@@ -13,6 +13,7 @@
 <url><loc>https://walker-data.com/mapgl/authors.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/index.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/news/index.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/add_bivariate_legend.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_circle_layer.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_control.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_coordinates_control.html</loc></url>
@@ -47,6 +48,8 @@
 <url><loc>https://walker-data.com/mapgl/reference/add_video_source.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/add_view.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/basemap_style.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/bivariate_palettes.html</loc></url>
+<url><loc>https://walker-data.com/mapgl/reference/bivariate_scale.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/carto_style.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/classification_helpers.html</loc></url>
 <url><loc>https://walker-data.com/mapgl/reference/clear_controls.html</loc></url>

@@ -98,6 +98,7 @@ reference:
     desc: "Functions for adding and managing map legends with customizable styling"
     contents:
       - map_legends
+      - add_bivariate_legend
       - legend_style
       - clear_legend
 
@@ -137,6 +138,8 @@ reference:
     contents:
       - step_classification
       - interpolate_palette
+      - bivariate_scale
+      - bivariate_palettes
       - classification_helpers
 
   - title: "Camera and View"

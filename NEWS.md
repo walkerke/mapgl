@@ -1,3 +1,15 @@
+# mapgl 0.5.0
+
+* New bivariate mapping support with `bivariate_scale()`, `bivariate_palettes()`, and `add_bivariate_legend()`. Bivariate scales use 3-by-3 palettes, support custom 3-by-3 color matrices, optional `x_breaks` and `y_breaks` for stable bins, and explicit `na_color` handling (#181).
+
+* Continuous legends can now expose an opt-in color-ramp picker. Use `color_ramps`, `selected_ramp`, and `ramp_picker = TRUE` with continuous legends to let readers switch palettes directly from the legend; named ramps display labels by default, and `ramp_labels = FALSE` creates a compact picker.
+
+* `interpolate_palette()` now carries additional scale metadata for downstream legends, including the source column, missing-value color, available color ramps, and selected ramp.
+
+* Compare maps now initialize legend interactivity assets so supported dynamic legend features can be used in compare views.
+
+* GitHub source archives are now slimmed with `.gitattributes export-ignore` rules for generated site and vignette assets. This preserves GitHub Pages content in the repository while avoiding large downloads during GitHub-based package installs.
+
 # mapgl 0.4.6
 
 * New `save_map()` function renders a map widget to a static PNG file using headless Chrome via the chromote package. Supports options for hiding controls, including/excluding legends and scale bars, replacing the basemap with a solid color, and retina-quality output with `image_scale`. New `print_map()` function provides the same capability for use in Quarto and R Markdown documents.

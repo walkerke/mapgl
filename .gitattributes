@@ -1,6 +1,20 @@
-docs/** linguist-documentation
+docs/** linguist-documentation export-ignore
 man/** linguist-documentation
-pkgdown/** linguist-documentation
-tools/readme/** linguist-documentation
-vignettes/** linguist-documentation
+pkgdown/** linguist-documentation export-ignore
+tools/readme/** linguist-documentation export-ignore
+vignettes/** linguist-documentation export-ignore
+data-raw/** export-ignore
+examples/** export-ignore
+.github/** export-ignore
+.Rproj.user/** export-ignore
+mapgl.Rcheck/** export-ignore
+mapgl*.tar.gz export-ignore
+mapgl*.tgz export-ignore
+CLAUDE.md export-ignore
+LICENSE.md export-ignore
+_pkgdown.yml export-ignore
+.dockerignore export-ignore
+logo.png export-ignore
+index.qmd export-ignore
+index.md export-ignore
 inst/htmlwidgets/lib/** linguist-vendored

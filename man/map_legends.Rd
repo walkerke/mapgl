@@ -34,6 +34,13 @@ add_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE
@@ -85,6 +92,13 @@ add_continuous_legend(
   filter_column = NULL,
   filter_values = NULL,
   draggable = FALSE,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   collapsible = FALSE,
   collapsed = FALSE
 )
@@ -114,6 +128,13 @@ add_continuous_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE
@@ -144,6 +165,13 @@ add_continuous_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE
@@ -197,6 +225,20 @@ add_continuous_legend(
 \item{classification}{A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.}
 
 \item{breaks}{Numeric vector of break points for filtering with classification-based legends. Typically extracted automatically from the classification object. Only needed if you want to override the default breaks.}
+
+\item{color_ramps}{For continuous legends, a list of color vectors to expose in a color-ramp picker. Named lists use the names as picker labels; unnamed lists get generated labels.}
+
+\item{selected_ramp}{The initially selected ramp name or index when \code{color_ramps} is provided.}
+
+\item{ramp_picker}{Logical, whether to show the continuous legend color-ramp picker.}
+
+\item{ramp_labels}{Logical, whether to show palette labels in the color-ramp picker.}
+
+\item{color_column}{Character, the data column to use when restyling the layer. If NULL, mapgl attempts to auto-detect it from the layer paint expression.}
+
+\item{color_property}{Character, the paint property to restyle. If NULL, mapgl attempts to auto-detect one of \code{fill-color}, \code{circle-color}, \code{line-color}, or \code{fill-extrusion-color}.}
+
+\item{na_color}{Color to use for missing values when rebuilding the interpolation expression.}
 
 \item{draggable}{Logical, whether the legend can be dragged to a new position by the user. Default is FALSE.}
 

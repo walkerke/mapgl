@@ -42,6 +42,14 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.0" id="mapgl-050">mapgl 0.5.0<a class="anchor" aria-label="anchor" href="#mapgl-050"></a></h2>
+<ul><li><p>New bivariate mapping support with <code><a href="../reference/bivariate_scale.html">bivariate_scale()</a></code>, <code><a href="../reference/bivariate_palettes.html">bivariate_palettes()</a></code>, and <code><a href="../reference/add_bivariate_legend.html">add_bivariate_legend()</a></code>. Bivariate scales use 3-by-3 palettes, support custom 3-by-3 color matrices, optional <code>x_breaks</code> and <code>y_breaks</code> for stable bins, and explicit <code>na_color</code> handling (<a href="https://github.com/walkerke/mapgl/issues/181" class="external-link">#181</a>).</p></li>
+<li><p>Continuous legends can now expose an opt-in color-ramp picker. Use <code>color_ramps</code>, <code>selected_ramp</code>, and <code>ramp_picker = TRUE</code> with continuous legends to let readers switch palettes directly from the legend; named ramps display labels by default, and <code>ramp_labels = FALSE</code> creates a compact picker.</p></li>
+<li><p><code><a href="../reference/interpolate_palette.html">interpolate_palette()</a></code> now carries additional scale metadata for downstream legends, including the source column, missing-value color, available color ramps, and selected ramp.</p></li>
+<li><p>Compare maps now initialize legend interactivity assets so supported dynamic legend features can be used in compare views.</p></li>
+<li><p>GitHub source archives are now slimmed with <code>.gitattributes export-ignore</code> rules for generated site and vignette assets. This preserves GitHub Pages content in the repository while avoiding large downloads during GitHub-based package installs.</p></li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.6" id="mapgl-046">mapgl 0.4.6<a class="anchor" aria-label="anchor" href="#mapgl-046"></a></h2><p class="text-muted">CRAN release: 2026-04-14</p>
 <ul><li><p>New <code><a href="../reference/save_map.html">save_map()</a></code> function renders a map widget to a static PNG file using headless Chrome via the chromote package. Supports options for hiding controls, including/excluding legends and scale bars, replacing the basemap with a solid color, and retina-quality output with <code>image_scale</code>. New <code><a href="../reference/print_map.html">print_map()</a></code> function provides the same capability for use in Quarto and R Markdown documents.</p></li>
 <li><p>Update MapLibre GL JS to v5.22.0 and Mapbox GL JS to v3.21.0.</p></li>

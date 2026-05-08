@@ -34,6 +34,13 @@ add_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE
@@ -85,6 +92,13 @@ add_continuous_legend(
   filter_column = NULL,
   filter_values = NULL,
   draggable = FALSE,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   collapsible = FALSE,
   collapsed = FALSE
 )
@@ -115,6 +129,13 @@ add_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE
@@ -146,6 +167,13 @@ add_legend(
   filter_values = NULL,
   classification = NULL,
   breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE
@@ -290,6 +318,41 @@ add_legend(
   Numeric vector of break points for filtering with classification-based
   legends. Typically extracted automatically from the classification
   object. Only needed if you want to override the default breaks.
+
+- color_ramps:
+
+  For continuous legends, a list of color vectors to expose in a
+  color-ramp picker. Named lists use the names as picker labels; unnamed
+  lists get generated labels.
+
+- selected_ramp:
+
+  The initially selected ramp name or index when `color_ramps` is
+  provided.
+
+- ramp_picker:
+
+  Logical, whether to show the continuous legend color-ramp picker.
+
+- ramp_labels:
+
+  Logical, whether to show palette labels in the color-ramp picker.
+
+- color_column:
+
+  Character, the data column to use when restyling the layer. If NULL,
+  mapgl attempts to auto-detect it from the layer paint expression.
+
+- color_property:
+
+  Character, the paint property to restyle. If NULL, mapgl attempts to
+  auto-detect one of `fill-color`, `circle-color`, `line-color`, or
+  `fill-extrusion-color`.
+
+- na_color:
+
+  Color to use for missing values when rebuilding the interpolation
+  expression.
 
 - draggable:
 
