@@ -10,6 +10,7 @@ Let’s grab some data from **tidycensus** on median age by Census tract
 in Florida and initialize an empty map focused on Florida.
 
 ``` r
+
 library(tidycensus)
 library(mapgl)
 
@@ -17,14 +18,15 @@ fl_age <- get_acs(
   geography = "tract",
   variables = "B01002_001",
   state = "FL",
-  year = 2023,
+  year = 2024,
   geometry = TRUE
 )
 ```
 
-    ## Getting data from the 2019-2023 5-year ACS
+    ## Getting data from the 2020-2024 5-year ACS
 
 ``` r
+
 fl_map <- mapboxgl(mapbox_style("light"),
                    bounds = fl_age)
 
@@ -47,6 +49,7 @@ smooth color transitions. You can specify the classification method
 specific colors:
 
 ``` r
+
 # Automatic continuous scale with equal breaks
 continuous_scale <- interpolate_palette(
   data = fl_age,
@@ -78,6 +81,7 @@ values and stops. This gives you complete control over the color
 mapping:
 
 ``` r
+
 fl_map |>
   add_fill_layer(
   id = "fl_tracts",
@@ -103,6 +107,7 @@ ramp, and clicking a different ramp in the legend updates both the
 legend gradient and the map.
 
 ``` r
+
 age_ramps <- list(
   Viridis = viridisLite::viridis(5),
   Magma = viridisLite::magma(5),
@@ -133,7 +138,7 @@ maplibre(
   ) |>
   add_legend(
     "Median age in Florida",
-    values = get_legend_labels(age_picker_scale, digits = 0, suffix = " years"),
+    values = get_legend_labels(age_picker_scale, digits = 0),
     colors = age_picker_scale,
     type = "continuous",
     layer_id = "fl_age_picker",
@@ -166,6 +171,7 @@ uses quantile breaks; pass `x_breaks` and `y_breaks` as four-value
 numeric vectors when you need stable bins across maps or filtered views.
 
 ``` r
+
 fl_age_income <- get_acs(
   geography = "tract",
   variables = c(
@@ -173,15 +179,16 @@ fl_age_income <- get_acs(
     median_income = "B19013_001"
   ),
   state = "FL",
-  year = 2023,
+  year = 2024,
   geometry = TRUE,
   output = "wide"
 )
 ```
 
-    ## Getting data from the 2019-2023 5-year ACS
+    ## Getting data from the 2020-2024 5-year ACS
 
 ``` r
+
 names(fl_age_income) <- sub("E$", "", names(fl_age_income))
 
 fl_age_income$popup <- glue::glue(
@@ -245,6 +252,7 @@ generate step expressions. You can specify the number of classes and the
 color palette to use:
 
 ``` r
+
 # Automatic quantile classification with 5 classes
 q_class <- step_quantile(
   data = fl_age,
@@ -274,6 +282,7 @@ function directly. Step expressions require a `base` value followed by a
 series of `stops` and threshold `values`:
 
 ``` r
+
 brewer_pal <- RColorBrewer::brewer.pal(5, "RdYlBu")
 
 fl_map |>
@@ -326,6 +335,7 @@ GL JS to change a Census tract’s fill to yellow and fill opacity to 1
 when the users hovers over the tract.
 
 ``` r
+
 fl_age$popup <- glue::glue(
   "<strong>GEOID: </strong>{fl_age$GEOID}<br><strong>Median age: </strong>{fl_age$estimate}"
 )

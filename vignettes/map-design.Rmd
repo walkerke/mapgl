@@ -24,7 +24,7 @@ fl_age <- get_acs(
   geography = "tract",
   variables = "B01002_001",
   state = "FL",
-  year = 2023,
+  year = 2024,
   geometry = TRUE
 )
 
@@ -120,7 +120,7 @@ maplibre(
   ) |>
   add_legend(
     "Median age in Florida",
-    values = get_legend_labels(age_picker_scale, digits = 0, suffix = " years"),
+    values = get_legend_labels(age_picker_scale, digits = 0),
     colors = age_picker_scale,
     type = "continuous",
     layer_id = "fl_age_picker",
@@ -149,7 +149,7 @@ fl_age_income <- get_acs(
     median_income = "B19013_001"
   ),
   state = "FL",
-  year = 2023,
+  year = 2024,
   geometry = TRUE,
   output = "wide"
 )

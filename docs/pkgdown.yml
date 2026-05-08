@@ -1,4 +1,4 @@
-pandoc: 3.7.0.2
+pandoc: 3.8.3
 pkgdown: 2.2.0.9000
 pkgdown_sha: f3ec6e2bb122e10436eccda7b221e297ab9d395a
 articles:
@@ -8,7 +8,7 @@ articles:
   shiny: shiny.html
   story-maps: story-maps.html
   turf: turf.html
-last_built: 2026-05-08T18:41Z
+last_built: 2026-05-08T20:43Z
 urls:
   reference: https://walker-data.com/mapgl/reference
   article: https://walker-data.com/mapgl/articles

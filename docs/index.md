@@ -10,12 +10,14 @@ users coming from other R mapping packages.
 Install from CRAN:
 
 ``` r
+
 install.packages("mapgl")
 ```
 
 Or, install the development version from GitHub:
 
 ``` r
+
 remotes::install_github("walkerke/mapgl")
 ```
 
