@@ -135,70 +135,6 @@ maplibre(
   )
 ```
 
-### Bivariate styling
-
-Bivariate maps visualize two variables at once by assigning each feature to a joint class. In this example, we'll compare median age and median household income for Florida Census tracts.
-
-The built-in bivariate palettes are 3-by-3 matrices. Rows represent the y-variable from low to high, and columns represent the x-variable from low to high. You can inspect the available palettes with `names(bivariate_palettes())`, or pass your own 3-by-3 matrix to the `colors` argument in `bivariate_scale()`. By default, `bivariate_scale()` uses quantile breaks; pass `x_breaks` and `y_breaks` as four-value numeric vectors when you need stable bins across maps or filtered views.
-
-```{r}
-fl_age_income <- get_acs(
-  geography = "tract",
-  variables = c(
-    median_age = "B01002_001",
-    median_income = "B19013_001"
-  ),
-  state = "FL",
-  year = 2024,
-  geometry = TRUE,
-  output = "wide"
-)
-
-names(fl_age_income) <- sub("E$", "", names(fl_age_income))
-
-fl_age_income$popup <- glue::glue(
-  "<strong>GEOID: </strong>{fl_age_income$GEOID}<br>",
-  "<strong>Median age: </strong>{round(fl_age_income$median_age, 1)}<br>",
-  "<strong>Median household income: </strong>${format(round(fl_age_income$median_income), big.mark = ',')}"
-)
-
-age_income_scale <- bivariate_scale(
-  data = fl_age_income,
-  x = "median_income",
-  y = "median_age", na_color = "white", palette = "blue_red"
-)
-
-maplibre(
-  style = carto_style("positron"),
-  bounds = fl_age_income
-) |>
-  add_fill_layer(
-    id = "fl_age_income",
-    source = fl_age_income,
-    fill_color = age_income_scale$expression,
-    fill_opacity = 0.75,
-    fill_outline_color = "rgba(255,255,255,0.25)",
-    popup = "popup",
-    hover_options = list(
-      fill_opacity = 1
-    )
-  ) |>
-  add_bivariate_legend(
-    age_income_scale,
-    legend_title = "Age and income",
-    x_title = "Higher income",
-    y_title = "Older median age",
-    layer_id = "fl_age_income",
-    style = legend_style(
-      background_color = "white",
-      background_opacity = 0.94,
-      border_color = "#d1d5db",
-      border_width = 1,
-      shadow = TRUE
-    )
-  )
-```
-
 ### Categorical styling
 
 Cartographers may prefer a binned method for visualizing their data rather than the continuous palette shown above. **mapgl** includes several classification functions that automate common choropleth workflows. The `step_equal_interval()` function creates equal interval breaks, while `step_quantile()` and `step_jenks()` create quantile and Jenks natural breaks respectively.
@@ -296,5 +232,69 @@ fl_map |>
     "Median age in Florida",
     values = c(20, 80),
     colors = c("lightblue", "darkblue")
+  )
+```
+
+### Bivariate styling
+
+Bivariate maps visualize two variables at once by assigning each feature to a joint class. In this example, we'll compare median age and median household income for Florida Census tracts.
+
+The built-in bivariate palettes are 3-by-3 matrices. Rows represent the y-variable from low to high, and columns represent the x-variable from low to high. You can inspect the available palettes with `names(bivariate_palettes())`, or pass your own 3-by-3 matrix to the `colors` argument in `bivariate_scale()`. By default, `bivariate_scale()` uses quantile breaks; pass `x_breaks` and `y_breaks` as four-value numeric vectors when you need stable bins across maps or filtered views.
+
+```{r}
+fl_age_income <- get_acs(
+  geography = "tract",
+  variables = c(
+    median_age = "B01002_001",
+    median_income = "B19013_001"
+  ),
+  state = "FL",
+  year = 2024,
+  geometry = TRUE,
+  output = "wide"
+)
+
+names(fl_age_income) <- sub("E$", "", names(fl_age_income))
+
+fl_age_income$popup <- glue::glue(
+  "<strong>GEOID: </strong>{fl_age_income$GEOID}<br>",
+  "<strong>Median age: </strong>{round(fl_age_income$median_age, 1)}<br>",
+  "<strong>Median household income: </strong>${format(round(fl_age_income$median_income), big.mark = ',')}"
+)
+
+age_income_scale <- bivariate_scale(
+  data = fl_age_income,
+  x = "median_income",
+  y = "median_age", na_color = "white", palette = "blue_red"
+)
+
+maplibre(
+  style = carto_style("positron"),
+  bounds = fl_age_income
+) |>
+  add_fill_layer(
+    id = "fl_age_income",
+    source = fl_age_income,
+    fill_color = age_income_scale$expression,
+    fill_opacity = 0.75,
+    fill_outline_color = "rgba(255,255,255,0.25)",
+    popup = "popup",
+    hover_options = list(
+      fill_opacity = 1
+    )
+  ) |>
+  add_bivariate_legend(
+    age_income_scale,
+    legend_title = "Age and income",
+    x_title = "Higher income",
+    y_title = "Older median age",
+    layer_id = "fl_age_income",
+    style = legend_style(
+      background_color = "white",
+      background_opacity = 0.94,
+      border_color = "#d1d5db",
+      border_width = 1,
+      shadow = TRUE
+    )
   )
 ```

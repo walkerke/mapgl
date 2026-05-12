@@ -8,7 +8,6 @@ function. Run the function with no arguments to get an interactive globe
 using Mapbox’s Standard style:
 
 ``` r
-
 library(mapgl)
 
 mapboxgl()
@@ -35,7 +34,6 @@ we use `projection = "winkelTripel"` for the Winkel Tripel global
 projection.
 
 ``` r
-
 mapboxgl(
   style = mapbox_style("satellite"),
   projection = "winkelTripel")
@@ -49,7 +47,6 @@ Standard style includes custom-rendered buildings around the world, such
 as the American Airlines Center in Dallas.
 
 ``` r
-
 mapboxgl(
   center = c(-97.6, 25.4)
 ) |> 
@@ -74,7 +71,6 @@ default tiles in
 CARTO’s Voyager tiles, which are usable without an API key.
 
 ``` r
-
 library(mapgl)
 
 maplibre()
@@ -94,7 +90,6 @@ well; **mapgl** aims to provide a consistent API to work with either
 Mapbox or MapLibre.
 
 ``` r
-
 maplibre(
   style = maptiler_style("bright"),
   center = c(-43.23412, -22.91370),
@@ -121,14 +116,12 @@ specify a column for styling, and the functions will create appropriate
 color scales for you.
 
 ``` r
-
 library(sf)
 ```
 
     ## Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 
 ``` r
-
 # Quick view of the North Carolina dataset
 nc <- st_read(system.file("shape/nc.shp", package="sf"))
 ```
@@ -143,7 +136,6 @@ nc <- st_read(system.file("shape/nc.shp", package="sf"))
     ## Geodetic CRS:  NAD27
 
 ``` r
-
 maplibre_view(nc, column = "AREA")
 ```
 
@@ -163,7 +155,6 @@ allows users to create synced swipe maps that can compare two styles.
 This function works for either Mapbox or MapLibre maps.
 
 ``` r
-
 m1 <- mapboxgl()
 m2 <- mapboxgl(mapbox_style("satellite-streets"))
 

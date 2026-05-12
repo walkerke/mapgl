@@ -28,7 +28,6 @@ proximity analysis, creating catchment areas, or adding visual emphasis
 around points of interest.
 
 ``` r
-
 library(mapgl)
 library(sf)
 library(tigris)
@@ -84,7 +83,6 @@ This supports five spatial predicates:
 - **disjoint**: Features that don’t touch at all
 
 ``` r
-
 # Find Census tracts that intersect with TCU's 2-mile buffer
 tarrant_tracts <- tracts("TX", "Tarrant", cb = TRUE)
 
@@ -148,7 +146,6 @@ applications. Here’s a simple app that lets users draw polygons and
 instantly filter counties:
 
 ``` r
-
 library(shiny)
 library(mapgl)
 library(sf)
@@ -227,7 +224,6 @@ advanced spatial workflows. Let’s create centroids for some Fort Worth
 area Census tracts and analyze their spatial patterns:
 
 ``` r
-
 # Get a subset of tracts
 fort_worth_tracts <- tarrant_tracts[1:10, ]  # First 10 tracts for demo
 
@@ -303,7 +299,6 @@ function returns the actual intersection geometry - the overlapping area
 between features:
 
 ``` r
-
 # Create two overlapping buffer zones around different Fort Worth locations
 downtown_fw <- st_sf(geometry = st_sfc(st_point(c(-97.3313, 32.7548)), crs = 4326))  # Downtown
 cultural_district <- st_sf(geometry = st_sfc(st_point(c(-97.3632, 32.7494)), crs = 4326))  # Cultural District

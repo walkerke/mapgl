@@ -62,7 +62,6 @@ you initialize your map so map scrolling behavior doesn’t interfere with
 story scrolling.
 
 ``` r
-
 library(shiny)
 library(mapgl)
 
@@ -110,7 +109,6 @@ define an expression, much like you would in
 Shiny, to be executed when a given section appears.
 
 ``` r
-
 library(shiny)
 library(mapgl)
 
@@ -157,7 +155,6 @@ to the original globe. This can be remedied by tying an
 event to the introductory section.
 
 ``` r
-
 library(shiny)
 library(mapgl)
 
@@ -223,7 +220,6 @@ you’ll add to a Mapbox / MapLibre basemap. Let’s build an example of how
 a real estate firm might use a story map to market a property.
 
 ``` r
-
 library(shiny)
 library(mapgl)
 library(mapboxapi)
@@ -365,7 +361,6 @@ scroll, the story will then zoom to the selected county and show a
 histogram of values for Census tracts in that county.
 
 ``` r
-
 library(shiny)
 library(mapgl)
 library(tidycensus)

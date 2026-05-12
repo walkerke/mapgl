@@ -1624,6 +1624,16 @@ add_continuous_legend <- function(
 
     #",
     unique_id,
+    ".bottom-left .mapgl-ramp-picker-menu,
+    #",
+    unique_id,
+    ".bottom-right .mapgl-ramp-picker-menu {
+      top: auto;
+      bottom: 4px;
+    }
+
+    #",
+    unique_id,
     " .mapgl-ramp-picker.mapgl-ramp-picker-open .mapgl-ramp-picker-menu {
       display: flex;
     }

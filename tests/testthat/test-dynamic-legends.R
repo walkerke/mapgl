@@ -85,6 +85,37 @@ test_that("continuous legends can use scale metadata for ramp picker config", {
   expect_match(map$x$legend_html, "mapgl-ramp-picker")
 })
 
+test_that("bottom-positioned ramp pickers open upward", {
+  scale <- interpolate_palette(
+    data = data.frame(value = 1:10),
+    column = "value",
+    color_ramps = list(
+      Brand = c("#132B43", "#56B1F7"),
+      Warm = c("#fff7bc", "#d95f0e")
+    )
+  )
+
+  map <- maplibre() |>
+    add_fill_layer(
+      id = "values",
+      source = list(
+        type = "geojson",
+        data = list(type = "FeatureCollection", features = list())
+      ),
+      fill_color = scale$expression
+    ) |>
+    add_legend(
+      "Values",
+      colors = scale,
+      layer_id = "values",
+      position = "bottom-left",
+      ramp_picker = TRUE
+    )
+
+  expect_match(map$x$legend_css, ".bottom-left .mapgl-ramp-picker-menu", fixed = TRUE)
+  expect_match(map$x$legend_css, "bottom: 4px", fixed = TRUE)
+})
+
 test_that("ramp picker requires an associated layer", {
   expect_error(
     maplibre() |>
