@@ -1022,6 +1022,7 @@ add_draw_control <- function(
 #' draw_attribute("textarea", label = "Notes")
 #' draw_attribute("numeric", min = 0, max = 1, step = 0.1, default = 1)
 #'
+#' \dontrun{
 #' mapboxgl() |>
 #'   add_draw_control(
 #'     attributes = list(
@@ -1033,6 +1034,7 @@ add_draw_control <- function(
 #'       value = draw_attribute("numeric")
 #'     )
 #'   )
+#' }
 draw_attribute <- function(
   type = NULL,
   label = NULL,

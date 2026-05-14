@@ -52,6 +52,7 @@ draw_attribute("select", choices = c("candidate", "active", "rejected"))
 draw_attribute("textarea", label = "Notes")
 draw_attribute("numeric", min = 0, max = 1, step = 0.1, default = 1)
 
+\dontrun{
 mapboxgl() |>
   add_draw_control(
     attributes = list(
@@ -63,4 +64,5 @@ mapboxgl() |>
       value = draw_attribute("numeric")
     )
   )
+}
 }
