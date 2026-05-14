@@ -13,7 +13,10 @@ compare(
   mousemove = FALSE,
   orientation = "vertical",
   mode = "swipe",
-  swiper_color = NULL
+  swiper_color = NULL,
+  laser = FALSE,
+  laser_color = "#ff2d55",
+  laser_size = 14
 )
 }
 \arguments{
@@ -34,6 +37,13 @@ compare(
 \item{mode}{A string specifying the comparison mode: "swipe" (default) for a swipeable comparison with a slider, or "sync" for synchronized maps displayed next to each other.}
 
 \item{swiper_color}{An optional CSS color value (e.g., "#000000", "rgb(0,0,0)", "black") to customize the color of the swiper handle. Only applicable when \code{mode="swipe"}.}
+
+\item{laser}{Logical; if \code{TRUE}, show a laser pointer on the opposite map
+that follows the cursor location. Only applies when \code{mode = "sync"}.}
+
+\item{laser_color}{CSS color for the laser pointer.}
+
+\item{laser_size}{Size of the laser pointer in pixels.}
 }
 \value{
 A comparison widget.
@@ -96,6 +106,9 @@ compare(m1, m2)
 
 # Synchronized side-by-side mode
 compare(m1, m2, mode = "sync")
+
+# Synchronized maps with a laser pointer
+compare(m1, m2, mode = "sync", laser = TRUE)
 
 # Custom swiper color
 compare(m1, m2, swiper_color = "#FF0000")  # Red swiper

@@ -11,6 +11,10 @@
 #' @param orientation A string specifying the orientation of the swiper or the side-by-side layout, either "horizontal" or "vertical".
 #' @param mode A string specifying the comparison mode: "swipe" (default) for a swipeable comparison with a slider, or "sync" for synchronized maps displayed next to each other.
 #' @param swiper_color An optional CSS color value (e.g., "#000000", "rgb(0,0,0)", "black") to customize the color of the swiper handle. Only applicable when `mode="swipe"`.
+#' @param laser Logical; if `TRUE`, show a laser pointer on the opposite map
+#'   that follows the cursor location. Only applies when `mode = "sync"`.
+#' @param laser_color CSS color for the laser pointer.
+#' @param laser_size Size of the laser pointer in pixels.
 #'
 #' @return A comparison widget.
 #' @export
@@ -67,6 +71,9 @@
 #' # Synchronized side-by-side mode
 #' compare(m1, m2, mode = "sync")
 #'
+#' # Synchronized maps with a laser pointer
+#' compare(m1, m2, mode = "sync", laser = TRUE)
+#'
 #' # Custom swiper color
 #' compare(m1, m2, swiper_color = "#FF0000")  # Red swiper
 #'
@@ -111,10 +118,28 @@ compare <- function(
     mousemove = FALSE,
     orientation = "vertical",
     mode = "swipe",
-    swiper_color = NULL
+    swiper_color = NULL,
+    laser = FALSE,
+    laser_color = "#ff2d55",
+    laser_size = 14
 ) {
     if (!mode %in% c("swipe", "sync")) {
         stop("Mode must be either 'swipe' or 'sync'.")
+    }
+
+    laser <- isTRUE(laser)
+    if (laser && mode != "sync") {
+        rlang::warn("`laser` is only supported when `mode = \"sync\"`; ignoring it.")
+        laser <- FALSE
+    }
+
+    if (
+        length(laser_size) != 1 ||
+            !is.numeric(laser_size) ||
+            !is.finite(laser_size) ||
+            laser_size <= 0
+    ) {
+        stop("`laser_size` must be a positive number.")
     }
 
     if (inherits(map1, "mapboxgl") && inherits(map2, "mapboxgl")) {
@@ -127,7 +152,10 @@ compare <- function(
             mousemove,
             orientation,
             mode,
-            swiper_color
+            swiper_color,
+            laser,
+            laser_color,
+            laser_size
         )
     } else if (inherits(map1, "maplibregl") && inherits(map2, "maplibregl")) {
         compare.maplibre(
@@ -139,7 +167,10 @@ compare <- function(
             mousemove,
             orientation,
             mode,
-            swiper_color
+            swiper_color,
+            laser,
+            laser_color,
+            laser_size
         )
     } else {
         stop("Both maps must be either mapboxgl or maplibregl objects.")
@@ -156,7 +187,10 @@ compare.mapboxgl <- function(
     mousemove,
     orientation,
     mode,
-    swiper_color = NULL
+    swiper_color = NULL,
+    laser = FALSE,
+    laser_color = "#ff2d55",
+    laser_size = 14
 ) {
     if (is.null(elementId)) {
         elementId <- paste0(
@@ -172,7 +206,12 @@ compare.mapboxgl <- function(
         mousemove = mousemove,
         orientation = orientation,
         mode = mode,
-        swiper_color = swiper_color
+        swiper_color = swiper_color,
+        laser = list(
+            enabled = laser,
+            color = laser_color,
+            size = laser_size
+        )
     )
 
     control_css <- htmltools::htmlDependency(
@@ -218,7 +257,10 @@ compare.maplibre <- function(
     mousemove,
     orientation,
     mode,
-    swiper_color = NULL
+    swiper_color = NULL,
+    laser = FALSE,
+    laser_color = "#ff2d55",
+    laser_size = 14
 ) {
     if (is.null(elementId)) {
         elementId <- paste0(
@@ -253,7 +295,12 @@ compare.maplibre <- function(
         mousemove = mousemove,
         orientation = orientation,
         mode = mode,
-        swiper_color = swiper_color
+        swiper_color = swiper_color,
+        laser = list(
+            enabled = laser,
+            color = laser_color,
+            size = laser_size
+        )
     )
 
     control_css <- htmltools::htmlDependency(
