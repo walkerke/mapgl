@@ -70,6 +70,8 @@ mapboxgl <- function(
     }
 
     additional_params <- list(...)
+    style_images <- mapgl_style_images(style)
+    style <- mapgl_drop_style_images(style)
 
     if (!is.null(bounds)) {
         if (inherits(bounds, "sfc")) {
@@ -103,19 +105,25 @@ mapboxgl <- function(
         stylesheet = "layers-control.css"
     )
 
+    x <- list(
+        style = style,
+        center = center,
+        zoom = zoom,
+        bearing = bearing,
+        pitch = pitch,
+        projection = projection,
+        parallels = parallels,
+        access_token = access_token,
+        additional_params = additional_params
+    )
+
+    if (length(style_images) > 0) {
+        x$images <- style_images
+    }
+
     htmlwidgets::createWidget(
         name = "mapboxgl",
-        x = list(
-            style = style,
-            center = center,
-            zoom = zoom,
-            bearing = bearing,
-            pitch = pitch,
-            projection = projection,
-            parallels = parallels,
-            access_token = access_token,
-            additional_params = additional_params
-        ),
+        x = x,
         width = width,
         height = height,
         package = "mapgl",

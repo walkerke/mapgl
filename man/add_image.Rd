@@ -16,7 +16,8 @@ add_image(
 )
 }
 \arguments{
-\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
+\item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions,
+a map proxy, or a style list.}
 
 \item{id}{A string specifying the ID of the image.}
 
@@ -35,11 +36,14 @@ that can be covered by the content in text-field if icon-text-fit is used.}
 \item{stretch_y}{A list of number pairs defining the part(s) of the image that can be stretched vertically.}
 }
 \value{
-The modified map object with the image added.
+The modified map object or style list with the image added.
 }
 \description{
 This function adds an image to the map's style. The image can be used with
 icon-image, background-pattern, fill-pattern, or line-pattern.
+It can also be used with a style list, such as one created by
+\code{\link[=basemap_style]{basemap_style()}}, before the style is supplied to \code{\link[=maplibre]{maplibre()}} or
+\code{\link[=mapboxgl]{mapboxgl()}}.
 }
 \examples{
 \dontrun{

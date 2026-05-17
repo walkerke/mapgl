@@ -2,8 +2,12 @@
 #'
 #' This function adds an image to the map's style. The image can be used with
 #' icon-image, background-pattern, fill-pattern, or line-pattern.
+#' It can also be used with a style list, such as one created by
+#' [basemap_style()], before the style is supplied to [maplibre()] or
+#' [mapboxgl()].
 #'
-#' @param map A map object created by the `mapboxgl` or `maplibre` functions.
+#' @param map A map object created by the `mapboxgl` or `maplibre` functions,
+#'   a map proxy, or a style list.
 #' @param id A string specifying the ID of the image.
 #' @param url A string specifying the URL of the image to be loaded or a path
 #'        to a local image file. Must be PNG or JPEG format.
@@ -14,7 +18,7 @@
 #' @param stretch_x A list of number pairs defining the part(s) of the image that can be stretched horizontally.
 #' @param stretch_y A list of number pairs defining the part(s) of the image that can be stretched vertically.
 #'
-#' @return The modified map object with the image added.
+#' @return The modified map object or style list with the image added.
 #' @export
 #'
 #' @examples
@@ -62,6 +66,20 @@ add_image <- function(map, id, url, content = NULL, pixel_ratio = 1, sdf = FALSE
         url <- base64enc::dataURI(file = url, mime = mime_type)
     }
 
+    image_info <- list(
+        id = id,
+        url = url,
+        options = options
+    )
+
+    if (mapgl_is_style_list(map)) {
+        attr(map, "mapgl_images") <- append(
+            attr(map, "mapgl_images", exact = TRUE),
+            list(image_info)
+        )
+        return(map)
+    }
+
     if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
         proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else "maplibre-proxy"
 
@@ -74,16 +92,40 @@ add_image <- function(map, id, url, content = NULL, pixel_ratio = 1, sdf = FALSE
                 options = options
             )
         ))
-    } else {
+    } else if (inherits(map, c("mapboxgl", "maplibregl"))) {
         if (is.null(map$x$images)) {
             map$x$images <- list()
         }
-        map$x$images <- append(map$x$images, list(list(
-            id = id,
-            url = url,
-            options = options
-        )))
+        map$x$images <- append(map$x$images, list(image_info))
+    } else {
+        rlang::abort(c(
+            "`add_image()` must be used with a map object, map proxy, or style list.",
+            i = "Pipe it after `maplibre()` / `mapboxgl()`, or pipe it into a style created by `basemap_style()`."
+        ))
     }
 
     return(map)
+}
+
+mapgl_is_style_list <- function(x) {
+    is.list(x) &&
+        length(x$version) == 1 &&
+        !is.na(x$version) &&
+        x$version == 8 &&
+        !is.null(x$sources) &&
+        is.list(x$layers)
+}
+
+mapgl_style_images <- function(style) {
+    images <- attr(style, "mapgl_images", exact = TRUE)
+    if (is.null(images)) {
+        list()
+    } else {
+        images
+    }
+}
+
+mapgl_drop_style_images <- function(style) {
+    attr(style, "mapgl_images") <- NULL
+    style
 }
