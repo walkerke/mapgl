@@ -430,10 +430,27 @@
               map._layerTunerChanges[lid] = { type: 'flowmap', props: { ...fs } }; if (map.triggerRepaint) map.triggerRepaint();
             } catch (e) {}
           };
-          folder.add(fs, 'colorScheme', config.flowmap_color_schemes || ['Teal', 'Blues', 'Burg', 'Sunset', 'Greens', 'Oranges', 'Purples', 'Reds']).name(getRName('flowmap', 'colorScheme')).onChange(up);
-          folder.add(fs, 'darkMode').name(getRName('flowmap', 'darkMode')).onChange(up);
-          folder.add(fs, 'opacity', 0, 1, 0.05).name(getRName('flowmap', 'opacity')).onChange(up);
-          folder.add(fs, 'blendMode', ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity']).name(getRName('flowmap', 'blendMode')).onChange(up);
+          const registerFlowmapController = function(controller, prop) {
+            controller.name(getRName('flowmap', prop)).onChange(up);
+            allLayerControllers.push({
+              controller: controller,
+              type: 'flowmap',
+              prop: prop,
+              layerId: lid,
+              originallyPresent: true,
+              hasInStyle: true
+            });
+          };
+          registerFlowmapController(
+            folder.add(fs, 'colorScheme', config.flowmap_color_schemes || ['Teal', 'Blues', 'Burg', 'Sunset', 'Greens', 'Oranges', 'Purples', 'Reds']),
+            'colorScheme'
+          );
+          registerFlowmapController(folder.add(fs, 'darkMode'), 'darkMode');
+          registerFlowmapController(folder.add(fs, 'opacity', 0, 1, 0.05), 'opacity');
+          registerFlowmapController(
+            folder.add(fs, 'blendMode', ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity']),
+            'blendMode'
+          );
           folder.add({ reset: function() {
             console.log(`Layer Tuner: Resetting flowmap ${lid}`);
             try {
