@@ -4,7 +4,16 @@
 \alias{add_layer_tuner}
 \title{Add a Layer Tuner to a map}
 \usage{
-add_layer_tuner(map, layers = "all", show_all_args = FALSE)
+add_layer_tuner(
+  map,
+  layers = "all",
+  show_all_args = FALSE,
+  title = NULL,
+  position = "top-left",
+  width = 245,
+  height = NULL,
+  collapsed = FALSE
+)
 }
 \arguments{
 \item{map}{A \code{mapboxgl} or \code{maplibre} object.}
@@ -15,6 +24,24 @@ to include all compatible layers.}
 \item{show_all_args}{A logical value. If \code{TRUE}, the exported R code will include all
 whitelisted arguments for each layer (using current map values or defaults) even if they
 were not explicitly customized in your original R code or during tuning. Default is \code{FALSE}.}
+
+\item{title}{Optional title for the tuner panel. Defaults to the built-in
+layer tuner title.}
+
+\item{position}{Initial position of the tuner panel. One of \code{"top-left"},
+\code{"top-right"}, \code{"bottom-left"}, or \code{"bottom-right"}. Defaults to
+\code{"top-left"}.}
+
+\item{width}{Initial tuner panel width. Numeric values are interpreted as
+pixels; character values are passed through as CSS lengths. Defaults to
+\code{245}.}
+
+\item{height}{Optional initial tuner panel height. Numeric values are
+interpreted as pixels; character values are passed through as CSS lengths.
+Defaults to \code{NULL}, which lets the panel size itself automatically.}
+
+\item{collapsed}{Logical value indicating whether the tuner panel should be
+collapsed initially. Defaults to \code{FALSE}.}
 }
 \value{
 The modified map object with the layer tuner added.
@@ -33,6 +60,6 @@ mapboxgl() |>
     locations = locations,
     flows = flows
   ) |>
-  add_layer_tuner()
+  add_layer_tuner(position = "top-right", width = 320)
 }
 }

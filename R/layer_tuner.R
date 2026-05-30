@@ -78,6 +78,19 @@ parse_pipeline_calls <- function(call) {
 #' @param show_all_args A logical value. If `TRUE`, the exported R code will include all
 #'   whitelisted arguments for each layer (using current map values or defaults) even if they
 #'   were not explicitly customized in your original R code or during tuning. Default is `FALSE`.
+#' @param title Optional title for the tuner panel. Defaults to the built-in
+#'   layer tuner title.
+#' @param position Initial position of the tuner panel. One of `"top-left"`,
+#'   `"top-right"`, `"bottom-left"`, or `"bottom-right"`. Defaults to
+#'   `"top-left"`.
+#' @param width Initial tuner panel width. Numeric values are interpreted as
+#'   pixels; character values are passed through as CSS lengths. Defaults to
+#'   `245`.
+#' @param height Optional initial tuner panel height. Numeric values are
+#'   interpreted as pixels; character values are passed through as CSS lengths.
+#'   Defaults to `NULL`, which lets the panel size itself automatically.
+#' @param collapsed Logical value indicating whether the tuner panel should be
+#'   collapsed initially. Defaults to `FALSE`.
 #'
 #' @return The modified map object with the layer tuner added.
 #' @export
@@ -92,9 +105,38 @@ parse_pipeline_calls <- function(call) {
 #'     locations = locations,
 #'     flows = flows
 #'   ) |>
-#'   add_layer_tuner()
+#'   add_layer_tuner(position = "top-right", width = 320)
 #' }
-add_layer_tuner <- function(map, layers = "all", show_all_args = FALSE) {
+add_layer_tuner <- function(
+    map,
+    layers = "all",
+    show_all_args = FALSE,
+    title = NULL,
+    position = "top-left",
+    width = 245,
+    height = NULL,
+    collapsed = FALSE) {
+    position_choices <- c("top-left", "top-right", "bottom-left", "bottom-right")
+    if (
+        !is.character(position) ||
+            length(position) != 1 ||
+            is.na(position) ||
+            !position %in% position_choices
+    ) {
+        rlang::abort(paste0(
+            "`position` must be one of ",
+            paste0("`", position_choices, "`", collapse = ", "),
+            "."
+        ))
+    }
+    title <- layer_tuner_optional_string(title, "title")
+    width <- layer_tuner_css_length(width, "width")
+    height <- layer_tuner_css_length(height, "height", allow_null = TRUE)
+
+    if (!is.logical(collapsed) || length(collapsed) != 1 || is.na(collapsed)) {
+        rlang::abort("`collapsed` must be `TRUE` or `FALSE`.")
+    }
+
     # Dynamically query flowmap color schemes so the widget is perfectly auto-populated
     flowmap_schemes <- tryCatch({
         flowmap_color_schemes()
@@ -128,7 +170,12 @@ add_layer_tuner <- function(map, layers = "all", show_all_args = FALSE) {
         flowmap_color_schemes = flowmap_schemes,
         map_type = if (inherits(map, "mapboxgl")) "mapboxgl" else "maplibre",
         original_calls = original_calls,
-        show_all_args = show_all_args
+        show_all_args = show_all_args,
+        title = title,
+        position = position,
+        width = width,
+        height = height,
+        collapsed = collapsed
     )
 
     lil_gui_dep <- htmltools::htmlDependency(
@@ -161,6 +208,7 @@ add_layer_tuner <- function(map, layers = "all", show_all_args = FALSE) {
                     message = list(
                         type = "add_layer_tuner",
                         layers = layers,
+                        layer_tuner = map$x$layer_tuner,
                         map = map$map_side
                     )
                 )
@@ -174,7 +222,8 @@ add_layer_tuner <- function(map, layers = "all", show_all_args = FALSE) {
                     id = map$id,
                     message = list(
                         type = "add_layer_tuner",
-                        layers = layers
+                        layers = layers,
+                        layer_tuner = map$x$layer_tuner
                     )
                 )
             )
@@ -182,4 +231,47 @@ add_layer_tuner <- function(map, layers = "all", show_all_args = FALSE) {
     }
 
     map
+}
+
+layer_tuner_optional_string <- function(value, arg) {
+    if (is.null(value)) return(NULL)
+    if (
+        !is.character(value) ||
+            length(value) != 1 ||
+            is.na(value) ||
+            !nzchar(value)
+    ) {
+        rlang::abort(paste0("`", arg, "` must be a non-empty string or `NULL`."))
+    }
+    value
+}
+
+layer_tuner_css_length <- function(value, arg, allow_null = FALSE) {
+    if (is.null(value)) {
+        if (allow_null) return(NULL)
+        rlang::abort(paste0("`", arg, "` must be a positive number or CSS length."))
+    }
+
+    if (is.numeric(value)) {
+        if (
+            length(value) != 1 ||
+                is.na(value) ||
+                !is.finite(value) ||
+                value <= 0
+        ) {
+            rlang::abort(paste0("`", arg, "` must be a positive number or CSS length."))
+        }
+        return(paste0(value, "px"))
+    }
+
+    if (
+        !is.character(value) ||
+            length(value) != 1 ||
+            is.na(value) ||
+            !nzchar(trimws(value))
+    ) {
+        rlang::abort(paste0("`", arg, "` must be a positive number or CSS length."))
+    }
+
+    value
 }

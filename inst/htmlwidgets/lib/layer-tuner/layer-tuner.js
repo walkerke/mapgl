@@ -9,7 +9,13 @@
       if (map._layerTunerInitialized) return;
       map._layerTunerInitialized = true;
 
-      const config = x.layer_tuner || {};
+      const config = x.layer_tuner || x || {};
+
+      const cssLength = function(value, fallback) {
+        if (value === null || value === undefined || value === '') return fallback;
+        if (typeof value === 'number') return `${value}px`;
+        return String(value);
+      };
       
       const formatRValue = function(val) {
         if (typeof val === 'string') return `"${val}"`;
@@ -238,19 +244,37 @@
         }
       };
 
-      const gui = new lil.GUI({ title: 'Layer Tuner 🎨', container: el });
+      const gui = new lil.GUI({ title: config.title || 'Layer Tuner 🎨', container: el });
       map._layerTunerGui = gui;
 
       // 1. Initial styles
       const dom = gui.domElement;
-      dom.style.position = 'absolute'; dom.style.top = '10px'; dom.style.left = '10px'; dom.style.right = 'auto'; dom.style.zIndex = '9999'; dom.style.width = '245px'; dom.style.height = 'auto'; dom.style.maxHeight = 'calc(100% - 20px)'; dom.style.display = 'flex'; dom.style.flexDirection = 'column';
+      const initialWidth = cssLength(config.width, '245px');
+      const initialHeight = cssLength(config.height, 'auto');
+      const initialMaxHeight = config.height ? 'none' : 'calc(100% - 20px)';
+      const initialPosition = config.position || 'top-left';
+      const applyInitialLayout = function() {
+        dom.style.top = 'auto';
+        dom.style.right = 'auto';
+        dom.style.bottom = 'auto';
+        dom.style.left = 'auto';
+        if (initialPosition.includes('bottom')) dom.style.bottom = '10px';
+        else dom.style.top = '10px';
+        if (initialPosition.includes('right')) dom.style.right = '10px';
+        else dom.style.left = '10px';
+        dom.style.width = initialWidth;
+        dom.style.height = initialHeight;
+        dom.style.maxHeight = initialMaxHeight;
+      };
+      dom.style.position = 'absolute'; dom.style.zIndex = '9999'; dom.style.display = 'flex'; dom.style.flexDirection = 'column';
+      applyInitialLayout();
 
       const children = dom.querySelector('.children');
       if (children) { children.style.flex = '1 1 auto'; children.style.overflowY = 'auto'; }
 
       // Resize handles
       const corners = ['tl', 'tr', 'bl', 'br'];
-      let isResizing = false, hasBeenManuallyResized = false, manualWidth = '245px', manualHeight = 'auto';
+      let isResizing = false, hasBeenManuallyResized = false, manualWidth = initialWidth, manualHeight = initialHeight;
       corners.forEach(c => {
         const handle = document.createElement('div');
         handle.style.position = 'absolute'; handle.style.width = '12px'; handle.style.height = '12px'; handle.style.zIndex = '10001'; handle.style.background = 'transparent';
@@ -264,6 +288,7 @@
         dom.appendChild(handle);
         handle.onmousedown = (e) => {
           isResizing = true; hasBeenManuallyResized = true;
+          dom.style.left = dom.offsetLeft + 'px'; dom.style.top = dom.offsetTop + 'px'; dom.style.right = 'auto'; dom.style.bottom = 'auto';
           const sw = dom.offsetWidth, sh = dom.offsetHeight, sx = e.clientX, sy = e.clientY, st = dom.offsetTop, sl = dom.offsetLeft;
           const onMove = (me) => {
             if (!isResizing) return;
@@ -285,7 +310,7 @@
           if (gui._closed) { dom.style.height = 'auto'; dom.querySelectorAll('div').forEach(d => { if(d.style.cursor.includes('resize')) d.style.display='none'; }); }
           else {
             if (hasBeenManuallyResized) { dom.style.width = manualWidth; dom.style.height = manualHeight; dom.style.maxHeight = 'none'; }
-            else { dom.style.width = '245px'; dom.style.height = 'auto'; dom.style.maxHeight = 'calc(100% - 20px)'; }
+            else applyInitialLayout();
             dom.querySelectorAll('div').forEach(d => { if(d.style.cursor.includes('resize')) d.style.display='block'; });
           }
         }
@@ -616,7 +641,7 @@
       };
 
       gui.add({ resetAll: resetAllLayers }, 'resetAll').name('♻️ Reset All Layers');
-      gui.add({ resetLayout: function() { hasBeenManuallyResized = false; manualWidth = '245px'; manualHeight = 'auto'; dom.style.width = manualWidth; dom.style.height = manualHeight; dom.style.maxHeight = 'calc(100% - 20px)'; dom.style.top = '10px'; dom.style.left = '10px'; } }, 'resetLayout').name('🔄 Reset UI Layout');
+      gui.add({ resetLayout: function() { hasBeenManuallyResized = false; manualWidth = initialWidth; manualHeight = initialHeight; applyInitialLayout(); } }, 'resetLayout').name('🔄 Reset UI Layout');
 
       // 3. Toggles & Filters
       const modeRow = document.createElement('div');
@@ -655,6 +680,7 @@
           if (e.button !== 0 || isResizing) return;
           dragging = true; moved = false; sx = e.clientX; sy = e.clientY;
           const r = dom.getBoundingClientRect(); const pr = el.getBoundingClientRect(); ex = r.left - pr.left; ey = r.top - pr.top;
+          dom.style.left = ex + 'px'; dom.style.top = ey + 'px'; dom.style.right = 'auto'; dom.style.bottom = 'auto';
           dom.style.height = r.height + 'px'; dom.style.width = r.width + 'px'; dom.style.maxHeight = 'none';
         });
         window.addEventListener('mousemove', (e) => {
@@ -810,6 +836,7 @@
         });
       }
 
+      if (config.collapsed) gui.close();
       refreshCurrentSnapshot(); updateControllerVisibilities(); updateFolderVisibilities();
     }
   };

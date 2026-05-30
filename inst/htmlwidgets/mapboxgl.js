@@ -5334,7 +5334,12 @@ if (HTMLWidgets.shinyMode) {
         map.controls.push({ type: "globe_minimap", control: globeMinimap });
       } else if (message.type === "add_layer_tuner") {
         if (window.MapGLLayerTuner) {
-          window.MapGLLayerTuner.init(map, { enabled: true, layers: message.layers }, el, HTMLWidgets);
+          window.MapGLLayerTuner.init(
+            map,
+            { layer_tuner: message.layer_tuner || { enabled: true, layers: message.layers } },
+            el,
+            HTMLWidgets
+          );
         }
       }
     }
