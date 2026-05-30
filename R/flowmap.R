@@ -49,6 +49,20 @@ flowmap_color_schemes <- function() {
 #'   without throwing a warning. If `TRUE`, defaults to `"screen"` when `flow_dark_mode` is `TRUE`,
 #'   and `"multiply"` when `FALSE`. If `FALSE`, no blending is applied. Note: CSS blending requires
 #'   a standalone canvas overlay and is ignored when `before_id` or `slot` is specified.
+#' @param flow_fade_amount Controls how much lower-magnitude flows fade compared to higher ones. Range: 0-100.
+#' @param flow_highlight_color Color used for highlighting hovered elements.
+#' @param flow_locations_enabled Whether to show location circles.
+#' @param flow_location_totals_enabled Whether to show incoming/outgoing totals as concentric circles at each location.
+#' @param flow_location_labels_enabled Whether to show text labels at locations.
+#' @param flow_lines_rendering_mode Controls how flow lines are rendered: `"straight"`, `"animated-straight"`, or `"curved"`.
+#' @param flow_clustering_enabled Whether to cluster nearby locations when zoomed out.
+#' @param flow_clustering_auto Whether to automatically adjust clustering level based on zoom.
+#' @param flow_clustering_level Fixed clustering zoom level. Only used when `flow_clustering_auto` is `FALSE`.
+#' @param flow_fade_enabled Whether to apply color fading to lower-magnitude flows.
+#' @param flow_fade_opacity_enabled Whether to also fade opacity for lower-magnitude flows.
+#' @param flow_adaptive_scales_enabled Whether to adapt flow thickness and color scales to the current viewport.
+#' @param flow_max_top_flows_display_num Maximum number of flows to display.
+#' @param flow_endpoints_in_viewport_mode Controls when a flow is considered visible based on endpoint locations: `"any"` or `"both"`.
 #' @param visibility Whether the layer is initially `"visible"` or `"none"`.
 #' @param before_id Optional map layer ID to render before.
 #' @param slot Optional Mapbox Standard slot.
@@ -90,6 +104,20 @@ add_flowmap <- function(
   flow_opacity = 1,
   flow_dark_mode = "auto",
   flow_blend = "auto",
+  flow_fade_amount = 50,
+  flow_highlight_color = "#ff9b29",
+  flow_locations_enabled = TRUE,
+  flow_location_totals_enabled = TRUE,
+  flow_location_labels_enabled = FALSE,
+  flow_lines_rendering_mode = c("straight", "animated-straight", "curved"),
+  flow_clustering_enabled = TRUE,
+  flow_clustering_auto = TRUE,
+  flow_clustering_level = NULL,
+  flow_fade_enabled = TRUE,
+  flow_fade_opacity_enabled = FALSE,
+  flow_adaptive_scales_enabled = TRUE,
+  flow_max_top_flows_display_num = 5000,
+  flow_endpoints_in_viewport_mode = c("any", "both"),
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -103,6 +131,8 @@ add_flowmap <- function(
   }
 
   visibility <- match.arg(visibility)
+  flow_lines_rendering_mode <- match.arg(flow_lines_rendering_mode)
+  flow_endpoints_in_viewport_mode <- match.arg(flow_endpoints_in_viewport_mode)
 
   if (
     !is.numeric(flow_opacity) ||
@@ -161,6 +191,34 @@ add_flowmap <- function(
   } else {
     rlang::abort("`flow_blend` must be a logical (`TRUE` or `FALSE`) or a valid CSS blend mode string.")
   }
+
+  flowmap_validate_logical(flow_locations_enabled, "flow_locations_enabled")
+  flowmap_validate_logical(flow_location_totals_enabled, "flow_location_totals_enabled")
+  flowmap_validate_logical(flow_location_labels_enabled, "flow_location_labels_enabled")
+  flowmap_validate_logical(flow_clustering_enabled, "flow_clustering_enabled")
+  flowmap_validate_logical(flow_clustering_auto, "flow_clustering_auto")
+  flowmap_validate_logical(flow_fade_enabled, "flow_fade_enabled")
+  flowmap_validate_logical(flow_fade_opacity_enabled, "flow_fade_opacity_enabled")
+  flowmap_validate_logical(flow_adaptive_scales_enabled, "flow_adaptive_scales_enabled")
+
+  if (!is.character(flow_highlight_color) || length(flow_highlight_color) != 1 || is.na(flow_highlight_color)) {
+    rlang::abort("`flow_highlight_color` must be a single string.")
+  }
+
+  if (!is.numeric(flow_fade_amount) || length(flow_fade_amount) != 1 || is.na(flow_fade_amount) || flow_fade_amount < 0 || flow_fade_amount > 100) {
+    rlang::abort("`flow_fade_amount` must be a number between 0 and 100.")
+  }
+
+  if (!is.numeric(flow_max_top_flows_display_num) || length(flow_max_top_flows_display_num) != 1 || is.na(flow_max_top_flows_display_num) || flow_max_top_flows_display_num <= 0) {
+    rlang::abort("`flow_max_top_flows_display_num` must be a positive number.")
+  }
+
+  if (!is.null(flow_clustering_level)) {
+    if (!is.numeric(flow_clustering_level) || length(flow_clustering_level) != 1 || is.na(flow_clustering_level)) {
+      rlang::abort("`flow_clustering_level` must be a number or NULL.")
+    }
+  }
+
   flow_color_scheme <- flowmap_normalize_color_scheme(flow_color_scheme)
   before_id <- flowmap_validate_optional_string(before_id, "before_id")
   slot <- flowmap_validate_optional_string(slot, "slot")
@@ -179,12 +237,27 @@ add_flowmap <- function(
       colorScheme = flow_color_scheme,
       darkMode = flow_dark_mode,
       opacity = flow_opacity,
-      flowBlend = flow_blend
+      flowBlend = flow_blend,
+      fadeAmount = flow_fade_amount,
+      highlightColor = flow_highlight_color,
+      locationsEnabled = flow_locations_enabled,
+      locationTotalsEnabled = flow_location_totals_enabled,
+      locationLabelsEnabled = flow_location_labels_enabled,
+      flowLinesRenderingMode = flow_lines_rendering_mode,
+      clusteringEnabled = flow_clustering_enabled,
+      clusteringAuto = flow_clustering_auto,
+      clusteringLevel = flow_clustering_level,
+      fadeEnabled = flow_fade_enabled,
+      fadeOpacityEnabled = flow_fade_opacity_enabled,
+      adaptiveScalesEnabled = flow_adaptive_scales_enabled,
+      maxTopFlowsDisplayNum = flow_max_top_flows_display_num,
+      flowEndpointsInViewportMode = flow_endpoints_in_viewport_mode
     ),
     visibility = visibility,
     beforeId = before_id,
     slot = slot
   )
+
 
   if (is.null(map$x$flowmaps)) {
     map$x$flowmaps <- list()
@@ -196,6 +269,12 @@ add_flowmap <- function(
     flowmap_index = length(map$x$flowmaps),
     pending = is.null(before_id) && (is.logical(flow_blend) && !flow_blend)
   )
+}
+
+flowmap_validate_logical <- function(value, arg) {
+  if (!is.logical(value) || length(value) != 1 || is.na(value)) {
+    rlang::abort(paste0("`", arg, "` must be TRUE or FALSE."))
+  }
 }
 
 mapgl_layer_order <- function(map) {

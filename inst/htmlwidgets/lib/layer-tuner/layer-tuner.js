@@ -18,6 +18,7 @@
       };
       
       const formatRValue = function(val) {
+        if (val === undefined || val === null) return 'NULL';
         if (typeof val === 'string') return `"${val}"`;
         if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
         if (typeof val === 'number') return val;
@@ -73,8 +74,14 @@
       };
 
       const normalizeColorValue = function(value, fallback) {
+        if (Array.isArray(value)) {
+          if (value.length >= 3) {
+            return '#' + value.slice(0, 3).map(toTwoDigitHex).join('');
+          }
+          return fallback;
+        }
         if (typeof value !== 'string') return fallback;
-        const trimmed = value.trim();
+        let trimmed = value.trim();
         const lower = trimmed.toLowerCase();
 
         if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed;
@@ -241,6 +248,31 @@
           'text-rotation-alignment': { type: 'select', options: ['map', 'viewport', 'auto'], default: 'auto', method: 'layout' },
           'text-size': { type: 'slider', min: 4, max: 72, step: 1, default: 16, method: 'layout' },
           'text-transform': { type: 'select', options: ['none', 'uppercase', 'lowercase'], default: 'none', method: 'layout' }
+        },
+        'heatmap': {
+          'heatmap-weight': { type: 'slider', min: 0, max: 10, step: 0.1, default: 1, method: 'paint' },
+          'heatmap-intensity': { type: 'slider', min: 0, max: 10, step: 0.1, default: 1, method: 'paint' },
+          'heatmap-radius': { type: 'slider', min: 0, max: 100, step: 1, default: 30, method: 'paint' },
+          'heatmap-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' }
+        },
+        'fill-extrusion': {
+          'fill-extrusion-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'fill-extrusion-color': { type: 'color', default: '#000000', method: 'paint' },
+          'fill-extrusion-height': { type: 'slider', min: 0, max: 5000, step: 10, default: 0, method: 'paint' },
+          'fill-extrusion-base': { type: 'slider', min: 0, max: 5000, step: 10, default: 0, method: 'paint' },
+          'fill-extrusion-vertical-gradient': { type: 'boolean', default: true, method: 'paint' },
+          'fill-extrusion-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' }
+        },
+        'raster': {
+          'raster-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'raster-hue-rotate': { type: 'slider', min: 0, max: 360, step: 1, default: 0, method: 'paint' },
+          'raster-brightness-min': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'raster-brightness-max': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'raster-saturation': { type: 'slider', min: -1, max: 1, step: 0.1, default: 0, method: 'paint' },
+          'raster-contrast': { type: 'slider', min: -1, max: 1, step: 0.1, default: 0, method: 'paint' },
+          'raster-resampling': { type: 'select', options: ['linear', 'nearest'], default: 'linear', method: 'paint' },
+          'raster-fade-duration': { type: 'slider', min: 0, max: 1000, step: 10, default: 300, method: 'paint' },
+          'raster-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' }
         }
       };
 
@@ -422,7 +454,22 @@
                 const updated = current[meta.idx].clone({
                   colorScheme: meta.state.colorScheme,
                   darkMode: meta.state.darkMode,
-                  opacity: meta.state.opacity
+                  opacity: meta.state.opacity,
+                  fadeAmount: meta.state.fadeAmount,
+                  highlightColor: meta.state.highlightColor,
+                  locationsEnabled: meta.state.locationsEnabled,
+                  locationTotalsEnabled: meta.state.locationTotalsEnabled,
+                  locationLabelsEnabled: meta.state.locationLabelsEnabled,
+                  flowLinesRenderingMode: meta.state.flowLinesRenderingMode,
+                  clusteringEnabled: meta.state.clusteringEnabled,
+                  clusteringAuto: meta.state.clusteringAuto,
+                  clusteringLevel: meta.state.clusteringAuto ? undefined : meta.state.clusteringLevel,
+                  fadeEnabled: meta.state.fadeEnabled,
+                  fadeOpacityEnabled: meta.state.fadeOpacityEnabled,
+                  adaptiveScalesEnabled: meta.state.adaptiveScalesEnabled,
+                  animationEnabled: meta.state.animationEnabled,
+                  maxTopFlowsDisplayNum: meta.state.maxTopFlowsDisplayNum,
+                  flowEndpointsInViewportMode: meta.state.flowEndpointsInViewportMode
                 });
                 const newLayers = [...current];
                 newLayers[meta.idx] = updated;
@@ -538,7 +585,24 @@
               if (idArg) { layerId = idArg.value.replace(/^["']|["']$/g, ''); processedLayerIds.add(layerId); }
               if (layerId) {
                 const layerChanges = changes[layerId];
-                const type = fun.startsWith('add_') && fun.endsWith('_layer') ? { 'add_circle_layer': 'circle', 'add_fill_layer': 'fill', 'add_line_layer': 'line', 'add_symbol_layer': 'symbol' }[fun] : null;
+                if (fun === 'add_flowmap' && layerMeta[layerId] && layerMeta[layerId].type === 'flowmap') {
+                  const flowState = layerMeta[layerId].state;
+                  Object.keys(flowState).forEach(function(propName) {
+                    const rName = getRName('flowmap', propName);
+                    const propVal = flowState[propName];
+                    const isTuned = layerChanges && layerChanges.props && layerChanges.props[propName] !== undefined;
+                    const wasPresent = args.some(a => a.name === rName);
+                    if (wasPresent || isTuned || showAllArgs) {
+                      if (propVal === null || (propVal !== undefined && typeof propVal !== 'object')) {
+                        const formattedVal = formatRValue(propVal);
+                        const existing = args.find(a => a.name === rName);
+                        if (existing) existing.value = formattedVal;
+                        else args.push({ name: rName, value: formattedVal });
+                      }
+                    }
+                  });
+                }
+                const type = fun.startsWith('add_') && fun.endsWith('_layer') ? { 'add_circle_layer': 'circle', 'add_fill_layer': 'fill', 'add_line_layer': 'line', 'add_symbol_layer': 'symbol', 'add_heatmap_layer': 'heatmap', 'add_fill_extrusion_layer': 'fill-extrusion', 'add_raster_layer': 'raster' }[fun] : null;
                 if (type && TUNER_SCHEMA[type]) {
                   const schema = TUNER_SCHEMA[type];
                   Object.keys(schema).forEach(function(propName) {
@@ -548,7 +612,7 @@
                       try { propVal = schema[propName].method === 'paint' ? map.getPaintProperty(layerId, propName) : map.getLayoutProperty(layerId, propName); } catch (e) {}
                       if (propVal === undefined || typeof propVal === 'object') propVal = schema[propName].default;
                     }
-                    if (propVal !== undefined && typeof propVal !== 'object') {
+                    if (propVal === null || (propVal !== undefined && typeof propVal !== 'object')) {
                       const formattedVal = formatRValue(propVal); const existing = args.find(a => a.name === rName);
                       if (existing) existing.value = formattedVal; else args.push({ name: rName, value: formattedVal });
                     }
@@ -574,15 +638,31 @@
           if (styleObj && styleObj.layers) {
             styleObj.layers.forEach(l => {
               if (processedLayerIds.has(l.id) || (map._basemapLayerIds && map._basemapLayerIds.has(l.id))) return;
-              if (!TUNER_SCHEMA[l.type]) return;
-              const rf = { 'circle': 'add_circle_layer', 'fill': 'add_fill_layer', 'line': 'add_line_layer', 'symbol': 'add_symbol_layer' }[l.type];
+              const typeMap = { 'circle': 'add_circle_layer', 'fill': 'add_fill_layer', 'line': 'add_line_layer', 'symbol': 'add_symbol_layer', 'heatmap': 'add_heatmap_layer', 'fill-extrusion': 'add_fill_extrusion_layer', 'raster': 'add_raster_layer' };
+              if (!typeMap[l.type] || !TUNER_SCHEMA[l.type]) return;
+              const rf = typeMap[l.type];
               let lc = `  ${rf}(\n    id = "${l.id}",\n    source = "${l.source}"`;
               const sch = TUNER_SCHEMA[l.type]; const lCh = (changes[l.id] && changes[l.id].props) || {};
               Object.keys(sch).forEach(p => {
                 let v = lCh[p] ? lCh[p].value : (showAllArgs ? (function(){ try { return sch[p].method === 'paint' ? map.getPaintProperty(l.id, p) : map.getLayoutProperty(l.id, p); } catch(e){} })() : undefined);
                 if (v === undefined && showAllArgs) v = sch[p].default;
-                if (v !== undefined && typeof v !== 'object') lc += `,\n    ${getRName(l.type, p)} = ${formatRValue(v)}`;
+                if (v === null || (v !== undefined && typeof v !== 'object')) lc += `,\n    ${getRName(l.type, p)} = ${formatRValue(v)}`;
               });
+              parts.push(lc + '\n  )');
+            });
+          }
+          if (map._mapglFlowmapLayers) {
+            map._mapglFlowmapLayers.forEach(l => {
+              if (processedLayerIds.has(l.id)) return;
+              let lc = `  add_flowmap(\n    id = "${l.id}",\n    locations = locations_data,\n    flows = flows_data`;
+              const meta = layerMeta[l.id];
+              if (meta && meta.state) {
+                Object.keys(meta.state).forEach(p => {
+                  const rName = getRName('flowmap', p);
+                  const v = meta.state[p];
+                  if (v !== undefined && typeof v !== 'object') lc += `,\n    ${rName} = ${formatRValue(v)}`;
+                });
+              }
               parts.push(lc + '\n  )');
             });
           }
@@ -774,7 +854,27 @@
         map._mapglFlowmapLayers.forEach((l, i) => {
           const lid = l.id || `flowmap-${i}`; if (config.layers && config.layers !== 'all' && !config.layers.includes(lid)) return;
           const folder = gui.addFolder(`FLOWMAP: ${lid}`); folder.close(); layerFolders.push(folder);
-          const initial = { colorScheme: l.props.colorScheme || 'Teal', darkMode: l.props.darkMode !== undefined ? l.props.darkMode : true, opacity: l.props.opacity !== undefined ? l.props.opacity : 1, blendMode: map._deckCanvas && map._deckCanvas.style.mixBlendMode ? map._deckCanvas.style.mixBlendMode : 'screen' };
+          const initial = {
+            colorScheme: l.props.colorScheme || 'Teal',
+            darkMode: l.props.darkMode !== undefined ? l.props.darkMode : true,
+            opacity: l.props.opacity !== undefined ? l.props.opacity : 1,
+            blendMode: map._deckCanvas && map._deckCanvas.style.mixBlendMode ? map._deckCanvas.style.mixBlendMode : 'screen',
+            fadeAmount: l.props.fadeAmount !== undefined ? l.props.fadeAmount : 50,
+            highlightColor: normalizeColorValue(l.props.highlightColor, '#ff9b29'),
+            locationsEnabled: l.props.locationsEnabled !== undefined ? l.props.locationsEnabled : true,
+            locationTotalsEnabled: l.props.locationTotalsEnabled !== undefined ? l.props.locationTotalsEnabled : true,
+            locationLabelsEnabled: l.props.locationLabelsEnabled !== undefined ? l.props.locationLabelsEnabled : false,
+            flowLinesRenderingMode: l.props.flowLinesRenderingMode || 'straight',
+            clusteringEnabled: l.props.clusteringEnabled !== undefined ? l.props.clusteringEnabled : true,
+            clusteringAuto: l.props.clusteringAuto !== undefined ? l.props.clusteringAuto : true,
+            clusteringLevel: l.props.clusteringLevel !== undefined ? l.props.clusteringLevel : 5,
+            fadeEnabled: l.props.fadeEnabled !== undefined ? l.props.fadeEnabled : true,
+            fadeOpacityEnabled: l.props.fadeOpacityEnabled !== undefined ? l.props.fadeOpacityEnabled : false,
+            adaptiveScalesEnabled: l.props.adaptiveScalesEnabled !== undefined ? l.props.adaptiveScalesEnabled : true,
+            animationEnabled: l.props.animationEnabled !== undefined ? l.props.animationEnabled : false,
+            maxTopFlowsDisplayNum: l.props.maxTopFlowsDisplayNum || 5000,
+            flowEndpointsInViewportMode: l.props.flowEndpointsInViewportMode || 'any'
+          };
           const fs = { ...initial };
           layerMeta[lid] = { type: 'flowmap', state: fs, initial: initial, idx: i };
           const up = (options) => {
@@ -782,7 +882,48 @@
               const shouldRecord = !options || options.record !== false;
               const shouldRefresh = !options || options.refresh !== false;
               if (shouldRecord) recordHistory();
-              const cur = map._mapglFlowmapLayers; const nL = cur[i].clone({ colorScheme: fs.colorScheme, darkMode: fs.darkMode, opacity: fs.opacity }); const nArr = [...cur]; nArr[i] = nL; map._mapglFlowmapLayers = nArr;
+              const cur = map._mapglFlowmapLayers;
+              
+              // Handle animation toggle syncing
+              if (options && options.prop === 'animationEnabled') {
+                if (fs.animationEnabled) {
+                  fs.flowLinesRenderingMode = 'animated-straight';
+                } else if (fs.flowLinesRenderingMode === 'animated-straight') {
+                  fs.flowLinesRenderingMode = 'straight';
+                }
+                // Update display of rendering mode controller
+                try {
+                  const rmc = folder.controllersRecursive().find(c => c._name === 'flow_lines_rendering_mode');
+                  if (rmc) rmc.updateDisplay();
+                } catch(e) {}
+              } else if (options && options.prop === 'flowLinesRenderingMode') {
+                fs.animationEnabled = (fs.flowLinesRenderingMode === 'animated-straight');
+                try {
+                  const anc = folder.controllersRecursive().find(c => c._name === 'flow_animation_enabled');
+                  if (anc) anc.updateDisplay();
+                } catch(e) {}
+              }
+
+              const nL = cur[i].clone({
+                colorScheme: fs.colorScheme,
+                darkMode: fs.darkMode,
+                opacity: fs.opacity,
+                fadeAmount: fs.fadeAmount,
+                highlightColor: fs.highlightColor,
+                locationsEnabled: fs.locationsEnabled,
+                locationTotalsEnabled: fs.locationTotalsEnabled,
+                locationLabelsEnabled: fs.locationLabelsEnabled,
+                flowLinesRenderingMode: fs.flowLinesRenderingMode,
+                clusteringEnabled: fs.clusteringEnabled,
+                clusteringAuto: fs.clusteringAuto,
+                clusteringLevel: fs.clusteringAuto ? undefined : fs.clusteringLevel,
+                fadeEnabled: fs.fadeEnabled,
+                fadeOpacityEnabled: fs.fadeOpacityEnabled,
+                adaptiveScalesEnabled: fs.adaptiveScalesEnabled,
+                maxTopFlowsDisplayNum: fs.maxTopFlowsDisplayNum,
+                flowEndpointsInViewportMode: fs.flowEndpointsInViewportMode
+              });
+              const nArr = [...cur]; nArr[i] = nL; map._mapglFlowmapLayers = nArr;
               (map._mapglFlowmapOverlay || map._deckgl).setProps({ layers: map._mapglFlowmapLayers }); if (map._deckCanvas) map._deckCanvas.style.mixBlendMode = fs.blendMode;
               map._layerTunerChanges[lid] = { type: 'flowmap', props: { ...fs } }; if (map.triggerRepaint) map.triggerRepaint();
               if (shouldRefresh) refreshCurrentSnapshot();
@@ -790,23 +931,34 @@
           };
           const registerFlowmapController = function(controller, prop) {
             controller.name(getRName('flowmap', prop));
-            if (prop === 'opacity' && typeof controller.onFinishChange === 'function') {
+            let originallyPresent = false;
+            if (config.original_calls) {
+              const rn = getRName('flowmap', prop);
+              const mc = config.original_calls.find(c => {
+                const ia = c.args.find(a => a.name === 'id');
+                return ia && ia.value.replace(/^["']|["']$/g, '') === lid;
+              });
+              if (mc) originallyPresent = mc.args.some(a => a.name === rn);
+            }
+            if ((prop === 'opacity' || prop === 'fadeAmount') && typeof controller.onFinishChange === 'function') {
               controller.onChange(function() {
-                up({ record: false, refresh: false });
+                up({ record: false, refresh: false, prop: prop });
               });
               controller.onFinishChange(function() {
-                up();
+                up({ prop: prop });
               });
             } else {
-              controller.onChange(up);
+              controller.onChange(function() {
+                up({ prop: prop });
+              });
             }
             allLayerControllers.push({
               controller: controller,
               type: 'flowmap',
               prop: prop,
               layerId: lid,
-              originallyPresent: true,
-              hasInStyle: true
+              originallyPresent: originallyPresent,
+              hasInStyle: false
             });
           };
           registerFlowmapController(
@@ -819,6 +971,21 @@
             folder.add(fs, 'blendMode', ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity']),
             'blendMode'
           );
+          registerFlowmapController(folder.add(fs, 'fadeAmount', 0, 100, 1), 'fadeAmount');
+          registerFlowmapController(folder.addColor(fs, 'highlightColor'), 'highlightColor');
+          registerFlowmapController(folder.add(fs, 'locationsEnabled'), 'locationsEnabled');
+          registerFlowmapController(folder.add(fs, 'locationTotalsEnabled'), 'locationTotalsEnabled');
+          registerFlowmapController(folder.add(fs, 'locationLabelsEnabled'), 'locationLabelsEnabled');
+          registerFlowmapController(folder.add(fs, 'flowLinesRenderingMode', ['straight', 'animated-straight', 'curved']), 'flowLinesRenderingMode');
+          registerFlowmapController(folder.add(fs, 'clusteringEnabled'), 'clusteringEnabled');
+          registerFlowmapController(folder.add(fs, 'clusteringAuto'), 'clusteringAuto');
+          registerFlowmapController(folder.add(fs, 'clusteringLevel', 0, 20, 1), 'clusteringLevel');
+          registerFlowmapController(folder.add(fs, 'fadeEnabled'), 'fadeEnabled');
+          registerFlowmapController(folder.add(fs, 'fadeOpacityEnabled'), 'fadeOpacityEnabled');
+          registerFlowmapController(folder.add(fs, 'adaptiveScalesEnabled'), 'adaptiveScalesEnabled');
+          registerFlowmapController(folder.add(fs, 'maxTopFlowsDisplayNum', 100, 50000, 100), 'maxTopFlowsDisplayNum');
+          registerFlowmapController(folder.add(fs, 'flowEndpointsInViewportMode', ['any', 'both']), 'flowEndpointsInViewportMode');
+
           folder.add({ reset: function() {
             console.log(`Layer Tuner: Resetting flowmap ${lid}`);
             try {
@@ -836,7 +1003,11 @@
         });
       }
 
-      if (config.collapsed) gui.close();
+      if (config.collapsed) {
+        gui.close();
+      } else if (layerFolders.length <= 2) {
+        layerFolders.forEach(folder => folder.open());
+      }
       refreshCurrentSnapshot(); updateControllerVisibilities(); updateFolderVisibilities();
     }
   };

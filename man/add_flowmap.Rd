@@ -14,6 +14,20 @@ add_flowmap(
   flow_opacity = 1,
   flow_dark_mode = "auto",
   flow_blend = "auto",
+  flow_fade_amount = 50,
+  flow_highlight_color = "#ff9b29",
+  flow_locations_enabled = TRUE,
+  flow_location_totals_enabled = TRUE,
+  flow_location_labels_enabled = FALSE,
+  flow_lines_rendering_mode = c("straight", "animated-straight", "curved"),
+  flow_clustering_enabled = TRUE,
+  flow_clustering_auto = TRUE,
+  flow_clustering_level = NULL,
+  flow_fade_enabled = TRUE,
+  flow_fade_opacity_enabled = FALSE,
+  flow_adaptive_scales_enabled = TRUE,
+  flow_max_top_flows_display_num = 5000,
+  flow_endpoints_in_viewport_mode = c("any", "both"),
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -59,6 +73,34 @@ If \code{before_id} or \code{slot} is specified (interleaved mode), \code{"auto"
 without throwing a warning. If \code{TRUE}, defaults to \code{"screen"} when \code{flow_dark_mode} is \code{TRUE},
 and \code{"multiply"} when \code{FALSE}. If \code{FALSE}, no blending is applied. Note: CSS blending requires
 a standalone canvas overlay and is ignored when \code{before_id} or \code{slot} is specified.}
+
+\item{flow_fade_amount}{Controls how much lower-magnitude flows fade compared to higher ones. Range: 0-100.}
+
+\item{flow_highlight_color}{Color used for highlighting hovered elements.}
+
+\item{flow_locations_enabled}{Whether to show location circles.}
+
+\item{flow_location_totals_enabled}{Whether to show incoming/outgoing totals as concentric circles at each location.}
+
+\item{flow_location_labels_enabled}{Whether to show text labels at locations.}
+
+\item{flow_lines_rendering_mode}{Controls how flow lines are rendered: \code{"straight"}, \code{"animated-straight"}, or \code{"curved"}.}
+
+\item{flow_clustering_enabled}{Whether to cluster nearby locations when zoomed out.}
+
+\item{flow_clustering_auto}{Whether to automatically adjust clustering level based on zoom.}
+
+\item{flow_clustering_level}{Fixed clustering zoom level. Only used when \code{flow_clustering_auto} is \code{FALSE}.}
+
+\item{flow_fade_enabled}{Whether to apply color fading to lower-magnitude flows.}
+
+\item{flow_fade_opacity_enabled}{Whether to also fade opacity for lower-magnitude flows.}
+
+\item{flow_adaptive_scales_enabled}{Whether to adapt flow thickness and color scales to the current viewport.}
+
+\item{flow_max_top_flows_display_num}{Maximum number of flows to display.}
+
+\item{flow_endpoints_in_viewport_mode}{Controls when a flow is considered visible based on endpoint locations: \code{"any"} or \code{"both"}.}
 
 \item{visibility}{Whether the layer is initially \code{"visible"} or \code{"none"}.}
 

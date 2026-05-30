@@ -2,8 +2,11 @@ Package: mapgl
 Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS'
 Version: 0.4.9.9000
 Date: 2026-05-14
-Authors@R:
-    person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre"))
+Authors@R: c(
+    person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre")),
+    person(given = "Egor", family = "Kotov", email = "kotov.egor@gmail.com", role = c("aut", "ctb"), comment = c(ORCID = "0000-0001-6690-5345", "added Flowmap.gl and layer tuner")
+    )
+  )
 Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.com/mapbox-gl-js/guides>)
     and the 'MapLibre GL JS' (<https://maplibre.org/maplibre-gl-js/docs/>) interactive mapping libraries to help users
     create custom interactive maps in R.  Users can create interactive globe visualizations; layer 'sf' objects to create
