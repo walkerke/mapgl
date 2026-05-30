@@ -16,8 +16,6 @@ flowmap_color_schemes <- function() {
   flowmap_color_scheme_registry()
 }
 
-#' Add a flowmap layer
-#'
 #' Adds a FlowmapGL layer for visualizing origin-destination flows between
 #' point locations.
 #'
@@ -32,9 +30,25 @@ flowmap_color_schemes <- function() {
 #'   vector of at least two CSS colors, or a `mapgl_continuous_scale` object
 #'   created by [interpolate_palette()]. Preset names are case-sensitive; use
 #'   [flowmap_color_schemes()] to list them.
-#' @param flow_dark_mode `TRUE` or `FALSE`; whether to use FlowMapGL dark-mode
-#'   colors.
+#' @param flow_dark_mode Logical (`TRUE` or `FALSE`), or `"auto"`; whether to use FlowMapGL dark-mode
+#'   colors. If `"auto"`, the mode is dynamically detected based on the map style.
 #' @param flow_opacity Layer opacity between 0 and 1.
+#' @param flow_blend Logical (`TRUE` or `FALSE`), `"auto"`, or a character string specifying a CSS
+#'   mix-blend-mode.
+#'
+#'   Valid modes are: `"normal"`, `"multiply"`, `"screen"`, `"overlay"`, `"darken"`,
+#'   `"lighten"`, `"color-dodge"`, `"color-burn"`, `"hard-light"`, `"soft-light"`,
+#'   `"difference"`, `"exclusion"`, `"hue"`, `"saturation"`, `"color"`, and `"luminosity"`.
+#'
+#'   **Recommendations**:
+#'   * On **dark basemaps**: `"screen"` looks best, creating a glowing additive effect where flows overlap.
+#'   * On **light basemaps**: `"multiply"` or `"darken"` looks best, increasing contrast against the light background.
+#'
+#'   If `"auto"`, automatically chooses `"screen"` for dark styles and `"multiply"` for light styles.
+#'   If `before_id` or `slot` is specified (interleaved mode), `"auto"` quietly disables blending (`FALSE`)
+#'   without throwing a warning. If `TRUE`, defaults to `"screen"` when `flow_dark_mode` is `TRUE`,
+#'   and `"multiply"` when `FALSE`. If `FALSE`, no blending is applied. Note: CSS blending requires
+#'   a standalone canvas overlay and is ignored when `before_id` or `slot` is specified.
 #' @param visibility Whether the layer is initially `"visible"` or `"none"`.
 #' @param before_id Optional map layer ID to render before.
 #' @param slot Optional Mapbox Standard slot.
@@ -73,8 +87,9 @@ add_flowmap <- function(
   locations,
   flows,
   flow_color_scheme = "Teal",
-  flow_dark_mode = TRUE,
+  flow_dark_mode = "auto",
   flow_opacity = 1,
+  flow_blend = "auto",
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -99,7 +114,53 @@ add_flowmap <- function(
     rlang::abort("`flow_opacity` must be a number between 0 and 1.")
   }
 
+  # Determine dark mode if "auto"
+  if (identical(flow_dark_mode, "auto")) {
+    flow_dark_mode <- is_dark_style(map$x$style)
+  }
+
   flow_dark_mode <- flowmap_validate_dark_mode(flow_dark_mode)
+
+  use_interleaved <- !is.null(before_id) || !is.null(slot)
+
+  # Resolve blend mode if "auto"
+  if (identical(flow_blend, "auto")) {
+    if (use_interleaved) {
+      flow_blend <- FALSE
+    } else {
+      flow_blend <- if (flow_dark_mode) "screen" else "multiply"
+    }
+  } else if (isTRUE(flow_blend)) {
+    # If explicitly TRUE, we still resolve to the best blend mode
+    flow_blend <- if (flow_dark_mode) "screen" else "multiply"
+  }
+
+  if (use_interleaved && (!is.logical(flow_blend) || flow_blend)) {
+    rlang::warn("`flow_blend` is ignored when `before_id` or `slot` is specified. CSS blending requires a separate canvas overlay, which is not supported in interleaved mode.")
+  }
+
+  if (is.logical(flow_blend)) {
+    if (length(flow_blend) != 1 || is.na(flow_blend)) {
+      rlang::abort("`flow_blend` must be `TRUE` or `FALSE`.")
+    }
+  } else if (is.character(flow_blend)) {
+    if (length(flow_blend) != 1 || is.na(flow_blend) || !nzchar(trimws(flow_blend))) {
+      rlang::abort("`flow_blend` must be a valid CSS blend mode name.")
+    }
+    valid_modes <- c(
+      "normal", "multiply", "screen", "overlay", "darken", "lighten",
+      "color-dodge", "color-burn", "hard-light", "soft-light",
+      "difference", "exclusion", "hue", "saturation", "color", "luminosity"
+    )
+    if (!flow_blend %in% valid_modes) {
+      rlang::abort(paste0(
+        "`flow_blend` must be one of the valid CSS mix-blend-mode values: ",
+        paste(paste0("\"", valid_modes, "\""), collapse = ", ")
+      ))
+    }
+  } else {
+    rlang::abort("`flow_blend` must be a logical (`TRUE` or `FALSE`) or a valid CSS blend mode string.")
+  }
   flow_color_scheme <- flowmap_normalize_color_scheme(flow_color_scheme)
   before_id <- flowmap_validate_optional_string(before_id, "before_id")
   slot <- flowmap_validate_optional_string(slot, "slot")
@@ -117,7 +178,8 @@ add_flowmap <- function(
     settings = list(
       colorScheme = flow_color_scheme,
       darkMode = flow_dark_mode,
-      opacity = flow_opacity
+      opacity = flow_opacity,
+      flowBlend = flow_blend
     ),
     visibility = visibility,
     beforeId = before_id,
@@ -132,7 +194,7 @@ add_flowmap <- function(
   mapgl_record_flowmap_order(
     map,
     flowmap_index = length(map$x$flowmaps),
-    pending = is.null(before_id)
+    pending = is.null(before_id) && (is.logical(flow_blend) && !flow_blend)
   )
 }
 
@@ -448,4 +510,42 @@ flowmap_validate_ids <- function(locations, flows) {
       if (length(invalid) > 5) ", ..." else ""
     ))
   }
+}
+
+is_dark_style <- function(style) {
+  if (is.null(style)) {
+    return(TRUE) # Fallback to TRUE as default
+  }
+
+  if (!is.character(style) || length(style) != 1 || is.na(style)) {
+    # If it's a list (like from basemap_style)
+    if (is.list(style)) {
+      bg_layer <- Filter(function(l) isTRUE(l$type == "background"), style$layers)
+      if (length(bg_layer) > 0) {
+        color <- bg_layer[[1]]$paint$`background-color`
+        if (is.character(color) && length(color) == 1) {
+          if (grepl("white|light|grey|gray", color, ignore.case = TRUE)) {
+            return(FALSE)
+          }
+          if (grepl("black|dark", color, ignore.case = TRUE)) {
+            return(TRUE)
+          }
+        }
+      }
+    }
+    return(TRUE) # Safe fallback
+  }
+
+  # Dark patterns
+  if (grepl("dark|night|midnight|satellite|hybrid|imagery|nova", style, ignore.case = TRUE)) {
+    return(TRUE)
+  }
+
+  # Light patterns
+  if (grepl("light|day|positron|voyager|streets|outdoors|basic|bright|topo|terrain", style, ignore.case = TRUE)) {
+    return(FALSE)
+  }
+
+  # Default fallback if unknown
+  TRUE
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/flowmap.R
 \name{add_flowmap}
 \alias{add_flowmap}
-\title{Add a flowmap layer}
+\title{Adds a FlowmapGL layer for visualizing origin-destination flows between
+point locations.}
 \usage{
 add_flowmap(
   map,
@@ -10,8 +11,9 @@ add_flowmap(
   locations,
   flows,
   flow_color_scheme = "Teal",
-  flow_dark_mode = TRUE,
+  flow_dark_mode = "auto",
   flow_opacity = 1,
+  flow_blend = "auto",
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -34,10 +36,29 @@ vector of at least two CSS colors, or a \code{mapgl_continuous_scale} object
 created by \code{\link[=interpolate_palette]{interpolate_palette()}}. Preset names are case-sensitive; use
 \code{\link[=flowmap_color_schemes]{flowmap_color_schemes()}} to list them.}
 
-\item{flow_dark_mode}{\code{TRUE} or \code{FALSE}; whether to use FlowMapGL dark-mode
-colors.}
+\item{flow_dark_mode}{Logical (\code{TRUE} or \code{FALSE}), or \code{"auto"}; whether to use FlowMapGL dark-mode
+colors. If \code{"auto"}, the mode is dynamically detected based on the map style.}
 
 \item{flow_opacity}{Layer opacity between 0 and 1.}
+
+\item{flow_blend}{Logical (\code{TRUE} or \code{FALSE}), \code{"auto"}, or a character string specifying a CSS
+mix-blend-mode.
+
+Valid modes are: \code{"normal"}, \code{"multiply"}, \code{"screen"}, \code{"overlay"}, \code{"darken"},
+\code{"lighten"}, \code{"color-dodge"}, \code{"color-burn"}, \code{"hard-light"}, \code{"soft-light"},
+\code{"difference"}, \code{"exclusion"}, \code{"hue"}, \code{"saturation"}, \code{"color"}, and \code{"luminosity"}.
+
+\strong{Recommendations}:
+\itemize{
+\item On \strong{dark basemaps}: \code{"screen"} looks best, creating a glowing additive effect where flows overlap.
+\item On \strong{light basemaps}: \code{"multiply"} or \code{"darken"} looks best, increasing contrast against the light background.
+}
+
+If \code{"auto"}, automatically chooses \code{"screen"} for dark styles and \code{"multiply"} for light styles.
+If \code{before_id} or \code{slot} is specified (interleaved mode), \code{"auto"} quietly disables blending (\code{FALSE})
+without throwing a warning. If \code{TRUE}, defaults to \code{"screen"} when \code{flow_dark_mode} is \code{TRUE},
+and \code{"multiply"} when \code{FALSE}. If \code{FALSE}, no blending is applied. Note: CSS blending requires
+a standalone canvas overlay and is ignored when \code{before_id} or \code{slot} is specified.}
 
 \item{visibility}{Whether the layer is initially \code{"visible"} or \code{"none"}.}
 

@@ -10,12 +10,13 @@ flowmap_test_flows <- function() {
   data.frame(origin = "a", dest = "b", count = 10)
 }
 
-flowmap_test_map <- function(...) {
+flowmap_test_map <- function(flow_blend = FALSE, ...) {
   maplibre() |>
     add_flowmap(
       id = "flows",
       locations = flowmap_test_locations(),
       flows = flowmap_test_flows(),
+      flow_blend = flow_blend,
       ...
     )
 }
@@ -36,6 +37,7 @@ test_that("add_flowmap serializes minimal flowmap config", {
       flow_color_scheme = "Teal",
       flow_dark_mode = FALSE,
       flow_opacity = 0.7,
+      flow_blend = FALSE,
       visibility = "none",
       before_id = "labels",
       slot = "top"
@@ -50,12 +52,13 @@ test_that("add_flowmap serializes minimal flowmap config", {
   expect_equal(flowmap$settings$colorScheme, "Teal")
   expect_false(flowmap$settings$darkMode)
   expect_equal(flowmap$settings$opacity, 0.7)
+  expect_false(flowmap$settings$flowBlend)
   expect_equal(flowmap$visibility, "none")
   expect_equal(flowmap$beforeId, "labels")
   expect_equal(flowmap$slot, "top")
 
   mapbox_map <- mapboxgl(access_token = "test-token") |>
-    add_flowmap("flows", locations, flows)
+    add_flowmap("flows", locations, flows, flow_blend = FALSE)
 
   expect_length(mapbox_map$x$flowmaps, 1)
   expect_equal(mapbox_map$x$flowmaps[[1]]$id, "flows")
@@ -276,7 +279,7 @@ test_that("flowmap added before a regular layer gets inferred beforeId", {
   flows <- data.frame(origin = "a", dest = "b", count = 10)
 
   map <- maplibre() |>
-    add_flowmap("flows", locations, flows) |>
+    add_flowmap("flows", locations, flows, flow_blend = FALSE) |>
     add_layer(
       id = "points",
       type = "circle",
@@ -320,7 +323,7 @@ test_that("explicit flowmap before_id is not overwritten by later layers", {
   flows <- data.frame(origin = "a", dest = "b", count = 10)
 
   map <- maplibre() |>
-    add_flowmap("flows", locations, flows, before_id = "labels") |>
+    add_flowmap("flows", locations, flows, before_id = "labels", flow_blend = FALSE) |>
     add_layer(
       id = "points",
       type = "circle",
@@ -342,8 +345,8 @@ test_that("multiple pending flowmaps resolve to the same later regular layer", {
   flows <- data.frame(origin = "a", dest = "b", count = 10)
 
   map <- maplibre() |>
-    add_flowmap("flows-a", locations, flows) |>
-    add_flowmap("flows-b", locations, flows) |>
+    add_flowmap("flows-a", locations, flows, flow_blend = FALSE) |>
+    add_flowmap("flows-b", locations, flows, flow_blend = FALSE) |>
     add_layer(
       id = "points",
       type = "circle",
@@ -475,4 +478,107 @@ test_that("flowmap vendoring manifest matches committed bundle", {
   )
   expect_equal(manifest$copyrights$path, "inst/COPYRIGHTS")
   expect_equal(file.exists(system.file("COPYRIGHTS", package = "mapgl")), TRUE)
+})
+
+test_that("is_dark_style utility classifies basemaps correctly", {
+  # Dark styles
+  expect_true(is_dark_style("mapbox://styles/mapbox/dark-v11"))
+  expect_true(is_dark_style("mapbox://styles/mapbox/navigation-night-v1"))
+  expect_true(is_dark_style("mapbox://styles/mapbox/satellite-v9"))
+  expect_true(is_dark_style("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"))
+  expect_true(is_dark_style("https://api.maptiler.com/maps/basic-dark/style.json"))
+  expect_true(is_dark_style("https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/imagery"))
+
+  # Light styles
+  expect_false(is_dark_style("mapbox://styles/mapbox/light-v11"))
+  expect_false(is_dark_style("mapbox://styles/mapbox/streets-v12"))
+  expect_false(is_dark_style("https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"))
+  expect_false(is_dark_style("https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"))
+  expect_false(is_dark_style("https://api.maptiler.com/maps/streets-v2/style.json"))
+  expect_false(is_dark_style("https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/streets"))
+
+  # Custom basemap_style list object
+  dark_custom <- list(layers = list(list(type = "background", paint = list(`background-color` = "black"))))
+  light_custom <- list(layers = list(list(type = "background", paint = list(`background-color` = "white"))))
+  expect_true(is_dark_style(dark_custom))
+  expect_false(is_dark_style(light_custom))
+
+  # Fallbacks
+  expect_true(is_dark_style(NULL))
+  expect_true(is_dark_style(list()))
+  expect_true(is_dark_style("random-style"))
+})
+
+test_that("add_flowmap validates flow_blend and handles auto-resolution", {
+  # Standalone map with flow_blend = "auto" (default) on default light basemap (voyager)
+  map_default <- maplibre() |>
+    add_flowmap(
+      id = "flows",
+      locations = flowmap_test_locations(),
+      flows = flowmap_test_flows()
+    )
+  expect_false(map_default$x$flowmaps[[1]]$settings$darkMode) # Inferred to FALSE
+  expect_equal(map_default$x$flowmaps[[1]]$settings$flowBlend, "multiply") # Inferred to "multiply"
+
+  # Standalone map with flow_blend = "auto" on dark style
+  map_dark <- mapboxgl(style = mapbox_style("dark"), access_token = "token") |>
+    add_flowmap(
+      id = "flows",
+      locations = flowmap_test_locations(),
+      flows = flowmap_test_flows()
+    )
+  expect_true(map_dark$x$flowmaps[[1]]$settings$darkMode) # Inferred to TRUE
+  expect_equal(map_dark$x$flowmaps[[1]]$settings$flowBlend, "screen") # Inferred to "screen"
+
+  # Interleaved map with flow_blend = "auto" (default) quietly resolves to FALSE (no warning)
+  expect_no_warning(
+    map_interleaved <- maplibre() |>
+      add_flowmap(
+        id = "flows",
+        locations = flowmap_test_locations(),
+        flows = flowmap_test_flows(),
+        before_id = "labels"
+      )
+  )
+  expect_false(map_interleaved$x$flowmaps[[1]]$settings$flowBlend)
+
+  # Check validation
+  expect_error(flowmap_test_map(flow_blend = NA), "must be `TRUE` or `FALSE`")
+  expect_error(flowmap_test_map(flow_blend = "invalid-mode"), "must be one of the valid CSS mix-blend-mode")
+  expect_error(flowmap_test_map(flow_blend = 123), "must be a logical")
+
+  # Valid string blend mode
+  map_string <- maplibre() |>
+    add_flowmap(
+      id = "flows",
+      locations = flowmap_test_locations(),
+      flows = flowmap_test_flows(),
+      flow_blend = "screen"
+    )
+  expect_equal(map_string$x$flowmaps[[1]]$settings$flowBlend, "screen")
+
+  # Check warning when interleaved (before_id is set) and flow_blend is explicitly non-FALSE
+  expect_warning(
+    maplibre() |>
+      add_flowmap(
+        id = "flows",
+        locations = flowmap_test_locations(),
+        flows = flowmap_test_flows(),
+        flow_blend = TRUE,
+        before_id = "labels"
+      ),
+    "ignored when `before_id` or `slot` is specified"
+  )
+
+  expect_warning(
+    maplibre() |>
+      add_flowmap(
+        id = "flows",
+        locations = flowmap_test_locations(),
+        flows = flowmap_test_flows(),
+        flow_blend = "screen",
+        before_id = "labels"
+      ),
+    "ignored when `before_id` or `slot` is specified"
+  )
 })
