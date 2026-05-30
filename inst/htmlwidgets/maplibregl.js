@@ -2157,6 +2157,10 @@ HTMLWidgets.widget({
             x.layers.forEach((layer) => add_my_layers(layer));
           }
 
+          if (window.MapGLFlowmapPlugin) {
+            window.MapGLFlowmapPlugin.init(map, x, el, HTMLWidgets);
+          }
+
           // Apply setFilter if provided
           if (x.setFilter) {
             x.setFilter.forEach(function (filter) {
@@ -3061,6 +3065,26 @@ HTMLWidgets.widget({
               x.layers_control.layers ||
               map.getStyle().layers.map((layer) => layer.id);
             let layersConfig = x.layers_control.layers_config;
+            const getLayerControlVisibility = (layerId) => {
+              if (
+                window.MapGLFlowmapPlugin &&
+                window.MapGLFlowmapPlugin.hasLayer(map, layerId)
+              ) {
+                return window.MapGLFlowmapPlugin.getVisibility(map, layerId);
+              }
+              return map.getLayoutProperty(layerId, "visibility") || "visible";
+            };
+            const setLayerControlVisibility = (layerId, visibility) => {
+              if (
+                window.MapGLFlowmapPlugin &&
+                window.MapGLFlowmapPlugin.setVisibility(map, layerId, visibility)
+              ) {
+                return;
+              }
+              if (map.getLayer(layerId)) {
+                map.setLayoutProperty(layerId, "visibility", visibility);
+              }
+            };
 
             // If we have a layers_config, use that; otherwise fall back to original behavior
             if (layersConfig && Array.isArray(layersConfig)) {
@@ -3078,10 +3102,8 @@ HTMLWidgets.widget({
 
                 // Check if the first layer's visibility is set to "none" initially
                 const firstLayerId = layerIds[0];
-                const initialVisibility = map.getLayoutProperty(
-                  firstLayerId,
-                  "visibility",
-                );
+                const initialVisibility =
+                  getLayerControlVisibility(firstLayerId);
                 link.className = initialVisibility === "none" ? "" : "active";
 
                 // Also hide any associated legends if the layer is initially hidden
@@ -3105,15 +3127,12 @@ HTMLWidgets.widget({
                     this.getAttribute("data-layer-ids"),
                   );
                   const firstLayerId = layerIds[0];
-                  const visibility = map.getLayoutProperty(
-                    firstLayerId,
-                    "visibility",
-                  );
+                  const visibility = getLayerControlVisibility(firstLayerId);
 
                   // Toggle visibility for all layer IDs in the group
                   if (visibility === "visible") {
                     layerIds.forEach((layerId) => {
-                      map.setLayoutProperty(layerId, "visibility", "none");
+                      setLayerControlVisibility(layerId, "none");
                       // Hide associated legends
                       const associatedLegends = document.querySelectorAll(
                         `.mapboxgl-legend[data-layer-id="${layerId}"]`,
@@ -3125,7 +3144,7 @@ HTMLWidgets.widget({
                     this.className = "";
                   } else {
                     layerIds.forEach((layerId) => {
-                      map.setLayoutProperty(layerId, "visibility", "visible");
+                      setLayerControlVisibility(layerId, "visible");
                       // Show associated legends
                       const associatedLegends = document.querySelectorAll(
                         `.mapboxgl-legend[data-layer-id="${layerId}"]`,
@@ -3154,10 +3173,7 @@ HTMLWidgets.widget({
                 link.textContent = layerId;
 
                 // Check if the layer visibility is set to "none" initially
-                const initialVisibility = map.getLayoutProperty(
-                  layerId,
-                  "visibility",
-                );
+                const initialVisibility = getLayerControlVisibility(layerId);
                 link.className = initialVisibility === "none" ? "" : "active";
 
                 // Also hide any associated legends if the layer is initially hidden
@@ -3176,14 +3192,11 @@ HTMLWidgets.widget({
                   e.preventDefault();
                   e.stopPropagation();
 
-                  const visibility = map.getLayoutProperty(
-                    clickedLayer,
-                    "visibility",
-                  );
+                  const visibility = getLayerControlVisibility(clickedLayer);
 
                   // Toggle layer visibility by changing the layout object's visibility property
                   if (visibility === "visible") {
-                    map.setLayoutProperty(clickedLayer, "visibility", "none");
+                    setLayerControlVisibility(clickedLayer, "none");
                     this.className = "";
 
                     // Hide associated legends
@@ -3195,11 +3208,7 @@ HTMLWidgets.widget({
                     });
                   } else {
                     this.className = "active";
-                    map.setLayoutProperty(
-                      clickedLayer,
-                      "visibility",
-                      "visible",
-                    );
+                    setLayerControlVisibility(clickedLayer, "visible");
 
                     // Show associated legends
                     const associatedLegends = document.querySelectorAll(

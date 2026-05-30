@@ -62,6 +62,7 @@ reference:
       - add_fill_extrusion_layer
       - add_raster_layer
       - add_symbol_layer
+      - add_flowmap
       - add_view
 
   - title: "Data Sources"
@@ -127,6 +128,7 @@ reference:
       - interpolate
       - match_expr
       - step_expr
+      - flowmap_color_schemes
       - get_column
       - concat
       - number_format

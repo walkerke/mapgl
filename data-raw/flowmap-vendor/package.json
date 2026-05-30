@@ -1,0 +1,23 @@
+{
+  "name": "mapgl-flowmap-vendor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reproducible vendoring workspace for the mapgl FlowmapGL browser bundle.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "./build-flowmap.sh build",
+    "check": "./build-flowmap.sh check"
+  },
+  "dependencies": {
+    "@deck.gl/core": "9.3.2",
+    "@deck.gl/layers": "9.3.2",
+    "@deck.gl/mapbox": "9.3.2",
+    "@flowmap.gl/data": "9.3.0",
+    "@flowmap.gl/layers": "9.3.0",
+    "@luma.gl/core": "9.3.3",
+    "@luma.gl/engine": "9.3.3",
+    "@luma.gl/shadertools": "9.3.3",
+    "esbuild": "0.28.0"
+  }
+}

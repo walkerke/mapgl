@@ -55,7 +55,7 @@ download.file(
   destfile = "inst/htmlwidgets/lib/maptiler-geocoding-control/maplibregl.umd.js"
 )
 download.file(
-    "https://unpkg.com/@maptiler/geocoding-control@2.1.7/style.css",
+  "https://unpkg.com/@maptiler/geocoding-control@2.1.7/style.css",
   destfile = "inst/htmlwidgets/lib/maptiler-geocoding-control/style.css"
 )
 

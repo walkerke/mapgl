@@ -85,3 +85,13 @@ dependencies:
       - "legend-interactivity.js"
     stylesheet:
       - "legend-interactivity.css"
+  - name: flowmap-gl
+    version: "9.3.0"
+    src: "htmlwidgets/lib/flowmap-gl"
+    script:
+      - "flowmap-gl-bundle.min.js"
+  - name: flowmap-plugin
+    version: "1.0.0"
+    src: "htmlwidgets"
+    script:
+      - "flowmap.js"

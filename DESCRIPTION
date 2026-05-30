@@ -12,6 +12,7 @@ Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.c
 URL: https://walker-data.com/mapgl/
 BugReports: https://github.com/walkerke/mapgl/issues
 License: MIT + file LICENSE
+Copyright: See LICENSE.note for bundled third-party JavaScript components.
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
