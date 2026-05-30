@@ -323,7 +323,13 @@ test_that("explicit flowmap before_id is not overwritten by later layers", {
   flows <- data.frame(origin = "a", dest = "b", count = 10)
 
   map <- maplibre() |>
-    add_flowmap("flows", locations, flows, before_id = "labels", flow_blend = FALSE) |>
+    add_flowmap(
+      "flows",
+      locations,
+      flows,
+      before_id = "labels",
+      flow_blend = FALSE
+    ) |>
     add_layer(
       id = "points",
       type = "circle",
@@ -447,13 +453,56 @@ test_that("Mapbox and MapLibre YAML files include the same flowmap dependencies"
   }
 
   expect_equal(
-    tail(yaml_dependency_names(mapbox), 2),
+    yaml_dependency_names(mapbox)[
+      match("flowmap-gl", yaml_dependency_names(mapbox)):match(
+        "flowmap-plugin",
+        yaml_dependency_names(mapbox)
+      )
+    ],
     c("flowmap-gl", "flowmap-plugin")
   )
   expect_equal(
-    tail(yaml_dependency_names(maplibre), 2),
+    yaml_dependency_names(maplibre)[
+      match("flowmap-gl", yaml_dependency_names(maplibre)):match(
+        "flowmap-plugin",
+        yaml_dependency_names(maplibre)
+      )
+    ],
     c("flowmap-gl", "flowmap-plugin")
   )
+})
+
+test_that("compare widgets include and initialize flowmap support", {
+  yaml_dependency_names <- function(lines) {
+    name_lines <- grep("^  - name:", lines, value = TRUE)
+    sub("^  - name: ", "", name_lines)
+  }
+
+  compare_yaml_paths <- c(
+    "htmlwidgets/mapboxgl_compare.yaml",
+    "htmlwidgets/maplibregl_compare.yaml"
+  )
+
+  for (path in compare_yaml_paths) {
+    lines <- readLines(system.file(path, package = "mapgl"))
+    expect_true("flowmap-gl" %in% yaml_dependency_names(lines), info = path)
+    expect_true("flowmap-plugin" %in% yaml_dependency_names(lines), info = path)
+  }
+
+  compare_js_paths <- c(
+    "htmlwidgets/mapboxgl_compare.js",
+    "htmlwidgets/maplibregl_compare.js"
+  )
+
+  for (path in compare_js_paths) {
+    js <- paste(
+      readLines(system.file(path, package = "mapgl")),
+      collapse = "\n"
+    )
+    expect_match(js, "MapGLFlowmapPlugin\\.init", fixed = FALSE)
+    expect_match(js, "MapGLFlowmapPlugin\\.getVisibility", fixed = FALSE)
+    expect_match(js, "MapGLFlowmapPlugin\\.setVisibility", fixed = FALSE)
+  }
 })
 
 test_that("flowmap vendoring manifest matches committed bundle", {
@@ -485,21 +534,45 @@ test_that("is_dark_style utility classifies basemaps correctly", {
   expect_true(is_dark_style("mapbox://styles/mapbox/dark-v11"))
   expect_true(is_dark_style("mapbox://styles/mapbox/navigation-night-v1"))
   expect_true(is_dark_style("mapbox://styles/mapbox/satellite-v9"))
-  expect_true(is_dark_style("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"))
-  expect_true(is_dark_style("https://api.maptiler.com/maps/basic-dark/style.json"))
-  expect_true(is_dark_style("https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/imagery"))
+  expect_true(is_dark_style(
+    "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+  ))
+  expect_true(is_dark_style(
+    "https://api.maptiler.com/maps/basic-dark/style.json"
+  ))
+  expect_true(is_dark_style(
+    "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/imagery"
+  ))
 
   # Light styles
   expect_false(is_dark_style("mapbox://styles/mapbox/light-v11"))
   expect_false(is_dark_style("mapbox://styles/mapbox/streets-v12"))
-  expect_false(is_dark_style("https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"))
-  expect_false(is_dark_style("https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"))
-  expect_false(is_dark_style("https://api.maptiler.com/maps/streets-v2/style.json"))
-  expect_false(is_dark_style("https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/streets"))
+  expect_false(is_dark_style(
+    "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+  ))
+  expect_false(is_dark_style(
+    "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+  ))
+  expect_false(is_dark_style(
+    "https://api.maptiler.com/maps/streets-v2/style.json"
+  ))
+  expect_false(is_dark_style(
+    "https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles/arcgis/streets"
+  ))
 
   # Custom basemap_style list object
-  dark_custom <- list(layers = list(list(type = "background", paint = list(`background-color` = "black"))))
-  light_custom <- list(layers = list(list(type = "background", paint = list(`background-color` = "white"))))
+  dark_custom <- list(
+    layers = list(list(
+      type = "background",
+      paint = list(`background-color` = "black")
+    ))
+  )
+  light_custom <- list(
+    layers = list(list(
+      type = "background",
+      paint = list(`background-color` = "white")
+    ))
+  )
   expect_true(is_dark_style(dark_custom))
   expect_false(is_dark_style(light_custom))
 
@@ -544,7 +617,10 @@ test_that("add_flowmap validates flow_blend and handles auto-resolution", {
 
   # Check validation
   expect_error(flowmap_test_map(flow_blend = NA), "must be `TRUE` or `FALSE`")
-  expect_error(flowmap_test_map(flow_blend = "invalid-mode"), "must be one of the valid CSS mix-blend-mode")
+  expect_error(
+    flowmap_test_map(flow_blend = "invalid-mode"),
+    "must be one of the valid CSS mix-blend-mode"
+  )
   expect_error(flowmap_test_map(flow_blend = 123), "must be a logical")
 
   # Valid string blend mode

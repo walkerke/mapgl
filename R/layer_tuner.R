@@ -164,19 +164,35 @@ add_layer_tuner <- function(
         # Silent fallback
     })
 
-    map$x$layer_tuner <- list(
-        enabled = TRUE,
-        layers = layers,
-        flowmap_color_schemes = flowmap_schemes,
-        map_type = if (inherits(map, "mapboxgl")) "mapboxgl" else "maplibre",
-        original_calls = original_calls,
-        show_all_args = show_all_args,
+  map_type <- if (
+    inherits(map, "mapboxgl") ||
+      inherits(map, "mapboxgl_compare") ||
+      inherits(map, "mapboxgl_compare_proxy")
+  ) {
+    "mapboxgl"
+  } else {
+    "maplibre"
+  }
+
+  layer_tuner <- list(
+    enabled = TRUE,
+    layers = layers,
+    flowmap_color_schemes = flowmap_schemes,
+    map_type = map_type,
+    original_calls = original_calls,
+    show_all_args = show_all_args,
         title = title,
         position = position,
         width = width,
-        height = height,
-        collapsed = collapsed
-    )
+    height = height,
+    collapsed = collapsed
+  )
+  map$x$layer_tuner <- layer_tuner
+
+  if (inherits(map, "mapboxgl_compare") || inherits(map, "maplibregl_compare")) {
+    map$x$map1$layer_tuner <- layer_tuner
+    map$x$map2$layer_tuner <- layer_tuner
+  }
 
     lil_gui_dep <- htmltools::htmlDependency(
         name = "lil-gui",

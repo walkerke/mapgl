@@ -42,3 +42,50 @@ test_that("add_layer_tuner validates initial UI options", {
   expect_error(add_layer_tuner(maplibre(), height = NA), "`height`")
   expect_error(add_layer_tuner(maplibre(), collapsed = NA), "`collapsed`")
 })
+
+test_that("compare widgets preserve child layer tuner dependencies", {
+  widget <- compare(
+    maplibre() |> add_layer_tuner(),
+    maplibre()
+  )
+
+  dependency_names <- vapply(
+    widget$dependencies,
+    `[[`,
+    character(1),
+    "name"
+  )
+
+  expect_true("lil-gui" %in% dependency_names)
+  expect_true("layer-tuner" %in% dependency_names)
+  expect_true(widget$x$map1$layer_tuner$enabled)
+  expect_null(widget$x$map2$layer_tuner)
+})
+
+test_that("add_layer_tuner configures both maps in compare widgets", {
+  widget <- compare(maplibre(), maplibre()) |>
+    add_layer_tuner(position = "top-right")
+
+  expect_true(widget$x$map1$layer_tuner$enabled)
+  expect_true(widget$x$map2$layer_tuner$enabled)
+  expect_equal(widget$x$map1$layer_tuner$position, "top-right")
+  expect_equal(widget$x$map2$layer_tuner$position, "top-right")
+})
+
+test_that("compare widget bindings initialize the layer tuner", {
+  compare_js_paths <- c(
+    "htmlwidgets/mapboxgl_compare.js",
+    "htmlwidgets/maplibregl_compare.js"
+  )
+
+  for (path in compare_js_paths) {
+    js <- paste(
+      readLines(system.file(path, package = "mapgl")),
+      collapse = "\n"
+    )
+    expect_match(js, "MapGLLayerTuner\\.init", fixed = FALSE)
+    expect_match(js, "mapData\\.layer_tuner", fixed = FALSE)
+    expect_match(js, "_basemapLayerIds", fixed = TRUE)
+    expect_match(js, "mapgl-compare-layer-tuner-host", fixed = TRUE)
+  }
+})
