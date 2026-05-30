@@ -46,6 +46,118 @@
         return prop.replace(/-/g, '_');
       };
 
+      const NAMED_COLORS = {
+        black: '#000000',
+        blue: '#0000ff',
+        cyan: '#00ffff',
+        gray: '#808080',
+        green: '#008000',
+        grey: '#808080',
+        orange: '#ffa500',
+        purple: '#800080',
+        red: '#ff0000',
+        transparent: '#000000',
+        white: '#ffffff',
+        yellow: '#ffff00'
+      };
+
+      const toTwoDigitHex = function(value) {
+        const numeric = Math.max(0, Math.min(255, Number(value)));
+        return Math.round(numeric).toString(16).padStart(2, '0');
+      };
+
+      const normalizeColorValue = function(value, fallback) {
+        if (typeof value !== 'string') return fallback;
+        const trimmed = value.trim();
+        const lower = trimmed.toLowerCase();
+
+        if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed;
+        if (/^#[0-9a-f]{3}$/i.test(trimmed)) {
+          return '#' + trimmed.slice(1).split('').map(function(ch) {
+            return ch + ch;
+          }).join('');
+        }
+        if (/^[0-9a-f]{6}$/i.test(trimmed)) return '#' + trimmed;
+        if (/^[0-9a-f]{3}$/i.test(trimmed)) {
+          return '#' + trimmed.split('').map(function(ch) {
+            return ch + ch;
+          }).join('');
+        }
+
+        const rgbMatch = lower.match(/^rgba?\(([^)]+)\)$/);
+        if (rgbMatch) {
+          const parts = rgbMatch[1].split(',').map(function(part) {
+            return parseFloat(part.trim());
+          });
+          if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
+            return '#' + parts.slice(0, 3).map(toTwoDigitHex).join('');
+          }
+        }
+
+        if (NAMED_COLORS[lower]) return NAMED_COLORS[lower];
+
+        try {
+          const ctx = document.createElement('canvas').getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#000000';
+            ctx.fillStyle = trimmed;
+            const normalized = ctx.fillStyle;
+            if (/^#[0-9a-f]{6}$/i.test(normalized)) return normalized;
+          }
+        } catch (e) {}
+
+        return fallback;
+      };
+
+      const getExpandedSliderBounds = function(spec, value) {
+        let min = spec.min;
+        let max = spec.max;
+        if (!Number.isFinite(value)) return { min: min, max: max };
+
+        const range = Math.max(Math.abs(max - min), spec.step || 1);
+        const padding = Math.max(range * 0.25, spec.step || 1);
+        if (value < min) min = value - padding;
+        if (value > max) max = value + padding;
+
+        return { min: min, max: max };
+      };
+
+      const expandSliderToValue = function(controller, value, spec) {
+        if (!controller || !Number.isFinite(value)) return;
+        const currentMin = controller._min;
+        const currentMax = controller._max;
+        if (!Number.isFinite(currentMin) || !Number.isFinite(currentMax)) return;
+
+        const expanded = getExpandedSliderBounds(
+          { min: currentMin, max: currentMax, step: spec.step },
+          value
+        );
+
+        if (expanded.min !== currentMin && typeof controller.min === 'function') {
+          controller.min(expanded.min);
+        }
+        if (expanded.max !== currentMax && typeof controller.max === 'function') {
+          controller.max(expanded.max);
+        }
+      };
+
+      const attachSliderAutoExpansion = function(controller, spec) {
+        if (!controller || spec.type !== 'slider') return;
+        const input = controller.domElement &&
+          controller.domElement.querySelector &&
+          controller.domElement.querySelector('input');
+        if (!input) return;
+
+        input.addEventListener('input', function() {
+          const value = parseFloat(input.value);
+          if (!Number.isFinite(value)) return;
+          expandSliderToValue(controller, value, spec);
+          if (controller.getValue && controller.getValue() !== value) {
+            controller.setValue(value);
+          }
+        });
+      };
+
       const TUNER_SCHEMA = {
         'fill': {
           'fill-antialias': { type: 'boolean', default: true, method: 'paint' },
@@ -184,6 +296,172 @@
       const allLayerControllers = [];
       const layerFolders = [];
       const layerMeta = {}; // To store initial values for reset
+      const HISTORY_LIMIT = 1000;
+      const undoStack = [];
+      const redoStack = [];
+      let currentSnapshot = null;
+      let isApplyingHistory = false;
+      let undoButton = null;
+      let redoButton = null;
+
+      const cloneHistoryValue = function(value) {
+        if (value === undefined || value === null) return value;
+        if (Array.isArray(value)) return value.map(cloneHistoryValue);
+        if (typeof value === 'object') {
+          const copy = {};
+          Object.keys(value).forEach(function(key) {
+            copy[key] = cloneHistoryValue(value[key]);
+          });
+          return copy;
+        }
+        return value;
+      };
+
+      const captureHistorySnapshot = function() {
+        const snapshot = {
+          layers: {},
+          changes: cloneHistoryValue(map._layerTunerChanges || {})
+        };
+
+        Object.keys(layerMeta).forEach(function(lid) {
+          const meta = layerMeta[lid];
+          if (meta.type === 'flowmap') {
+            snapshot.layers[lid] = {
+              type: 'flowmap',
+              state: cloneHistoryValue(meta.state)
+            };
+            return;
+          }
+
+          const raw = {};
+          Object.keys(TUNER_SCHEMA[meta.type]).forEach(function(p) {
+            const spec = TUNER_SCHEMA[meta.type][p];
+            try {
+              raw[p] = spec.method === 'paint' ?
+                map.getPaintProperty(lid, p) :
+                map.getLayoutProperty(lid, p);
+            } catch (e) {
+              raw[p] = undefined;
+            }
+          });
+
+          snapshot.layers[lid] = {
+            type: meta.type,
+            state: cloneHistoryValue(meta.state),
+            raw: cloneHistoryValue(raw)
+          };
+        });
+
+        return snapshot;
+      };
+
+      const updateHistoryButtons = function() {
+        if (undoButton) {
+          undoButton.disabled = undoStack.length === 0;
+          undoButton.style.opacity = undoButton.disabled ? '0.45' : '1';
+          undoButton.style.cursor = undoButton.disabled ? 'default' : 'pointer';
+        }
+        if (redoButton) {
+          redoButton.disabled = redoStack.length === 0;
+          redoButton.style.opacity = redoButton.disabled ? '0.45' : '1';
+          redoButton.style.cursor = redoButton.disabled ? 'default' : 'pointer';
+        }
+      };
+
+      const refreshCurrentSnapshot = function() {
+        currentSnapshot = captureHistorySnapshot();
+        updateHistoryButtons();
+      };
+
+      const recordHistory = function() {
+        if (isApplyingHistory || !currentSnapshot) return;
+        undoStack.push(cloneHistoryValue(currentSnapshot));
+        if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+        redoStack.length = 0;
+        updateHistoryButtons();
+      };
+
+      const applyHistorySnapshot = function(snapshot) {
+        if (!snapshot) return;
+        isApplyingHistory = true;
+        try {
+          Object.keys(snapshot.layers).forEach(function(lid) {
+            const meta = layerMeta[lid];
+            const layerSnapshot = snapshot.layers[lid];
+            if (!meta || !layerSnapshot) return;
+
+            if (meta.type === 'flowmap') {
+              Object.assign(meta.state, cloneHistoryValue(layerSnapshot.state));
+              const current = map._mapglFlowmapLayers;
+              if (current && current[meta.idx]) {
+                const updated = current[meta.idx].clone({
+                  colorScheme: meta.state.colorScheme,
+                  darkMode: meta.state.darkMode,
+                  opacity: meta.state.opacity
+                });
+                const newLayers = [...current];
+                newLayers[meta.idx] = updated;
+                map._mapglFlowmapLayers = newLayers;
+                if (map._mapglFlowmapOverlay || map._deckgl) {
+                  (map._mapglFlowmapOverlay || map._deckgl).setProps({
+                    layers: map._mapglFlowmapLayers
+                  });
+                }
+              }
+              if (map._deckCanvas) {
+                map._deckCanvas.style.mixBlendMode = meta.state.blendMode;
+              }
+              return;
+            }
+
+            Object.keys(layerSnapshot.raw || {}).forEach(function(p) {
+              const spec = TUNER_SCHEMA[meta.type][p];
+              const rawVal = layerSnapshot.raw[p] === undefined ?
+                null :
+                cloneHistoryValue(layerSnapshot.raw[p]);
+              try {
+                if (spec.method === 'paint') map.setPaintProperty(lid, p, rawVal);
+                else map.setLayoutProperty(lid, p, rawVal);
+              } catch (e) {
+                console.warn(`Layer Tuner: Failed applying history for ${lid}.${p}`, e);
+              }
+            });
+            Object.assign(meta.state, cloneHistoryValue(layerSnapshot.state));
+          });
+
+          map._layerTunerChanges = cloneHistoryValue(snapshot.changes || {});
+          if (map.triggerRepaint) map.triggerRepaint();
+          try {
+            gui.controllersRecursive().forEach(c => {
+              if (c && typeof c.updateDisplay === 'function') c.updateDisplay();
+            });
+            updateControllerVisibilities();
+          } catch (e) {
+            console.error('Layer Tuner: Failed updating UI after history change', e);
+          }
+        } finally {
+          isApplyingHistory = false;
+        }
+      };
+
+      const undoHistory = function() {
+        if (undoStack.length === 0 || !currentSnapshot) return;
+        redoStack.push(cloneHistoryValue(currentSnapshot));
+        const previous = undoStack.pop();
+        applyHistorySnapshot(previous);
+        currentSnapshot = cloneHistoryValue(previous);
+        updateHistoryButtons();
+      };
+
+      const redoHistory = function() {
+        if (redoStack.length === 0 || !currentSnapshot) return;
+        undoStack.push(cloneHistoryValue(currentSnapshot));
+        if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+        const next = redoStack.pop();
+        applyHistorySnapshot(next);
+        currentSnapshot = cloneHistoryValue(next);
+        updateHistoryButtons();
+      };
 
       const updateControllerVisibilities = function() {
         const showAll = tunerState.showMode === 'All Options';
@@ -202,8 +480,27 @@
         layerFolders.forEach(f => { const title = (f._title || '').toLowerCase(); if (!query || title.includes(query)) f.show(); else f.hide(); });
       };
 
+      const applyLayerControllerValue = function(layerId, layerType, prop, spec, value, options) {
+        const shouldRecord = !options || options.record !== false;
+        const shouldRefresh = !options || options.refresh !== false;
+        try {
+          if (shouldRecord) recordHistory();
+          if (spec.method === 'paint') map.setPaintProperty(layerId, prop, value);
+          else map.setLayoutProperty(layerId, prop, value);
+          if (!map._layerTunerChanges[layerId]) {
+            map._layerTunerChanges[layerId] = { type: layerType, props: {} };
+          }
+          map._layerTunerChanges[layerId].props[prop] = {
+            method: spec.method,
+            value: value
+          };
+          updateControllerVisibilities();
+          if (shouldRefresh) refreshCurrentSnapshot();
+        } catch (e) {}
+      };
+
       // 2. Export & Layout Reset
-      gui.add({ exportCode: function() {
+      const exportCodeCtrl = gui.add({ exportCode: function() {
         try {
           const changes = map._layerTunerChanges;
           const showAllArgs = tunerState.showMode === 'All Options';
@@ -280,6 +577,7 @@
 
       const resetAllLayers = function() {
         console.log('Layer Tuner: Global reset triggered');
+        recordHistory();
         Object.keys(layerMeta).forEach(lid => {
           try {
             const meta = layerMeta[lid];
@@ -313,13 +611,14 @@
         try {
           gui.controllersRecursive().forEach(c => { if(c && typeof c.updateDisplay === 'function') c.updateDisplay(); });
           updateControllerVisibilities();
+          refreshCurrentSnapshot();
         } catch (e) { console.error('Layer Tuner: Failed updating UI post-reset', e); }
       };
 
       gui.add({ resetAll: resetAllLayers }, 'resetAll').name('♻️ Reset All Layers');
       gui.add({ resetLayout: function() { hasBeenManuallyResized = false; manualWidth = '245px'; manualHeight = 'auto'; dom.style.width = manualWidth; dom.style.height = manualHeight; dom.style.maxHeight = 'calc(100% - 20px)'; dom.style.top = '10px'; dom.style.left = '10px'; } }, 'resetLayout').name('🔄 Reset UI Layout');
 
-      // 3. Toggles & Search
+      // 3. Toggles & Filters
       const modeRow = document.createElement('div');
       modeRow.style.display = 'flex'; modeRow.style.gap = '2px'; modeRow.style.padding = '0 4px'; modeRow.style.margin = '4px 0';
       const bCust = document.createElement('button'); bCust.textContent = '🎯 Customized'; bCust.style.flex = '1'; bCust.style.fontSize = '10px'; bCust.style.padding = '6px 0'; bCust.style.background = tunerState.showMode === 'Customized' ? '#00bcd4' : '#424242'; bCust.style.color = tunerState.showMode === 'Customized' ? '#121212' : '#fff'; bCust.style.border = 'none'; bCust.style.borderRadius = '2px'; bCust.style.cursor = 'pointer'; bCust.style.fontWeight = '600';
@@ -327,9 +626,18 @@
       const setMode = (m) => { tunerState.showMode = m; bCust.style.background = m === 'Customized' ? '#00bcd4' : '#424242'; bCust.style.color = m === 'Customized' ? '#121212' : '#fff'; bAll.style.background = m === 'All Options' ? '#00bcd4' : '#424242'; bAll.style.color = m === 'All Options' ? '#121212' : '#fff'; updateControllerVisibilities(); };
       bCust.onclick = () => setMode('Customized'); bAll.onclick = () => setMode('All Options'); modeRow.appendChild(bCust); modeRow.appendChild(bAll); dom.querySelector('.children').prepend(modeRow);
 
-      const searchCtrl = gui.add(tunerState, 'searchQuery').name('🔍 Search Layers').onChange(updateFolderVisibilities);
+      const historyRow = document.createElement('div');
+      historyRow.style.display = 'flex'; historyRow.style.gap = '2px'; historyRow.style.padding = '0 4px'; historyRow.style.margin = '4px 0';
+      undoButton = document.createElement('button'); undoButton.innerHTML = '&#8630; Undo'; undoButton.title = `Undo previous tuning change (keeps up to ${HISTORY_LIMIT} states)`; undoButton.style.flex = '1'; undoButton.style.fontSize = '10px'; undoButton.style.padding = '5px 0'; undoButton.style.background = '#424242'; undoButton.style.color = '#fff'; undoButton.style.border = 'none'; undoButton.style.borderRadius = '2px'; undoButton.style.fontWeight = '600';
+      redoButton = document.createElement('button'); redoButton.innerHTML = '&#8631; Redo'; redoButton.title = `Redo tuning change (history keeps up to ${HISTORY_LIMIT} undo states)`; redoButton.style.flex = '1'; redoButton.style.fontSize = '10px'; redoButton.style.padding = '5px 0'; redoButton.style.background = '#424242'; redoButton.style.color = '#fff'; redoButton.style.border = 'none'; redoButton.style.borderRadius = '2px'; redoButton.style.fontWeight = '600';
+      undoButton.onclick = undoHistory; redoButton.onclick = redoHistory;
+      historyRow.appendChild(undoButton); historyRow.appendChild(redoButton);
+      dom.querySelector('.children').insertBefore(historyRow, modeRow.nextSibling);
+      updateHistoryButtons();
+
+      const searchCtrl = gui.add(tunerState, 'searchQuery').name('🔍 Filter Layers').onChange(updateFolderVisibilities);
       try { const input = searchCtrl.domElement.querySelector('input'); if (input) input.addEventListener('input', function() { tunerState.searchQuery = this.value; updateFolderVisibilities(); }); } catch (e) {}
-      const propSearchCtrl = gui.add(tunerState, 'propSearchQuery').name('🔍 Search Args').onChange(updateControllerVisibilities);
+      const propSearchCtrl = gui.add(tunerState, 'propSearchQuery').name('🔍 Filter Arguments').onChange(updateControllerVisibilities);
       try { const input = propSearchCtrl.domElement.querySelector('input'); if (input) input.addEventListener('input', function() { tunerState.propSearchQuery = this.value; updateControllerVisibilities(); }); } catch (e) {}
 
       const btnRow = document.createElement('div');
@@ -337,6 +645,7 @@
       const bExpand = document.createElement('button'); bExpand.textContent = '📂 Expand All'; bExpand.style.flex = '1'; bExpand.style.fontSize = '10px'; bExpand.style.padding = '4px 0'; bExpand.style.background = '#424242'; bExpand.style.color = '#fff'; bExpand.style.border = 'none'; bExpand.style.borderRadius = '2px'; bExpand.style.cursor = 'pointer'; bExpand.onclick = () => layerFolders.forEach(f => f.open());
       const bCollapse = document.createElement('button'); bCollapse.textContent = '📁 Collapse All'; bCollapse.style.flex = '1'; bCollapse.style.fontSize = '10px'; bCollapse.style.padding = '4px 0'; bCollapse.style.background = '#424242'; bCollapse.style.color = '#fff'; bCollapse.style.border = 'none'; bCollapse.style.borderRadius = '2px'; bCollapse.style.cursor = 'pointer'; bCollapse.onclick = () => layerFolders.forEach(f => f.close());
       btnRow.appendChild(bExpand); btnRow.appendChild(bCollapse); dom.querySelector('.children').insertBefore(btnRow, searchCtrl.domElement);
+      dom.querySelector('.children').prepend(exportCodeCtrl.domElement);
 
       // 4. Robust Draggability
       const titleEl = dom.querySelector('.title');
@@ -371,6 +680,7 @@
             try { v = spec.method === 'paint' ? map.getPaintProperty(l.id, p) : map.getLayoutProperty(l.id, p); } catch (e) {}
             rawInitial[p] = v; // Store original format (could be an object/expression)
             if (v === undefined || typeof v === 'object') v = spec.default;
+            if (spec.type === 'color') v = normalizeColorValue(v, spec.default);
             s[p] = v; initial[p] = v;
             let orig = false;
             if (config.original_calls) {
@@ -378,22 +688,39 @@
               if (mc) orig = mc.args.some(a => a.name === rn);
             }
             const hasS = (spec.method === 'paint' && l.paint && l.paint[p] !== undefined) || (spec.method === 'layout' && l.layout && l.layout[p] !== undefined);
-            const ctrl = spec.type === 'color' ? folder.addColor(s, p) : (spec.type === 'slider' ? folder.add(s, p, spec.min, spec.max, spec.step) : folder.add(s, p));
+            let ctrl;
+            if (spec.type === 'color') {
+              ctrl = folder.addColor(s, p);
+            } else if (spec.type === 'slider') {
+              const bounds = getExpandedSliderBounds(spec, s[p]);
+              ctrl = folder.add(s, p, bounds.min, bounds.max, spec.step);
+              attachSliderAutoExpansion(ctrl, spec);
+            } else {
+              ctrl = folder.add(s, p);
+            }
             if (ctrl) {
               ctrl.name(getRName(l.type, p)); allLayerControllers.push({ controller: ctrl, type: l.type, prop: p, layerId: l.id, originallyPresent: orig, hasInStyle: hasS });
-              ctrl.onChange(nv => {
-                try {
-                  if (spec.method === 'paint') map.setPaintProperty(l.id, p, nv); else map.setLayoutProperty(l.id, p, nv);
-                  if (!map._layerTunerChanges[l.id]) map._layerTunerChanges[l.id] = { type: l.type, props: {} };
-                  map._layerTunerChanges[l.id].props[p] = { method: spec.method, value: nv };
-                  updateControllerVisibilities();
-                } catch (e) {}
-              });
+              if (spec.type === 'slider' && typeof ctrl.onFinishChange === 'function') {
+                ctrl.onChange(nv => {
+                  applyLayerControllerValue(l.id, l.type, p, spec, nv, {
+                    record: false,
+                    refresh: false
+                  });
+                });
+                ctrl.onFinishChange(nv => {
+                  applyLayerControllerValue(l.id, l.type, p, spec, nv);
+                });
+              } else {
+                ctrl.onChange(nv => {
+                  applyLayerControllerValue(l.id, l.type, p, spec, nv);
+                });
+              }
             }
           });
           folder.add({ reset: function() {
             console.log(`Layer Tuner: Resetting layer ${l.id}`);
             try {
+              recordHistory();
               Object.keys(rawInitial).forEach(p => {
                 const sp = TUNER_SCHEMA[l.type][p];
                 const rawVal = rawInitial[p];
@@ -409,6 +736,7 @@
               try {
                 folder.controllersRecursive().forEach(c => { if(c && typeof c.updateDisplay === 'function') c.updateDisplay(); });
                 updateControllerVisibilities();
+                refreshCurrentSnapshot();
               } catch(e){}
             } catch(e) { console.error(`Failed to reset layer ${l.id}`, e); }
           }}, 'reset').name('♻️ Reset Layer');
@@ -423,15 +751,29 @@
           const initial = { colorScheme: l.props.colorScheme || 'Teal', darkMode: l.props.darkMode !== undefined ? l.props.darkMode : true, opacity: l.props.opacity !== undefined ? l.props.opacity : 1, blendMode: map._deckCanvas && map._deckCanvas.style.mixBlendMode ? map._deckCanvas.style.mixBlendMode : 'screen' };
           const fs = { ...initial };
           layerMeta[lid] = { type: 'flowmap', state: fs, initial: initial, idx: i };
-          const up = () => {
+          const up = (options) => {
             try {
+              const shouldRecord = !options || options.record !== false;
+              const shouldRefresh = !options || options.refresh !== false;
+              if (shouldRecord) recordHistory();
               const cur = map._mapglFlowmapLayers; const nL = cur[i].clone({ colorScheme: fs.colorScheme, darkMode: fs.darkMode, opacity: fs.opacity }); const nArr = [...cur]; nArr[i] = nL; map._mapglFlowmapLayers = nArr;
               (map._mapglFlowmapOverlay || map._deckgl).setProps({ layers: map._mapglFlowmapLayers }); if (map._deckCanvas) map._deckCanvas.style.mixBlendMode = fs.blendMode;
               map._layerTunerChanges[lid] = { type: 'flowmap', props: { ...fs } }; if (map.triggerRepaint) map.triggerRepaint();
+              if (shouldRefresh) refreshCurrentSnapshot();
             } catch (e) {}
           };
           const registerFlowmapController = function(controller, prop) {
-            controller.name(getRName('flowmap', prop)).onChange(up);
+            controller.name(getRName('flowmap', prop));
+            if (prop === 'opacity' && typeof controller.onFinishChange === 'function') {
+              controller.onChange(function() {
+                up({ record: false, refresh: false });
+              });
+              controller.onFinishChange(function() {
+                up();
+              });
+            } else {
+              controller.onChange(up);
+            }
             allLayerControllers.push({
               controller: controller,
               type: 'flowmap',
@@ -454,19 +796,21 @@
           folder.add({ reset: function() {
             console.log(`Layer Tuner: Resetting flowmap ${lid}`);
             try {
-              Object.assign(fs, initial); 
-              up(); 
+              recordHistory();
+              Object.assign(fs, initial);
+              up({ record: false });
               delete map._layerTunerChanges[lid];
               try {
                 folder.controllersRecursive().forEach(c => { if(c && typeof c.updateDisplay === 'function') c.updateDisplay(); });
                 updateControllerVisibilities();
+                refreshCurrentSnapshot();
               } catch(e){}
             } catch(e) { console.error(`Failed to reset flowmap ${lid}`, e); }
           }}, 'reset').name('♻️ Reset Layer');
         });
       }
 
-      updateControllerVisibilities(); updateFolderVisibilities();
+      refreshCurrentSnapshot(); updateControllerVisibilities(); updateFolderVisibilities();
     }
   };
 })();
