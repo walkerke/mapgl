@@ -11,8 +11,8 @@ add_flowmap(
   locations,
   flows,
   flow_color_scheme = "Teal",
-  flow_dark_mode = "auto",
   flow_opacity = 1,
+  flow_dark_mode = "auto",
   flow_blend = "auto",
   visibility = c("visible", "none"),
   before_id = NULL,
@@ -36,10 +36,10 @@ vector of at least two CSS colors, or a \code{mapgl_continuous_scale} object
 created by \code{\link[=interpolate_palette]{interpolate_palette()}}. Preset names are case-sensitive; use
 \code{\link[=flowmap_color_schemes]{flowmap_color_schemes()}} to list them.}
 
+\item{flow_opacity}{Layer opacity between 0 and 1.}
+
 \item{flow_dark_mode}{Logical (\code{TRUE} or \code{FALSE}), or \code{"auto"}; whether to use FlowMapGL dark-mode
 colors. If \code{"auto"}, the mode is dynamically detected based on the map style.}
-
-\item{flow_opacity}{Layer opacity between 0 and 1.}
 
 \item{flow_blend}{Logical (\code{TRUE} or \code{FALSE}), \code{"auto"}, or a character string specifying a CSS
 mix-blend-mode.

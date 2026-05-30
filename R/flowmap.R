@@ -30,9 +30,9 @@ flowmap_color_schemes <- function() {
 #'   vector of at least two CSS colors, or a `mapgl_continuous_scale` object
 #'   created by [interpolate_palette()]. Preset names are case-sensitive; use
 #'   [flowmap_color_schemes()] to list them.
+#' @param flow_opacity Layer opacity between 0 and 1.
 #' @param flow_dark_mode Logical (`TRUE` or `FALSE`), or `"auto"`; whether to use FlowMapGL dark-mode
 #'   colors. If `"auto"`, the mode is dynamically detected based on the map style.
-#' @param flow_opacity Layer opacity between 0 and 1.
 #' @param flow_blend Logical (`TRUE` or `FALSE`), `"auto"`, or a character string specifying a CSS
 #'   mix-blend-mode.
 #'
@@ -87,8 +87,8 @@ add_flowmap <- function(
   locations,
   flows,
   flow_color_scheme = "Teal",
-  flow_dark_mode = "auto",
   flow_opacity = 1,
+  flow_dark_mode = "auto",
   flow_blend = "auto",
   visibility = c("visible", "none"),
   before_id = NULL,

@@ -2106,6 +2106,10 @@ HTMLWidgets.widget({
             window.MapGLFlowmapPlugin.init(map, x, el, HTMLWidgets);
           }
 
+          if (window.MapGLLayerTuner && x.layer_tuner && x.layer_tuner.enabled) {
+            window.MapGLLayerTuner.init(map, x, el, HTMLWidgets);
+          }
+
           // Apply setFilter if provided
           if (x.setFilter) {
             x.setFilter.forEach(function (filter) {
@@ -5328,6 +5332,10 @@ if (HTMLWidgets.shinyMode) {
         const globeMinimap = new GlobeMinimap(globeMinimapOptions);
         map.addControl(globeMinimap, message.position || "bottom-left");
         map.controls.push({ type: "globe_minimap", control: globeMinimap });
+      } else if (message.type === "add_layer_tuner") {
+        if (window.MapGLLayerTuner) {
+          window.MapGLLayerTuner.init(map, { enabled: true, layers: message.layers }, el, HTMLWidgets);
+        }
       }
     }
   });

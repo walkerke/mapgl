@@ -74,3 +74,4 @@ Below are the licenses of the individual bundled components:
 | typical | 7.3.0 | MIT | git+https://github.com/75lb/typical.git |
 | undici-types | 7.16.0 | MIT | git+https://github.com/nodejs/undici.git |
 | wordwrapjs | 5.1.1 | MIT | https://github.com/75lb/wordwrapjs |
+| lil-gui | 0.19.0 | MIT | https://github.com/georgealways/lil-gui |

@@ -95,3 +95,8 @@ dependencies:
     src: "htmlwidgets"
     script:
       - "flowmap.js"
+  - name: lil-gui
+    version: "0.19.0"
+    src: "htmlwidgets/lib/lil-gui"
+    script:
+      - "lil-gui.umd.min.js"

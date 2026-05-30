@@ -69,6 +69,7 @@ The FlowmapGL browser bundle shipped at `inst/htmlwidgets/lib/flowmap-gl/flowmap
 | supports-color | 7.2.0 | MIT | chalk/supports-color |
 | table-layout | 4.1.1 | MIT | https://github.com/75lb/table-layout |
 | tslib | 2.8.1 | 0BSD | https://github.com/Microsoft/tslib.git |
-| typical | 7.3.0 | MIT | git+https://github.com/75lb/typical.git |
+| typical | 7.3.0 | MIT | https://github.com/75lb/typical.git |
 | undici-types | 7.16.0 | MIT | git+https://github.com/nodejs/undici.git |
 | wordwrapjs | 5.1.1 | MIT | https://github.com/75lb/wordwrapjs |
+| lil-gui | 0.19.0 | MIT | https://github.com/georgealways/lil-gui |
