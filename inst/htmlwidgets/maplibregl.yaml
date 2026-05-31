@@ -89,3 +89,33 @@ dependencies:
       - "legend-interactivity.js"
     stylesheet:
       - "legend-interactivity.css"
+  - name: flowmap-gl
+    version: "9.3.0"
+    src: "htmlwidgets/lib/flowmap-gl"
+    script:
+      - "flowmap-gl-bundle.min.js"
+  - name: flowmap-plugin
+    version: "1.0.0"
+    src: "htmlwidgets"
+    script:
+      - "flowmap.js"
+    stylesheet:
+      - "flowmap.css"
+  - name: lil-gui
+    version: "0.19.0"
+    src: "htmlwidgets/lib/lil-gui"
+    script:
+      - "lil-gui.umd.min.js"
+  - name: d3
+    version: "7.9.0"
+    src: "htmlwidgets/lib/d3"
+    script:
+      - "d3.min.js"
+
+  - name: time-control
+    version: "1.0.0"
+    src: "htmlwidgets/lib/time-control"
+    script:
+      - "time-control.js"
+    stylesheet:
+      - "time-control.css"

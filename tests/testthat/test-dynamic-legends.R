@@ -53,7 +53,11 @@ test_that("color ramp labels are optional", {
   config <- map$x$legend_interactivity[[1]]
   expect_equal(config$selectedRamp, "Ramp 2")
   expect_match(map$x$legend_html, "mapgl-ramp-picker-no-labels")
-  expect_false(grepl("mapgl-ramp-picker-label", map$x$legend_html, fixed = TRUE))
+  expect_false(grepl(
+    "mapgl-ramp-picker-label",
+    map$x$legend_html,
+    fixed = TRUE
+  ))
 })
 
 test_that("continuous legends can use scale metadata for ramp picker config", {
@@ -75,7 +79,12 @@ test_that("continuous legends can use scale metadata for ramp picker config", {
       ),
       fill_color = scale$expression
     ) |>
-    add_legend("Values", colors = scale, layer_id = "values", ramp_picker = TRUE)
+    add_legend(
+      "Values",
+      colors = scale,
+      layer_id = "values",
+      ramp_picker = TRUE
+    )
 
   config <- map$x$legend_interactivity[[1]]
   expect_true(config$rampPicker)
@@ -112,7 +121,11 @@ test_that("bottom-positioned ramp pickers open upward", {
       ramp_picker = TRUE
     )
 
-  expect_match(map$x$legend_css, ".bottom-left .mapgl-ramp-picker-menu", fixed = TRUE)
+  expect_match(
+    map$x$legend_css,
+    ".bottom-left .mapgl-ramp-picker-menu",
+    fixed = TRUE
+  )
   expect_match(map$x$legend_css, "bottom: 4px", fixed = TRUE)
 })
 
@@ -186,7 +199,10 @@ test_that("bivariate_scale accepts custom breaks", {
 
 test_that("bivariate built-in palettes are inspectable", {
   palettes <- bivariate_palettes()
-  expect_true(all(c("blue_pink", "blue_red", "green_blue", "purple_orange") %in% names(palettes)))
+  expect_true(all(
+    c("blue_pink", "blue_red", "green_blue", "purple_orange") %in%
+      names(palettes)
+  ))
   expect_equal(dim(bivariate_palettes("blue_red")), c(3, 3))
   expect_error(bivariate_palettes("not-a-palette"), "Unknown bivariate palette")
 })

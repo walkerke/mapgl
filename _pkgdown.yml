@@ -62,6 +62,7 @@ reference:
       - add_fill_extrusion_layer
       - add_raster_layer
       - add_symbol_layer
+      - add_flowmap
       - add_view
 
   - title: "Data Sources"
@@ -90,6 +91,7 @@ reference:
       - add_geolocate_control
       - add_globe_control
       - add_screenshot_control
+      - add_time_control
       - add_coordinates_control
       - add_control
       - clear_controls
@@ -127,6 +129,7 @@ reference:
       - interpolate
       - match_expr
       - step_expr
+      - flowmap_color_schemes
       - get_column
       - concat
       - number_format
@@ -166,10 +169,14 @@ reference:
     desc: "Functions to modify and manage existing layers"
     contents:
       - set_filter
+      - set_flowmap_filter
       - set_paint_property
       - set_layout_property
       - set_tooltip
+      - tooltip_options
       - set_popup
+      - popup_options
+      - set_flowmap_settings
       - set_source
       - clear_layer
       - move_layer
@@ -211,6 +218,7 @@ reference:
     desc: "Functions for advanced mapping features"
     contents:
       - compare
+      - add_layer_tuner
       - add_globe_minimap
       - add_image
       - get_drawn_features

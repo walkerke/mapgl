@@ -1,0 +1,1018 @@
+(function() {
+  window.MapGLLayerTuner = {
+    init: function(map, x, el, HTMLWidgets) {
+      if (typeof lil === 'undefined') {
+        console.warn('lil-gui is not loaded. Layer tuner cannot be initialized.');
+        return;
+      }
+
+      if (map._layerTunerInitialized) return;
+      map._layerTunerInitialized = true;
+
+      const config = x.layer_tuner || x || {};
+
+      const cssLength = function(value, fallback) {
+        if (value === null || value === undefined || value === '') return fallback;
+        if (typeof value === 'number') return `${value}px`;
+        return String(value);
+      };
+      
+      const formatRValue = function(val) {
+        if (val === undefined || val === null) return 'NULL';
+        if (typeof val === 'string') return `"${val}"`;
+        if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+        if (typeof val === 'number') return val;
+        if (Array.isArray(val)) return `c(${val.map(formatRValue).join(', ')})`;
+        return JSON.stringify(val);
+      };
+
+      const copyToClipboardFallback = function(text) {
+        return new Promise(function(resolve, reject) {
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(resolve).catch(reject);
+          } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed'; textArea.style.top = '0'; textArea.style.left = '0'; textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.focus(); textArea.select();
+            try { if (document.execCommand('copy')) resolve(); else reject(); } catch (err) { reject(err); }
+            document.body.removeChild(textArea);
+          }
+        });
+      };
+
+      const getRName = function(type, prop) {
+        if (type === 'flowmap') {
+          if (prop === 'colorScheme') return 'flow_color_scheme';
+          if (prop === 'darkMode') return 'flow_dark_mode';
+          if (prop === 'opacity') return 'flow_opacity';
+          if (prop === 'blendMode') return 'flow_blend';
+          return 'flow_' + prop.replace(/([A-Z])/g, "_$1").toLowerCase();
+        }
+        return prop.replace(/-/g, '_');
+      };
+
+      const NAMED_COLORS = {
+        black: '#000000',
+        blue: '#0000ff',
+        cyan: '#00ffff',
+        gray: '#808080',
+        green: '#008000',
+        grey: '#808080',
+        orange: '#ffa500',
+        purple: '#800080',
+        red: '#ff0000',
+        transparent: '#000000',
+        white: '#ffffff',
+        yellow: '#ffff00'
+      };
+
+      const toTwoDigitHex = function(value) {
+        const numeric = Math.max(0, Math.min(255, Number(value)));
+        return Math.round(numeric).toString(16).padStart(2, '0');
+      };
+
+      const normalizeColorValue = function(value, fallback) {
+        if (Array.isArray(value)) {
+          if (value.length >= 3) {
+            return '#' + value.slice(0, 3).map(toTwoDigitHex).join('');
+          }
+          return fallback;
+        }
+        if (typeof value !== 'string') return fallback;
+        let trimmed = value.trim();
+        const lower = trimmed.toLowerCase();
+
+        if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed;
+        if (/^#[0-9a-f]{3}$/i.test(trimmed)) {
+          return '#' + trimmed.slice(1).split('').map(function(ch) {
+            return ch + ch;
+          }).join('');
+        }
+        if (/^[0-9a-f]{6}$/i.test(trimmed)) return '#' + trimmed;
+        if (/^[0-9a-f]{3}$/i.test(trimmed)) {
+          return '#' + trimmed.split('').map(function(ch) {
+            return ch + ch;
+          }).join('');
+        }
+
+        const rgbMatch = lower.match(/^rgba?\(([^)]+)\)$/);
+        if (rgbMatch) {
+          const parts = rgbMatch[1].split(',').map(function(part) {
+            return parseFloat(part.trim());
+          });
+          if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
+            return '#' + parts.slice(0, 3).map(toTwoDigitHex).join('');
+          }
+        }
+
+        if (NAMED_COLORS[lower]) return NAMED_COLORS[lower];
+
+        try {
+          const ctx = document.createElement('canvas').getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#000000';
+            ctx.fillStyle = trimmed;
+            const normalized = ctx.fillStyle;
+            if (/^#[0-9a-f]{6}$/i.test(normalized)) return normalized;
+          }
+        } catch (e) {}
+
+        return fallback;
+      };
+
+      const getExpandedSliderBounds = function(spec, value) {
+        let min = spec.min;
+        let max = spec.max;
+        if (!Number.isFinite(value)) return { min: min, max: max };
+
+        const range = Math.max(Math.abs(max - min), spec.step || 1);
+        const padding = Math.max(range * 0.25, spec.step || 1);
+        if (value < min) min = value - padding;
+        if (value > max) max = value + padding;
+
+        return { min: min, max: max };
+      };
+
+      const expandSliderToValue = function(controller, value, spec) {
+        if (!controller || !Number.isFinite(value)) return;
+        const currentMin = controller._min;
+        const currentMax = controller._max;
+        if (!Number.isFinite(currentMin) || !Number.isFinite(currentMax)) return;
+
+        const expanded = getExpandedSliderBounds(
+          { min: currentMin, max: currentMax, step: spec.step },
+          value
+        );
+
+        if (expanded.min !== currentMin && typeof controller.min === 'function') {
+          controller.min(expanded.min);
+        }
+        if (expanded.max !== currentMax && typeof controller.max === 'function') {
+          controller.max(expanded.max);
+        }
+      };
+
+      const attachSliderAutoExpansion = function(controller, spec) {
+        if (!controller || spec.type !== 'slider') return;
+        const input = controller.domElement &&
+          controller.domElement.querySelector &&
+          controller.domElement.querySelector('input');
+        if (!input) return;
+
+        input.addEventListener('input', function() {
+          const value = parseFloat(input.value);
+          if (!Number.isFinite(value)) return;
+          expandSliderToValue(controller, value, spec);
+          if (controller.getValue && controller.getValue() !== value) {
+            controller.setValue(value);
+          }
+        });
+      };
+
+      const TUNER_SCHEMA = {
+        'fill': {
+          'fill-antialias': { type: 'boolean', default: true, method: 'paint' },
+          'fill-color': { type: 'color', default: '#000000', method: 'paint' },
+          'fill-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'fill-outline-color': { type: 'color', default: '#000000', method: 'paint' },
+          'fill-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'fill-sort-key': { type: 'slider', min: 0, max: 100, step: 1, default: 0, method: 'layout' }
+        },
+        'line': {
+          'line-blur': { type: 'slider', min: 0, max: 20, step: 0.5, default: 0, method: 'paint' },
+          'line-cap': { type: 'select', options: ['butt', 'round', 'square'], default: 'butt', method: 'layout' },
+          'line-color': { type: 'color', default: '#000000', method: 'paint' },
+          'line-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'line-gap-width': { type: 'slider', min: 0, max: 30, step: 0.5, default: 0, method: 'paint' },
+          'line-join': { type: 'select', options: ['bevel', 'miter', 'round'], default: 'miter', method: 'layout' },
+          'line-miter-limit': { type: 'slider', min: 0, max: 20, step: 0.5, default: 2, method: 'layout' },
+          'line-offset': { type: 'slider', min: -20, max: 20, step: 0.5, default: 0, method: 'paint' },
+          'line-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'line-round-limit': { type: 'slider', min: 0, max: 20, step: 0.5, default: 1, method: 'layout' },
+          'line-sort-key': { type: 'slider', min: 0, max: 100, step: 1, default: 0, method: 'layout' },
+          'line-width': { type: 'slider', min: 0, max: 20, step: 0.5, default: 1, method: 'paint' }
+        },
+        'circle': {
+          'circle-blur': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'circle-color': { type: 'color', default: '#000000', method: 'paint' },
+          'circle-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'circle-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'circle-pitch-alignment': { type: 'select', options: ['map', 'viewport'], default: 'viewport', method: 'paint' },
+          'circle-pitch-scale': { type: 'select', options: ['map', 'viewport'], default: 'map', method: 'paint' },
+          'circle-radius': { type: 'slider', min: 0, max: 50, step: 0.5, default: 5, method: 'paint' },
+          'circle-sort-key': { type: 'slider', min: 0, max: 100, step: 1, default: 0, method: 'layout' },
+          'circle-stroke-color': { type: 'color', default: '#000000', method: 'paint' },
+          'circle-stroke-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'circle-stroke-width': { type: 'slider', min: 0, max: 10, step: 0.5, default: 0, method: 'paint' },
+          'circle-translate': { type: 'text', default: '0,0', method: 'paint' }
+        },
+        'symbol': {
+          'icon-allow-overlap': { type: 'boolean', default: false, method: 'layout' },
+          'icon-anchor': { type: 'select', options: ['center', 'left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'], default: 'center', method: 'layout' },
+          'icon-color': { type: 'color', default: '#ffffff', method: 'paint' },
+          'icon-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'icon-halo-blur': { type: 'slider', min: 0, max: 10, step: 0.5, default: 0, method: 'paint' },
+          'icon-halo-color': { type: 'color', default: '#000000', method: 'paint' },
+          'icon-halo-width': { type: 'slider', min: 0, max: 10, step: 0.5, default: 0, method: 'paint' },
+          'icon-ignore-placement': { type: 'boolean', default: false, method: 'layout' },
+          'icon-image': { type: 'text', default: '', method: 'layout' },
+          'icon-keep-upright': { type: 'boolean', default: false, method: 'layout' },
+          'icon-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'icon-optional': { type: 'boolean', default: false, method: 'layout' },
+          'icon-padding': { type: 'slider', min: 0, max: 50, step: 1, default: 2, method: 'layout' },
+          'icon-pitch-alignment': { type: 'select', options: ['map', 'viewport', 'auto'], default: 'auto', method: 'layout' },
+          'icon-rotate': { type: 'slider', min: 0, max: 360, step: 1, default: 0, method: 'layout' },
+          'icon-rotation-alignment': { type: 'select', options: ['map', 'viewport', 'auto'], default: 'auto', method: 'layout' },
+          'icon-size': { type: 'slider', min: 0.1, max: 5, step: 0.05, default: 1, method: 'layout' },
+          'text-allow-overlap': { type: 'boolean', default: false, method: 'layout' },
+          'text-anchor': { type: 'select', options: ['center', 'left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'], default: 'center', method: 'layout' },
+          'text-color': { type: 'color', default: '#000000', method: 'paint' },
+          'text-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'text-field': { type: 'text', default: '', method: 'layout' },
+          'text-halo-blur': { type: 'slider', min: 0, max: 10, step: 0.5, default: 0, method: 'paint' },
+          'text-halo-color': { type: 'color', default: '#000000', method: 'paint' },
+          'text-halo-width': { type: 'slider', min: 0, max: 10, step: 0.5, default: 0, method: 'paint' },
+          'text-ignore-placement': { type: 'boolean', default: false, method: 'layout' },
+          'text-justify': { type: 'select', options: ['auto', 'left', 'center', 'right'], default: 'auto', method: 'layout' },
+          'text-keep-upright': { type: 'boolean', default: true, method: 'layout' },
+          'text-letter-spacing': { type: 'slider', min: 0, max: 2, step: 0.05, default: 0, method: 'layout' },
+          'text-line-height': { type: 'slider', min: 0.5, max: 3, step: 0.1, default: 1.2, method: 'layout' },
+          'text-max-angle': { type: 'slider', min: 0, max: 360, step: 5, default: 45, method: 'layout' },
+          'text-max-width': { type: 'slider', min: 0, max: 50, step: 0.5, default: 10, method: 'layout' },
+          'text-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'text-padding': { type: 'slider', min: 0, max: 50, step: 1, default: 2, method: 'layout' },
+          'text-pitch-alignment': { type: 'select', options: ['map', 'viewport', 'auto'], default: 'auto', method: 'layout' },
+          'text-rotate': { type: 'slider', min: 0, max: 360, step: 1, default: 0, method: 'layout' },
+          'text-rotation-alignment': { type: 'select', options: ['map', 'viewport', 'auto'], default: 'auto', method: 'layout' },
+          'text-size': { type: 'slider', min: 4, max: 72, step: 1, default: 16, method: 'layout' },
+          'text-transform': { type: 'select', options: ['none', 'uppercase', 'lowercase'], default: 'none', method: 'layout' }
+        },
+        'heatmap': {
+          'heatmap-weight': { type: 'slider', min: 0, max: 10, step: 0.1, default: 1, method: 'paint' },
+          'heatmap-intensity': { type: 'slider', min: 0, max: 10, step: 0.1, default: 1, method: 'paint' },
+          'heatmap-radius': { type: 'slider', min: 0, max: 100, step: 1, default: 30, method: 'paint' },
+          'heatmap-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' }
+        },
+        'fill-extrusion': {
+          'fill-extrusion-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'fill-extrusion-color': { type: 'color', default: '#000000', method: 'paint' },
+          'fill-extrusion-height': { type: 'slider', min: 0, max: 5000, step: 10, default: 0, method: 'paint' },
+          'fill-extrusion-base': { type: 'slider', min: 0, max: 5000, step: 10, default: 0, method: 'paint' },
+          'fill-extrusion-vertical-gradient': { type: 'boolean', default: true, method: 'paint' },
+          'fill-extrusion-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' }
+        },
+        'raster': {
+          'raster-opacity': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'raster-hue-rotate': { type: 'slider', min: 0, max: 360, step: 1, default: 0, method: 'paint' },
+          'raster-brightness-min': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' },
+          'raster-brightness-max': { type: 'slider', min: 0, max: 1, step: 0.05, default: 1, method: 'paint' },
+          'raster-saturation': { type: 'slider', min: -1, max: 1, step: 0.1, default: 0, method: 'paint' },
+          'raster-contrast': { type: 'slider', min: -1, max: 1, step: 0.1, default: 0, method: 'paint' },
+          'raster-resampling': { type: 'select', options: ['linear', 'nearest'], default: 'linear', method: 'paint' },
+          'raster-fade-duration': { type: 'slider', min: 0, max: 1000, step: 10, default: 300, method: 'paint' },
+          'raster-emissive-strength': { type: 'slider', min: 0, max: 1, step: 0.05, default: 0, method: 'paint' }
+        }
+      };
+
+      const gui = new lil.GUI({ title: config.title || 'Layer Tuner 🎨', container: el });
+      map._layerTunerGui = gui;
+
+      // 1. Initial styles
+      const dom = gui.domElement;
+      const initialWidth = cssLength(config.width, '245px');
+      const initialHeight = cssLength(config.height, 'auto');
+      const initialMaxHeight = config.height ? 'none' : 'calc(100% - 20px)';
+      const initialPosition = config.position || 'top-left';
+      const applyInitialLayout = function() {
+        dom.style.top = 'auto';
+        dom.style.right = 'auto';
+        dom.style.bottom = 'auto';
+        dom.style.left = 'auto';
+        if (initialPosition.includes('bottom')) dom.style.bottom = '10px';
+        else dom.style.top = '10px';
+        if (initialPosition.includes('right')) dom.style.right = '10px';
+        else dom.style.left = '10px';
+        dom.style.width = initialWidth;
+        dom.style.height = initialHeight;
+        dom.style.maxHeight = initialMaxHeight;
+      };
+      dom.style.position = 'absolute'; dom.style.zIndex = '9999'; dom.style.display = 'flex'; dom.style.flexDirection = 'column';
+      applyInitialLayout();
+
+      const children = dom.querySelector('.children');
+      if (children) { children.style.flex = '1 1 auto'; children.style.overflowY = 'auto'; }
+
+      // Resize handles
+      const corners = ['tl', 'tr', 'bl', 'br'];
+      let isResizing = false, hasBeenManuallyResized = false, manualWidth = initialWidth, manualHeight = initialHeight;
+      corners.forEach(c => {
+        const handle = document.createElement('div');
+        handle.style.position = 'absolute'; handle.style.width = '12px'; handle.style.height = '12px'; handle.style.zIndex = '10001'; handle.style.background = 'transparent';
+        if (c==='tl') { handle.style.top='-4px'; handle.style.left='-4px'; handle.style.cursor='nw-resize'; }
+        else if (c==='tr') { handle.style.top='-4px'; handle.style.right='-4px'; handle.style.cursor='ne-resize'; }
+        else if (c==='bl') { handle.style.bottom='-4px'; handle.style.left='-4px'; handle.style.cursor='sw-resize'; }
+        else if (c==='br') { 
+          handle.style.bottom='-4px'; handle.style.right='-4px'; handle.style.cursor='se-resize'; 
+          handle.innerHTML = '<div style="position:absolute;bottom:6px;right:6px;width:0;height:0;border-style:solid;border-width:0 0 6px 6px;border-color:transparent transparent rgba(255,255,255,0.4) transparent;"></div>';
+        }
+        dom.appendChild(handle);
+        handle.onmousedown = (e) => {
+          isResizing = true; hasBeenManuallyResized = true;
+          dom.style.left = dom.offsetLeft + 'px'; dom.style.top = dom.offsetTop + 'px'; dom.style.right = 'auto'; dom.style.bottom = 'auto';
+          const sw = dom.offsetWidth, sh = dom.offsetHeight, sx = e.clientX, sy = e.clientY, st = dom.offsetTop, sl = dom.offsetLeft;
+          const onMove = (me) => {
+            if (!isResizing) return;
+            const dx = me.clientX - sx, dy = me.clientY - sy;
+            if (c.includes('r')) dom.style.width = Math.max(180, sw + dx) + 'px';
+            if (c.includes('l')) { const nw = Math.max(180, sw - dx); dom.style.width = nw + 'px'; dom.style.left = (sl + (sw - nw)) + 'px'; }
+            if (c.includes('b')) dom.style.height = Math.max(100, sh + dy) + 'px';
+            if (c.includes('t')) { const nh = Math.max(100, sh - dy); dom.style.height = nh + 'px'; dom.style.top = (st + (sh - nh)) + 'px'; }
+            manualWidth = dom.style.width; manualHeight = dom.style.height; dom.style.maxHeight = 'none';
+          };
+          const onUp = () => { isResizing = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+          window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
+          e.preventDefault(); e.stopPropagation();
+        };
+      });
+
+      gui.onOpenClose(g => {
+        if (g === gui) {
+          if (gui._closed) { dom.style.height = 'auto'; dom.querySelectorAll('div').forEach(d => { if(d.style.cursor.includes('resize')) d.style.display='none'; }); }
+          else {
+            if (hasBeenManuallyResized) { dom.style.width = manualWidth; dom.style.height = manualHeight; dom.style.maxHeight = 'none'; }
+            else applyInitialLayout();
+            dom.querySelectorAll('div').forEach(d => { if(d.style.cursor.includes('resize')) d.style.display='block'; });
+          }
+        }
+      });
+
+      map._layerTunerChanges = {};
+      const tunerState = { showMode: config.show_all_args ? 'All Options' : 'Customized', searchQuery: '', propSearchQuery: '' };
+      const allLayerControllers = [];
+      const layerFolders = [];
+      const layerMeta = {}; // To store initial values for reset
+      const HISTORY_LIMIT = 1000;
+      const undoStack = [];
+      const redoStack = [];
+      let currentSnapshot = null;
+      let isApplyingHistory = false;
+      let undoButton = null;
+      let redoButton = null;
+
+      const cloneHistoryValue = function(value) {
+        if (value === undefined || value === null) return value;
+        if (Array.isArray(value)) return value.map(cloneHistoryValue);
+        if (typeof value === 'object') {
+          const copy = {};
+          Object.keys(value).forEach(function(key) {
+            copy[key] = cloneHistoryValue(value[key]);
+          });
+          return copy;
+        }
+        return value;
+      };
+
+      const captureHistorySnapshot = function() {
+        const snapshot = {
+          layers: {},
+          changes: cloneHistoryValue(map._layerTunerChanges || {})
+        };
+
+        Object.keys(layerMeta).forEach(function(lid) {
+          const meta = layerMeta[lid];
+          if (meta.type === 'flowmap') {
+            snapshot.layers[lid] = {
+              type: 'flowmap',
+              state: cloneHistoryValue(meta.state)
+            };
+            return;
+          }
+
+          const raw = {};
+          Object.keys(TUNER_SCHEMA[meta.type]).forEach(function(p) {
+            const spec = TUNER_SCHEMA[meta.type][p];
+            try {
+              raw[p] = spec.method === 'paint' ?
+                map.getPaintProperty(lid, p) :
+                map.getLayoutProperty(lid, p);
+            } catch (e) {
+              raw[p] = undefined;
+            }
+          });
+
+          snapshot.layers[lid] = {
+            type: meta.type,
+            state: cloneHistoryValue(meta.state),
+            raw: cloneHistoryValue(raw)
+          };
+        });
+
+        return snapshot;
+      };
+
+      const updateHistoryButtons = function() {
+        if (undoButton) {
+          undoButton.disabled = undoStack.length === 0;
+          undoButton.style.opacity = undoButton.disabled ? '0.45' : '1';
+          undoButton.style.cursor = undoButton.disabled ? 'default' : 'pointer';
+        }
+        if (redoButton) {
+          redoButton.disabled = redoStack.length === 0;
+          redoButton.style.opacity = redoButton.disabled ? '0.45' : '1';
+          redoButton.style.cursor = redoButton.disabled ? 'default' : 'pointer';
+        }
+      };
+
+      const refreshCurrentSnapshot = function() {
+        currentSnapshot = captureHistorySnapshot();
+        updateHistoryButtons();
+      };
+
+      const recordHistory = function() {
+        if (isApplyingHistory || !currentSnapshot) return;
+        undoStack.push(cloneHistoryValue(currentSnapshot));
+        if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+        redoStack.length = 0;
+        updateHistoryButtons();
+      };
+
+      const applyHistorySnapshot = function(snapshot) {
+        if (!snapshot) return;
+        isApplyingHistory = true;
+        try {
+          Object.keys(snapshot.layers).forEach(function(lid) {
+            const meta = layerMeta[lid];
+            const layerSnapshot = snapshot.layers[lid];
+            if (!meta || !layerSnapshot) return;
+
+            if (meta.type === 'flowmap') {
+              Object.assign(meta.state, cloneHistoryValue(layerSnapshot.state));
+              const current = map._mapglFlowmapLayers;
+              if (current && current[meta.idx]) {
+                const updated = current[meta.idx].clone({
+                  colorScheme: meta.state.colorScheme,
+                  darkMode: meta.state.darkMode,
+                  opacity: meta.state.opacity,
+                  fadeAmount: meta.state.fadeAmount,
+                  highlightColor: meta.state.highlightColor,
+                  locationsEnabled: meta.state.locationsEnabled,
+                  locationTotalsEnabled: meta.state.locationTotalsEnabled,
+                  locationLabelsEnabled: meta.state.locationLabelsEnabled,
+                  flowLinesRenderingMode: meta.state.flowLinesRenderingMode,
+                  clusteringEnabled: meta.state.clusteringEnabled,
+                  clusteringAuto: meta.state.clusteringAuto,
+                  clusteringLevel: meta.state.clusteringAuto ? undefined : meta.state.clusteringLevel,
+                  fadeEnabled: meta.state.fadeEnabled,
+                  fadeOpacityEnabled: meta.state.fadeOpacityEnabled,
+                  adaptiveScalesEnabled: meta.state.adaptiveScalesEnabled,
+                  temporalScaleDomain: meta.state.temporalScaleDomain,
+                  animationEnabled: meta.state.animationEnabled,
+                  maxTopFlowsDisplayNum: meta.state.maxTopFlowsDisplayNum,
+                  flowEndpointsInViewportMode: meta.state.flowEndpointsInViewportMode
+                });
+                const newLayers = [...current];
+                newLayers[meta.idx] = updated;
+                map._mapglFlowmapLayers = newLayers;
+                if (map._mapglFlowmapOverlay || map._deckgl) {
+                  (map._mapglFlowmapOverlay || map._deckgl).setProps({
+                    layers: map._mapglFlowmapLayers
+                  });
+                }
+              }
+              if (map._deckCanvas) {
+                map._deckCanvas.style.mixBlendMode = meta.state.blendMode;
+              }
+              return;
+            }
+
+            Object.keys(layerSnapshot.raw || {}).forEach(function(p) {
+              const spec = TUNER_SCHEMA[meta.type][p];
+              const rawVal = layerSnapshot.raw[p] === undefined ?
+                null :
+                cloneHistoryValue(layerSnapshot.raw[p]);
+              try {
+                if (spec.method === 'paint') map.setPaintProperty(lid, p, rawVal);
+                else map.setLayoutProperty(lid, p, rawVal);
+              } catch (e) {
+                console.warn(`Layer Tuner: Failed applying history for ${lid}.${p}`, e);
+              }
+            });
+            Object.assign(meta.state, cloneHistoryValue(layerSnapshot.state));
+          });
+
+          map._layerTunerChanges = cloneHistoryValue(snapshot.changes || {});
+          if (map.triggerRepaint) map.triggerRepaint();
+          try {
+            gui.controllersRecursive().forEach(c => {
+              if (c && typeof c.updateDisplay === 'function') c.updateDisplay();
+            });
+            updateControllerVisibilities();
+          } catch (e) {
+            console.error('Layer Tuner: Failed updating UI after history change', e);
+          }
+        } finally {
+          isApplyingHistory = false;
+        }
+      };
+
+      const undoHistory = function() {
+        if (undoStack.length === 0 || !currentSnapshot) return;
+        redoStack.push(cloneHistoryValue(currentSnapshot));
+        const previous = undoStack.pop();
+        applyHistorySnapshot(previous);
+        currentSnapshot = cloneHistoryValue(previous);
+        updateHistoryButtons();
+      };
+
+      const redoHistory = function() {
+        if (redoStack.length === 0 || !currentSnapshot) return;
+        undoStack.push(cloneHistoryValue(currentSnapshot));
+        if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+        const next = redoStack.pop();
+        applyHistorySnapshot(next);
+        currentSnapshot = cloneHistoryValue(next);
+        updateHistoryButtons();
+      };
+
+      const updateControllerVisibilities = function() {
+        const showAll = tunerState.showMode === 'All Options';
+        const propQuery = (tunerState.propSearchQuery || '').toLowerCase();
+        allLayerControllers.forEach(function(meta) {
+          const rName = (meta.controller._name || '').toLowerCase();
+          const propMatches = !propQuery || rName.includes(propQuery);
+          const isTuned = map._layerTunerChanges[meta.layerId] && map._layerTunerChanges[meta.layerId].props[meta.prop] !== undefined;
+          const logicVisible = showAll || meta.originallyPresent || meta.hasInStyle || isTuned;
+          if (propMatches && logicVisible) meta.controller.show(); else meta.controller.hide();
+        });
+      };
+
+      const updateFolderVisibilities = function() {
+        const query = (tunerState.searchQuery || '').toLowerCase();
+        layerFolders.forEach(f => { const title = (f._title || '').toLowerCase(); if (!query || title.includes(query)) f.show(); else f.hide(); });
+      };
+
+      const applyLayerControllerValue = function(layerId, layerType, prop, spec, value, options) {
+        const shouldRecord = !options || options.record !== false;
+        const shouldRefresh = !options || options.refresh !== false;
+        try {
+          if (shouldRecord) recordHistory();
+          if (spec.method === 'paint') map.setPaintProperty(layerId, prop, value);
+          else map.setLayoutProperty(layerId, prop, value);
+          if (!map._layerTunerChanges[layerId]) {
+            map._layerTunerChanges[layerId] = { type: layerType, props: {} };
+          }
+          map._layerTunerChanges[layerId].props[prop] = {
+            method: spec.method,
+            value: value
+          };
+          updateControllerVisibilities();
+          if (shouldRefresh) refreshCurrentSnapshot();
+        } catch (e) {}
+      };
+
+      // 2. Export & Layout Reset
+      const exportCodeCtrl = gui.add({ exportCode: function() {
+        try {
+          const changes = map._layerTunerChanges;
+          const showAllArgs = tunerState.showMode === 'All Options';
+          let codeStr = '# Copy-paste this complete pipeline to recreate your styled map:\n\n';
+          const parts = []; const originalCalls = config.original_calls; const processedLayerIds = new Set();
+          if (originalCalls && Array.isArray(originalCalls) && originalCalls.length > 0) {
+            originalCalls.forEach(function(call) {
+              const fun = call.fun; const args = call.args.map(a => ({ name: a.name, value: a.value }));
+              let layerId = null; const idArg = args.find(a => a.name === 'id');
+              if (idArg) { layerId = idArg.value.replace(/^["']|["']$/g, ''); processedLayerIds.add(layerId); }
+              if (layerId) {
+                const layerChanges = changes[layerId];
+                if (fun === 'add_flowmap' && layerMeta[layerId] && layerMeta[layerId].type === 'flowmap') {
+                  const flowState = layerMeta[layerId].state;
+                  Object.keys(flowState).forEach(function(propName) {
+                    const rName = getRName('flowmap', propName);
+                    const propVal = flowState[propName];
+                    const isTuned = layerChanges && layerChanges.props && layerChanges.props[propName] !== undefined;
+                    const wasPresent = args.some(a => a.name === rName);
+                    if (wasPresent || isTuned || showAllArgs) {
+                      if (propVal === null || (propVal !== undefined && typeof propVal !== 'object')) {
+                        const formattedVal = formatRValue(propVal);
+                        const existing = args.find(a => a.name === rName);
+                        if (existing) existing.value = formattedVal;
+                        else args.push({ name: rName, value: formattedVal });
+                      }
+                    }
+                  });
+                }
+                const type = fun.startsWith('add_') && fun.endsWith('_layer') ? { 'add_circle_layer': 'circle', 'add_fill_layer': 'fill', 'add_line_layer': 'line', 'add_symbol_layer': 'symbol', 'add_heatmap_layer': 'heatmap', 'add_fill_extrusion_layer': 'fill-extrusion', 'add_raster_layer': 'raster' }[fun] : null;
+                if (type && TUNER_SCHEMA[type]) {
+                  const schema = TUNER_SCHEMA[type];
+                  Object.keys(schema).forEach(function(propName) {
+                    const rName = getRName(type, propName); let propVal = undefined;
+                    if (layerChanges && layerChanges.props[propName] !== undefined) propVal = layerChanges.props[propName].value;
+                    else if (args.some(a => a.name === rName) || showAllArgs) {
+                      try { propVal = schema[propName].method === 'paint' ? map.getPaintProperty(layerId, propName) : map.getLayoutProperty(layerId, propName); } catch (e) {}
+                      if (propVal === undefined || typeof propVal === 'object') propVal = schema[propName].default;
+                    }
+                    if (propVal === null || (propVal !== undefined && typeof propVal !== 'object')) {
+                      const formattedVal = formatRValue(propVal); const existing = args.find(a => a.name === rName);
+                      if (existing) existing.value = formattedVal; else args.push({ name: rName, value: formattedVal });
+                    }
+                  });
+                }
+              }
+              if (['maplibre', 'mapboxgl', 'maplibre_compare', 'mapboxgl_compare'].includes(fun)) {
+                const sArg = args.find(a => a.name === 'style');
+                if (sArg && sArg.value.includes('basemaps.cartocdn.com')) {
+                  const valStr = sArg.value.replace(/^["']|["']$/g, ''); const name = (valStr.split('/').slice(-2, -1)[0] || '').replace('-gl-style', '').replace('nolabels', 'no-labels');
+                  sArg.value = `carto_style("${name || 'dark-matter'}")`;
+                }
+                parts.push(`${fun}(\n${args.map(a => `  ${a.name} = ${a.value}`).join(',\n')}\n)`);
+              } else parts.push(`  ${fun}(\n${args.map(a => a.name ? `    ${a.name} = ${a.value}` : `    ${a.value}`).join(',\n')}\n  )`);
+            });
+          } else {
+            const mt = config.map_type === 'mapboxgl' ? 'mapboxgl' : 'maplibre';
+            let s = x.style || '';
+            if (s.includes('basemaps.cartocdn.com')) { const n = (s.split('/').slice(-2, -1)[0] || '').replace('-gl-style', '').replace('nolabels', 'no-labels'); s = `carto_style("${n || 'dark-matter'}")`; } else s = `"${s}"`;
+            parts.push(`${mt}(\n  style = ${s}${x.center ? `,\n  center = c(${x.center[0]}, ${x.center[1]})` : ''}${x.zoom ? `,\n  zoom = ${x.zoom}` : ''}\n)`);
+          }
+          const styleObj = map.getStyle();
+          if (styleObj && styleObj.layers) {
+            styleObj.layers.forEach(l => {
+              if (processedLayerIds.has(l.id) || (map._basemapLayerIds && map._basemapLayerIds.has(l.id))) return;
+              const typeMap = { 'circle': 'add_circle_layer', 'fill': 'add_fill_layer', 'line': 'add_line_layer', 'symbol': 'add_symbol_layer', 'heatmap': 'add_heatmap_layer', 'fill-extrusion': 'add_fill_extrusion_layer', 'raster': 'add_raster_layer' };
+              if (!typeMap[l.type] || !TUNER_SCHEMA[l.type]) return;
+              const rf = typeMap[l.type];
+              let lc = `  ${rf}(\n    id = "${l.id}",\n    source = "${l.source}"`;
+              const sch = TUNER_SCHEMA[l.type]; const lCh = (changes[l.id] && changes[l.id].props) || {};
+              Object.keys(sch).forEach(p => {
+                let v = lCh[p] ? lCh[p].value : (showAllArgs ? (function(){ try { return sch[p].method === 'paint' ? map.getPaintProperty(l.id, p) : map.getLayoutProperty(l.id, p); } catch(e){} })() : undefined);
+                if (v === undefined && showAllArgs) v = sch[p].default;
+                if (v === null || (v !== undefined && typeof v !== 'object')) lc += `,\n    ${getRName(l.type, p)} = ${formatRValue(v)}`;
+              });
+              parts.push(lc + '\n  )');
+            });
+          }
+          if (map._mapglFlowmapLayers) {
+            map._mapglFlowmapLayers.forEach(l => {
+              if (processedLayerIds.has(l.id)) return;
+              let lc = `  add_flowmap(\n    id = "${l.id}",\n    locations = locations_data,\n    flows = flows_data`;
+              const meta = layerMeta[l.id];
+              if (meta && meta.state) {
+                Object.keys(meta.state).forEach(p => {
+                  const rName = getRName('flowmap', p);
+                  const v = meta.state[p];
+                  if (v !== undefined && typeof v !== 'object') lc += `,\n    ${rName} = ${formatRValue(v)}`;
+                });
+              }
+              parts.push(lc + '\n  )');
+            });
+          }
+          codeStr += parts.join(' |>\n') + ' |>\n  add_layer_tuner()';
+          const overlay = document.createElement('div');
+          overlay.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:100000;display:flex;align-items:center;justify-content:center;';
+          overlay.innerHTML = `<div style="background:rgba(20,20,20,0.9);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#fff;padding:24px;width:85%;max-width:520px;box-shadow:0 20px 40px rgba(0,0,0,0.6);font-family:sans-serif;"><h3>Exported R Code 🚀</h3><p style="font-size:13px;color:#aaa;">Copy and paste into your R script.</p><pre id="tuner-code-block" style="background:rgba(0,0,0,0.4);padding:16px;overflow:auto;font-family:monospace;font-size:12px;color:#8ae4b4;max-height:300px;user-select:text;-webkit-user-select:text;"><code>${codeStr}</code></pre><div style="display:flex;justify-content:flex-end;gap:12px;"><button id="tuner-close-btn" style="padding:8px 18px;border-radius:6px;cursor:pointer;border:none;background:rgba(255,255,255,0.08);color:#eee;">Close</button><button id="tuner-copy-btn" style="padding:8px 18px;border-radius:6px;cursor:pointer;border:none;background:#00bcd4;color:#121212;font-weight:600;">Copy Code</button></div></div>`;
+          document.body.appendChild(overlay); document.getElementById('tuner-close-btn').onclick = () => document.body.removeChild(overlay);
+          document.getElementById('tuner-copy-btn').onclick = function() {
+            copyToClipboardFallback(codeStr).then(() => {
+              this.textContent = 'Copied! ✓'; this.style.background = '#4caf50'; this.style.color = '#fff';
+              setTimeout(() => { this.textContent = 'Copy Code'; this.style.background = '#00bcd4'; this.style.color = '#121212'; }, 2000);
+            });
+          };
+        } catch (err) { console.error('Export Error:', err); alert('Export failed. Check console.'); }
+      } }, 'exportCode').name('Export R Code 🚀');
+
+      const resetAllLayers = function() {
+        console.log('Layer Tuner: Global reset triggered');
+        recordHistory();
+        Object.keys(layerMeta).forEach(lid => {
+          try {
+            const meta = layerMeta[lid];
+            if (meta.type === 'flowmap') {
+              const current = map._mapglFlowmapLayers;
+              if (current && current[meta.idx]) {
+                const updated = current[meta.idx].clone({ ...meta.initial });
+                const newArr = [...current]; newArr[meta.idx] = updated; map._mapglFlowmapLayers = newArr;
+                if (map._mapglFlowmapOverlay || map._deckgl) (map._mapglFlowmapOverlay || map._deckgl).setProps({ layers: map._mapglFlowmapLayers });
+                Object.assign(meta.state, meta.initial);
+              }
+            } else {
+              Object.keys(meta.rawInitial).forEach(p => {
+                const spec = TUNER_SCHEMA[meta.type][p];
+                const rawVal = meta.rawInitial[p];
+                try {
+                  // If rawVal was undefined originally, some map properties cannot be unset to undefined.
+                  // Try to apply it, or gracefully fail.
+                  if (rawVal !== undefined) {
+                    if (spec.method === 'paint') map.setPaintProperty(lid, p, rawVal);
+                    else map.setLayoutProperty(lid, p, rawVal);
+                  }
+                } catch (e) { console.warn(`Layer Tuner: Reset property ${p} failed on ${lid}`, e); }
+                meta.state[p] = meta.initial[p]; // Update UI state
+              });
+            }
+            delete map._layerTunerChanges[lid];
+          } catch (e) { console.error(`Layer Tuner: Failed resetting layer ${lid}`, e); }
+        });
+        
+        try {
+          gui.controllersRecursive().forEach(c => { if(c && typeof c.updateDisplay === 'function') c.updateDisplay(); });
+          updateControllerVisibilities();
+          refreshCurrentSnapshot();
+        } catch (e) { console.error('Layer Tuner: Failed updating UI post-reset', e); }
+      };
+
+      gui.add({ resetAll: resetAllLayers }, 'resetAll').name('♻️ Reset All Layers');
+      gui.add({ resetLayout: function() { hasBeenManuallyResized = false; manualWidth = initialWidth; manualHeight = initialHeight; applyInitialLayout(); } }, 'resetLayout').name('🔄 Reset UI Layout');
+
+      // 3. Toggles & Filters
+      const modeRow = document.createElement('div');
+      modeRow.style.display = 'flex'; modeRow.style.gap = '2px'; modeRow.style.padding = '0 4px'; modeRow.style.margin = '4px 0';
+      const bCust = document.createElement('button'); bCust.textContent = '🎯 Customized'; bCust.style.flex = '1'; bCust.style.fontSize = '10px'; bCust.style.padding = '6px 0'; bCust.style.background = tunerState.showMode === 'Customized' ? '#00bcd4' : '#424242'; bCust.style.color = tunerState.showMode === 'Customized' ? '#121212' : '#fff'; bCust.style.border = 'none'; bCust.style.borderRadius = '2px'; bCust.style.cursor = 'pointer'; bCust.style.fontWeight = '600';
+      const bAll = document.createElement('button'); bAll.textContent = '🌐 All Options'; bAll.style.flex = '1'; bAll.style.fontSize = '10px'; bAll.style.padding = '6px 0'; bAll.style.background = tunerState.showMode === 'All Options' ? '#00bcd4' : '#424242'; bAll.style.color = tunerState.showMode === 'All Options' ? '#121212' : '#fff'; bAll.style.border = 'none'; bAll.style.borderRadius = '2px'; bAll.style.cursor = 'pointer'; bAll.style.fontWeight = '600';
+      const setMode = (m) => { tunerState.showMode = m; bCust.style.background = m === 'Customized' ? '#00bcd4' : '#424242'; bCust.style.color = m === 'Customized' ? '#121212' : '#fff'; bAll.style.background = m === 'All Options' ? '#00bcd4' : '#424242'; bAll.style.color = m === 'All Options' ? '#121212' : '#fff'; updateControllerVisibilities(); };
+      bCust.onclick = () => setMode('Customized'); bAll.onclick = () => setMode('All Options'); modeRow.appendChild(bCust); modeRow.appendChild(bAll); dom.querySelector('.children').prepend(modeRow);
+
+      const historyRow = document.createElement('div');
+      historyRow.style.display = 'flex'; historyRow.style.gap = '2px'; historyRow.style.padding = '0 4px'; historyRow.style.margin = '4px 0';
+      undoButton = document.createElement('button'); undoButton.innerHTML = '&#8630; Undo'; undoButton.title = `Undo previous tuning change (keeps up to ${HISTORY_LIMIT} states)`; undoButton.style.flex = '1'; undoButton.style.fontSize = '10px'; undoButton.style.padding = '5px 0'; undoButton.style.background = '#424242'; undoButton.style.color = '#fff'; undoButton.style.border = 'none'; undoButton.style.borderRadius = '2px'; undoButton.style.fontWeight = '600';
+      redoButton = document.createElement('button'); redoButton.innerHTML = '&#8631; Redo'; redoButton.title = `Redo tuning change (history keeps up to ${HISTORY_LIMIT} undo states)`; redoButton.style.flex = '1'; redoButton.style.fontSize = '10px'; redoButton.style.padding = '5px 0'; redoButton.style.background = '#424242'; redoButton.style.color = '#fff'; redoButton.style.border = 'none'; redoButton.style.borderRadius = '2px'; redoButton.style.fontWeight = '600';
+      undoButton.onclick = undoHistory; redoButton.onclick = redoHistory;
+      historyRow.appendChild(undoButton); historyRow.appendChild(redoButton);
+      dom.querySelector('.children').insertBefore(historyRow, modeRow.nextSibling);
+      updateHistoryButtons();
+
+      const searchCtrl = gui.add(tunerState, 'searchQuery').name('🔍 Filter Layers').onChange(updateFolderVisibilities);
+      try { const input = searchCtrl.domElement.querySelector('input'); if (input) input.addEventListener('input', function() { tunerState.searchQuery = this.value; updateFolderVisibilities(); }); } catch (e) {}
+      const propSearchCtrl = gui.add(tunerState, 'propSearchQuery').name('🔍 Filter Arguments').onChange(updateControllerVisibilities);
+      try { const input = propSearchCtrl.domElement.querySelector('input'); if (input) input.addEventListener('input', function() { tunerState.propSearchQuery = this.value; updateControllerVisibilities(); }); } catch (e) {}
+
+      const btnRow = document.createElement('div');
+      btnRow.style.display = 'flex'; btnRow.style.gap = '2px'; btnRow.style.padding = '0 4px'; btnRow.style.margin = '4px 0';
+      const bExpand = document.createElement('button'); bExpand.textContent = '📂 Expand All'; bExpand.style.flex = '1'; bExpand.style.fontSize = '10px'; bExpand.style.padding = '4px 0'; bExpand.style.background = '#424242'; bExpand.style.color = '#fff'; bExpand.style.border = 'none'; bExpand.style.borderRadius = '2px'; bExpand.style.cursor = 'pointer'; bExpand.onclick = () => layerFolders.forEach(f => f.open());
+      const bCollapse = document.createElement('button'); bCollapse.textContent = '📁 Collapse All'; bCollapse.style.flex = '1'; bCollapse.style.fontSize = '10px'; bCollapse.style.padding = '4px 0'; bCollapse.style.background = '#424242'; bCollapse.style.color = '#fff'; bCollapse.style.border = 'none'; bCollapse.style.borderRadius = '2px'; bCollapse.style.cursor = 'pointer'; bCollapse.onclick = () => layerFolders.forEach(f => f.close());
+      btnRow.appendChild(bExpand); btnRow.appendChild(bCollapse); dom.querySelector('.children').insertBefore(btnRow, searchCtrl.domElement);
+      dom.querySelector('.children').prepend(exportCodeCtrl.domElement);
+
+      // 4. Robust Draggability
+      const titleEl = dom.querySelector('.title');
+      if (titleEl) {
+        titleEl.style.cursor = 'move'; let dragging = false, moved = false, sx, sy, ex, ey;
+        titleEl.addEventListener('mousedown', (e) => {
+          if (e.button !== 0 || isResizing) return;
+          dragging = true; moved = false; sx = e.clientX; sy = e.clientY;
+          const r = dom.getBoundingClientRect(); const pr = el.getBoundingClientRect(); ex = r.left - pr.left; ey = r.top - pr.top;
+          dom.style.left = ex + 'px'; dom.style.top = ey + 'px'; dom.style.right = 'auto'; dom.style.bottom = 'auto';
+          dom.style.height = r.height + 'px'; dom.style.width = r.width + 'px'; dom.style.maxHeight = 'none';
+        });
+        window.addEventListener('mousemove', (e) => {
+          if (!dragging) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.hypot(dx, dy) > 5) moved = true;
+          if (moved) { const pr = el.getBoundingClientRect(); let nx = ex + dx, ny = ey + dy; nx = Math.max(0, Math.min(nx, pr.width - 50)); ny = Math.max(0, Math.min(ny, pr.height - 30)); dom.style.left = nx + 'px'; dom.style.top = ny + 'px'; }
+        });
+        window.addEventListener('mouseup', () => { dragging = false; if (!hasBeenManuallyResized && !gui._closed) { dom.style.height = 'auto'; dom.style.maxHeight = 'calc(100% - 20px)'; } });
+        titleEl.addEventListener('click', (e) => { if (moved) { e.stopImmediatePropagation(); e.preventDefault(); moved = false; } }, { capture: true });
+      }
+
+      // 5. Process Layers
+      const style = map.getStyle();
+      if (style && style.layers) {
+        style.layers.forEach(function(l) {
+          if ((map._basemapLayerIds && map._basemapLayerIds.has(l.id)) || !TUNER_SCHEMA[l.type]) return;
+          if (config.layers && config.layers !== 'all' && !config.layers.includes(l.id)) return;
+          const folder = gui.addFolder(`${l.type.toUpperCase()}: ${l.id}`);
+          folder.close(); layerFolders.push(folder);
+          const s = {}, initial = {}, rawInitial = {};
+          layerMeta[l.id] = { type: l.type, state: s, initial: initial, rawInitial: rawInitial };
+          Object.keys(TUNER_SCHEMA[l.type]).forEach(p => {
+            const spec = TUNER_SCHEMA[l.type][p]; let v = undefined;
+            try { v = spec.method === 'paint' ? map.getPaintProperty(l.id, p) : map.getLayoutProperty(l.id, p); } catch (e) {}
+            rawInitial[p] = v; // Store original format (could be an object/expression)
+            if (v === undefined || typeof v === 'object') v = spec.default;
+            if (spec.type === 'color') v = normalizeColorValue(v, spec.default);
+            s[p] = v; initial[p] = v;
+            let orig = false;
+            if (config.original_calls) {
+              const rn = getRName(l.type, p); const mc = config.original_calls.find(c => { const ia = c.args.find(a => a.name === 'id'); return ia && ia.value.replace(/^["']|["']$/g, '') === l.id; });
+              if (mc) orig = mc.args.some(a => a.name === rn);
+            }
+            const hasS = (spec.method === 'paint' && l.paint && l.paint[p] !== undefined) || (spec.method === 'layout' && l.layout && l.layout[p] !== undefined);
+            let ctrl;
+            if (spec.type === 'color') {
+              ctrl = folder.addColor(s, p);
+            } else if (spec.type === 'slider') {
+              const bounds = getExpandedSliderBounds(spec, s[p]);
+              ctrl = folder.add(s, p, bounds.min, bounds.max, spec.step);
+              attachSliderAutoExpansion(ctrl, spec);
+            } else {
+              ctrl = folder.add(s, p);
+            }
+            if (ctrl) {
+              ctrl.name(getRName(l.type, p)); allLayerControllers.push({ controller: ctrl, type: l.type, prop: p, layerId: l.id, originallyPresent: orig, hasInStyle: hasS });
+              if (spec.type === 'slider' && typeof ctrl.onFinishChange === 'function') {
+                ctrl.onChange(nv => {
+                  applyLayerControllerValue(l.id, l.type, p, spec, nv, {
+                    record: false,
+                    refresh: false
+                  });
+                });
+                ctrl.onFinishChange(nv => {
+                  applyLayerControllerValue(l.id, l.type, p, spec, nv);
+                });
+              } else {
+                ctrl.onChange(nv => {
+                  applyLayerControllerValue(l.id, l.type, p, spec, nv);
+                });
+              }
+            }
+          });
+          folder.add({ reset: function() {
+            console.log(`Layer Tuner: Resetting layer ${l.id}`);
+            try {
+              recordHistory();
+              Object.keys(rawInitial).forEach(p => {
+                const sp = TUNER_SCHEMA[l.type][p];
+                const rawVal = rawInitial[p];
+                try {
+                  if (rawVal !== undefined) {
+                    if (sp.method === 'paint') map.setPaintProperty(l.id, p, rawVal);
+                    else map.setLayoutProperty(l.id, p, rawVal);
+                  }
+                } catch(e) {}
+                s[p] = initial[p];
+              });
+              delete map._layerTunerChanges[l.id];
+              try {
+                folder.controllersRecursive().forEach(c => { if(c && typeof c.updateDisplay === 'function') c.updateDisplay(); });
+                updateControllerVisibilities();
+                refreshCurrentSnapshot();
+              } catch(e){}
+            } catch(e) { console.error(`Failed to reset layer ${l.id}`, e); }
+          }}, 'reset').name('♻️ Reset Layer');
+        });
+      }
+
+      // 6. Flowmaps
+      if (map._mapglFlowmapLayers) {
+        map._mapglFlowmapLayers.forEach((l, i) => {
+          const lid = l.id || `flowmap-${i}`; if (config.layers && config.layers !== 'all' && !config.layers.includes(lid)) return;
+          const folder = gui.addFolder(`FLOWMAP: ${lid}`); folder.close(); layerFolders.push(folder);
+          const initial = {
+            colorScheme: l.props.colorScheme || 'Teal',
+            darkMode: l.props.darkMode !== undefined ? l.props.darkMode : true,
+            opacity: l.props.opacity !== undefined ? l.props.opacity : 1,
+            blendMode: map._deckCanvas && map._deckCanvas.style.mixBlendMode ? map._deckCanvas.style.mixBlendMode : 'screen',
+            fadeAmount: l.props.fadeAmount !== undefined ? l.props.fadeAmount : 50,
+            highlightColor: normalizeColorValue(l.props.highlightColor, '#ff9b29'),
+            locationsEnabled: l.props.locationsEnabled !== undefined ? l.props.locationsEnabled : true,
+            locationTotalsEnabled: l.props.locationTotalsEnabled !== undefined ? l.props.locationTotalsEnabled : true,
+            locationLabelsEnabled: l.props.locationLabelsEnabled !== undefined ? l.props.locationLabelsEnabled : false,
+            flowLinesRenderingMode: l.props.flowLinesRenderingMode || 'straight',
+            clusteringEnabled: l.props.clusteringEnabled !== undefined ? l.props.clusteringEnabled : true,
+            clusteringAuto: l.props.clusteringAuto !== undefined ? l.props.clusteringAuto : true,
+            clusteringLevel: l.props.clusteringLevel !== undefined ? l.props.clusteringLevel : 5,
+            fadeEnabled: l.props.fadeEnabled !== undefined ? l.props.fadeEnabled : true,
+            fadeOpacityEnabled: l.props.fadeOpacityEnabled !== undefined ? l.props.fadeOpacityEnabled : false,
+            adaptiveScalesEnabled: l.props.adaptiveScalesEnabled !== undefined ? l.props.adaptiveScalesEnabled : true,
+            temporalScaleDomain: l.props.temporalScaleDomain || 'selected',
+            animationEnabled: l.props.animationEnabled !== undefined ? l.props.animationEnabled : false,
+            maxTopFlowsDisplayNum: l.props.maxTopFlowsDisplayNum || 5000,
+            flowEndpointsInViewportMode: l.props.flowEndpointsInViewportMode || 'any'
+          };
+          const fs = { ...initial };
+          layerMeta[lid] = { type: 'flowmap', state: fs, initial: initial, idx: i };
+          const up = (options) => {
+            try {
+              const shouldRecord = !options || options.record !== false;
+              const shouldRefresh = !options || options.refresh !== false;
+              if (shouldRecord) recordHistory();
+              const cur = map._mapglFlowmapLayers;
+              
+              // Handle animation toggle syncing
+              if (options && options.prop === 'animationEnabled') {
+                if (fs.animationEnabled) {
+                  fs.flowLinesRenderingMode = 'animated-straight';
+                } else if (fs.flowLinesRenderingMode === 'animated-straight') {
+                  fs.flowLinesRenderingMode = 'straight';
+                }
+                // Update display of rendering mode controller
+                try {
+                  const rmc = folder.controllersRecursive().find(c => c._name === 'flow_lines_rendering_mode');
+                  if (rmc) rmc.updateDisplay();
+                } catch(e) {}
+              } else if (options && options.prop === 'flowLinesRenderingMode') {
+                fs.animationEnabled = (fs.flowLinesRenderingMode === 'animated-straight');
+                try {
+                  const anc = folder.controllersRecursive().find(c => c._name === 'flow_animation_enabled');
+                  if (anc) anc.updateDisplay();
+                } catch(e) {}
+              }
+
+              const nL = cur[i].clone({
+                colorScheme: fs.colorScheme,
+                darkMode: fs.darkMode,
+                opacity: fs.opacity,
+                fadeAmount: fs.fadeAmount,
+                highlightColor: fs.highlightColor,
+                locationsEnabled: fs.locationsEnabled,
+                locationTotalsEnabled: fs.locationTotalsEnabled,
+                locationLabelsEnabled: fs.locationLabelsEnabled,
+                flowLinesRenderingMode: fs.flowLinesRenderingMode,
+                clusteringEnabled: fs.clusteringEnabled,
+                clusteringAuto: fs.clusteringAuto,
+                clusteringLevel: fs.clusteringAuto ? undefined : fs.clusteringLevel,
+                fadeEnabled: fs.fadeEnabled,
+                fadeOpacityEnabled: fs.fadeOpacityEnabled,
+                adaptiveScalesEnabled: fs.adaptiveScalesEnabled,
+                temporalScaleDomain: fs.temporalScaleDomain,
+                maxTopFlowsDisplayNum: fs.maxTopFlowsDisplayNum,
+                flowEndpointsInViewportMode: fs.flowEndpointsInViewportMode
+              });
+              const nArr = [...cur]; nArr[i] = nL; map._mapglFlowmapLayers = nArr;
+              (map._mapglFlowmapOverlay || map._deckgl).setProps({ layers: map._mapglFlowmapLayers }); if (map._deckCanvas) map._deckCanvas.style.mixBlendMode = fs.blendMode;
+              map._layerTunerChanges[lid] = { type: 'flowmap', props: { ...fs } }; if (map.triggerRepaint) map.triggerRepaint();
+              if (shouldRefresh) refreshCurrentSnapshot();
+            } catch (e) {}
+          };
+          const registerFlowmapController = function(controller, prop) {
+            controller.name(getRName('flowmap', prop));
+            let originallyPresent = false;
+            if (config.original_calls) {
+              const rn = getRName('flowmap', prop);
+              const mc = config.original_calls.find(c => {
+                const ia = c.args.find(a => a.name === 'id');
+                return ia && ia.value.replace(/^["']|["']$/g, '') === lid;
+              });
+              if (mc) originallyPresent = mc.args.some(a => a.name === rn);
+            }
+            if ((prop === 'opacity' || prop === 'fadeAmount') && typeof controller.onFinishChange === 'function') {
+              controller.onChange(function() {
+                up({ record: false, refresh: false, prop: prop });
+              });
+              controller.onFinishChange(function() {
+                up({ prop: prop });
+              });
+            } else {
+              controller.onChange(function() {
+                up({ prop: prop });
+              });
+            }
+            allLayerControllers.push({
+              controller: controller,
+              type: 'flowmap',
+              prop: prop,
+              layerId: lid,
+              originallyPresent: originallyPresent,
+              hasInStyle: false
+            });
+          };
+          registerFlowmapController(
+            folder.add(fs, 'colorScheme', config.flowmap_color_schemes || ['Teal', 'Blues', 'Burg', 'Sunset', 'Greens', 'Oranges', 'Purples', 'Reds']),
+            'colorScheme'
+          );
+          registerFlowmapController(folder.add(fs, 'darkMode'), 'darkMode');
+          registerFlowmapController(folder.add(fs, 'opacity', 0, 1, 0.05), 'opacity');
+          registerFlowmapController(
+            folder.add(fs, 'blendMode', ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity']),
+            'blendMode'
+          );
+          registerFlowmapController(folder.add(fs, 'fadeAmount', 0, 100, 1), 'fadeAmount');
+          registerFlowmapController(folder.addColor(fs, 'highlightColor'), 'highlightColor');
+          registerFlowmapController(folder.add(fs, 'locationsEnabled'), 'locationsEnabled');
+          registerFlowmapController(folder.add(fs, 'locationTotalsEnabled'), 'locationTotalsEnabled');
+          registerFlowmapController(folder.add(fs, 'locationLabelsEnabled'), 'locationLabelsEnabled');
+          registerFlowmapController(folder.add(fs, 'flowLinesRenderingMode', ['straight', 'animated-straight', 'curved']), 'flowLinesRenderingMode');
+          registerFlowmapController(folder.add(fs, 'clusteringEnabled'), 'clusteringEnabled');
+          registerFlowmapController(folder.add(fs, 'clusteringAuto'), 'clusteringAuto');
+          registerFlowmapController(folder.add(fs, 'clusteringLevel', 0, 20, 1), 'clusteringLevel');
+          registerFlowmapController(folder.add(fs, 'fadeEnabled'), 'fadeEnabled');
+          registerFlowmapController(folder.add(fs, 'fadeOpacityEnabled'), 'fadeOpacityEnabled');
+          registerFlowmapController(folder.add(fs, 'adaptiveScalesEnabled'), 'adaptiveScalesEnabled');
+          registerFlowmapController(folder.add(fs, 'temporalScaleDomain', ['selected', 'all']), 'temporalScaleDomain');
+          registerFlowmapController(folder.add(fs, 'maxTopFlowsDisplayNum', 100, 50000, 100), 'maxTopFlowsDisplayNum');
+          registerFlowmapController(folder.add(fs, 'flowEndpointsInViewportMode', ['any', 'both']), 'flowEndpointsInViewportMode');
+
+          folder.add({ reset: function() {
+            console.log(`Layer Tuner: Resetting flowmap ${lid}`);
+            try {
+              recordHistory();
+              Object.assign(fs, initial);
+              up({ record: false });
+              delete map._layerTunerChanges[lid];
+              try {
+                folder.controllersRecursive().forEach(c => { if(c && typeof c.updateDisplay === 'function') c.updateDisplay(); });
+                updateControllerVisibilities();
+                refreshCurrentSnapshot();
+              } catch(e){}
+            } catch(e) { console.error(`Failed to reset flowmap ${lid}`, e); }
+          }}, 'reset').name('♻️ Reset Layer');
+        });
+      }
+
+      if (config.collapsed) {
+        gui.close();
+      } else if (layerFolders.length <= 2) {
+        layerFolders.forEach(folder => folder.open());
+      }
+      refreshCurrentSnapshot(); updateControllerVisibilities(); updateFolderVisibilities();
+    }
+  };
+})();

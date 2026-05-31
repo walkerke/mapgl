@@ -95,6 +95,8 @@ add_layer <- function(
     )
   }
 
+  map <- mapgl_resolve_pending_flowmaps(map, before_id = id)
+
   map$x$layers <- c(
     map$x$layers,
     list(list(
@@ -114,6 +116,8 @@ add_layer <- function(
       filter = filter
     ))
   )
+
+  map <- mapgl_record_layer_order(map, id)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     layer <- list(

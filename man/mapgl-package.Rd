@@ -21,5 +21,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Kyle Walker \email{kyle@walker-data.com}
 
+Authors:
+\itemize{
+  \item Egor Kotov \email{kotov.egor@gmail.com} (\href{https://orcid.org/0000-0001-6690-5345}{ORCID}) (added Flowmap.gl, layer tuner, time control) [contributor]
+}
+
 }
 \keyword{internal}

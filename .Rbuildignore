@@ -1,5 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.vscode($|/)
 ^docs$
 ^vignettes$
 ^data-raw$
@@ -20,4 +21,5 @@ CLAUDE.md
 .DS_Store
 ^tools/check-save-map-integration\.R$
 ^tmp$
+^private($|/)
 ^\.dockerignore$

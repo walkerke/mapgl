@@ -485,6 +485,12 @@ HTMLWidgets.widget({
 
         // Set projection on style load (MapLibre doesn't support projection in constructor)
         beforeMap.on("style.load", function () {
+          if (!beforeMap._basemapLayerIds) {
+            beforeMap._basemapLayerIds = new Set(
+              beforeMap.getStyle().layers.map((layer) => layer.id),
+            );
+          }
+
           if (x.map1.projection) {
             beforeMap.setProjection({ type: x.map1.projection });
           }
@@ -506,6 +512,12 @@ HTMLWidgets.widget({
 
         // Set projection on style load (MapLibre doesn't support projection in constructor)
         afterMap.on("style.load", function () {
+          if (!afterMap._basemapLayerIds) {
+            afterMap._basemapLayerIds = new Set(
+              afterMap.getStyle().layers.map((layer) => layer.id),
+            );
+          }
+
           if (x.map2.projection) {
             afterMap.setProjection({ type: x.map2.projection });
           }
@@ -1157,6 +1169,22 @@ HTMLWidgets.widget({
                 }
                 layerState.layoutProperties[message.layer][message.name] =
                   message.value;
+              } else if (message.type === "set_flowmap_filter") {
+                if (window.MapGLFlowmapPlugin) {
+                  window.MapGLFlowmapPlugin.setFilter(
+                    map,
+                    message.id,
+                    message.filter,
+                  );
+                }
+              } else if (message.type === "set_flowmap_settings") {
+                if (window.MapGLFlowmapPlugin) {
+                  window.MapGLFlowmapPlugin.setSettings(
+                    map,
+                    message.id,
+                    message.settings,
+                  );
+                }
               } else if (message.type === "set_paint_property") {
                 const layerId = message.layer;
                 const propertyName = message.name;
@@ -3098,6 +3126,46 @@ HTMLWidgets.widget({
           }
         }
 
+        function ensureCompareLayerTunerHost(map) {
+          const side = map === beforeMap ? "before" : "after";
+          const hostId = `${el.id}-${side}-layer-tuner-host`;
+          let host = document.getElementById(hostId);
+          if (host) {
+            return host;
+          }
+
+          host = document.createElement("div");
+          host.id = hostId;
+          host.className = "mapgl-compare-layer-tuner-host";
+          host.style.position = "absolute";
+          host.style.zIndex = "10000";
+          host.style.pointerEvents = "none";
+          host.style.overflow = "visible";
+
+          if (x.orientation === "horizontal") {
+            host.style.left = "0";
+            host.style.width = "100%";
+            host.style.height = "50%";
+            if (side === "before") {
+              host.style.top = "0";
+            } else {
+              host.style.top = "50%";
+            }
+          } else {
+            host.style.top = "0";
+            host.style.width = "50%";
+            host.style.height = "100%";
+            if (side === "before") {
+              host.style.left = "0";
+            } else {
+              host.style.left = "50%";
+            }
+          }
+
+          el.appendChild(host);
+          return host;
+        }
+
         async function applyMapModifications(map, mapData) {
           // Initialize controls array if it doesn't exist
           if (!map.controls) {
@@ -3615,6 +3683,38 @@ HTMLWidgets.widget({
                 console.error("Failed to add layer: ", layer, e);
               }
             });
+          }
+
+          if (mapData.flowmaps) {
+            if (window.MapGLFlowmapPlugin) {
+              const flowmapEl = {
+                id: `${el.id}-${map === beforeMap ? "before" : "after"}`,
+              };
+              window.MapGLFlowmapPlugin.init(
+                map,
+                mapData,
+                flowmapEl,
+                HTMLWidgets,
+              );
+            } else {
+              console.error("Flowmap plugin is not loaded. Cannot add flowmap layers.");
+            }
+          }
+
+          if (
+            window.MapGLLayerTuner &&
+            mapData.layer_tuner &&
+            mapData.layer_tuner.enabled
+          ) {
+            window.MapGLLayerTuner.init(
+              map,
+              mapData,
+              ensureCompareLayerTunerHost(map),
+              HTMLWidgets,
+            );
+            if (map._layerTunerGui && map._layerTunerGui.domElement) {
+              map._layerTunerGui.domElement.style.pointerEvents = "auto";
+            }
           }
 
           // Set terrain if provided
@@ -4487,6 +4587,43 @@ HTMLWidgets.widget({
               mapData.layers_control.layers ||
               map.getStyle().layers.map((layer) => layer.id);
             let layersConfig = mapData.layers_control.layers_config;
+            const getLayerControlVisibility = (targetMap, layerId) => {
+              if (
+                window.MapGLFlowmapPlugin &&
+                window.MapGLFlowmapPlugin.hasLayer(targetMap, layerId)
+              ) {
+                return window.MapGLFlowmapPlugin.getVisibility(
+                  targetMap,
+                  layerId,
+                );
+              }
+              if (targetMap.getLayer(layerId)) {
+                return (
+                  targetMap.getLayoutProperty(layerId, "visibility") ||
+                  "visible"
+                );
+              }
+              return "visible";
+            };
+            const setLayerControlVisibility = (
+              targetMap,
+              layerId,
+              visibility,
+            ) => {
+              if (
+                window.MapGLFlowmapPlugin &&
+                window.MapGLFlowmapPlugin.setVisibility(
+                  targetMap,
+                  layerId,
+                  visibility,
+                )
+              ) {
+                return;
+              }
+              if (targetMap.getLayer(layerId)) {
+                targetMap.setLayoutProperty(layerId, "visibility", visibility);
+              }
+            };
 
             // If we have a layers_config, use that; otherwise fall back to original behavior
             if (layersConfig && Array.isArray(layersConfig)) {
@@ -4504,9 +4641,9 @@ HTMLWidgets.widget({
 
                 // Check if the first layer's visibility is set to "none" initially
                 const firstLayerId = layerIds[0];
-                const initialVisibility = map.getLayoutProperty(
+                const initialVisibility = getLayerControlVisibility(
+                  map,
                   firstLayerId,
-                  "visibility",
                 );
                 link.className = initialVisibility === "none" ? "" : "active";
 
@@ -4520,16 +4657,16 @@ HTMLWidgets.widget({
                     this.getAttribute("data-layer-ids"),
                   );
                   const firstLayerId = layerIds[0];
-                  const visibility = map.getLayoutProperty(
+                  const visibility = getLayerControlVisibility(
+                    map,
                     firstLayerId,
-                    "visibility",
                   );
 
                   const newVis = visibility === "visible" ? "none" : "visible";
                   const allMaps = [beforeMap, afterMap];
                   layerIds.forEach((layerId) => {
                     allMaps.forEach((m) => {
-                      try { m.setLayoutProperty(layerId, "visibility", newVis); } catch(err) {}
+                      setLayerControlVisibility(m, layerId, newVis);
                     });
                   });
                   this.className = newVis === "visible" ? "active" : "";
@@ -4553,15 +4690,15 @@ HTMLWidgets.widget({
                   e.preventDefault();
                   e.stopPropagation();
 
-                  const visibility = map.getLayoutProperty(
+                  const visibility = getLayerControlVisibility(
+                    map,
                     clickedLayer,
-                    "visibility",
                   );
 
                   // toggle on BOTH maps in the compare widget
                   const newVis = visibility === "visible" ? "none" : "visible";
                   [beforeMap, afterMap].forEach((m) => {
-                    try { m.setLayoutProperty(clickedLayer, "visibility", newVis); } catch(err) {}
+                    setLayerControlVisibility(m, clickedLayer, newVis);
                   });
                   this.className = newVis === "visible" ? "active" : "";
                 };

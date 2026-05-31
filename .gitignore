@@ -7,3 +7,4 @@ CLAUDE.md
 .claude
 tmp/
 examples/
+data-raw/flowmap-vendor/node_modules/
