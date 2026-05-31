@@ -228,27 +228,45 @@ window.MapGLFlowmapPlugin = (function () {
     });
   }
 
-  function getTooltipTemplate(tooltip, objectType) {
-    const template = tooltip[objectType];
-    if (template === false || template == null) {
-      return null;
-    }
-    if (template === true) {
-      return objectType === "location"
-        ? DEFAULT_LOCATION_TOOLTIP
-        : DEFAULT_FLOW_TOOLTIP;
-    }
-    return template;
-  }
-
-  function getTooltipHTML(config, info) {
-    const tooltip = config.tooltip || {};
+  function getTooltipHTML(config, info, behavior) {
+    const interaction = config[behavior] || {};
     const object = info && info.object;
-    if (!object || !object.type) {
+    if (!object) {
       return null;
     }
 
-    const template = getTooltipTemplate(tooltip, object.type);
+    // Determine object type if missing
+    let objectType = object.type;
+    if (!objectType) {
+      if (object.lat != null && object.lon != null) {
+        objectType = "location";
+      } else if (object.origin != null && object.dest != null) {
+        objectType = "flow";
+      }
+    }
+
+    if (!objectType) {
+      return null;
+    }
+
+    const templateConfig = interaction[objectType];
+    if (!templateConfig || templateConfig === false) {
+      return null;
+    }
+
+    let template;
+    if (templateConfig.kind === "column") {
+      template = object[templateConfig.value] || "";
+    } else {
+      if (templateConfig.value === true) {
+        template = objectType === "location"
+          ? DEFAULT_LOCATION_TOOLTIP
+          : DEFAULT_FLOW_TOOLTIP;
+      } else {
+        template = templateConfig.value;
+      }
+    }
+
     if (!template) {
       return null;
     }
@@ -309,43 +327,146 @@ window.MapGLFlowmapPlugin = (function () {
     return extra ? base + " " + extra : base;
   }
 
-  function showPopupTooltip(map, config, info, html) {
-    const Popup = getPopupConstructor();
-    if (!Popup) {
-      showElementTooltip(map, config, info, html);
+  function generateHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  function ensureCustomStyle(css, className) {
+    const selector = className || "mapgl-custom-" + generateHash(css);
+    const styleId = "style-" + selector;
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = "." + selector + " { " + css + " }";
+      document.head.appendChild(style);
+    }
+    return selector;
+  }
+
+  function showInteractiveUI(map, config, info, behavior) {
+    const interaction = config[behavior];
+    if (!interaction || !interaction.enabled) return;
+
+    const html = getTooltipHTML(config, info, behavior);
+    if (!html) {
+      if (behavior === "tooltip") hideFlowmapTooltip(map, config.id);
       return;
     }
-
-    const tooltip = config.tooltip || {};
-    const options = Object.assign(
-      {
-        closeButton: false,
-        closeOnClick: false,
-        maxWidth: "400px",
-      },
-      tooltip.options || {}
-    );
-    const baseClass = [
-      "mapgl-flowmap-tooltip",
-      "mapgl-flowmap-tooltip--" + (tooltip.theme || "light"),
-    ].join(" ");
-    options.className = mergeClassName(baseClass, options.className);
 
     const lngLat = getTooltipLngLat(map, info);
     if (!lngLat) {
-      hideFlowmapTooltip(map, config.id);
+      if (behavior === "tooltip") hideFlowmapTooltip(map, config.id);
       return;
     }
 
-    const store = getTooltipStore(map);
-    if (!store[config.id]) {
-      store[config.id] = {};
-    }
-    if (!store[config.id].popup) {
-      store[config.id].popup = new Popup(options);
+    // Dismiss existing interactions of other types if needed
+    if (behavior === "popup") {
+      hideFlowmapTooltip(map, config.id);
     }
 
-    store[config.id].popup.setLngLat(lngLat).setHTML(html).addTo(map);
+    const popupProps = interaction.popup_props || {};
+    let className = [
+      "mapgl-flowmap-tooltip",
+      "mapgl-flowmap-tooltip--" + (interaction.theme || "light"),
+    ].join(" ");
+
+    if (interaction.style === "anchored") {
+      const Popup = getPopupConstructor();
+      if (!Popup) return;
+
+      if (popupProps.css) {
+        const customClass = ensureCustomStyle(popupProps.css, popupProps.className);
+        className = mergeClassName(className, customClass);
+      } else if (popupProps.className) {
+        className = mergeClassName(className, popupProps.className);
+      }
+
+      const options = Object.assign(
+        {
+          closeButton: behavior === "popup",
+          closeOnClick: behavior === "popup" ? false : true,
+          maxWidth: "400px",
+        },
+        popupProps,
+        { className: className }
+      );
+
+      const store = getTooltipStore(map);
+      if (!store[config.id]) store[config.id] = {};
+
+      const storeKey = behavior === "popup" ? "clickPopup" : "popup";
+      
+      if (store[config.id][storeKey]) {
+        store[config.id][storeKey].remove();
+      }
+      
+      store[config.id][storeKey] = new Popup(options)
+        .setLngLat(lngLat)
+        .setHTML(html)
+        .addTo(map);
+
+    } else {
+      // Floating mode
+      const point = getTooltipPoint(map, info);
+      if (!point || !map || typeof map.getContainer !== "function") return;
+
+      const store = getTooltipStore(map);
+      if (!store[config.id]) store[config.id] = {};
+      
+      const storeKey = behavior === "popup" ? "clickElement" : "element";
+
+      if (!store[config.id][storeKey]) {
+        const element = document.createElement("div");
+        element.style.position = "absolute";
+        element.style.zIndex = "1000";
+        map.getContainer().appendChild(element);
+        store[config.id][storeKey] = element;
+      }
+
+      const element = store[config.id][storeKey];
+      
+      // Use the example-tooltip classes for floating mode to get the background/border
+      let floatingClassName = [
+        "mapgl-flowmap-example-tooltip",
+        "mapgl-flowmap-example-tooltip--" + (interaction.theme || "light"),
+        "flowmap-tooltip"
+      ].join(" ");
+
+      if (popupProps.css) {
+        const customClass = ensureCustomStyle(popupProps.css, popupProps.className);
+        floatingClassName = mergeClassName(floatingClassName, customClass);
+      } else if (popupProps.className) {
+        floatingClassName = mergeClassName(floatingClassName, popupProps.className);
+      }
+
+      element.className = floatingClassName;
+      element.innerHTML = html;
+      
+      const offset = getElementOffset(popupProps);
+      element.style.left = point.x + offset[0] + "px";
+      element.style.top = point.y + offset[1] + "px";
+      element.style.display = "block";
+      element.style.pointerEvents = behavior === "popup" ? "auto" : "none";
+
+      if (behavior === "popup") {
+        // Delayed listener to avoid immediate dismissal from bubbling
+        setTimeout(() => {
+          const closeHandler = (e) => {
+            // Don't close if we clicked inside the popup element itself
+            if (element.contains(e.target)) return;
+            element.style.display = "none";
+            map.off("click", closeHandler);
+          };
+          map.on("click", closeHandler);
+        }, 100);
+      }
+    }
   }
 
   function getElementOffset(options) {
@@ -357,53 +478,6 @@ window.MapGLFlowmapPlugin = (function () {
       return [offset, offset];
     }
     return [10, 10];
-  }
-
-  function showElementTooltip(map, config, info, html) {
-    const tooltip = config.tooltip || {};
-    const point = getTooltipPoint(map, info);
-    if (!point || !map || typeof map.getContainer !== "function") {
-      return;
-    }
-
-    const store = getTooltipStore(map);
-    if (!store[config.id]) {
-      store[config.id] = {};
-    }
-
-    if (!store[config.id].element) {
-      const element = document.createElement("div");
-      element.className = [
-        "flowmap-tooltip",
-        "mapgl-flowmap-example-tooltip",
-        "mapgl-flowmap-example-tooltip--" + (tooltip.theme || "dark"),
-      ].join(" ");
-      map.getContainer().appendChild(element);
-      store[config.id].element = element;
-    }
-
-    const element = store[config.id].element;
-    const offset = getElementOffset(tooltip.options || {});
-    element.innerHTML = html;
-    element.style.left = point.x + offset[0] + "px";
-    element.style.top = point.y + offset[1] + "px";
-    element.style.display = "block";
-  }
-
-  function showFlowmapTooltip(map, config, info) {
-    const html = getTooltipHTML(config, info);
-    if (!html) {
-      hideFlowmapTooltip(map, config.id);
-      return;
-    }
-
-    hideOtherFlowmapTooltips(map, config.id);
-
-    if (config.tooltip && config.tooltip.style === "flowmap") {
-      showElementTooltip(map, config, info, html);
-    } else {
-      showPopupTooltip(map, config, info, html);
-    }
   }
 
   function ensureOverlay(map, interleaved, elId, settings) {
@@ -556,40 +630,80 @@ window.MapGLFlowmapPlugin = (function () {
       map.on("moveend", syncViewState);
       syncViewState();
 
-      // Forward mouse events from Mapbox to standalone Deck for picking / hover tooltips
+      // Forward mouse events from Mapbox to standalone Deck for picking / hover tooltips.
+      // We manually delegate hover and click events to the deck.gl sublayers, which
+      // automatically propagates them up to the composite FlowmapLayer. This ensures
+      // that the composite layer's internal highlight state is updated synchronously,
+      // and its async picking info enrichment is executed before calling our custom handlers.
       const onMapMouseMove = (e) => {
         if (!deckInstance || !map._mapglFlowmapLayers || map._mapglFlowmapLayers.length === 0) return;
         const { x, y } = e.point;
         try {
           const info = deckInstance.pickObject({ x, y, radius: 2 });
-          map.getCanvas().style.cursor = info ? "pointer" : '';
+          map.getCanvas().style.cursor = info ? "pointer" : "";
 
-          if (info && info.layer && (info.layer.onHover || (info.layer.props && info.layer.props.onHover))) {
+          if (info && info.layer) {
+            const event = { srcEvent: e.originalEvent || e };
             info.x = x;
             info.y = y;
             info.lngLat = e.lngLat;
             if (e.lngLat) {
               info.coordinate = [e.lngLat.lng, e.lngLat.lat];
             }
-            const event = { srcEvent: e.originalEvent || e };
             if (typeof info.layer.onHover === "function") {
               info.layer.onHover(info, event);
-            } else {
+            } else if (info.layer.props && typeof info.layer.props.onHover === "function") {
               info.layer.props.onHover(info, event);
             }
           } else {
             hideAllFlowmapTooltips(map);
+            // Also notify active flowmap layers that hover has ended, to clear highlights
+            map._mapglFlowmapLayers.forEach((layer) => {
+              if (layer.props && typeof layer.props.onHover === "function") {
+                layer.props.onHover({ index: -1 }, {});
+              }
+            });
           }
         } catch (err) {
-          // Ignore deck.gl assertion failures during rapid scrubbing
-          // console.warn('Deck.gl picking error:', err);
+          // Ignore deck.gl picking errors during init / rapid movement
+        }
+      };
+
+      const onMapClick = (e) => {
+        if (!deckInstance || !map._mapglFlowmapLayers || map._mapglFlowmapLayers.length === 0) return;
+        const { x, y } = e.point;
+        try {
+          const info = deckInstance.pickObject({ x, y, radius: 5 });
+          if (info && info.layer) {
+            const event = { srcEvent: e.originalEvent || e };
+            info.x = x;
+            info.y = y;
+            info.lngLat = e.lngLat;
+            if (e.lngLat) {
+              info.coordinate = [e.lngLat.lng, e.lngLat.lat];
+            }
+            if (typeof info.layer.onClick === "function") {
+              info.layer.onClick(info, event);
+            } else if (info.layer.props && typeof info.layer.props.onClick === "function") {
+              info.layer.props.onClick(info, event);
+            }
+          }
+        } catch (err) {
+          // Ignore deck.gl picking errors
         }
       };
 
       if (!map._hasDeckMoveListener) {
         map.on("mousemove", onMapMouseMove);
+        map.on("click", onMapClick);
         map.on("mouseout", function () {
           hideAllFlowmapTooltips(map);
+          // Clear hover highlights on mouseout
+          map._mapglFlowmapLayers.forEach((layer) => {
+            if (layer.props && typeof layer.props.onHover === "function") {
+              layer.props.onHover({ index: -1 }, {});
+            }
+          });
         });
         map._hasDeckMoveListener = true;
       }
@@ -730,9 +844,16 @@ window.MapGLFlowmapPlugin = (function () {
 
     if (config.tooltip && config.tooltip.enabled) {
       layerProps.onHover = function (info) {
-        showFlowmapTooltip(map, config, info);
+        showInteractiveUI(map, config, info, "tooltip");
       };
     }
+
+    if (config.popup && config.popup.enabled) {
+      layerProps.onClick = function (info) {
+        showInteractiveUI(map, config, info, "popup");
+      };
+    }
+
 
     return makeFlowmapLayer(layerProps);
   }

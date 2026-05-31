@@ -65,16 +65,16 @@ test_that("add_flowmap serializes minimal flowmap config", {
 })
 
 test_that("add_flowmap serializes flowmap tooltip options", {
-  no_tooltip <- flowmap_test_map()
+  no_tooltip <- flowmap_test_map(tooltip = FALSE)
   expect_null(no_tooltip$x$flowmaps[[1]]$tooltip)
 
   default_tooltip <- flowmap_test_map(tooltip = TRUE)
   tooltip <- default_tooltip$x$flowmaps[[1]]$tooltip
   expect_true(tooltip$enabled)
-  expect_equal(tooltip$style, "mapgl")
+  expect_equal(tooltip$style, "floating")
   expect_equal(tooltip$theme, "light")
-  expect_true(tooltip$location)
-  expect_true(tooltip$flow)
+  expect_equal(tooltip$location, list(kind = "template", value = TRUE))
+  expect_equal(tooltip$flow, list(kind = "template", value = TRUE))
 
   dark_tooltip <- mapboxgl(
     style = mapbox_style("dark"),
@@ -90,36 +90,37 @@ test_that("add_flowmap serializes flowmap tooltip options", {
   expect_equal(dark_tooltip$x$flowmaps[[1]]$tooltip$theme, "dark")
 
   custom <- flowmap_test_map(
-    tooltip = flowmap_tooltip(
-      location = "<strong>{name}</strong>",
-      flow = "{origin.id} -> {dest.id}: {count}",
-      style = "flowmap",
+    tooltip = tooltip_options(
+      template = list(
+        location = "<strong>{name}</strong>",
+        flow = "{origin.id} -> {dest.id}: {count}"
+      ),
       theme = "dark",
-      options = list(offset = c(12, 14))
+      offset = c(12, 14)
     )
   )
   tooltip <- custom$x$flowmaps[[1]]$tooltip
-  expect_equal(tooltip$style, "flowmap")
+  expect_equal(tooltip$style, "floating")
   expect_equal(tooltip$theme, "dark")
-  expect_equal(tooltip$location, "<strong>{name}</strong>")
-  expect_equal(tooltip$flow, "{origin.id} -> {dest.id}: {count}")
-  expect_equal(tooltip$options$offset, c(12, 14))
+  expect_equal(tooltip$location, list(kind = "template", value = "<strong>{name}</strong>"))
+  expect_equal(tooltip$flow, list(kind = "template", value = "{origin.id} -> {dest.id}: {count}"))
+  expect_equal(tooltip$popup_props$offset, c(12, 14))
 
   same_template <- flowmap_test_map(tooltip = "{count}")
-  expect_equal(same_template$x$flowmaps[[1]]$tooltip$location, "{count}")
-  expect_equal(same_template$x$flowmaps[[1]]$tooltip$flow, "{count}")
+  expect_equal(same_template$x$flowmaps[[1]]$tooltip$location, list(kind = "template", value = "{count}"))
+  expect_equal(same_template$x$flowmaps[[1]]$tooltip$flow, list(kind = "template", value = "{count}"))
 
   flow_only <- flowmap_test_map(
     tooltip = list(location = FALSE, flow = "{count}")
   )
   expect_false(flow_only$x$flowmaps[[1]]$tooltip$location)
-  expect_equal(flow_only$x$flowmaps[[1]]$tooltip$flow, "{count}")
+  expect_equal(flow_only$x$flowmaps[[1]]$tooltip$flow, list(kind = "template", value = "{count}"))
 })
 
 test_that("add_flowmap validates flowmap tooltip options", {
   expect_error(
     flowmap_test_map(tooltip = 1),
-    "must be `TRUE`, `FALSE`, `NULL`, a template string"
+    "must be TRUE, FALSE, NULL, a template string"
   )
   expect_error(
     flowmap_test_map(tooltip_style = "native", tooltip = TRUE),
@@ -131,27 +132,19 @@ test_that("add_flowmap validates flowmap tooltip options", {
   )
   expect_error(
     flowmap_test_map(tooltip = list(location = c("a", "b"))),
-    "tooltip\\$location"
+    "templates for `location`"
   )
   expect_error(
     flowmap_test_map(tooltip = TRUE, tooltip_options = c(offset = 1)),
     "`tooltip_options` must be a named list"
   )
   expect_error(
-    flowmap_tooltip(options = list(1)),
-    "`options` must be a named list"
+    tooltip_options(template = TRUE, theme = "auto", render_mode = "floating", list(1)),
+    "Additional popup properties must be named"
   )
   expect_error(
-    flowmap_tooltip(location = c("a", "b")),
-    "`location` must be `TRUE`, `FALSE`, or a template string"
-  )
-  expect_error(
-    flowmap_tooltip(flow = NA),
-    "`flow` must be `TRUE`, `FALSE`, or a template string"
-  )
-  expect_error(
-    flowmap_tooltip(options = stats::setNames(list(1), NA_character_)),
-    "`options` must be a named list"
+    flowmap_test_map(tooltip = tooltip_options(template = list(location = c("a", "b")))),
+    "Interaction templates for `location` must be TRUE, FALSE, or a string"
   )
 })
 
@@ -755,9 +748,7 @@ test_that("flowmap plugin includes tooltip renderers", {
   )
 
   expect_match(js, "DEFAULT_LOCATION_TOOLTIP", fixed = TRUE)
-  expect_match(js, "showPopupTooltip", fixed = TRUE)
-  expect_match(js, "showElementTooltip", fixed = TRUE)
-  expect_match(js, "showFlowmapTooltip", fixed = TRUE)
+  expect_match(js, "showInteractiveUI", fixed = TRUE)
   expect_match(js, "getTooltipStore(map)", fixed = TRUE)
   expect_match(js, "hideOtherFlowmapTooltips", fixed = TRUE)
   expect_match(js, "layerProps.onHover", fixed = TRUE)

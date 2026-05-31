@@ -16,64 +16,7 @@ flowmap_color_schemes <- function() {
   flowmap_color_scheme_registry()
 }
 
-#' Configure FlowmapGL tooltips
-#'
-#' Creates a tooltip configuration for [add_flowmap()].
-#'
-#' @param location Location tooltip template, `TRUE` for the default location
-#'   tooltip, or `FALSE` to disable location tooltips.
-#' @param flow Flow tooltip template, `TRUE` for the default flow tooltip, or
-#'   `FALSE` to disable flow tooltips.
-#' @param style Tooltip style. `"mapgl"` uses the same popup style as other
-#'   mapgl layers; `"flowmap"` uses the upstream Flowmap.gl example style.
-#' @param theme Tooltip theme. `"auto"` follows `flow_dark_mode`; `"light"`
-#'   and `"dark"` force a theme.
-#' @param options A named list of renderer-specific options. For mapgl-style
-#'   tooltips, common popup options such as `maxWidth`, `offset`, `anchor`, and
-#'   `className` may be used.
-#'
-#' @return A flowmap tooltip configuration object.
-#' @export
-#'
-#' @examples
-#' flowmap_tooltip(
-#'   location = "<strong>{name}</strong><br>Incoming: {totals.incomingCount}",
-#'   flow = "<strong>{origin.id} to {dest.id}</strong><br>{count}",
-#'   style = "flowmap"
-#' )
-flowmap_tooltip <- function(
-  location = TRUE,
-  flow = TRUE,
-  style = c("mapgl", "flowmap"),
-  theme = c("auto", "light", "dark"),
-  options = list()
-) {
-  style <- match.arg(style)
-  theme <- match.arg(theme)
 
-  if (
-    !is.list(options) ||
-      (!is.null(names(options)) && anyNA(names(options))) ||
-      (length(options) > 0 &&
-        (is.null(names(options)) || any(!nzchar(names(options)))))
-  ) {
-    rlang::abort("`options` must be a named list.")
-  }
-
-  location <- flowmap_validate_tooltip_template(location, "location")
-  flow <- flowmap_validate_tooltip_template(flow, "flow")
-
-  structure(
-    list(
-      location = location,
-      flow = flow,
-      style = style,
-      theme = theme,
-      options = options
-    ),
-    class = "mapgl_flowmap_tooltip"
-  )
-}
 
 #' Adds a FlowmapGL layer for visualizing origin-destination flows between
 #' point locations.
@@ -134,15 +77,21 @@ flowmap_tooltip <- function(
 #' @param flow_selected_locations Optional vector of location IDs to select.
 #' @param flow_location_filter_mode Optional location filter mode: `"ALL"`, `"INCOMING"`, `"OUTGOING"`, or `"BETWEEN"`.
 #' @param tooltip Tooltip configuration. Use `FALSE` or `NULL` to disable
-#'   tooltips, `TRUE` for default tooltips, a single template string for both
-#'   location and flow hovers, a named list with `location` and/or `flow`
-#'   templates, or a [flowmap_tooltip()] object.
-#' @param tooltip_style Tooltip style used when `tooltip` is not a
-#'   [flowmap_tooltip()] object. `"mapgl"` uses the same popup style as other
-#'   mapgl layers; `"flowmap"` uses the upstream Flowmap.gl example style.
+#'   tooltips, `TRUE` for default tooltips, a single template string,
+#'   a named list, or a [tooltip_options()] object.
+#' @param popup Popup configuration. Use `FALSE` or `NULL` to disable
+#'   popups, `TRUE` for default popups, a single template string,
+#'   a named list, or a [popup_options()] object.
+#' @param tooltip_style Tooltip rendering style: `"floating"` (cursor-following)
+#'   or `"anchored"` (fixed to feature).
+#' @param popup_style Popup rendering style: `"floating"` (at click position)
+#'   or `"anchored"` (fixed to feature).
 #' @param tooltip_theme Tooltip theme. `"auto"` follows `flow_dark_mode`;
 #'   `"light"` and `"dark"` force a theme.
+#' @param popup_theme Popup theme. `"auto"` follows `flow_dark_mode`;
+#'   `"light"` and `"dark"` force a theme.
 #' @param tooltip_options A named list of renderer-specific tooltip options.
+#' @param popup_options A named list of renderer-specific popup options.
 #' @param visibility Whether the layer is initially `"visible"` or `"none"`.
 #' @param before_id Optional map layer ID to render before.
 #' @param slot Optional Mapbox Standard slot.
@@ -212,10 +161,14 @@ add_flowmap <- function(
   flow_selected_time_range = NULL,
   flow_selected_locations = NULL,
   flow_location_filter_mode = c("ALL", "INCOMING", "OUTGOING", "BETWEEN"),
-  tooltip = FALSE,
-  tooltip_style = c("mapgl", "flowmap"),
+  tooltip = TRUE,
+  popup = FALSE,
+  tooltip_style = c("floating", "anchored"),
+  popup_style = c("floating", "anchored"),
   tooltip_theme = c("auto", "light", "dark"),
-  tooltip_options = NULL,
+  popup_theme = c("auto", "light", "dark"),
+  tooltip_options = list(),
+  popup_options = list(),
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -252,12 +205,30 @@ add_flowmap <- function(
   }
 
   flow_dark_mode <- flowmap_validate_dark_mode(flow_dark_mode)
-  tooltip_config <- flowmap_normalize_tooltip(
+
+  # Normalize interactions
+  tooltip_config <- flowmap_normalize_interaction(
     tooltip,
     style = tooltip_style,
     theme = tooltip_theme,
-    options = tooltip_options,
-    dark_mode = flow_dark_mode
+    popup_props = tooltip_options,
+    dark_mode = flow_dark_mode,
+    behavior = "hover",
+    default_enabled = TRUE,
+    locations_df = locations,
+    flows_df = flows
+  )
+
+  popup_config <- flowmap_normalize_interaction(
+    popup,
+    style = popup_style,
+    theme = popup_theme,
+    popup_props = popup_options,
+    dark_mode = flow_dark_mode,
+    behavior = "click",
+    default_enabled = FALSE,
+    locations_df = locations,
+    flows_df = flows
   )
 
   use_interleaved <- !is.null(before_id) || !is.null(slot)
@@ -456,6 +427,10 @@ add_flowmap <- function(
 
   if (isTRUE(tooltip_config$enabled)) {
     flowmap_config$tooltip <- tooltip_config
+  }
+
+  if (isTRUE(popup_config$enabled)) {
+    flowmap_config$popup <- popup_config
   }
 
   if (is.null(map$x$flowmaps)) {
@@ -853,135 +828,112 @@ flowmap_validate_single_string <- function(value, arg) {
   value
 }
 
-flowmap_normalize_tooltip <- function(
-  tooltip,
+flowmap_normalize_interaction <- function(
+  input,
   style,
   theme,
-  options,
-  dark_mode
+  popup_props,
+  dark_mode,
+  behavior,
+  default_enabled,
+  locations_df,
+  flows_df
 ) {
-  if (is.null(tooltip) || identical(tooltip, FALSE)) {
+  option_name <- if (behavior == "hover") "tooltip_options" else "popup_options"
+  if (!is.list(popup_props)) {
+    rlang::abort(paste0("`", option_name, "` must be a named list."))
+  }
+  if (length(popup_props) > 0 && (is.null(names(popup_props)) || any(!nzchar(names(popup_props))))) {
+    rlang::abort(paste0("`", option_name, "` must be a named list."))
+  }
+
+  if (is.null(input) || identical(input, FALSE)) {
     return(list(enabled = FALSE))
   }
 
-  if (is.null(options)) {
-    options <- list()
-  }
-  if (
-    !is.list(options) || (!is.null(names(options)) && anyNA(names(options)))
-  ) {
-    rlang::abort("`tooltip_options` must be a named list.")
-  }
-  if (
-    length(options) > 0 &&
-      (is.null(names(options)) || any(!nzchar(names(options))))
-  ) {
-    rlang::abort("`tooltip_options` must be a named list.")
+  # Promote simple inputs to a config list
+  if (isTRUE(input)) {
+    input <- list(location = TRUE, flow = TRUE)
+  } else if (is.character(input) && length(input) == 1 && !is.na(input)) {
+    input <- list(location = input, flow = input)
+  } else if (inherits(input, "mapgl_tooltip_popup_options")) {
+    # It's already a config object, but we need to handle the template if it's dual
+    if (is.character(input$template) || isTRUE(input$template) || is.null(input$template)) {
+      input$location <- input$template %||% TRUE
+      input$flow <- input$template %||% TRUE
+    } else if (is.list(input$template)) {
+      input$location <- input$template$location %||% TRUE
+      input$flow <- input$template$flow %||% TRUE
+    }
+    style <- input$render_mode
+    theme <- input$theme
+    popup_props <- input$popup_props
   }
 
-  location <- TRUE
-  flow <- TRUE
-
-  if (inherits(tooltip, "mapgl_flowmap_tooltip")) {
-    location <- tooltip$location
-    flow <- tooltip$flow
-    style <- tooltip$style %||% style
-    theme <- tooltip$theme %||% theme
-    options <- tooltip$options %||% options
-  } else if (isTRUE(tooltip)) {
-    # Defaults already set above.
-  } else if (is.character(tooltip) && length(tooltip) == 1 && !is.na(tooltip)) {
-    location <- tooltip
-    flow <- tooltip
-  } else if (is.list(tooltip) && !is.null(names(tooltip))) {
-    if (!is.null(tooltip$location)) {
-      location <- tooltip$location
-    }
-    if (!is.null(tooltip$flow)) {
-      flow <- tooltip$flow
-    }
-    if (!is.null(tooltip$style)) {
-      style <- tooltip$style
-    }
-    if (!is.null(tooltip$theme)) {
-      theme <- tooltip$theme
-    }
-    if (!is.null(tooltip$options)) {
-      options <- tooltip$options
-    }
-  } else {
+  if (!is.list(input) || is.null(names(input))) {
     rlang::abort(
-      "`tooltip` must be `TRUE`, `FALSE`, `NULL`, a template string, a named list, or a `flowmap_tooltip()` object."
+      paste0(
+        "`",
+        behavior,
+        "` must be TRUE, FALSE, NULL, a template string, a named list, or a config object."
+      )
     )
   }
 
-  style <- flowmap_validate_choice(
-    style,
-    "tooltip_style",
-    c("mapgl", "flowmap")
-  )
-  theme <- flowmap_validate_choice(
-    theme,
-    "tooltip_theme",
-    c("auto", "light", "dark")
-  )
+  # Final theme resolution
   if (identical(theme, "auto")) {
     theme <- if (dark_mode) "dark" else "light"
   }
 
-  if (
-    !is.list(options) ||
-      (length(options) > 0 &&
-        (is.null(names(options)) || any(!nzchar(names(options)))))
-  ) {
-    rlang::abort("`tooltip_options` must be a named list.")
-  }
+  # Normalize templates for both feature types
+  location_template <- flowmap_normalize_template(
+    input$location %||% default_enabled,
+    locations_df,
+    "location"
+  )
+  flow_template <- flowmap_normalize_template(
+    input$flow %||% default_enabled,
+    flows_df,
+    "flow"
+  )
 
-  location <- flowmap_validate_tooltip_template(location, "tooltip$location")
-  flow <- flowmap_validate_tooltip_template(flow, "tooltip$flow")
-
-  enabled <- !identical(location, FALSE) || !identical(flow, FALSE)
+  enabled <- !identical(location_template, FALSE) || !identical(flow_template, FALSE)
 
   list(
     enabled = enabled,
     style = style,
     theme = theme,
-    location = location,
-    flow = flow,
-    options = options
+    location = location_template,
+    flow = flow_template,
+    popup_props = popup_props
   )
 }
 
-flowmap_validate_tooltip_template <- function(value, arg) {
-  if (is.null(value)) {
+flowmap_normalize_template <- function(value, df, type) {
+  if (is.null(value) || identical(value, FALSE)) {
     return(FALSE)
   }
 
-  if (is.logical(value)) {
-    if (length(value) != 1 || is.na(value)) {
-      rlang::abort(paste0(
-        "`",
-        arg,
-        "` must be `TRUE`, `FALSE`, or a template string."
-      ))
+  if (isTRUE(value)) {
+    return(list(kind = "template", value = TRUE))
+  }
+
+  if (!is.character(value) || length(value) != 1 || is.na(value) || !nzchar(trimws(value))) {
+    rlang::abort(paste0("Interaction templates for `", type, "` must be TRUE, FALSE, or a string."))
+  }
+
+  # Disambiguation logic
+  is_literal <- grepl("[{<>]", value)
+
+  if (is_literal) {
+    return(list(kind = "template", value = value))
+  } else {
+    # Column reference - validate
+    if (!value %in% names(df)) {
+      rlang::abort(paste0("Column `", value, "` not found in `", type, "s` table."))
     }
-    return(value)
+    return(list(kind = "column", value = value))
   }
-
-  if (
-    !is.character(value) ||
-      length(value) != 1 ||
-      is.na(value) ||
-      !nzchar(trimws(value))
-  ) {
-    rlang::abort(paste0(
-      "`",
-      arg,
-      "` must be `TRUE`, `FALSE`, or a template string."
-    ))
-  }
-
-  value
 }
 
 mapgl_layer_order <- function(map) {

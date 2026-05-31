@@ -35,10 +35,14 @@ add_flowmap(
   flow_selected_time_range = NULL,
   flow_selected_locations = NULL,
   flow_location_filter_mode = c("ALL", "INCOMING", "OUTGOING", "BETWEEN"),
-  tooltip = FALSE,
-  tooltip_style = c("mapgl", "flowmap"),
+  tooltip = TRUE,
+  popup = FALSE,
+  tooltip_style = c("floating", "anchored"),
+  popup_style = c("floating", "anchored"),
   tooltip_theme = c("auto", "light", "dark"),
-  tooltip_options = NULL,
+  popup_theme = c("auto", "light", "dark"),
+  tooltip_options = list(),
+  popup_options = list(),
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -132,18 +136,28 @@ thickness and color scales use only the currently selected time range
 \item{flow_location_filter_mode}{Optional location filter mode: \code{"ALL"}, \code{"INCOMING"}, \code{"OUTGOING"}, or \code{"BETWEEN"}.}
 
 \item{tooltip}{Tooltip configuration. Use \code{FALSE} or \code{NULL} to disable
-tooltips, \code{TRUE} for default tooltips, a single template string for both
-location and flow hovers, a named list with \code{location} and/or \code{flow}
-templates, or a \code{\link[=flowmap_tooltip]{flowmap_tooltip()}} object.}
+tooltips, \code{TRUE} for default tooltips, a single template string,
+a named list, or a \code{\link[=tooltip_options]{tooltip_options()}} object.}
 
-\item{tooltip_style}{Tooltip style used when \code{tooltip} is not a
-\code{\link[=flowmap_tooltip]{flowmap_tooltip()}} object. \code{"mapgl"} uses the same popup style as other
-mapgl layers; \code{"flowmap"} uses the upstream Flowmap.gl example style.}
+\item{popup}{Popup configuration. Use \code{FALSE} or \code{NULL} to disable
+popups, \code{TRUE} for default popups, a single template string,
+a named list, or a \code{\link[=popup_options]{popup_options()}} object.}
+
+\item{tooltip_style}{Tooltip rendering style: \code{"floating"} (cursor-following)
+or \code{"anchored"} (fixed to feature).}
+
+\item{popup_style}{Popup rendering style: \code{"floating"} (at click position)
+or \code{"anchored"} (fixed to feature).}
 
 \item{tooltip_theme}{Tooltip theme. \code{"auto"} follows \code{flow_dark_mode};
 \code{"light"} and \code{"dark"} force a theme.}
 
+\item{popup_theme}{Popup theme. \code{"auto"} follows \code{flow_dark_mode};
+\code{"light"} and \code{"dark"} force a theme.}
+
 \item{tooltip_options}{A named list of renderer-specific tooltip options.}
+
+\item{popup_options}{A named list of renderer-specific popup options.}
 
 \item{visibility}{Whether the layer is initially \code{"visible"} or \code{"none"}.}
 
