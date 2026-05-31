@@ -44,3 +44,5 @@ Suggests:
   usethis,
   leaflet
 Config/testthat/edition: 3
+LazyData: true
+
