@@ -53,7 +53,8 @@ or \code{"day"}.}
 \item{position}{The position of the control: \code{"top-right"}, \code{"top-left"},
 \code{"bottom-right"}, \code{"bottom-left"}, or \code{"bottom-center"}.}
 
-\item{initial_range}{Optional vector of two dates for the initial selection.}
+\item{initial_range}{Optional vector of two dates/timestamps for the initial
+time filter range.}
 
 \item{loop}{Logical; whether to loop the playback.}
 
@@ -97,4 +98,8 @@ encodes time as numeric epoch milliseconds (or seconds).
 
 For flowmap layers the control updates the \code{selectedTimeRange} of the
 flowmap filter via the flowmap.gl plugin.
+
+Hold Shift while dragging on the histogram to add another selected time
+range. Multiple ranges are combined with OR semantics when filtering target
+layers.
 }

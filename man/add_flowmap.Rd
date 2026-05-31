@@ -35,6 +35,10 @@ add_flowmap(
   flow_selected_time_range = NULL,
   flow_selected_locations = NULL,
   flow_location_filter_mode = c("ALL", "INCOMING", "OUTGOING", "BETWEEN"),
+  tooltip = FALSE,
+  tooltip_style = c("mapgl", "flowmap"),
+  tooltip_theme = c("auto", "light", "dark"),
+  tooltip_options = NULL,
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -126,6 +130,20 @@ thickness and color scales use only the currently selected time range
 \item{flow_selected_locations}{Optional vector of location IDs to select.}
 
 \item{flow_location_filter_mode}{Optional location filter mode: \code{"ALL"}, \code{"INCOMING"}, \code{"OUTGOING"}, or \code{"BETWEEN"}.}
+
+\item{tooltip}{Tooltip configuration. Use \code{FALSE} or \code{NULL} to disable
+tooltips, \code{TRUE} for default tooltips, a single template string for both
+location and flow hovers, a named list with \code{location} and/or \code{flow}
+templates, or a \code{\link[=flowmap_tooltip]{flowmap_tooltip()}} object.}
+
+\item{tooltip_style}{Tooltip style used when \code{tooltip} is not a
+\code{\link[=flowmap_tooltip]{flowmap_tooltip()}} object. \code{"mapgl"} uses the same popup style as other
+mapgl layers; \code{"flowmap"} uses the upstream Flowmap.gl example style.}
+
+\item{tooltip_theme}{Tooltip theme. \code{"auto"} follows \code{flow_dark_mode};
+\code{"light"} and \code{"dark"} force a theme.}
+
+\item{tooltip_options}{A named list of renderer-specific tooltip options.}
 
 \item{visibility}{Whether the layer is initially \code{"visible"} or \code{"none"}.}
 

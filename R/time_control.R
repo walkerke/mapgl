@@ -34,7 +34,8 @@
 #'   or `"day"`.
 #' @param position The position of the control: `"top-right"`, `"top-left"`,
 #'   `"bottom-right"`, `"bottom-left"`, or `"bottom-center"`.
-#' @param initial_range Optional vector of two dates for the initial selection.
+#' @param initial_range Optional vector of two dates/timestamps for the initial
+#'   time filter range.
 #' @param loop Logical; whether to loop the playback.
 #' @param speed Playback speed in milliseconds per step (default 500).
 #' @param autoplay Logical; if `TRUE`, start playing the scrubber animation
@@ -49,6 +50,11 @@
 #'   `collapsible = TRUE`.
 #' @param title Optional short title shown in the header (useful when the
 #'   control is draggable or collapsible).
+#'
+#' @details
+#' Hold Shift while dragging on the histogram to add another selected time
+#' range. Multiple ranges are combined with OR semantics when filtering target
+#' layers.
 #'
 #' @return The modified map object.
 #' @export
@@ -86,7 +92,9 @@ add_time_control <- function(
 
   if (!is.null(layer_id)) {
     if (!is.character(layer_id) || length(layer_id) < 1) {
-      rlang::abort("`layer_id` must be a character vector of one or more layer IDs, or NULL for all flowmap layers.")
+      rlang::abort(
+        "`layer_id` must be a character vector of one or more layer IDs, or NULL for all flowmap layers."
+      )
     }
   }
 
@@ -99,11 +107,19 @@ add_time_control <- function(
   }
 
   tzone <- attr(times, "tzone")
-  if (is.null(tzone) || tzone == "") tzone <- "UTC"
+  if (is.null(tzone) || tzone == "") {
+    tzone <- "UTC"
+  }
 
   if (time_interval == "hour") {
-    start_time <- as.POSIXct(format(min(times), "%Y-%m-%d %H:00:00", tz = tzone), tz = tzone)
-    end_time <- as.POSIXct(format(max(times) + 3600, "%Y-%m-%d %H:00:00", tz = tzone), tz = tzone)
+    start_time <- as.POSIXct(
+      format(min(times), "%Y-%m-%d %H:00:00", tz = tzone),
+      tz = tzone
+    )
+    end_time <- as.POSIXct(
+      format(max(times) + 3600, "%Y-%m-%d %H:00:00", tz = tzone),
+      tz = tzone
+    )
     breaks <- seq(from = start_time, to = end_time, by = "hour")
     binned <- cut(times, breaks = breaks, include.lowest = TRUE)
   } else {
@@ -124,7 +140,10 @@ add_time_control <- function(
   )
 
   if (time_interval == "hour") {
-    bins_df$time <- format(as.POSIXct(bins_df$time, tz = tzone), "%Y-%m-%dT%H:%M:%SZ")
+    bins_df$time <- format(
+      as.POSIXct(bins_df$time, tz = tzone),
+      "%Y-%m-%dT%H:%M:%SZ"
+    )
   } else {
     bins_df$time <- format(as.Date(bins_df$time), "%Y-%m-%d")
   }
@@ -132,10 +151,16 @@ add_time_control <- function(
   initial_range_iso <- NULL
   if (!is.null(initial_range)) {
     if (length(initial_range) != 2) {
-      rlang::abort("`initial_range` must be a length-2 vector of dates/timestamps.")
+      rlang::abort(
+        "`initial_range` must be a length-2 vector of dates/timestamps."
+      )
     }
     if (inherits(initial_range, "POSIXct")) {
-      initial_range_iso <- format(initial_range, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+      initial_range_iso <- format(
+        initial_range,
+        "%Y-%m-%dT%H:%M:%SZ",
+        tz = "UTC"
+      )
     } else if (inherits(initial_range, "Date")) {
       initial_range_iso <- format(initial_range, "%Y-%m-%d")
     } else {

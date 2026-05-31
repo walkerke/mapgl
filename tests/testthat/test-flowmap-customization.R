@@ -53,11 +53,56 @@ test_that("add_flowmap validates new parameters", {
   locations <- data.frame(id = c("a", "b"), lat = c(40, 41), lon = c(-74, -75))
   flows <- data.frame(origin = "a", dest = "b", count = 10)
 
-  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_fade_amount = -1), "between 0 and 100")
-  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_fade_amount = 101), "between 0 and 100")
-  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_max_top_flows_display_num = 0), "positive number")
-  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_clustering_level = "a"), "number or NULL")
-  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_locations_enabled = "TRUE"), "TRUE or FALSE")
-  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_highlight_color = 123), "single string")
-  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_temporal_scale_domain = "hour"), "'arg' should be one of")
+  expect_error(
+    add_flowmap(maplibre(), "id", locations, flows, flow_fade_amount = -1),
+    "between 0 and 100"
+  )
+  expect_error(
+    add_flowmap(maplibre(), "id", locations, flows, flow_fade_amount = 101),
+    "between 0 and 100"
+  )
+  expect_error(
+    add_flowmap(
+      maplibre(),
+      "id",
+      locations,
+      flows,
+      flow_max_top_flows_display_num = 0
+    ),
+    "positive number"
+  )
+  expect_error(
+    add_flowmap(
+      maplibre(),
+      "id",
+      locations,
+      flows,
+      flow_clustering_level = "a"
+    ),
+    "number or NULL"
+  )
+  expect_error(
+    add_flowmap(
+      maplibre(),
+      "id",
+      locations,
+      flows,
+      flow_locations_enabled = "TRUE"
+    ),
+    "TRUE or FALSE"
+  )
+  expect_error(
+    add_flowmap(maplibre(), "id", locations, flows, flow_highlight_color = 123),
+    "single string"
+  )
+  expect_error(
+    add_flowmap(
+      maplibre(),
+      "id",
+      locations,
+      flows,
+      flow_temporal_scale_domain = "hour"
+    ),
+    "'arg' should be one of"
+  )
 })

@@ -1,33 +1,73 @@
-diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts b/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts
---- a/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts
-+++ b/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts
-@@ -1,5 +1,6 @@
- import { FlowLinesRenderingMode, LocationFilterMode, ViewportProps } from './types';
- export type FlowEndpointsInViewportMode = 'any' | 'both';
-+export type TemporalScaleDomain = 'selected' | 'all';
- export interface FilterState {
-     selectedLocations?: (string | number)[];
-     locationFilterMode?: LocationFilterMode;
-@@ -20,6 +21,7 @@ export interface SettingsState {
-     fadeAmount: number;
-     colorScheme: string | string[] | undefined;
-     highlightColor: string | number[];
-+    temporalScaleDomain: TemporalScaleDomain;
-     maxTopFlowsDisplayNum: number;
-     flowEndpointsInViewportMode: FlowEndpointsInViewportMode;
- }
+diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts b/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts
+index 92cc7ab..746013c 100644
+--- a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts
++++ b/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts
+@@ -1,6 +1,6 @@
+ import { ScaleLinear } from 'd3-scale';
+ import FlowmapAggregateAccessors from './FlowmapAggregateAccessors';
+-import { FlowmapState } from './FlowmapState';
++import { FlowmapState, TemporalScaleDomain } from './FlowmapState';
+ import { ClusterIndex, LocationWeightGetter } from './cluster/ClusterIndex';
+ import { ColorsRGBA, DiffColorsRGBA } from './colors';
+ import { TimeGranularityKey } from './time';
+@@ -25,6 +25,8 @@ export default class FlowmapSelectors<L extends Record<string, any>, F extends R
+     getZoom: (state: FlowmapState, props: FlowmapData<L, F>) => number | undefined;
+     getViewport: (state: FlowmapState, props: FlowmapData<L, F>) => ViewportProps;
+     getSelectedTimeRange: (state: FlowmapState, props: FlowmapData<L, F>) => [Date, Date] | undefined;
++    getSelectedTimeRanges: (state: FlowmapState, props: FlowmapData<L, F>) => [Date, Date][] | undefined;
++    getTemporalScaleDomain: Selector<L, F, TemporalScaleDomain>;
+     getColorScheme: Selector<L, F, string | string[] | undefined>;
+     getDarkMode: Selector<L, F, boolean>;
+     getFadeEnabled: Selector<L, F, boolean>;
+@@ -134,7 +136,9 @@ export default class FlowmapSelectors<L extends Record<string, any>, F extends R
+         memoize: typeof import("reselect").weakMapMemoize;
+     };
+     getUnknownLocations: Selector<L, F, Set<string | number> | undefined>;
++    getSortedAggregatedFlows: Selector<L, F, (F | AggregateFlow)[] | undefined>;
+     getSortedAggregatedFilteredFlows: Selector<L, F, (F | AggregateFlow)[] | undefined>;
++    getFlowsForScaleDomain: Selector<L, F, (F | AggregateFlow)[] | undefined>;
+     getExpandedSelectedLocationsSet: Selector<L, F, Set<string | number> | undefined>;
+     getTotalCountsByTime: Selector<L, F, CountByTime[] | undefined>;
+     getMaxLocationCircleSize: Selector<L, F, number>;
 diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js b/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js
+index 3892964..0ba65cf 100644
 --- a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js
 +++ b/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js
-@@ -33,6 +33,7 @@ export default class FlowmapSelectors {
+@@ -33,6 +33,8 @@ export default class FlowmapSelectors {
          this.getZoom = (state, props) => state.viewport.zoom;
          this.getViewport = (state, props) => state.viewport;
          this.getSelectedTimeRange = (state, props) => state.filter?.selectedTimeRange;
++        this.getSelectedTimeRanges = (state, props) => state.filter?.selectedTimeRanges;
 +        this.getTemporalScaleDomain = (state, props) => state.settings.temporalScaleDomain;
          this.getColorScheme = (state, props) => state.settings.colorScheme;
          this.getDarkMode = (state, props) => state.settings.darkMode;
          this.getFadeEnabled = (state, props) => state.settings.fadeEnabled;
-@@ -296,6 +297,19 @@ export default class FlowmapSelectors {
+@@ -131,17 +133,19 @@ export default class FlowmapSelectors {
+             const { interval } = timeGranularity;
+             return [timeExtent[0], interval.offset(interval.floor(timeExtent[1]), 1)];
+         });
+-        this.getSortedFlowsForKnownLocationsFilteredByTime = createSelector(this.getSortedFlowsForKnownLocations, this.getTimeExtent, this.getSelectedTimeRange, (flows, timeExtent, timeRange) => {
++        this.getSortedFlowsForKnownLocationsFilteredByTime = createSelector(this.getSortedFlowsForKnownLocations, this.getTimeExtent, this.getSelectedTimeRange, this.getSelectedTimeRanges, (flows, timeExtent, timeRange, timeRanges) => {
+             if (!flows)
+                 return undefined;
+-            if (!timeExtent ||
+-                !timeRange ||
+-                (timeExtent[0] === timeRange[0] && timeExtent[1] === timeRange[1])) {
++            const selectedRanges = Array.isArray(timeRanges) && timeRanges.length > 0 ? timeRanges : timeRange ? [timeRange] : null;
++            if (!timeExtent || !selectedRanges || selectedRanges.length === 0) {
++                return flows;
++            }
++            if (selectedRanges.length === 1 && timeExtent[0] === selectedRanges[0][0] && timeExtent[1] === selectedRanges[0][1]) {
+                 return flows;
+             }
+             return flows.filter((flow) => {
+                 const time = this.accessors.getFlowTime(flow);
+-                return time && timeRange[0] <= time && time < timeRange[1];
++                return time && selectedRanges.some((range) => range[0] <= time && time < range[1]);
+             });
+         });
+         this.getLocationsHavingFlows = createSelector(this.getSortedFlowsForKnownLocations, this.getLocations, (flows, locations) => {
+@@ -296,6 +300,19 @@ export default class FlowmapSelectors {
              }
              return missing;
          });
@@ -47,7 +87,7 @@ diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js b/node_modul
          this.getSortedAggregatedFilteredFlows = createSelector(this.getClusterIndex, this.getClusteringEnabled, this.getSortedFlowsForKnownLocationsFilteredByTime, this.getClusterZoom, this.getTimeExtent, (clusterTree, isClusteringEnabled, flows, clusterZoom, timeExtent) => {
              if (!flows)
                  return undefined;
-@@ -314,6 +328,9 @@ export default class FlowmapSelectors {
+@@ -314,6 +331,9 @@ export default class FlowmapSelectors {
              aggregated.sort((a, b) => descending(Math.abs(this.accessors.getFlowMagnitude(a)), Math.abs(this.accessors.getFlowMagnitude(b))));
              return aggregated;
          });
@@ -57,7 +97,7 @@ diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js b/node_modul
          this.getExpandedSelectedLocationsSet = createSelector(this.getClusteringEnabled, this.getSelectedLocationsSet, this.getClusterIndex, (clusteringEnabled, selectedLocations, clusterIndex) => {
              if (!selectedLocations || !clusterIndex) {
                  return selectedLocations;
-@@ -497,7 +514,7 @@ export default class FlowmapSelectors {
+@@ -497,7 +517,7 @@ export default class FlowmapSelectors {
              // we need ascending for rendering
              return picked.reverse();
          });
@@ -66,7 +106,7 @@ diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js b/node_modul
              if (!flows)
                  return undefined;
              let rv = undefined;
-@@ -519,10 +536,31 @@ export default class FlowmapSelectors {
+@@ -519,10 +539,31 @@ export default class FlowmapSelectors {
              }
              return rv;
          });
@@ -101,7 +141,7 @@ diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js b/node_modul
              return rv[0] !== undefined && rv[1] !== undefined ? rv : undefined;
          });
          this.getFlowMagnitudeExtent = (state, props) => {
-@@ -613,8 +651,8 @@ export default class FlowmapSelectors {
+@@ -613,8 +654,8 @@ export default class FlowmapSelectors {
          this.getLocationOrClusterByIdGetter = createSelector(this.getClusterIndex, this.getLocationsById, (clusterIndex, locationsById) => {
              return (id) => clusterIndex?.getClusterById(id) ?? locationsById?.get(id);
          });
@@ -112,7 +152,7 @@ diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js b/node_modul
          });
          this.accessors = new FlowmapAggregateAccessors(accessors);
          this.setAccessors(accessors);
-@@ -634,17 +672,17 @@ export default class FlowmapSelectors {
+@@ -634,17 +675,17 @@ export default class FlowmapSelectors {
          const getInCircleSize = this.getInCircleSizeGetter(state, props);
          const getOutCircleSize = this.getOutCircleSizeGetter(state, props);
          const flowThicknessScale = this.getFlowThicknessScale(state, props);
@@ -133,36 +173,59 @@ diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js b/node_modul
          const flowColorScale = getFlowColorScale(flowmapColors, flowMagnitudeExtent, flowLinesRenderingMode === 'animated-straight');
          // Using a generator here helps to avoid creating intermediary arrays
          const circlePositions = Float64Array.from((function* () {
-diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts b/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts
---- a/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts
-+++ b/node_modules/@flowmap.gl/data/dist/FlowmapSelectors.d.ts
-@@ -1,6 +1,6 @@
- import { ScaleLinear } from 'd3-scale';
- import FlowmapAggregateAccessors from './FlowmapAggregateAccessors';
--import { FlowmapState } from './FlowmapState';
-+import { FlowmapState, TemporalScaleDomain } from './FlowmapState';
- import { ClusterIndex, LocationWeightGetter } from './cluster/ClusterIndex';
- import { ColorsRGBA, DiffColorsRGBA } from './colors';
- import { TimeGranularityKey } from './time';
-@@ -25,6 +25,7 @@ export default class FlowmapSelectors<L extends Record<string, any>, F extends R
-     getZoom: (state: FlowmapState, props: FlowmapData<L, F>) => number | undefined;
-     getViewport: (state: FlowmapState, props: FlowmapData<L, F>) => ViewportProps;
-     getSelectedTimeRange: (state: FlowmapState, props: FlowmapData<L, F>) => [Date, Date] | undefined;
-+    getTemporalScaleDomain: Selector<L, F, TemporalScaleDomain>;
-     getColorScheme: Selector<L, F, string | string[] | undefined>;
-     getDarkMode: Selector<L, F, boolean>;
-     getFadeEnabled: Selector<L, F, boolean>;
-@@ -134,7 +135,9 @@ export default class FlowmapSelectors<L extends Record<string, any>, F extends R
-         memoize: typeof import("reselect").weakMapMemoize;
-     };
-     getUnknownLocations: Selector<L, F, Set<string | number> | undefined>;
-+    getSortedAggregatedFlows: Selector<L, F, (F | AggregateFlow)[] | undefined>;
-     getSortedAggregatedFilteredFlows: Selector<L, F, (F | AggregateFlow)[] | undefined>;
-+    getFlowsForScaleDomain: Selector<L, F, (F | AggregateFlow)[] | undefined>;
-     getExpandedSelectedLocationsSet: Selector<L, F, Set<string | number> | undefined>;
-     getTotalCountsByTime: Selector<L, F, CountByTime[] | undefined>;
-     getMaxLocationCircleSize: Selector<L, F, number>;
+diff --git a/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts b/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts
+index 185b0ee..aeb99db 100644
+--- a/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts
++++ b/node_modules/@flowmap.gl/data/dist/FlowmapState.d.ts
+@@ -1,9 +1,11 @@
+ import { FlowLinesRenderingMode, LocationFilterMode, ViewportProps } from './types';
+ export type FlowEndpointsInViewportMode = 'any' | 'both';
++export type TemporalScaleDomain = 'selected' | 'all';
+ export interface FilterState {
+     selectedLocations?: (string | number)[];
+     locationFilterMode?: LocationFilterMode;
+     selectedTimeRange?: [Date, Date];
++    selectedTimeRanges?: [Date, Date][];
+ }
+ export interface SettingsState {
+     flowLinesRenderingMode: FlowLinesRenderingMode;
+@@ -20,6 +22,7 @@ export interface SettingsState {
+     fadeAmount: number;
+     colorScheme: string | string[] | undefined;
+     highlightColor: string | number[];
++    temporalScaleDomain: TemporalScaleDomain;
+     maxTopFlowsDisplayNum: number;
+     flowEndpointsInViewportMode: FlowEndpointsInViewportMode;
+ }
+diff --git a/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts b/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts
+index 3dacdf9..65351d1 100644
+--- a/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts
++++ b/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts
+@@ -1,5 +1,5 @@
+ import { CompositeLayer } from '@deck.gl/core';
+-import { FilterState, FlowEndpointsInViewportMode, FlowLinesLayerAttributes, FlowLinesRenderingMode, FlowmapAggregateAccessors, FlowmapData, FlowmapDataAccessors, FlowmapDataProvider, LayersData } from '@flowmap.gl/data';
++import { FilterState, FlowEndpointsInViewportMode, FlowLinesLayerAttributes, FlowLinesRenderingMode, FlowmapAggregateAccessors, FlowmapData, FlowmapDataAccessors, FlowmapDataProvider, LayersData, TemporalScaleDomain } from '@flowmap.gl/data';
+ import { FlowmapLayerPickingInfo, LayerProps } from './types';
+ export type FlowmapLayerProps<L extends Record<string, any>, F extends Record<string, any>> = {
+     data?: FlowmapData<L, F>;
+@@ -22,6 +22,7 @@ export type FlowmapLayerProps<L extends Record<string, any>, F extends Record<st
+     fadeAmount?: number;
+     colorScheme?: string | string[];
+     highlightColor?: string | number[];
++    temporalScaleDomain?: TemporalScaleDomain;
+     maxTopFlowsDisplayNum?: number;
+     flowEndpointsInViewportMode?: FlowEndpointsInViewportMode;
+     onHover?: (info: FlowmapLayerPickingInfo<L, F> | undefined, event: SourceEvent) => void;
+@@ -68,6 +69,7 @@ export default class FlowmapLayer<L extends Record<string, any>, F extends Recor
+         clusteringAuto: boolean;
+         clusteringLevel: undefined;
+         adaptiveScalesEnabled: boolean;
++        temporalScaleDomain: string;
+         flowLineThicknessScale: number;
+         flowLineCurviness: number;
+         colorScheme: string;
 diff --git a/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.js b/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.js
+index 404c7ed..7606439 100644
 --- a/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.js
 +++ b/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.js
 @@ -28,6 +28,7 @@ const PROPS_TO_CAUSE_LAYER_DATA_UPDATE = [
@@ -198,29 +261,3 @@ diff --git a/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.js b/node_modules
      flowLineThicknessScale: 1,
      flowLineCurviness: 1,
      colorScheme: 'Teal',
-diff --git a/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts b/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts
---- a/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts
-+++ b/node_modules/@flowmap.gl/layers/dist/FlowmapLayer.d.ts
-@@ -1,5 +1,5 @@
- import { CompositeLayer } from '@deck.gl/core';
--import { FilterState, FlowEndpointsInViewportMode, FlowLinesLayerAttributes, FlowLinesRenderingMode, FlowmapAggregateAccessors, FlowmapData, FlowmapDataAccessors, FlowmapDataProvider, LayersData } from '@flowmap.gl/data';
-+import { FilterState, FlowEndpointsInViewportMode, FlowLinesLayerAttributes, FlowLinesRenderingMode, FlowmapAggregateAccessors, FlowmapData, FlowmapDataAccessors, FlowmapDataProvider, LayersData, TemporalScaleDomain } from '@flowmap.gl/data';
- import { FlowmapLayerPickingInfo, LayerProps } from './types';
- export type FlowmapLayerProps<L extends Record<string, any>, F extends Record<string, any>> = {
-     data?: FlowmapData<L, F>;
-@@ -22,6 +22,7 @@ export type FlowmapLayerProps<L extends Record<string, any>, F extends Record<st
-     fadeAmount?: number;
-     colorScheme?: string | string[];
-     highlightColor?: string | number[];
-+    temporalScaleDomain?: TemporalScaleDomain;
-     maxTopFlowsDisplayNum?: number;
-     flowEndpointsInViewportMode?: FlowEndpointsInViewportMode;
-     onHover?: (info: FlowmapLayerPickingInfo<L, F> | undefined, event: SourceEvent) => void;
-@@ -68,6 +69,7 @@ export default class FlowmapLayer<L extends Record<string, any>, F extends Recor
-         clusteringAuto: boolean;
-         clusteringLevel: undefined;
-         adaptiveScalesEnabled: boolean;
-+        temporalScaleDomain: string;
-         flowLineThicknessScale: number;
-         flowLineCurviness: number;
-         colorScheme: string;

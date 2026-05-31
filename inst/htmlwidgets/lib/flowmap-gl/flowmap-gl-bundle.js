@@ -47474,6 +47474,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       this.getZoom = (state, props) => state.viewport.zoom;
       this.getViewport = (state, props) => state.viewport;
       this.getSelectedTimeRange = (state, props) => state.filter?.selectedTimeRange;
+      this.getSelectedTimeRanges = (state, props) => state.filter?.selectedTimeRanges;
       this.getTemporalScaleDomain = (state, props) => state.settings.temporalScaleDomain;
       this.getColorScheme = (state, props) => state.settings.colorScheme;
       this.getDarkMode = (state, props) => state.settings.darkMode;
@@ -47571,15 +47572,19 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
         const { interval } = timeGranularity;
         return [timeExtent[0], interval.offset(interval.floor(timeExtent[1]), 1)];
       });
-      this.getSortedFlowsForKnownLocationsFilteredByTime = createSelector(this.getSortedFlowsForKnownLocations, this.getTimeExtent, this.getSelectedTimeRange, (flows, timeExtent, timeRange) => {
+      this.getSortedFlowsForKnownLocationsFilteredByTime = createSelector(this.getSortedFlowsForKnownLocations, this.getTimeExtent, this.getSelectedTimeRange, this.getSelectedTimeRanges, (flows, timeExtent, timeRange, timeRanges) => {
         if (!flows)
           return void 0;
-        if (!timeExtent || !timeRange || timeExtent[0] === timeRange[0] && timeExtent[1] === timeRange[1]) {
+        const selectedRanges = Array.isArray(timeRanges) && timeRanges.length > 0 ? timeRanges : timeRange ? [timeRange] : null;
+        if (!timeExtent || !selectedRanges || selectedRanges.length === 0) {
+          return flows;
+        }
+        if (selectedRanges.length === 1 && timeExtent[0] === selectedRanges[0][0] && timeExtent[1] === selectedRanges[0][1]) {
           return flows;
         }
         return flows.filter((flow) => {
           const time = this.accessors.getFlowTime(flow);
-          return time && timeRange[0] <= time && time < timeRange[1];
+          return time && selectedRanges.some((range3) => range3[0] <= time && time < range3[1]);
         });
       });
       this.getLocationsHavingFlows = createSelector(this.getSortedFlowsForKnownLocations, this.getLocations, (flows, locations) => {

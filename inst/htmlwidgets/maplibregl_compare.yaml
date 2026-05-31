@@ -82,3 +82,5 @@ dependencies:
     src: "htmlwidgets"
     script:
       - "flowmap.js"
+    stylesheet:
+      - "flowmap.css"

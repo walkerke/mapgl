@@ -5,6 +5,9 @@ window.MapGLFlowmapPlugin = (function () {
     'a[data-mapgl-flowmap-attribution="true"]';
   const FLOWMAP_ATTRIBUTION_SEPARATOR_SELECTOR =
     '[data-mapgl-flowmap-attribution-separator="true"]';
+  const DEFAULT_LOCATION_TOOLTIP =
+    "<strong>{name}</strong><br>Incoming trips: {totals.incomingCount}<br>Outgoing trips: {totals.outgoingCount}<br>Internal or round trips: {totals.internalCount}";
+  const DEFAULT_FLOW_TOOLTIP = "<strong>{origin.id} -> {dest.id}</strong><br>{count}";
 
   function dataframeToRows(data, HTMLWidgets) {
     if (!data || Array.isArray(data) || typeof data !== "object") {
@@ -147,6 +150,260 @@ window.MapGLFlowmapPlugin = (function () {
     });
 
     ensureFlowmapAttribution(map);
+  }
+
+  function getTooltipStore(map) {
+    if (!map._mapglFlowmapTooltips) {
+      map._mapglFlowmapTooltips = {};
+    }
+    return map._mapglFlowmapTooltips;
+  }
+
+  function hideFlowmapTooltip(map, id) {
+    const store = getTooltipStore(map);
+    const tooltip = store[id];
+    if (!tooltip) {
+      return;
+    }
+    if (tooltip.popup) {
+      tooltip.popup.remove();
+    }
+    if (tooltip.element) {
+      tooltip.element.style.display = "none";
+    }
+  }
+
+  function hideAllFlowmapTooltips(map) {
+    const store = getTooltipStore(map);
+    Object.keys(store).forEach(function (id) {
+      hideFlowmapTooltip(map, id);
+    });
+  }
+
+  function hideOtherFlowmapTooltips(map, activeId) {
+    const store = getTooltipStore(map);
+    Object.keys(store).forEach(function (id) {
+      if (id !== activeId) {
+        hideFlowmapTooltip(map, id);
+      }
+    });
+  }
+
+  function getPopupConstructor() {
+    if (typeof mapboxgl !== "undefined" && mapboxgl.Popup) {
+      return mapboxgl.Popup;
+    }
+    if (typeof maplibregl !== "undefined" && maplibregl.Popup) {
+      return maplibregl.Popup;
+    }
+    return null;
+  }
+
+  function escapeHTML(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function getPathValue(object, path) {
+    if (!object || !path) {
+      return undefined;
+    }
+
+    return path.split(".").reduce(function (value, key) {
+      if (value == null) {
+        return undefined;
+      }
+      return value[key];
+    }, object);
+  }
+
+  function renderTooltipTemplate(template, object) {
+    return template.replace(/\{([^}]+)\}/g, function (match, path) {
+      const value = getPathValue(object, path.trim());
+      return escapeHTML(value == null ? "" : value);
+    });
+  }
+
+  function getTooltipTemplate(tooltip, objectType) {
+    const template = tooltip[objectType];
+    if (template === false || template == null) {
+      return null;
+    }
+    if (template === true) {
+      return objectType === "location"
+        ? DEFAULT_LOCATION_TOOLTIP
+        : DEFAULT_FLOW_TOOLTIP;
+    }
+    return template;
+  }
+
+  function getTooltipHTML(config, info) {
+    const tooltip = config.tooltip || {};
+    const object = info && info.object;
+    if (!object || !object.type) {
+      return null;
+    }
+
+    const template = getTooltipTemplate(tooltip, object.type);
+    if (!template) {
+      return null;
+    }
+
+    return renderTooltipTemplate(template, object);
+  }
+
+  function getTooltipLngLat(map, info) {
+    if (info && info.lngLat) {
+      return info.lngLat;
+    }
+    if (info && Array.isArray(info.coordinate)) {
+      return info.coordinate;
+    }
+
+    const object = info && info.object;
+    if (!object) {
+      return null;
+    }
+
+    if (object.type === "location" && object.location) {
+      const location = object.location;
+      if (location.lon != null && location.lat != null) {
+        return [location.lon, location.lat];
+      }
+    }
+
+    if (object.type === "flow" && object.origin && object.dest) {
+      const origin = object.origin;
+      const dest = object.dest;
+      if (
+        origin.lon != null &&
+        origin.lat != null &&
+        dest.lon != null &&
+        dest.lat != null
+      ) {
+        return [(origin.lon + dest.lon) / 2, (origin.lat + dest.lat) / 2];
+      }
+    }
+
+    return null;
+  }
+
+  function getTooltipPoint(map, info) {
+    if (info && Number.isFinite(info.x) && Number.isFinite(info.y)) {
+      return { x: info.x, y: info.y };
+    }
+
+    const lngLat = getTooltipLngLat(map, info);
+    if (lngLat && map && typeof map.project === "function") {
+      return map.project(lngLat);
+    }
+
+    return null;
+  }
+
+  function mergeClassName(base, extra) {
+    return extra ? base + " " + extra : base;
+  }
+
+  function showPopupTooltip(map, config, info, html) {
+    const Popup = getPopupConstructor();
+    if (!Popup) {
+      showElementTooltip(map, config, info, html);
+      return;
+    }
+
+    const tooltip = config.tooltip || {};
+    const options = Object.assign(
+      {
+        closeButton: false,
+        closeOnClick: false,
+        maxWidth: "400px",
+      },
+      tooltip.options || {}
+    );
+    const baseClass = [
+      "mapgl-flowmap-tooltip",
+      "mapgl-flowmap-tooltip--" + (tooltip.theme || "light"),
+    ].join(" ");
+    options.className = mergeClassName(baseClass, options.className);
+
+    const lngLat = getTooltipLngLat(map, info);
+    if (!lngLat) {
+      hideFlowmapTooltip(map, config.id);
+      return;
+    }
+
+    const store = getTooltipStore(map);
+    if (!store[config.id]) {
+      store[config.id] = {};
+    }
+    if (!store[config.id].popup) {
+      store[config.id].popup = new Popup(options);
+    }
+
+    store[config.id].popup.setLngLat(lngLat).setHTML(html).addTo(map);
+  }
+
+  function getElementOffset(options) {
+    const offset = options && options.offset;
+    if (Array.isArray(offset) && offset.length >= 2) {
+      return [Number(offset[0]) || 0, Number(offset[1]) || 0];
+    }
+    if (typeof offset === "number") {
+      return [offset, offset];
+    }
+    return [10, 10];
+  }
+
+  function showElementTooltip(map, config, info, html) {
+    const tooltip = config.tooltip || {};
+    const point = getTooltipPoint(map, info);
+    if (!point || !map || typeof map.getContainer !== "function") {
+      return;
+    }
+
+    const store = getTooltipStore(map);
+    if (!store[config.id]) {
+      store[config.id] = {};
+    }
+
+    if (!store[config.id].element) {
+      const element = document.createElement("div");
+      element.className = [
+        "flowmap-tooltip",
+        "mapgl-flowmap-example-tooltip",
+        "mapgl-flowmap-example-tooltip--" + (tooltip.theme || "dark"),
+      ].join(" ");
+      map.getContainer().appendChild(element);
+      store[config.id].element = element;
+    }
+
+    const element = store[config.id].element;
+    const offset = getElementOffset(tooltip.options || {});
+    element.innerHTML = html;
+    element.style.left = point.x + offset[0] + "px";
+    element.style.top = point.y + offset[1] + "px";
+    element.style.display = "block";
+  }
+
+  function showFlowmapTooltip(map, config, info) {
+    const html = getTooltipHTML(config, info);
+    if (!html) {
+      hideFlowmapTooltip(map, config.id);
+      return;
+    }
+
+    hideOtherFlowmapTooltips(map, config.id);
+
+    if (config.tooltip && config.tooltip.style === "flowmap") {
+      showElementTooltip(map, config, info, html);
+    } else {
+      showPopupTooltip(map, config, info, html);
+    }
   }
 
   function ensureOverlay(map, interleaved, elId, settings) {
@@ -307,14 +564,21 @@ window.MapGLFlowmapPlugin = (function () {
           const info = deckInstance.pickObject({ x, y, radius: 2 });
           map.getCanvas().style.cursor = info ? "pointer" : '';
 
-          // Hide any existing tooltips
-          var oldTooltips = document.querySelectorAll(".flowmap-tooltip");
-          for (var i = 0; i < oldTooltips.length; i++) {
-            oldTooltips[i].style.display = "none";
-          }
-
-          if (info && info.layer && info.layer.props.onHover) {
-            info.layer.props.onHover(info);
+          if (info && info.layer && (info.layer.onHover || (info.layer.props && info.layer.props.onHover))) {
+            info.x = x;
+            info.y = y;
+            info.lngLat = e.lngLat;
+            if (e.lngLat) {
+              info.coordinate = [e.lngLat.lng, e.lngLat.lat];
+            }
+            const event = { srcEvent: e.originalEvent || e };
+            if (typeof info.layer.onHover === "function") {
+              info.layer.onHover(info, event);
+            } else {
+              info.layer.props.onHover(info, event);
+            }
+          } else {
+            hideAllFlowmapTooltips(map);
           }
         } catch (err) {
           // Ignore deck.gl assertion failures during rapid scrubbing
@@ -325,10 +589,7 @@ window.MapGLFlowmapPlugin = (function () {
       if (!map._hasDeckMoveListener) {
         map.on("mousemove", onMapMouseMove);
         map.on("mouseout", function () {
-          var oldTooltips = document.querySelectorAll(".flowmap-tooltip");
-          for (var i = 0; i < oldTooltips.length; i++) {
-            oldTooltips[i].style.display = "none";
-          }
+          hideAllFlowmapTooltips(map);
         });
         map._hasDeckMoveListener = true;
       }
@@ -364,13 +625,14 @@ window.MapGLFlowmapPlugin = (function () {
           map._deckContainer = null;
         }
         map._mapglFlowmapLayers = [];
+        hideAllFlowmapTooltips(map);
       });
 
       return deckInstance;
     }
   }
 
-  function makeLayer(config, HTMLWidgets) {
+  function makeLayer(config, HTMLWidgets, map) {
     const locations = dataframeToRows(config.data.locations, HTMLWidgets);
     const flows = dataframeToRows(config.data.flows, HTMLWidgets);
     const settings = config.settings || {};
@@ -444,6 +706,14 @@ window.MapGLFlowmapPlugin = (function () {
       };
     }
 
+    if (settings.selectedTimeRanges) {
+      layerProps.filter = {
+        ...layerProps.filter,
+        selectedTimeRange: null,
+        selectedTimeRanges: normalizeTimeRanges(settings.selectedTimeRanges)
+      };
+    }
+
     if (settings.selectedLocations) {
       layerProps.filter = {
         ...layerProps.filter,
@@ -458,7 +728,36 @@ window.MapGLFlowmapPlugin = (function () {
       };
     }
 
-    return new FlowmapGL.FlowmapLayer(layerProps);
+    if (config.tooltip && config.tooltip.enabled) {
+      layerProps.onHover = function (info) {
+        showFlowmapTooltip(map, config, info);
+      };
+    }
+
+    return makeFlowmapLayer(layerProps);
+  }
+
+  function makeFlowmapLayer(layerProps) {
+    const layer = new FlowmapGL.FlowmapLayer(layerProps);
+    layer._mapglOnHover = layerProps.onHover;
+    layer._mapglOnClick = layerProps.onClick;
+    return layer;
+  }
+
+  function cloneFlowmapLayer(layer, props) {
+    const cloneProps = Object.assign({}, props);
+
+    if (Object.prototype.hasOwnProperty.call(layer, "_mapglOnHover")) {
+      cloneProps.onHover = layer._mapglOnHover;
+    }
+    if (Object.prototype.hasOwnProperty.call(layer, "_mapglOnClick")) {
+      cloneProps.onClick = layer._mapglOnClick;
+    }
+
+    const cloned = layer.clone(cloneProps);
+    cloned._mapglOnHover = layer._mapglOnHover;
+    cloned._mapglOnClick = layer._mapglOnClick;
+    return cloned;
   }
 
   function init(map, x, el, HTMLWidgets) {
@@ -486,7 +785,7 @@ window.MapGLFlowmapPlugin = (function () {
     }
 
     const flowmapLayers = x.flowmaps.map(function (config) {
-      return makeLayer(config, HTMLWidgets);
+      return makeLayer(config, HTMLWidgets, map);
     });
 
     map._mapglFlowmapLayers = flowmapLayers;
@@ -526,7 +825,10 @@ window.MapGLFlowmapPlugin = (function () {
       if (layer.id !== id) {
         return layer;
       }
-      return layer.clone({ visible: visible });
+      if (!visible) {
+        hideFlowmapTooltip(map, id);
+      }
+      return cloneFlowmapLayer(layer, { visible: visible });
     });
     overlay.setProps({ layers: map._mapglFlowmapLayers });
     return true;
@@ -547,14 +849,34 @@ window.MapGLFlowmapPlugin = (function () {
       ];
     }
 
+    if (newFilter.selectedTimeRanges) {
+      newFilter.selectedTimeRanges = normalizeTimeRanges(newFilter.selectedTimeRanges);
+    }
+
     map._mapglFlowmapLayers = map._mapglFlowmapLayers.map(function (layer) {
       if (layer.id !== id) {
         return layer;
       }
-      return layer.clone({ filter: Object.assign({}, layer.props.filter, newFilter) });
+      return cloneFlowmapLayer(layer, {
+        filter: Object.assign({}, layer.props.filter, newFilter)
+      });
     });
     overlay.setProps({ layers: map._mapglFlowmapLayers });
     return true;
+  }
+
+  function normalizeTimeRanges(ranges) {
+    if (!Array.isArray(ranges)) {
+      return null;
+    }
+
+    return ranges
+      .filter(function (range) {
+        return Array.isArray(range) && range.length === 2;
+      })
+      .map(function (range) {
+        return [new Date(range[0]), new Date(range[1])];
+      });
   }
 
   function setSettings(map, id, settings) {
@@ -567,7 +889,7 @@ window.MapGLFlowmapPlugin = (function () {
       if (layer.id !== id) {
         return layer;
       }
-      return layer.clone(settings);
+      return cloneFlowmapLayer(layer, settings);
     });
     overlay.setProps({ layers: map._mapglFlowmapLayers });
     return true;
