@@ -2151,6 +2151,22 @@ HTMLWidgets.widget({
               }
             });
           }
+          if (x.h3t_sources) {
+            x.h3t_sources.forEach(function (source) {
+              map.addH3TSource(source.id, {
+                tiles: source.tiles,
+                sourcelayer: source.sourcelayer,
+                geometry_type: source.geometry_type,
+                minzoom: source.minzoom,
+                maxzoom: source.maxzoom,
+                promoteId: source.promoteId,
+                debug: source.debug,
+              });
+              if (x.layers) {
+                x.layers.forEach((layer) => add_my_layers(layer));
+              }
+            });
+          }
 
           // Add layers if provided
           if (x.layers) {
@@ -3415,6 +3431,30 @@ if (HTMLWidgets.shinyMode) {
         map.setFilter(message.layer, message.filter);
         // Track filter state for layer restoration
         layerState.filters[message.layer] = message.filter;
+      } else if (message.type === "add_h3t_sources") {
+        (message.h3t_sources || []).forEach(function (source) {
+          try {
+            map.addH3TSource(source.id, {
+              tiles: source.tiles,
+              sourcelayer: source.sourcelayer,
+              geometry_type: source.geometry_type,
+              minzoom: source.minzoom,
+              maxzoom: source.maxzoom,
+              promoteId: source.promoteId,
+              debug: source.debug,
+            });
+          } catch (e) {
+            console.error("addH3TSource failed for", source.id, e);
+          }
+        });
+      } else if (message.type === "add_h3j_sources") {
+        (message.h3j_sources || []).forEach(async function (source) {
+          try {
+            await map.addH3JSource(source.id, { data: source.url });
+          } catch (e) {
+            console.error("addH3JSource failed for", source.id, e);
+          }
+        });
       } else if (message.type === "add_source") {
         if (message.source.type === "vector") {
           const sourceConfig = {
