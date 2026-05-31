@@ -34,7 +34,7 @@ test_that("time control JavaScript supports shift-selected ranges", {
   expect_match(js, "sourceEvent\\.shiftKey", fixed = FALSE)
   expect_match(js, "selectedTimeRanges", fixed = TRUE)
   expect_match(js, "\\[\"any\", \\.\\.\\.clauses\\]", fixed = FALSE)
-  expect_match(js, "Shift-drag to select multiple ranges", fixed = TRUE)
+  expect_match(js, "Shift \\+ drag = select multiple", fixed = FALSE)
   expect_match(js, "mapgl-time-icon-btn", fixed = TRUE)
   expect_match(
     js,

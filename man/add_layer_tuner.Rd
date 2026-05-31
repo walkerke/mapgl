@@ -51,15 +51,20 @@ This function adds an interactive live customization widget (using lil-gui) to t
 It allows users to customize paint and layout properties of map layers in real-time.
 }
 \examples{
-\dontrun{
-library(mapgl)
-
-mapboxgl() |>
+# Create a flowmap centered on Montréal using the bundled datasets and add a layer tuner
+maplibre(
+  style = carto_style("dark-matter"),
+  center = c(-73.58, 45.50),
+  zoom = 11,
+  projection = "mercator"
+) |>
   add_flowmap(
-    id = "flows",
-    locations = locations,
-    flows = flows
+    id = "bixi-rides",
+    locations = bixi_locations,
+    flows = bixi_flows,
+    flow_time_column = "time",
+    flow_color_scheme = "Teal",
+    flow_dark_mode = TRUE
   ) |>
   add_layer_tuner(position = "top-right", width = 320)
-}
 }

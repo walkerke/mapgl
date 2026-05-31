@@ -136,6 +136,10 @@
   opacity: 0.9;
 }
 
+.is-draggable.is-collapsed .mapgl-time-icon-btn {
+  cursor: move;
+}
+
 .mapgl-time-play-btn {
   background: transparent;
   border: none;

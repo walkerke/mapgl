@@ -42,8 +42,8 @@
 #'   immediately after the control mounts. Defaults to `FALSE`.
 #' @param accent_color Color for the bars and selection handles.
 #' @param dark_mode Logical; whether to use a dark theme for the widget.
-#' @param draggable Logical; if `TRUE` the widget is detached from the map
-#'   corner container and can be repositioned by dragging its header.
+#' @param draggable Logical; if `TRUE` (default) the widget is detached from
+#'   the map corner container and can be repositioned by dragging its header.
 #' @param collapsible Logical; if `TRUE` the histogram body can be collapsed
 #'   to a compact bar.
 #' @param collapsed Logical; whether to start in the collapsed state. Implies
@@ -55,6 +55,29 @@
 #' Hold Shift while dragging on the histogram to add another selected time
 #' range. Multiple ranges are combined with OR semantics when filtering target
 #' layers.
+#'
+#' @examples
+#' # Create a flowmap centered on Montréal using the bundled datasets
+#' maplibre(
+#'   style = carto_style("dark-matter"),
+#'   center = c(-73.58, 45.50),
+#'   zoom = 11,
+#'   projection = "mercator"
+#' ) |>
+#'   add_flowmap(
+#'     id = "bixi-rides",
+#'     locations = bixi_locations,
+#'     flows = bixi_flows,
+#'     flow_time_column = "time",
+#'     flow_color_scheme = "Teal",
+#'     flow_dark_mode = TRUE
+#'   ) |>
+#'   add_time_control(
+#'     data = bixi_flows,
+#'     time_column = "time",
+#'     time_interval = "hour",
+#'     title = "BIXI Montréal Rides"
+#'   )
 #'
 #' @return The modified map object.
 #' @export
@@ -73,7 +96,7 @@ add_time_control <- function(
   autoplay = FALSE,
   accent_color = "#00bcd4",
   dark_mode = TRUE,
-  draggable = FALSE,
+  draggable = TRUE,
   collapsible = FALSE,
   collapsed = FALSE,
   title = NULL

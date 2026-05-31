@@ -115,22 +115,27 @@ flowmap_color_schemes <- function() {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' locations <- data.frame(
-#'   id = c("NYC", "LA", "CHI"),
-#'   lat = c(40.7128, 34.0522, 41.8781),
-#'   lon = c(-74.0060, -118.2437, -87.6298)
-#' )
-#'
-#' flows <- data.frame(
-#'   origin = c("NYC", "LA"),
-#'   dest = c("LA", "CHI"),
-#'   count = c(1200, 800)
-#' )
-#'
-#' maplibre(center = c(-98, 39), zoom = 3) |>
-#'   add_flowmap("flows", locations, flows)
-#' }
+#' # Create a flowmap centered on Montréal using the bundled datasets
+#' maplibre(
+#'   style = carto_style("dark-matter"),
+#'   center = c(-73.58, 45.50),
+#'   zoom = 11,
+#'   projection = "mercator"
+#' ) |>
+#'   add_flowmap(
+#'     id = "bixi-rides",
+#'     locations = bixi_locations,
+#'     flows = bixi_flows,
+#'     flow_time_column = "time",
+#'     flow_color_scheme = "Teal",
+#'     flow_dark_mode = TRUE
+#'   ) |>
+#'   add_time_control(
+#'     data = bixi_flows,
+#'     time_column = "time",
+#'     time_interval = "hour",
+#'     title = "BIXI Montréal Rides"
+#'   )
 add_flowmap <- function(
   map,
   id,

@@ -698,12 +698,35 @@ window.MapGLFlowmapPlugin = (function () {
         map.on("click", onMapClick);
         map.on("mouseout", function () {
           hideAllFlowmapTooltips(map);
-          // Clear hover highlights on mouseout
-          map._mapglFlowmapLayers.forEach((layer) => {
-            if (layer.props && typeof layer.props.onHover === "function") {
-              layer.props.onHover({ index: -1 }, {});
-            }
-          });
+          // Clear hover highlights on mouseout — directly update state to avoid async delay
+          let needsRedraw = false;
+          if (map._flowmapHoverTimers) {
+            Object.keys(map._flowmapHoverTimers).forEach(function(id) {
+              if (map._flowmapHoverTimers[id]) {
+                clearTimeout(map._flowmapHoverTimers[id]);
+                map._flowmapHoverTimers[id] = null;
+              }
+            });
+          }
+          if (map._flowmapHoveredLocation) {
+            Object.keys(map._flowmapHoveredLocation).forEach(function(id) {
+              if (map._flowmapHoveredLocation[id] !== null) {
+                map._flowmapHoveredLocation[id] = null;
+                needsRedraw = true;
+              }
+            });
+          }
+          if (needsRedraw) {
+            redrawFlowmaps(map, map._flowmapHTMLWidgets);
+          }
+          // Also notify via layer.props for any other listeners
+          if (map._mapglFlowmapLayers) {
+            map._mapglFlowmapLayers.forEach((layer) => {
+              if (layer.props && typeof layer.props.onHover === "function") {
+                layer.props.onHover({ index: -1 }, {});
+              }
+            });
+          }
         });
         map._hasDeckMoveListener = true;
       }
@@ -746,10 +769,26 @@ window.MapGLFlowmapPlugin = (function () {
     }
   }
 
-  function makeLayer(config, HTMLWidgets, map) {
-    const locations = dataframeToRows(config.data.locations, HTMLWidgets);
-    const flows = dataframeToRows(config.data.flows, HTMLWidgets);
+  function makeLayer(config, HTMLWidgets, map, customLocations, customFlows, customPickable) {
     const settings = config.settings || {};
+
+    // Cache converted rows on the original config's data object (for the canonical id)
+    const canonicalId = config._canonicalId || config.id;
+    const canonical = map._flowmapsConfig && map._flowmapsConfig.find(function(c) { return c.id === canonicalId; });
+    const dataTarget = canonical ? canonical.data : config.data;
+
+    if (!dataTarget._locationsRows) {
+      dataTarget._locationsRows = dataframeToRows(dataTarget.locations, HTMLWidgets);
+    }
+    if (!dataTarget._flowsRows) {
+      dataTarget._flowsRows = dataframeToRows(dataTarget.flows, HTMLWidgets);
+    }
+
+    const locations = customLocations !== undefined ? customLocations : dataTarget._locationsRows;
+    const flows = customFlows !== undefined ? customFlows : dataTarget._flowsRows;
+    const isPickable = customPickable !== undefined ? customPickable : true;
+    // When custom flows are provided we've already done the location filtering externally
+    const skipLocationFilter = customFlows !== undefined;
 
     const layerProps = {
       id: config.id,
@@ -759,7 +798,7 @@ window.MapGLFlowmapPlugin = (function () {
       },
       beforeId: config.beforeId || undefined,
       slot: config.slot || undefined,
-      pickable: true,
+      pickable: isPickable,
       visible: config.visibility !== "none",
       opacity: settings.opacity == null ? 1 : settings.opacity,
       colorScheme: settings.colorScheme,
@@ -828,11 +867,19 @@ window.MapGLFlowmapPlugin = (function () {
       };
     }
 
-    if (settings.selectedLocations) {
-      layerProps.filter = {
-        ...layerProps.filter,
-        selectedLocations: settings.selectedLocations
-      };
+    // Only apply location filter on the FlowmapLayer when we haven't pre-filtered externally.
+    // When customFlows is provided, the caller already filtered by selected locations.
+    if (!skipLocationFilter) {
+      let selectedLocs = settings.selectedLocations;
+      if (settings.clickToFilter && map._flowmapSelectedLocations && map._flowmapSelectedLocations[canonicalId]) {
+        selectedLocs = map._flowmapSelectedLocations[canonicalId];
+      }
+      if (selectedLocs && selectedLocs.length > 0) {
+        layerProps.filter = {
+          ...layerProps.filter,
+          selectedLocations: selectedLocs
+        };
+      }
     }
 
     if (settings.locationFilterMode) {
@@ -842,18 +889,34 @@ window.MapGLFlowmapPlugin = (function () {
       };
     }
 
-    if (config.tooltip && config.tooltip.enabled) {
+    // Only attach interactive handlers on the canonical (pickable) layer.
+    // The originalConfig is the root config from _flowmapsConfig for closures.
+    const originalConfig = (map._flowmapsConfig && map._flowmapsConfig.find(function(c) { return c.id === canonicalId; })) || config;
+
+    const hasHoverHandler = (originalConfig.tooltip && originalConfig.tooltip.enabled) || settings.hoverToHighlight;
+    const hasClickHandler = (originalConfig.popup && originalConfig.popup.enabled) || settings.clickToFilter;
+
+    if (isPickable && hasHoverHandler) {
       layerProps.onHover = function (info) {
-        showInteractiveUI(map, config, info, "tooltip");
+        if (originalConfig.tooltip && originalConfig.tooltip.enabled) {
+          showInteractiveUI(map, originalConfig, info, "tooltip");
+        }
+        if (settings.hoverToHighlight) {
+          handleHoverInteraction(map, originalConfig, info);
+        }
       };
     }
 
-    if (config.popup && config.popup.enabled) {
+    if (isPickable && hasClickHandler) {
       layerProps.onClick = function (info) {
-        showInteractiveUI(map, config, info, "popup");
+        if (originalConfig.popup && originalConfig.popup.enabled) {
+          showInteractiveUI(map, originalConfig, info, "popup");
+        }
+        if (settings.clickToFilter) {
+          handleClickInteraction(map, originalConfig, info);
+        }
       };
     }
-
 
     return makeFlowmapLayer(layerProps);
   }
@@ -905,15 +968,249 @@ window.MapGLFlowmapPlugin = (function () {
       return;
     }
 
-    const flowmapLayers = x.flowmaps.map(function (config) {
-      return makeLayer(config, HTMLWidgets, map);
+    // Initialize interaction state maps
+    if (!map._flowmapSelectedLocations) {
+      map._flowmapSelectedLocations = {};
+    }
+    if (!map._flowmapHoveredLocation) {
+      map._flowmapHoveredLocation = {};
+    }
+    if (!map._flowmapHoverTimers) {
+      map._flowmapHoverTimers = {};
+    }
+    map._flowmapsConfig = x.flowmaps;
+    map._flowmapHTMLWidgets = HTMLWidgets;
+
+    x.flowmaps.forEach(function (config) {
+      const id = config.id;
+      const cSettings = config.settings || {};
+      if (map._flowmapSelectedLocations[id] === undefined) {
+        const initialLocs = cSettings.selectedLocations;
+        map._flowmapSelectedLocations[id] = Array.isArray(initialLocs)
+          ? [...initialLocs]
+          : (initialLocs ? [initialLocs] : []);
+      }
+      if (map._flowmapHoveredLocation[id] === undefined) {
+        map._flowmapHoveredLocation[id] = null;
+      }
+      if (map._flowmapHoverTimers[id] === undefined) {
+        map._flowmapHoverTimers[id] = null;
+      }
     });
 
-    map._mapglFlowmapLayers = flowmapLayers;
-    overlay.setProps({ layers: flowmapLayers });
+    redrawFlowmaps(map, HTMLWidgets);
+  }
+
+  function redrawFlowmaps(map, HTMLWidgets) {
+    if (!map._flowmapsConfig) return;
+    const HTMLWidgetsInstance = HTMLWidgets || map._flowmapHTMLWidgets;
+    const layers = [];
+
+    map._flowmapsConfig.forEach(function (config) {
+      const id = config.id;
+      const settings = config.settings || {};
+      const isVisible = config.visibility !== "none";
+
+      if (!isVisible) {
+        return;
+      }
+
+      const hoverActive = settings.hoverToHighlight && map._flowmapHoveredLocation[id];
+
+      if (!config.data._locationsRows) {
+        config.data._locationsRows = dataframeToRows(config.data.locations, HTMLWidgetsInstance);
+      }
+      if (!config.data._flowsRows) {
+        config.data._flowsRows = dataframeToRows(config.data.flows, HTMLWidgetsInstance);
+      }
+
+      let baseLocations = config.data._locationsRows;
+      let baseFlows = config.data._flowsRows;
+
+      const selected = map._flowmapSelectedLocations[id] || [];
+      if (settings.clickToFilter && selected.length > 0) {
+        const selectedSet = new Set(selected.map(String));
+        baseFlows = baseFlows.filter(function (flow) {
+          return selectedSet.has(String(flow.origin)) || selectedSet.has(String(flow.dest));
+        });
+      }
+
+      if (hoverActive) {
+        const hovered = map._flowmapHoveredLocation[id];
+
+        // Build the full normal layer first, then clone it with dimmed opacity.
+        // Cloning reuses the FlowmapLayer's internal state and preserves handlers.
+        const layer = makeLayer(config, HTMLWidgetsInstance, map, baseLocations, baseFlows);
+        const dimOpacity = (settings.opacity == null ? 1.0 : settings.opacity) * 0.15;
+        const baseLayer = cloneFlowmapLayer(layer, {
+          id: id + "-dim",
+          opacity: dimOpacity,
+          pickable: true  // Keep pickable so hover events pass through to handlers
+        });
+        layers.push(baseLayer);
+
+        let highlightFlows = [];
+        let highlightLocations = [];
+        const connectedLocationIds = new Set();
+
+        if (hovered.type === "location") {
+          const hoveredId = String(hovered.id);
+          connectedLocationIds.add(hoveredId);
+          highlightFlows = baseFlows.filter(function (flow) {
+            const isConnected = String(flow.origin) === hoveredId || String(flow.dest) === hoveredId;
+            if (isConnected) {
+              connectedLocationIds.add(String(flow.origin));
+              connectedLocationIds.add(String(flow.dest));
+            }
+            return isConnected;
+          });
+        } else if (hovered.type === "flow") {
+          // For flow type, origin/dest IDs are in hovered.origin.id and hovered.dest.id
+          // (the picking info object has {type:'flow', flow:<raw>, origin:<loc>, dest:<loc>, count})
+          const originId = hovered.origin ? String(hovered.origin.id) : null;
+          const destId = hovered.dest ? String(hovered.dest.id) : null;
+          if (originId && destId) {
+            connectedLocationIds.add(originId);
+            connectedLocationIds.add(destId);
+            highlightFlows = baseFlows.filter(function (flow) {
+              return String(flow.origin) === originId && String(flow.dest) === destId;
+            });
+          }
+        }
+
+        highlightLocations = baseLocations.filter(function (loc) {
+          return connectedLocationIds.has(String(loc.id));
+        });
+
+        // Highlight overlay — not pickable so cursor passes through to dim base layer.
+        const hlLayerSettings = Object.assign({}, settings, {
+          opacity: settings.opacity == null ? 1.0 : settings.opacity,
+          clusteringEnabled: false  // disable clustering so small highlight sets render correctly
+        });
+        const highlightLayerConfig = {
+          _canonicalId: id,
+          id: id + "-highlight",
+          data: config.data,
+          settings: hlLayerSettings,
+          visibility: config.visibility,
+          beforeId: config.beforeId,
+          slot: config.slot,
+          tooltip: null,
+          popup: null,
+        };
+
+        const highlightLayer = makeLayer(
+          highlightLayerConfig,
+          HTMLWidgetsInstance,
+          map,
+          highlightLocations,
+          highlightFlows,
+          false  // not pickable
+        );
+        layers.push(highlightLayer);
+      } else {
+        const normalLayer = makeLayer(config, HTMLWidgetsInstance, map, baseLocations, baseFlows);
+        layers.push(normalLayer);
+      }
+    });
+
+    map._mapglFlowmapLayers = layers;
+    const overlay = map._mapglFlowmapOverlay || map._deckgl;
+    if (overlay) {
+      overlay.setProps({ layers: layers });
+    }
+  }
+
+  function handleHoverInteraction(map, config, info) {
+    const id = config.id;
+    const settings = config.settings || {};
+    const hoveredObject = info && info.object;
+
+    if (map._flowmapHoverTimers[id]) {
+      clearTimeout(map._flowmapHoverTimers[id]);
+      map._flowmapHoverTimers[id] = null;
+    }
+
+    if (hoveredObject) {
+      const objectType = hoveredObject.type;  // 'location' or 'flow' — set by FlowmapLayer
+
+      if (objectType === "location" || objectType === "flow") {
+        const currentHovered = map._flowmapHoveredLocation[id];
+        let isSame = false;
+        if (currentHovered && currentHovered.type === objectType) {
+          if (objectType === "location") {
+            isSame = String(currentHovered.id) === String(hoveredObject.id);
+          } else {
+            // For flows: use origin.id / dest.id from the enriched location objects
+            const curOrig = currentHovered.origin && String(currentHovered.origin.id);
+            const curDest = currentHovered.dest && String(currentHovered.dest.id);
+            const newOrig = hoveredObject.origin && String(hoveredObject.origin.id);
+            const newDest = hoveredObject.dest && String(hoveredObject.dest.id);
+            isSame = curOrig === newOrig && curDest === newDest;
+          }
+        }
+
+        if (!isSame) {
+          const delay = settings.hoverHighlightDelay != null ? settings.hoverHighlightDelay : 500;
+          if (delay > 0) {
+            map._flowmapHoverTimers[id] = setTimeout(function () {
+              map._flowmapHoveredLocation[id] = hoveredObject;
+              map._flowmapHoverTimers[id] = null;
+              redrawFlowmaps(map, map._flowmapHTMLWidgets);
+            }, delay);
+          } else {
+            map._flowmapHoveredLocation[id] = hoveredObject;
+            redrawFlowmaps(map, map._flowmapHTMLWidgets);
+          }
+        }
+        return;
+      }
+    }
+
+    // Mouse left the element — clear pending timer and reset highlight
+    if (map._flowmapHoveredLocation[id] !== null) {
+      map._flowmapHoveredLocation[id] = null;
+      redrawFlowmaps(map, map._flowmapHTMLWidgets);
+    }
+  }
+
+  function handleClickInteraction(map, config, info) {
+    const id = config.id;
+    const clickedObject = info && info.object;
+    if (!clickedObject) {
+      return;
+    }
+
+    const objectType = clickedObject.type;  // 'location' or 'flow'
+
+    if (objectType === "location") {
+      const locId = clickedObject.id;
+      const selected = map._flowmapSelectedLocations[id] || [];
+      const index = selected.indexOf(locId);
+      let newSelected;
+      if (index > -1) {
+        // Deselect
+        newSelected = selected.filter(function(s) { return s !== locId; });
+      } else {
+        // Select — copy to avoid mutation
+        newSelected = selected.concat([locId]);
+      }
+      map._flowmapSelectedLocations[id] = newSelected;
+      // Clear hover highlight when selection changes
+      if (map._flowmapHoverTimers[id]) {
+        clearTimeout(map._flowmapHoverTimers[id]);
+        map._flowmapHoverTimers[id] = null;
+      }
+      map._flowmapHoveredLocation[id] = null;
+      redrawFlowmaps(map, map._flowmapHTMLWidgets);
+    }
   }
 
   function hasLayer(map, id) {
+    // First check canonical config store (works even when hover replaces the layer id)
+    if (map && map._flowmapsConfig) {
+      return map._flowmapsConfig.some(function (c) { return c.id === id; });
+    }
     return Boolean(
       map &&
         map._mapglFlowmapLayers &&
@@ -924,66 +1221,58 @@ window.MapGLFlowmapPlugin = (function () {
   }
 
   function getVisibility(map, id) {
-    if (!hasLayer(map, id)) {
-      return undefined;
-    }
-
-    const layer = map._mapglFlowmapLayers.find(function (candidate) {
-      return candidate.id === id;
+    if (!map._flowmapsConfig) return undefined;
+    const config = map._flowmapsConfig.find(function (c) {
+      return c.id === id;
     });
-
-    return layer && layer.props.visible === false ? "none" : "visible";
+    return config ? (config.visibility === "none" ? "none" : "visible") : undefined;
   }
 
   function setVisibility(map, id, visibility) {
-    var overlay = map._mapglFlowmapOverlay || map._deckgl;
-    if (!hasLayer(map, id) || !overlay) {
+    if (!map._flowmapsConfig) {
       return false;
     }
-
-    const visible = visibility !== "none";
-    map._mapglFlowmapLayers = map._mapglFlowmapLayers.map(function (layer) {
-      if (layer.id !== id) {
-        return layer;
+    let found = false;
+    map._flowmapsConfig.forEach(function (config) {
+      if (config.id === id) {
+        config.visibility = visibility;
+        if (visibility === "none") {
+          hideFlowmapTooltip(map, id);
+        }
+        found = true;
       }
-      if (!visible) {
-        hideFlowmapTooltip(map, id);
-      }
-      return cloneFlowmapLayer(layer, { visible: visible });
     });
-    overlay.setProps({ layers: map._mapglFlowmapLayers });
-    return true;
+    if (found) {
+      redrawFlowmaps(map, map._flowmapHTMLWidgets);
+      return true;
+    }
+    return false;
   }
 
   function setFilter(map, id, filter) {
-    var overlay = map._mapglFlowmapOverlay || map._deckgl;
-    if (!hasLayer(map, id) || !overlay) {
+    if (!map._flowmapsConfig) {
       return false;
     }
+    let found = false;
+    map._flowmapsConfig.forEach(function (config) {
+      if (config.id === id) {
+        if (!config.settings) {
+          config.settings = {};
+        }
+        Object.assign(config.settings, filter);
 
-    const newFilter = { ...filter };
+        if (filter.selectedLocations) {
+          map._flowmapSelectedLocations[id] = filter.selectedLocations;
+        }
 
-    if (newFilter.selectedTimeRange) {
-      newFilter.selectedTimeRange = [
-        new Date(newFilter.selectedTimeRange[0]),
-        new Date(newFilter.selectedTimeRange[1])
-      ];
-    }
-
-    if (newFilter.selectedTimeRanges) {
-      newFilter.selectedTimeRanges = normalizeTimeRanges(newFilter.selectedTimeRanges);
-    }
-
-    map._mapglFlowmapLayers = map._mapglFlowmapLayers.map(function (layer) {
-      if (layer.id !== id) {
-        return layer;
+        found = true;
       }
-      return cloneFlowmapLayer(layer, {
-        filter: Object.assign({}, layer.props.filter, newFilter)
-      });
     });
-    overlay.setProps({ layers: map._mapglFlowmapLayers });
-    return true;
+    if (found) {
+      redrawFlowmaps(map, map._flowmapHTMLWidgets);
+      return true;
+    }
+    return false;
   }
 
   function normalizeTimeRanges(ranges) {
@@ -1001,19 +1290,24 @@ window.MapGLFlowmapPlugin = (function () {
   }
 
   function setSettings(map, id, settings) {
-    var overlay = map._mapglFlowmapOverlay || map._deckgl;
-    if (!hasLayer(map, id) || !overlay) {
+    if (!map._flowmapsConfig) {
       return false;
     }
-
-    map._mapglFlowmapLayers = map._mapglFlowmapLayers.map(function (layer) {
-      if (layer.id !== id) {
-        return layer;
+    let found = false;
+    map._flowmapsConfig.forEach(function (config) {
+      if (config.id === id) {
+        if (!config.settings) {
+          config.settings = {};
+        }
+        Object.assign(config.settings, settings);
+        found = true;
       }
-      return cloneFlowmapLayer(layer, settings);
     });
-    overlay.setProps({ layers: map._mapglFlowmapLayers });
-    return true;
+    if (found) {
+      redrawFlowmaps(map, map._flowmapHTMLWidgets);
+      return true;
+    }
+    return false;
   }
 
   return {

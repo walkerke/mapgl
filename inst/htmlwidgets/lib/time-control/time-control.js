@@ -59,7 +59,13 @@
         this._isCollapsed ? "Expand time control" : "Collapse time control",
       );
       if (this._canCollapse) {
-        this._collapseBtn.onclick = () => this.toggleCollapse();
+        this._collapseBtn.onclick = (e) => {
+          if (this._dragged) {
+            this._dragged = false;
+            return;
+          }
+          this.toggleCollapse();
+        };
       } else {
         this._collapseBtn.tabIndex = -1;
         this._collapseBtn.setAttribute("aria-hidden", "true");
@@ -99,7 +105,7 @@
 
       const hint = document.createElement("div");
       hint.className = "mapgl-time-hint";
-      hint.textContent = "Shift-drag to select multiple ranges";
+      hint.textContent = "Shift + drag = select multiple | Double click = select all";
       wrapper.appendChild(hint);
 
       this._body.appendChild(wrapper);
@@ -154,8 +160,14 @@
       handle.style.cursor = "move";
       let startX, startY, originLeft, originTop, moved;
       const onDown = (e) => {
-        if (e.target.closest("button")) return;
-        e.preventDefault();
+        const button = e.target.closest("button");
+        if (button && button !== this._collapseBtn) return;
+
+        if (!button) {
+          e.preventDefault();
+        }
+
+        this._dragged = false;
         const rect = this._container.getBoundingClientRect();
         const parentRect = this._map.getContainer().getBoundingClientRect();
         originLeft = rect.left - parentRect.left;
@@ -170,8 +182,13 @@
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
         if (!moved && Math.abs(dx) + Math.abs(dy) < 3) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
         if (!moved) {
           moved = true;
+          this._dragged = true;
           this._container.style.bottom = "auto";
           this._container.style.right = "auto";
           this._container.style.left = originLeft + "px";
@@ -308,6 +325,12 @@
         .attr("class", "mapgl-brush")
         .call(this._brush);
 
+      svg.on("dblclick", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this._brushGroup.call(this._brush.move, [0, innerWidth]);
+      });
+
       this._rangeOverlay = g
         .append("g")
         .attr("class", "mapgl-selected-ranges");
@@ -320,8 +343,9 @@
         ];
       } else {
         const start = bins[0].time;
+        const binsToSelect = Math.max(1, Math.round(bins.length * 0.2));
         const end = new Date(
-          start.getTime() + Math.min(3, bins.length) * intervalMs,
+          start.getTime() + binsToSelect * intervalMs,
         );
         initialSelection = [x(start), x(end)];
       }
@@ -330,6 +354,19 @@
     }
 
     _handleBrush(event) {
+      if (event.type === "start") {
+        const append =
+          event &&
+          event.sourceEvent &&
+          event.sourceEvent.shiftKey &&
+          this._ranges.length > 0;
+        
+        if (!append) {
+          this._ranges = [];
+          this._renderRanges();
+        }
+      }
+
       if (!event.selection) {
         if (this._activeLabel) this._activeLabel.style("display", "none");
         return;
@@ -546,10 +583,18 @@
       // 1. Drag main selection to move
       const dragRect = d3.drag()
         .on("start", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           event.subject.originalRange = [new Date(d[0]), new Date(d[1])];
           event.subject.startX = event.x;
         })
         .on("drag", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           const dx = event.x - event.subject.startX;
 
           // Convert dx (pixels) to time offset (ms) using scale
@@ -581,6 +626,10 @@
           this._emit("change", this._ranges);
         })
         .on("end", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           // Normalize (and merge overlapping ranges) on mouseup/end
           this._ranges = this._normalizeRanges(this._ranges);
           this._renderRanges();
@@ -594,9 +643,17 @@
       // 2. Drag left handle to resize start boundary
       const dragLeft = d3.drag()
         .on("start", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           event.subject.originalEnd = new Date(d[1]);
         })
         .on("drag", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           let newX = event.x;
           // Constrain: must be between 0 and the right boundary (leaving min 5px width)
           const minX = 0;
@@ -615,6 +672,10 @@
           this._emit("change", this._ranges);
         })
         .on("end", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           this._ranges = this._normalizeRanges(this._ranges);
           this._renderRanges();
           this._updateLabel(this._ranges);
@@ -627,9 +688,17 @@
       // 3. Drag right handle to resize end boundary
       const dragRight = d3.drag()
         .on("start", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           event.subject.originalStart = new Date(d[0]);
         })
         .on("drag", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           let newX = event.x;
           // Constrain: must be between left boundary (leaving min 5px width) and full width
           const minX = this._xScale(event.subject.originalStart) + 5;
@@ -648,6 +717,10 @@
           this._emit("change", this._ranges);
         })
         .on("end", (event, d) => {
+          if (event.sourceEvent) {
+            event.sourceEvent.preventDefault();
+            event.sourceEvent.stopPropagation();
+          }
           this._ranges = this._normalizeRanges(this._ranges);
           this._renderRanges();
           this._updateLabel(this._ranges);
@@ -781,6 +854,14 @@
       if (this._isPlaying) return;
       this._isPlaying = true;
       this._playBtn.innerHTML = this._getPauseIcon();
+      const d3 = window.d3;
+      if (d3) {
+        const selection = d3.brushSelection(this._brushGroup.node());
+        if (!selection && this._ranges && this._ranges.length > 0) {
+          const r = this._ranges[0];
+          this._brushGroup.call(this._brush.move, [this._xScale(r[0]), this._xScale(r[1])]);
+        }
+      }
       this._animate();
       this._emit("play");
     }
@@ -789,6 +870,7 @@
       this._isPlaying = false;
       this._playBtn.innerHTML = this._getPlayIcon();
       if (this._animationFrame) cancelAnimationFrame(this._animationFrame);
+      this._brushGroup.call(this._brush.move, null);
       this._emit("pause");
     }
     _animate() {
