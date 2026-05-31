@@ -104,3 +104,16 @@ dependencies:
     src: "htmlwidgets/lib/lil-gui"
     script:
       - "lil-gui.umd.min.js"
+  - name: d3
+    version: "7.9.0"
+    src: "htmlwidgets/lib/d3"
+    script:
+      - "d3.min.js"
+
+  - name: time-control
+    version: "1.0.0"
+    src: "htmlwidgets/lib/time-control"
+    script:
+      - "time-control.js"
+    stylesheet:
+      - "time-control.css"

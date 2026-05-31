@@ -9,11 +9,19 @@
   },
   "bundle": {
     "path": "inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js",
-    "sha256": "0702a268e1a23a1f2a9b271324f572f954858456b6489d367e11561ea6a57030",
-    "bytes": 809809
+    "sha256": "b3d0b04aa3fd73b5af33f5c0d3f0485a457cd566f3273e64803ce8e30fc727ef",
+    "bytes": 811038
   },
+  "patches": [
+    {
+      "path": "data-raw/flowmap-vendor/patches/flowmap-temporal-scale-domain.patch",
+      "sha256": "3d2755f26a9b93039ea8362c34525b8610ffa4c86dc591de300ce07cb81be8ec",
+      "bytes": 16753,
+      "purpose": "Add temporalScaleDomain so temporal flow width/color domains can use selected-time or all-time flows."
+    }
+  ],
   "copyrights": {
-    "path": "inst/COPYRIGHTS"
+    "path": "LICENSE.note"
   },
   "colorSchemes": {
     "source": "FlowMapGL 9.3.0 vendored bundle",

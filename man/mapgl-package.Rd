@@ -23,7 +23,7 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Egor Kotov \email{kotov.egor@gmail.com} (\href{https://orcid.org/0000-0001-6690-5345}{ORCID}) (added Flowmap.gl and layer tuner) [contributor]
+  \item Egor Kotov \email{kotov.egor@gmail.com} (\href{https://orcid.org/0000-0001-6690-5345}{ORCID}) (added Flowmap.gl, layer tuner, time control) [contributor]
 }
 
 }

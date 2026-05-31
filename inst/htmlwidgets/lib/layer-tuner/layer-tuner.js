@@ -467,6 +467,7 @@
                   fadeEnabled: meta.state.fadeEnabled,
                   fadeOpacityEnabled: meta.state.fadeOpacityEnabled,
                   adaptiveScalesEnabled: meta.state.adaptiveScalesEnabled,
+                  temporalScaleDomain: meta.state.temporalScaleDomain,
                   animationEnabled: meta.state.animationEnabled,
                   maxTopFlowsDisplayNum: meta.state.maxTopFlowsDisplayNum,
                   flowEndpointsInViewportMode: meta.state.flowEndpointsInViewportMode
@@ -871,6 +872,7 @@
             fadeEnabled: l.props.fadeEnabled !== undefined ? l.props.fadeEnabled : true,
             fadeOpacityEnabled: l.props.fadeOpacityEnabled !== undefined ? l.props.fadeOpacityEnabled : false,
             adaptiveScalesEnabled: l.props.adaptiveScalesEnabled !== undefined ? l.props.adaptiveScalesEnabled : true,
+            temporalScaleDomain: l.props.temporalScaleDomain || 'selected',
             animationEnabled: l.props.animationEnabled !== undefined ? l.props.animationEnabled : false,
             maxTopFlowsDisplayNum: l.props.maxTopFlowsDisplayNum || 5000,
             flowEndpointsInViewportMode: l.props.flowEndpointsInViewportMode || 'any'
@@ -920,6 +922,7 @@
                 fadeEnabled: fs.fadeEnabled,
                 fadeOpacityEnabled: fs.fadeOpacityEnabled,
                 adaptiveScalesEnabled: fs.adaptiveScalesEnabled,
+                temporalScaleDomain: fs.temporalScaleDomain,
                 maxTopFlowsDisplayNum: fs.maxTopFlowsDisplayNum,
                 flowEndpointsInViewportMode: fs.flowEndpointsInViewportMode
               });
@@ -983,6 +986,7 @@
           registerFlowmapController(folder.add(fs, 'fadeEnabled'), 'fadeEnabled');
           registerFlowmapController(folder.add(fs, 'fadeOpacityEnabled'), 'fadeOpacityEnabled');
           registerFlowmapController(folder.add(fs, 'adaptiveScalesEnabled'), 'adaptiveScalesEnabled');
+          registerFlowmapController(folder.add(fs, 'temporalScaleDomain', ['selected', 'all']), 'temporalScaleDomain');
           registerFlowmapController(folder.add(fs, 'maxTopFlowsDisplayNum', 100, 50000, 100), 'maxTopFlowsDisplayNum');
           registerFlowmapController(folder.add(fs, 'flowEndpointsInViewportMode', ['any', 'both']), 'flowEndpointsInViewportMode');
 

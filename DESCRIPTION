@@ -4,7 +4,7 @@ Version: 0.4.9.9000
 Date: 2026-05-14
 Authors@R: c(
     person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre")),
-    person(given = "Egor", family = "Kotov", email = "kotov.egor@gmail.com", role = c("aut", "ctb"), comment = c(ORCID = "0000-0001-6690-5345", "added Flowmap.gl and layer tuner")
+    person(given = "Egor", family = "Kotov", email = "kotov.egor@gmail.com", role = c("aut", "ctb"), comment = c(ORCID = "0000-0001-6690-5345", "added Flowmap.gl, layer tuner, time control")
     )
   )
 Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.com/mapbox-gl-js/guides>)

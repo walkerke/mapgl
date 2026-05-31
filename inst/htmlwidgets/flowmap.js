@@ -163,19 +163,24 @@ window.MapGLFlowmapPlugin = (function () {
 
       // Forward mouse events from Mapbox to standalone Deck for picking / hover tooltips
       const onMapMouseMove = (e) => {
-        if (!deckInstance) return;
+        if (!deckInstance || !map._mapglFlowmapLayers || map._mapglFlowmapLayers.length === 0) return;
         const { x, y } = e.point;
-        const info = deckInstance.pickObject({ x, y, radius: 2 });
-        map.getCanvas().style.cursor = info ? "pointer" : '';
+        try {
+          const info = deckInstance.pickObject({ x, y, radius: 2 });
+          map.getCanvas().style.cursor = info ? "pointer" : '';
 
-        // Hide any existing tooltips
-        var oldTooltips = document.querySelectorAll(".flowmap-tooltip");
-        for (var i = 0; i < oldTooltips.length; i++) {
-          oldTooltips[i].style.display = "none";
-        }
+          // Hide any existing tooltips
+          var oldTooltips = document.querySelectorAll(".flowmap-tooltip");
+          for (var i = 0; i < oldTooltips.length; i++) {
+            oldTooltips[i].style.display = "none";
+          }
 
-        if (info && info.layer && info.layer.props.onHover) {
-          info.layer.props.onHover(info);
+          if (info && info.layer && info.layer.props.onHover) {
+            info.layer.props.onHover(info);
+          }
+        } catch (err) {
+          // Ignore deck.gl assertion failures during rapid scrubbing
+          // console.warn('Deck.gl picking error:', err);
         }
       };
 
@@ -232,7 +237,7 @@ window.MapGLFlowmapPlugin = (function () {
     const flows = dataframeToRows(config.data.flows, HTMLWidgets);
     const settings = config.settings || {};
 
-    return new FlowmapGL.FlowmapLayer({
+    const layerProps = {
       id: config.id,
       data: {
         locations: locations,
@@ -251,12 +256,15 @@ window.MapGLFlowmapPlugin = (function () {
       locationTotalsEnabled: settings.locationTotalsEnabled,
       locationLabelsEnabled: settings.locationLabelsEnabled,
       flowLinesRenderingMode: settings.flowLinesRenderingMode,
+      flowLineThicknessScale: settings.flowLineThicknessScale == null ? 1 : settings.flowLineThicknessScale,
+      flowLineCurviness: settings.flowLineCurviness == null ? 1 : settings.flowLineCurviness,
       clusteringEnabled: settings.clusteringEnabled,
       clusteringAuto: settings.clusteringAuto,
       clusteringLevel: settings.clusteringLevel === null ? undefined : settings.clusteringLevel,
       fadeEnabled: settings.fadeEnabled,
       fadeOpacityEnabled: settings.fadeOpacityEnabled,
       adaptiveScalesEnabled: settings.adaptiveScalesEnabled,
+      temporalScaleDomain: settings.temporalScaleDomain || "selected",
       maxTopFlowsDisplayNum: settings.maxTopFlowsDisplayNum,
       flowEndpointsInViewportMode: settings.flowEndpointsInViewportMode,
       getLocationId: function (location) {
@@ -280,7 +288,39 @@ window.MapGLFlowmapPlugin = (function () {
       getFlowMagnitude: function (flow) {
         return flow.count;
       },
-    });
+    };
+
+    if (settings.timeColumn) {
+      layerProps.getFlowTime = function (flow) {
+        return flow.time ? new Date(flow.time) : undefined;
+      };
+    }
+
+    if (settings.selectedTimeRange) {
+      layerProps.filter = {
+        ...layerProps.filter,
+        selectedTimeRange: [
+          new Date(settings.selectedTimeRange[0]),
+          new Date(settings.selectedTimeRange[1])
+        ]
+      };
+    }
+
+    if (settings.selectedLocations) {
+      layerProps.filter = {
+        ...layerProps.filter,
+        selectedLocations: settings.selectedLocations
+      };
+    }
+
+    if (settings.locationFilterMode) {
+      layerProps.filter = {
+        ...layerProps.filter,
+        locationFilterMode: settings.locationFilterMode
+      };
+    }
+
+    return new FlowmapGL.FlowmapLayer(layerProps);
   }
 
   function init(map, x, el, HTMLWidgets) {
@@ -352,10 +392,53 @@ window.MapGLFlowmapPlugin = (function () {
     return true;
   }
 
+  function setFilter(map, id, filter) {
+    var overlay = map._mapglFlowmapOverlay || map._deckgl;
+    if (!hasLayer(map, id) || !overlay) {
+      return false;
+    }
+
+    const newFilter = { ...filter };
+
+    if (newFilter.selectedTimeRange) {
+      newFilter.selectedTimeRange = [
+        new Date(newFilter.selectedTimeRange[0]),
+        new Date(newFilter.selectedTimeRange[1])
+      ];
+    }
+
+    map._mapglFlowmapLayers = map._mapglFlowmapLayers.map(function (layer) {
+      if (layer.id !== id) {
+        return layer;
+      }
+      return layer.clone({ filter: Object.assign({}, layer.props.filter, newFilter) });
+    });
+    overlay.setProps({ layers: map._mapglFlowmapLayers });
+    return true;
+  }
+
+  function setSettings(map, id, settings) {
+    var overlay = map._mapglFlowmapOverlay || map._deckgl;
+    if (!hasLayer(map, id) || !overlay) {
+      return false;
+    }
+
+    map._mapglFlowmapLayers = map._mapglFlowmapLayers.map(function (layer) {
+      if (layer.id !== id) {
+        return layer;
+      }
+      return layer.clone(settings);
+    });
+    overlay.setProps({ layers: map._mapglFlowmapLayers });
+    return true;
+  }
+
   return {
     init: init,
     hasLayer: hasLayer,
     getVisibility: getVisibility,
     setVisibility: setVisibility,
+    setFilter: setFilter,
+    setSettings: setSettings,
   };
 })();

@@ -46,6 +46,7 @@ Below are the licenses of the individual bundled components:
 | color-name | 1.1.4 | MIT | git@github.com:colorjs/color-name.git |
 | command-line-args | 6.0.2 | MIT | git+https://github.com/75lb/command-line-args.git |
 | command-line-usage | 7.0.4 | MIT | https://github.com/75lb/command-line-usage |
+| d3 | 7.9.0 | ISC | https://github.com/d3/d3.git |
 | d3-array | 3.2.4 | ISC | https://github.com/d3/d3-array.git |
 | d3-color | 3.1.0 | ISC | https://github.com/d3/d3-color.git |
 | d3-format | 3.1.2 | ISC | https://github.com/d3/d3-format.git |
@@ -64,6 +65,7 @@ Below are the licenses of the individual bundled components:
 | internmap | 2.0.3 | ISC | https://github.com/mbostock/internmap.git |
 | json-bignum | 0.0.3 | MIT | https://github.com/datalanche/json-bignum.git |
 | kdbush | 4.1.0 | ISC | git://github.com/mourner/kdbush.git |
+| lil-gui | 0.19.0 | MIT | https://github.com/georgealways/lil-gui |
 | lodash.camelcase | 4.3.0 | MIT | lodash/lodash |
 | mjolnir.js | 3.0.0 | MIT | https://github.com/visgl/mjolnir.js |
 | reselect | 5.2.0 | MIT | https://github.com/reduxjs/reselect.git |
@@ -74,4 +76,3 @@ Below are the licenses of the individual bundled components:
 | typical | 7.3.0 | MIT | git+https://github.com/75lb/typical.git |
 | undici-types | 7.16.0 | MIT | git+https://github.com/nodejs/undici.git |
 | wordwrapjs | 5.1.1 | MIT | https://github.com/75lb/wordwrapjs |
-| lil-gui | 0.19.0 | MIT | https://github.com/georgealways/lil-gui |

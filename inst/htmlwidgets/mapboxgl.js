@@ -2671,6 +2671,11 @@ HTMLWidgets.widget({
             map.controls.push(fullscreen);
           }
 
+          // Add time controls if enabled
+          if (window.MapGLTimeControlPlugin) {
+            window.MapGLTimeControlPlugin.init(map, x);
+          }
+
           // Add geolocate control if enabled
           if (x.geolocate_control) {
             const geolocate = new mapboxgl.GeolocateControl({
@@ -3704,6 +3709,18 @@ if (HTMLWidgets.shinyMode) {
         }
         layerState.layoutProperties[message.layer][message.name] =
           message.value;
+      } else if (message.type === "set_flowmap_filter") {
+        if (window.MapGLFlowmapPlugin) {
+          window.MapGLFlowmapPlugin.setFilter(map, message.id, message.filter);
+        }
+      } else if (message.type === "set_flowmap_settings") {
+        if (window.MapGLFlowmapPlugin) {
+          window.MapGLFlowmapPlugin.setSettings(
+            map,
+            message.id,
+            message.settings,
+          );
+        }
       } else if (message.type === "set_paint_property") {
         const layerId = message.layer;
         const propertyName = message.name;
@@ -4686,6 +4703,11 @@ if (HTMLWidgets.shinyMode) {
         const fullscreen = new mapboxgl.FullscreenControl();
         map.addControl(fullscreen, position);
         map.controls.push({ type: "fullscreen", control: fullscreen });
+      } else if (
+        window.MapGLTimeControlPlugin &&
+        window.MapGLTimeControlPlugin.handleMessage(map, message)
+      ) {
+        // Handled by plugin
       } else if (message.type === "add_scale_control") {
         const scaleControl = new mapboxgl.ScaleControl({
           maxWidth: message.options.maxWidth,

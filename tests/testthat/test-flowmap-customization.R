@@ -23,13 +23,14 @@ test_that("add_flowmap serializes all new customization settings", {
       flow_fade_enabled = FALSE,
       flow_fade_opacity_enabled = TRUE,
       flow_adaptive_scales_enabled = FALSE,
+      flow_temporal_scale_domain = "all",
       flow_max_top_flows_display_num = 1000,
       flow_endpoints_in_viewport_mode = "both"
     )
 
   expect_length(map$x$flowmaps, 1)
   settings <- map$x$flowmaps[[1]]$settings
-  
+
   expect_equal(settings$fadeAmount, 75)
   expect_equal(settings$highlightColor, "red")
   expect_false(settings$locationsEnabled)
@@ -42,6 +43,7 @@ test_that("add_flowmap serializes all new customization settings", {
   expect_false(settings$fadeEnabled)
   expect_true(settings$fadeOpacityEnabled)
   expect_false(settings$adaptiveScalesEnabled)
+  expect_equal(settings$temporalScaleDomain, "all")
   expect_equal(settings$flowLinesRenderingMode, "animated-straight")
   expect_equal(settings$maxTopFlowsDisplayNum, 1000)
   expect_equal(settings$flowEndpointsInViewportMode, "both")
@@ -57,4 +59,5 @@ test_that("add_flowmap validates new parameters", {
   expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_clustering_level = "a"), "number or NULL")
   expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_locations_enabled = "TRUE"), "TRUE or FALSE")
   expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_highlight_color = 123), "single string")
+  expect_error(add_flowmap(maplibre(), "id", locations, flows, flow_temporal_scale_domain = "hour"), "'arg' should be one of")
 })

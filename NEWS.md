@@ -1,10 +1,25 @@
 # mapgl 0.5.0
 
+* `add_layer_tuner()` now applies the Filter Arguments control to flowmap
+  layer controls and includes Undo and Redo buttons with up to 1,000 undo
+  states. Numeric sliders automatically expand when current or typed values
+  exceed the default range, and color controls normalize common color formats
+  to editable hex values. The tuner panel can now be initialized with a custom
+  title, position, size, and collapsed state.
+
+* `add_flowmap()` now supports `flow_temporal_scale_domain` for temporal
+  flowmaps, allowing flow thickness and color scales to use either the
+  selected time interval or the full temporal extent.
+
 * New bivariate mapping support with `bivariate_scale()`, `bivariate_palettes()`, and `add_bivariate_legend()`. Bivariate scales use 3-by-3 palettes, support custom 3-by-3 color matrices, optional `x_breaks` and `y_breaks` for stable bins, and explicit `na_color` handling (#181).
 
 * Continuous legends can now expose an opt-in color-ramp picker. Use `color_ramps`, `selected_ramp`, and `ramp_picker = TRUE` with continuous legends to let readers switch palettes directly from the legend; named ramps display labels by default, and `ramp_labels = FALSE` creates a compact picker.
 
 * `interpolate_palette()` now carries additional scale metadata for downstream legends, including the source column, missing-value color, available color ramps, and selected ramp.
+
+* `set_flowmap_settings()` now updates a single validated FlowMapGL setting at
+  a time with `name` and `value` arguments. Snake-case aliases are still
+  accepted, and filter state remains handled by `set_flowmap_filter()`.
 
 * Compare maps now initialize legend interactivity assets so supported dynamic legend features can be used in compare views.
 

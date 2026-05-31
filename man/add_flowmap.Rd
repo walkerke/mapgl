@@ -20,14 +20,21 @@ add_flowmap(
   flow_location_totals_enabled = TRUE,
   flow_location_labels_enabled = FALSE,
   flow_lines_rendering_mode = c("straight", "animated-straight", "curved"),
+  flow_line_thickness_scale = 1,
+  flow_line_curviness = 1,
   flow_clustering_enabled = TRUE,
   flow_clustering_auto = TRUE,
   flow_clustering_level = NULL,
   flow_fade_enabled = TRUE,
   flow_fade_opacity_enabled = FALSE,
   flow_adaptive_scales_enabled = TRUE,
+  flow_temporal_scale_domain = c("selected", "all"),
   flow_max_top_flows_display_num = 5000,
   flow_endpoints_in_viewport_mode = c("any", "both"),
+  flow_time_column = NULL,
+  flow_selected_time_range = NULL,
+  flow_selected_locations = NULL,
+  flow_location_filter_mode = c("ALL", "INCOMING", "OUTGOING", "BETWEEN"),
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -86,6 +93,10 @@ a standalone canvas overlay and is ignored when \code{before_id} or \code{slot} 
 
 \item{flow_lines_rendering_mode}{Controls how flow lines are rendered: \code{"straight"}, \code{"animated-straight"}, or \code{"curved"}.}
 
+\item{flow_line_thickness_scale}{Multiplier for flow line thickness.}
+
+\item{flow_line_curviness}{Multiplier for flow line curviness (only used when \code{flow_lines_rendering_mode} is \code{"curved"}).}
+
 \item{flow_clustering_enabled}{Whether to cluster nearby locations when zoomed out.}
 
 \item{flow_clustering_auto}{Whether to automatically adjust clustering level based on zoom.}
@@ -96,11 +107,25 @@ a standalone canvas overlay and is ignored when \code{before_id} or \code{slot} 
 
 \item{flow_fade_opacity_enabled}{Whether to also fade opacity for lower-magnitude flows.}
 
-\item{flow_adaptive_scales_enabled}{Whether to adapt flow thickness and color scales to the current viewport.}
+\item{flow_adaptive_scales_enabled}{Whether to adapt flow thickness and
+color scales to the current viewport. This controls the spatial scale
+domain while panning and zooming.}
+
+\item{flow_temporal_scale_domain}{For temporal flowmaps, whether flow
+thickness and color scales use only the currently selected time range
+(\code{"selected"}) or all flow data across the full time extent (\code{"all"}).}
 
 \item{flow_max_top_flows_display_num}{Maximum number of flows to display.}
 
 \item{flow_endpoints_in_viewport_mode}{Controls when a flow is considered visible based on endpoint locations: \code{"any"} or \code{"both"}.}
+
+\item{flow_time_column}{Optional column name in \code{flows} for time data.}
+
+\item{flow_selected_time_range}{Optional vector of two dates (or strings) for initial time filtering.}
+
+\item{flow_selected_locations}{Optional vector of location IDs to select.}
+
+\item{flow_location_filter_mode}{Optional location filter mode: \code{"ALL"}, \code{"INCOMING"}, \code{"OUTGOING"}, or \code{"BETWEEN"}.}
 
 \item{visibility}{Whether the layer is initially \code{"visible"} or \code{"none"}.}
 
@@ -122,6 +147,13 @@ expression. Use \code{interpolate_palette(...)$expression} for data-driven layer
 color ramps. FlowMapGL's \code{flow_color_scheme} accepts a preset name such as
 \code{"Teal"}, a plain color ramp such as \code{c("red", "white", "blue")}, or an
 \code{interpolate_palette(...)} scale object.
+
+Flow scale domains have separate spatial and temporal controls.
+\code{flow_adaptive_scales_enabled = TRUE} rescales flow thickness and color for
+the current viewport; \code{FALSE} keeps the scale tied to the broader map extent.
+For temporal flowmaps, \code{flow_temporal_scale_domain = "selected"} rescales
+within the selected time-control interval, while \code{"all"} keeps the scale
+comparable across the full time extent.
 }
 \examples{
 \dontrun{

@@ -1,23 +1,42 @@
 import {createHash} from 'node:crypto';
-import {access, readFile, writeFile} from 'node:fs/promises';
+import {access, readdir, readFile, writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const outputDir = process.argv[2];
-const copyrightsPath = process.argv[3];
+const licenseNotePath = process.argv[3];
 
-if (!outputDir || !copyrightsPath) {
+if (!outputDir || !licenseNotePath) {
   throw new Error(
-    'Usage: node scripts/generate-vendor-metadata.mjs <output-dir> <copyrights-path>'
+    'Usage: node scripts/generate-vendor-metadata.mjs <output-dir> <license-note-path>'
   );
 }
 
 const vendorDir = fileURLToPath(new URL('../', import.meta.url));
 const lockPath = path.join(vendorDir, 'package-lock.json');
 const packagePath = path.join(vendorDir, 'package.json');
+const patchesDir = path.join(vendorDir, 'patches');
 const bundleName = 'flowmap-gl-bundle.min.js';
 const manifestName = 'flowmap-gl-vendor-manifest.json';
+const additionalBundledPackages = [
+  {
+    name: 'd3',
+    version: '7.9.0',
+    license: 'ISC',
+    repository: 'https://github.com/d3/d3.git'
+  },
+  {
+    name: 'lil-gui',
+    version: '0.19.0',
+    license: 'MIT',
+    repository: 'https://github.com/georgealways/lil-gui'
+  }
+];
+const patchPurposes = {
+  'patches/flowmap-temporal-scale-domain.patch':
+    'Add temporalScaleDomain so temporal flow width/color domains can use selected-time or all-time flows.'
+};
 
 const [lock, packageJson, bundle] = await Promise.all([
   readJson(lockPath),
@@ -25,6 +44,7 @@ const [lock, packageJson, bundle] = await Promise.all([
   readFile(path.join(outputDir, bundleName))
 ]);
 const colorSchemes = extractColorSchemes(bundle.toString('utf8'));
+const patchMetadata = await getPatchMetadata();
 
 const declaredDependencies = packageJson.dependencies;
 const packages = await Promise.all(
@@ -78,8 +98,9 @@ const manifest = {
     sha256: createHash('sha256').update(bundle).digest('hex'),
     bytes: bundle.byteLength
   },
+  patches: patchMetadata,
   copyrights: {
-    path: 'inst/COPYRIGHTS'
+    path: 'LICENSE.note'
   },
   colorSchemes: {
     source: 'FlowMapGL 9.3.0 vendored bundle',
@@ -96,7 +117,7 @@ await writeFile(
   `${JSON.stringify(manifest, null, 2)}\n`
 );
 
-await writeFile(copyrightsPath, renderCopyrights(installedPackages));
+await writeFile(licenseNotePath, renderLicenseNote(installedPackages));
 
 async function readJson(file) {
   return JSON.parse(await readFile(file, 'utf8'));
@@ -109,6 +130,31 @@ async function exists(file) {
   } catch {
     return false;
   }
+}
+
+async function getPatchMetadata() {
+  if (!(await exists(patchesDir))) {
+    return [];
+  }
+
+  const patchNames = (await readdir(patchesDir))
+    .filter((name) => name.endsWith('.patch'))
+    .sort();
+
+  return Promise.all(
+    patchNames.map(async (name) => {
+      const patchPath = path.join(patchesDir, name);
+      const contents = await readFile(patchPath);
+      const relativePath = `data-raw/flowmap-vendor/patches/${name}`;
+      const purposeKey = `patches/${name}`;
+      return {
+        path: relativePath,
+        sha256: createHash('sha256').update(contents).digest('hex'),
+        bytes: contents.byteLength,
+        purpose: patchPurposes[purposeKey] ?? ''
+      };
+    })
+  );
 }
 
 function normalizeRepository(repository) {
@@ -145,23 +191,30 @@ function extractColorSchemes(bundle) {
   return names;
 }
 
-function renderCopyrights(packages) {
-  const rows = packages.map((pkg) => {
+function renderLicenseNote(packages) {
+  return [
+    'This package as a whole is licensed under the MIT License (see LICENSE file).',
+    '',
+    'It bundles several third-party JavaScript components. The FlowmapGL browser bundle shipped at `inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js` is generated from npm release packages by `data-raw/flowmap-vendor/build-flowmap.sh build`.',
+    '',
+    'Below are the licenses of the individual bundled components:',
+    '',
+    '| Package | Version | License | Source |',
+    '| --- | --- | --- | --- |',
+    ...renderCopyrightRows(packages),
+    ''
+  ].join('\n');
+}
+
+function renderCopyrightRows(packages) {
+  const allPackages = [...packages, ...additionalBundledPackages];
+  allPackages.sort((a, b) => a.name.localeCompare(b.name));
+
+  return allPackages.map((pkg) => {
     const license = renderLicense(pkg.license);
     const source = pkg.repository ?? pkg.homepage ?? pkg.resolved ?? '';
     return `| ${pkg.name} | ${pkg.version} | ${license} | ${source} |`;
   });
-
-  return [
-    'Bundled third-party JavaScript components',
-    '',
-    'The FlowmapGL browser bundle shipped at `inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js` is generated from npm release packages by `data-raw/flowmap-vendor/build-flowmap.sh build`.',
-    '',
-    '| Package | Version | License | Source |',
-    '| --- | --- | --- | --- |',
-    ...rows,
-    ''
-  ].join('\n');
 }
 
 function renderLicense(license) {

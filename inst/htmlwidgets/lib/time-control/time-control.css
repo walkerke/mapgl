@@ -1,0 +1,231 @@
+.mapgl-time-control-container {
+  background: #f7f8fa;
+  color: #222;
+  border-radius: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  font-size: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  width: 560px;
+  max-width: calc(100vw - 24px);
+  pointer-events: auto;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 10px;
+  padding: 8px 12px 6px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-sizing: border-box;
+}
+
+.mapgl-time-control-container.dark-mode {
+  background: rgba(40, 48, 60, 0.92);
+  color: #e5e9f0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mapgl-time-control-container.mapgl-pos-bottom-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 20px;
+  margin: 0 !important;
+  z-index: 10;
+}
+
+.mapgl-time-control-container.mapgl-floating {
+  z-index: 10;
+}
+
+/* Header (drag + collapse) */
+.mapgl-time-header {
+  display: flex;
+  align-items: center;
+  height: 18px;
+  gap: 6px;
+  user-select: none;
+}
+
+.mapgl-time-drag {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.5;
+}
+
+.is-draggable .mapgl-time-drag {
+  cursor: move;
+}
+
+.mapgl-time-drag svg {
+  fill: currentColor;
+}
+
+.mapgl-time-title {
+  flex-grow: 1;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mapgl-time-collapse-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.mapgl-time-collapse-btn:hover {
+  opacity: 1;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.mapgl-time-collapse-btn svg {
+  fill: currentColor;
+}
+
+/* Body */
+.mapgl-time-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.is-collapsed .mapgl-time-body {
+  display: none;
+}
+
+.mapgl-time-play-btn {
+  background: transparent;
+  border: 1.5px solid currentColor;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  opacity: 0.85;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.mapgl-time-play-btn:hover {
+  opacity: 1;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.mapgl-time-play-btn svg {
+  fill: currentColor;
+  width: 16px;
+  height: 16px;
+}
+
+.mapgl-timeline-wrapper {
+  flex-grow: 1;
+  height: 80px;
+  position: relative;
+}
+
+.mapgl-current-range-label {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+}
+
+.dark-mode .mapgl-current-range-label {
+  background: rgba(20, 26, 36, 0.95);
+  color: #e5e9f0;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Axis */
+.mapgl-axis text {
+  fill: #555;
+  font-size: 10px;
+}
+
+.mapgl-axis line,
+.mapgl-axis path {
+  stroke: rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .mapgl-axis text {
+  fill: #c2c8d2;
+}
+
+.dark-mode .mapgl-axis line,
+.dark-mode .mapgl-axis path {
+  stroke: rgba(255, 255, 255, 0.18);
+}
+
+/* Bars */
+.mapgl-bar {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.dark-mode .mapgl-bar {
+  opacity: 0.65;
+}
+
+.mapgl-bar:hover {
+  opacity: 1;
+}
+
+/* Brush */
+.mapgl-brush .selection {
+  fill: currentColor;
+  fill-opacity: 0.22;
+  stroke: currentColor;
+  stroke-opacity: 0.7;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+
+.dark-mode .mapgl-brush .selection {
+  fill-opacity: 0.28;
+}
+
+.mapgl-brush .handle {
+  fill: currentColor;
+  fill-opacity: 0.95;
+  stroke: none;
+  cursor: ew-resize;
+}
+
+.mapgl-brush .handle--w,
+.mapgl-brush .handle--e {
+  width: 4px !important;
+}
+
+/* Decorative bracket caps appended via JS */
+.mapgl-brush-cap {
+  fill: currentColor;
+  pointer-events: none;
+}

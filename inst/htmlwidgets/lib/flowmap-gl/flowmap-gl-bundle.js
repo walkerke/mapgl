@@ -1,11 +1,10 @@
-var FlowmapGL = (() => {
+(() => {
   var __create = Object.create;
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __getProtoOf = Object.getPrototypeOf;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __esm = (fn, res) => function __init() {
     return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
   };
@@ -32,8 +31,6 @@ var FlowmapGL = (() => {
     isNodeMode || !mod3 || !mod3.__esModule ? __defProp(target2, "default", { value: mod3, enumerable: true }) : target2,
     mod3
   ));
-  var __toCommonJS = (mod3) => __copyProps(__defProp({}, "__esModule", { value: true }), mod3);
-  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
   // node_modules/@probe.gl/env/dist/lib/globals.js
   var window_2, document_2, process_, console_, navigator_;
@@ -950,9 +947,7 @@ var FlowmapGL = (() => {
       ORDERED_STATS_CACHE = /* @__PURE__ */ new WeakMap();
       ORDERED_STAT_NAME_SET_CACHE = /* @__PURE__ */ new WeakMap();
       StatsManager = class {
-        constructor() {
-          __publicField(this, "stats", /* @__PURE__ */ new Map());
-        }
+        stats = /* @__PURE__ */ new Map();
         getStats(name2) {
           return this.get(name2);
         }
@@ -994,8 +989,8 @@ var FlowmapGL = (() => {
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/resource.js
-  function selectivelyMerge(props, defaultProps9) {
-    const mergedProps = { ...defaultProps9 };
+  function selectivelyMerge(props, defaultProps8) {
+    const mergedProps = { ...defaultProps8 };
     for (const key in props) {
       if (props[key] !== void 0) {
         mergedProps[key] = props[key];
@@ -1149,39 +1144,45 @@ var FlowmapGL = (() => {
       ORDERED_STATS_CACHE2 = /* @__PURE__ */ new WeakMap();
       ORDERED_STAT_NAME_SET_CACHE2 = /* @__PURE__ */ new WeakMap();
       Resource = class {
+        /** Default properties for resource */
+        static defaultProps = {
+          id: "undefined",
+          handle: void 0,
+          userData: void 0
+        };
+        toString() {
+          return `${this[Symbol.toStringTag] || this.constructor.name}:"${this.id}"`;
+        }
+        /** props.id, for debugging. */
+        id;
+        /** The props that this resource was created with */
+        props;
+        /** User data object, reserved for the application */
+        userData = {};
+        /** The device that this resource is associated with - TODO can we remove this dup? */
+        _device;
+        /** Whether this resource has been destroyed */
+        destroyed = false;
+        /** For resources that allocate GPU memory */
+        allocatedBytes = 0;
+        /** Stats bucket currently holding the tracked allocation */
+        allocatedBytesName = null;
+        /** Attached resources will be destroyed when this resource is destroyed. Tracks auto-created "sub" resources. */
+        _attachedResources = /* @__PURE__ */ new Set();
         /**
          * Create a new Resource. Called from Subclass
          */
-        constructor(device, props, defaultProps9) {
-          /** props.id, for debugging. */
-          __publicField(this, "id");
-          /** The props that this resource was created with */
-          __publicField(this, "props");
-          /** User data object, reserved for the application */
-          __publicField(this, "userData", {});
-          /** The device that this resource is associated with - TODO can we remove this dup? */
-          __publicField(this, "_device");
-          /** Whether this resource has been destroyed */
-          __publicField(this, "destroyed", false);
-          /** For resources that allocate GPU memory */
-          __publicField(this, "allocatedBytes", 0);
-          /** Stats bucket currently holding the tracked allocation */
-          __publicField(this, "allocatedBytesName", null);
-          /** Attached resources will be destroyed when this resource is destroyed. Tracks auto-created "sub" resources. */
-          __publicField(this, "_attachedResources", /* @__PURE__ */ new Set());
+        constructor(device, props, defaultProps8) {
           if (!device) {
             throw new Error("no device");
           }
           this._device = device;
-          this.props = selectivelyMerge(props, defaultProps9);
+          this.props = selectivelyMerge(props, defaultProps8);
           const id = this.props.id !== "undefined" ? this.props.id : uid(this[Symbol.toStringTag]);
           this.props.id = id;
           this.id = id;
           this.userData = this.props.userData || {};
           this.addStats();
-        }
-        toString() {
-          return `${this[Symbol.toStringTag] || this.constructor.name}:"${this.id}"`;
         }
         /**
          * destroy can be called on any resource to release it before it is garbage collected.
@@ -1339,21 +1340,39 @@ var FlowmapGL = (() => {
           return getCanonicalResourceName(this);
         }
       };
-      /** Default properties for resource */
-      __publicField(Resource, "defaultProps", {
-        id: "undefined",
-        handle: void 0,
-        userData: void 0
-      });
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/buffer.js
-  var _Buffer, Buffer2;
+  var Buffer2;
   var init_buffer = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/buffer.js"() {
       init_resource();
-      _Buffer = class _Buffer extends Resource {
+      Buffer2 = class _Buffer extends Resource {
+        /** Index buffer */
+        static INDEX = 16;
+        /** Vertex buffer */
+        static VERTEX = 32;
+        /** Uniform buffer */
+        static UNIFORM = 64;
+        /** Storage buffer */
+        static STORAGE = 128;
+        static INDIRECT = 256;
+        static QUERY_RESOLVE = 512;
+        // Usage Flags
+        static MAP_READ = 1;
+        static MAP_WRITE = 2;
+        static COPY_SRC = 4;
+        static COPY_DST = 8;
+        get [Symbol.toStringTag]() {
+          return "Buffer";
+        }
+        /** The usage with which this buffer was created */
+        usage;
+        /** For index buffers, whether indices are 8, 16 or 32 bit. Note: uint8 indices are automatically converted to uint16 for WebGPU compatibility */
+        indexType;
+        /** "Time" of last update, can be used to check if redraw is needed */
+        updateTimestamp;
         constructor(device, props) {
           const deducedProps = { ...props };
           if ((props.usage || 0) & _Buffer.INDEX && !props.indexType) {
@@ -1367,20 +1386,9 @@ var FlowmapGL = (() => {
           }
           delete deducedProps.data;
           super(device, deducedProps, _Buffer.defaultProps);
-          /** The usage with which this buffer was created */
-          __publicField(this, "usage");
-          /** For index buffers, whether indices are 8, 16 or 32 bit. Note: uint8 indices are automatically converted to uint16 for WebGPU compatibility */
-          __publicField(this, "indexType");
-          /** "Time" of last update, can be used to check if redraw is needed */
-          __publicField(this, "updateTimestamp");
-          /** A partial CPU-side copy of the data in this buffer, for debugging purposes */
-          __publicField(this, "debugData", new ArrayBuffer(0));
           this.usage = deducedProps.usage || 0;
           this.indexType = deducedProps.indexType;
           this.updateTimestamp = device.incrementTimestamp();
-        }
-        get [Symbol.toStringTag]() {
-          return "Buffer";
         }
         /**
          * Create a copy of this Buffer with new byteLength, with same props but of the specified size.
@@ -1389,6 +1397,11 @@ var FlowmapGL = (() => {
         clone(props) {
           return this.device.createBuffer({ ...this.props, ...props });
         }
+        // PROTECTED METHODS (INTENDED FOR USE BY OTHER FRAMEWORK CODE ONLY)
+        /** Max amount of debug data saved. Two vec4's */
+        static DEBUG_DATA_MAX_LENGTH = 32;
+        /** A partial CPU-side copy of the data in this buffer, for debugging purposes */
+        debugData = new ArrayBuffer(0);
         /** This doesn't handle partial non-zero offset updates correctly */
         _setDebugData(data, _byteOffset, byteLength) {
           let arrayBufferView = null;
@@ -1409,36 +1422,17 @@ var FlowmapGL = (() => {
             this.debugData = new Uint8Array(arrayBuffer2, sourceByteOffset, copyByteLength).slice().buffer;
           }
         }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          usage: 0,
+          // Buffer.COPY_DST | Buffer.COPY_SRC
+          byteLength: 0,
+          byteOffset: 0,
+          data: null,
+          indexType: "uint16",
+          onMapped: void 0
+        };
       };
-      /** Index buffer */
-      __publicField(_Buffer, "INDEX", 16);
-      /** Vertex buffer */
-      __publicField(_Buffer, "VERTEX", 32);
-      /** Uniform buffer */
-      __publicField(_Buffer, "UNIFORM", 64);
-      /** Storage buffer */
-      __publicField(_Buffer, "STORAGE", 128);
-      __publicField(_Buffer, "INDIRECT", 256);
-      __publicField(_Buffer, "QUERY_RESOLVE", 512);
-      // Usage Flags
-      __publicField(_Buffer, "MAP_READ", 1);
-      __publicField(_Buffer, "MAP_WRITE", 2);
-      __publicField(_Buffer, "COPY_SRC", 4);
-      __publicField(_Buffer, "COPY_DST", 8);
-      // PROTECTED METHODS (INTENDED FOR USE BY OTHER FRAMEWORK CODE ONLY)
-      /** Max amount of debug data saved. Two vec4's */
-      __publicField(_Buffer, "DEBUG_DATA_MAX_LENGTH", 32);
-      __publicField(_Buffer, "defaultProps", {
-        ...Resource.defaultProps,
-        usage: 0,
-        // Buffer.COPY_DST | Buffer.COPY_SRC
-        byteLength: 0,
-        byteOffset: 0,
-        data: null,
-        indexType: "uint16",
-        onMapped: void 0
-      });
-      Buffer2 = _Buffer;
     }
   });
 
@@ -1880,8 +1874,8 @@ var FlowmapGL = (() => {
     const isInteger = formatInfo?.integer;
     const isWebGLSpecific = formatInfo?.webgl;
     const isCompressed = Boolean(formatInfo?.compressed);
-    formatCapabilities.render && (formatCapabilities.render = !isDepthStencil && !isCompressed);
-    formatCapabilities.filter && (formatCapabilities.filter = !isDepthStencil && !isSigned && !isInteger && !isWebGLSpecific);
+    formatCapabilities.render &&= !isDepthStencil && !isCompressed;
+    formatCapabilities.filter &&= !isDepthStencil && !isSigned && !isInteger && !isWebGLSpecific;
     return formatCapabilities;
   }
   function getTextureFormatInfo(format2) {
@@ -2144,7 +2138,7 @@ var FlowmapGL = (() => {
     }
     return processObject.env["NODE_ENV"];
   }
-  var DeviceLimits, DeviceFeatures, _Device, Device;
+  var DeviceLimits, DeviceFeatures, Device;
   var init_device = __esm({
     "node_modules/@luma.gl/core/dist/adapter/device.js"() {
       init_stats_manager();
@@ -2158,9 +2152,9 @@ var FlowmapGL = (() => {
       DeviceLimits = class {
       };
       DeviceFeatures = class {
+        features;
+        disabledFeatures;
         constructor(features = [], disabledFeatures) {
-          __publicField(this, "features");
-          __publicField(this, "disabledFeatures");
           this.features = new Set(features);
           this.disabledFeatures = disabledFeatures || {};
         }
@@ -2171,35 +2165,82 @@ var FlowmapGL = (() => {
           return !this.disabledFeatures?.[feature] && this.features.has(feature);
         }
       };
-      _Device = class _Device {
-        constructor(props) {
-          /** id of this device, primarily for debugging */
-          __publicField(this, "id");
-          /** A copy of the device props  */
-          __publicField(this, "props");
-          /** Available for the application to store data on the device */
-          __publicField(this, "userData", {});
-          /** stats */
-          __publicField(this, "statsManager", lumaStats);
-          /** Internal per-device factory storage */
-          __publicField(this, "_factories", {});
-          /** An abstract timestamp used for change tracking */
-          __publicField(this, "timestamp", 0);
-          /** True if this device has been reused during device creation (app has multiple references) */
-          __publicField(this, "_reused", false);
-          /** Used by other luma.gl modules to store data on the device */
-          __publicField(this, "_moduleData", {});
-          __publicField(this, "_textureCaps", {});
-          /** Internal timestamp query set used when GPU timing collection is enabled for this device. */
-          __publicField(this, "_debugGPUTimeQuery", null);
-          this.props = { ..._Device.defaultProps, ...props };
-          this.id = this.props.id || uid(this[Symbol.toStringTag].toLowerCase());
-        }
+      Device = class _Device {
+        static defaultProps = {
+          id: null,
+          powerPreference: "high-performance",
+          failIfMajorPerformanceCaveat: false,
+          createCanvasContext: void 0,
+          // WebGL specific
+          webgl: {},
+          // Callbacks
+          // eslint-disable-next-line handle-callback-err
+          onError: (error, context) => {
+          },
+          onResize: (context, info) => {
+            const [width, height] = context.getDevicePixelSize();
+            log2.log(1, `${context} resized => ${width}x${height}px`)();
+          },
+          onPositionChange: (context, info) => {
+            const [left, top] = context.getPosition();
+            log2.log(1, `${context} repositioned => ${left},${top}`)();
+          },
+          onVisibilityChange: (context) => log2.log(1, `${context} Visibility changed ${context.isVisible}`)(),
+          onDevicePixelRatioChange: (context, info) => log2.log(1, `${context} DPR changed ${info.oldRatio} => ${context.devicePixelRatio}`)(),
+          // Debug flags
+          debug: getDefaultDebugValue(),
+          debugGPUTime: false,
+          debugShaders: log2.get("debug-shaders") || void 0,
+          debugFramebuffers: Boolean(log2.get("debug-framebuffers")),
+          debugFactories: Boolean(log2.get("debug-factories")),
+          debugWebGL: Boolean(log2.get("debug-webgl")),
+          debugSpectorJS: void 0,
+          // Note: log setting is queried by the spector.js code
+          debugSpectorJSUrl: void 0,
+          // Experimental
+          _reuseDevices: false,
+          _requestMaxLimits: true,
+          _cacheShaders: true,
+          _destroyShaders: false,
+          _cachePipelines: true,
+          _sharePipelines: true,
+          _destroyPipelines: false,
+          // TODO - Change these after confirming things work as expected
+          _initializeFeatures: true,
+          _disabledFeatures: {
+            "compilation-status-async-webgl": true
+          },
+          // INTERNAL
+          _handle: void 0
+        };
         get [Symbol.toStringTag]() {
           return "Device";
         }
         toString() {
           return `Device(${this.id})`;
+        }
+        /** id of this device, primarily for debugging */
+        id;
+        /** A copy of the device props  */
+        props;
+        /** Available for the application to store data on the device */
+        userData = {};
+        /** stats */
+        statsManager = lumaStats;
+        /** Internal per-device factory storage */
+        _factories = {};
+        /** An abstract timestamp used for change tracking */
+        timestamp = 0;
+        /** True if this device has been reused during device creation (app has multiple references) */
+        _reused = false;
+        /** Used by other luma.gl modules to store data on the device */
+        _moduleData = {};
+        _textureCaps = {};
+        /** Internal timestamp query set used when GPU timing collection is enabled for this device. */
+        _debugGPUTimeQuery = null;
+        constructor(props) {
+          this.props = { ..._Device.defaultProps, ...props };
+          this.id = this.props.id || uid(this[Symbol.toStringTag].toLowerCase());
         }
         // TODO - just expose the shadertypes decoders?
         getVertexFormatInfo(format2) {
@@ -2447,8 +2488,7 @@ or create a device with the 'debug: true' prop.`;
         }
         // INTERNAL LUMA.GL METHODS
         getModuleData(moduleName) {
-          var _a;
-          (_a = this._moduleData)[moduleName] || (_a[moduleName] = {});
+          this._moduleData[moduleName] ||= {};
           return this._moduleData[moduleName];
         }
         // INTERNAL HELPERS
@@ -2495,59 +2535,11 @@ or create a device with the 'debug: true' prop.`;
           return newProps;
         }
       };
-      __publicField(_Device, "defaultProps", {
-        id: null,
-        powerPreference: "high-performance",
-        failIfMajorPerformanceCaveat: false,
-        createCanvasContext: void 0,
-        // WebGL specific
-        webgl: {},
-        // Callbacks
-        // eslint-disable-next-line handle-callback-err
-        onError: (error, context) => {
-        },
-        onResize: (context, info) => {
-          const [width, height] = context.getDevicePixelSize();
-          log2.log(1, `${context} resized => ${width}x${height}px`)();
-        },
-        onPositionChange: (context, info) => {
-          const [left, top] = context.getPosition();
-          log2.log(1, `${context} repositioned => ${left},${top}`)();
-        },
-        onVisibilityChange: (context) => log2.log(1, `${context} Visibility changed ${context.isVisible}`)(),
-        onDevicePixelRatioChange: (context, info) => log2.log(1, `${context} DPR changed ${info.oldRatio} => ${context.devicePixelRatio}`)(),
-        // Debug flags
-        debug: getDefaultDebugValue(),
-        debugGPUTime: false,
-        debugShaders: log2.get("debug-shaders") || void 0,
-        debugFramebuffers: Boolean(log2.get("debug-framebuffers")),
-        debugFactories: Boolean(log2.get("debug-factories")),
-        debugWebGL: Boolean(log2.get("debug-webgl")),
-        debugSpectorJS: void 0,
-        // Note: log setting is queried by the spector.js code
-        debugSpectorJSUrl: void 0,
-        // Experimental
-        _reuseDevices: false,
-        _requestMaxLimits: true,
-        _cacheShaders: true,
-        _destroyShaders: false,
-        _cachePipelines: true,
-        _sharePipelines: true,
-        _destroyPipelines: false,
-        // TODO - Change these after confirming things work as expected
-        _initializeFeatures: true,
-        _disabledFeatures: {
-          "compilation-status-async-webgl": true
-        },
-        // INTERNAL
-        _handle: void 0
-      });
-      Device = _Device;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/luma.js
-  var STARTUP_MESSAGE, ERROR_MESSAGE, _Luma, Luma, luma;
+  var STARTUP_MESSAGE, ERROR_MESSAGE, Luma, luma;
   var init_luma = __esm({
     "node_modules/@luma.gl/core/dist/adapter/luma.js"() {
       init_device();
@@ -2555,28 +2547,32 @@ or create a device with the 'debug: true' prop.`;
       init_log();
       STARTUP_MESSAGE = "set luma.log.level=1 (or higher) to trace rendering";
       ERROR_MESSAGE = "No matching device found. Ensure `@luma.gl/webgl` and/or `@luma.gl/webgpu` modules are imported.";
-      _Luma = class _Luma {
+      Luma = class _Luma {
+        static defaultProps = {
+          ...Device.defaultProps,
+          type: "best-available",
+          adapters: void 0,
+          waitForPageLoad: true
+        };
+        /** Global stats for all devices */
+        stats = lumaStats;
+        /**
+         * Global log
+         *
+         * Assign luma.log.level in console to control logging: \
+         * 0: none, 1: minimal, 2: verbose, 3: attribute/uniforms, 4: gl logs
+         * luma.log.break[], set to gl funcs, luma.log.profile[] set to model names`;
+         */
+        log = log2;
+        /** Version of luma.gl */
+        VERSION = (
+          // Version detection using build plugin
+          // @ts-expect-error no-undef
+          true ? "9.3.3" : "running from source"
+        );
+        spector;
+        preregisteredAdapters = /* @__PURE__ */ new Map();
         constructor() {
-          /** Global stats for all devices */
-          __publicField(this, "stats", lumaStats);
-          /**
-           * Global log
-           *
-           * Assign luma.log.level in console to control logging: \
-           * 0: none, 1: minimal, 2: verbose, 3: attribute/uniforms, 4: gl logs
-           * luma.log.break[], set to gl funcs, luma.log.profile[] set to model names`;
-           */
-          __publicField(this, "log", log2);
-          /** Version of luma.gl */
-          __publicField(
-            this,
-            "VERSION",
-            // Version detection using build plugin
-            // @ts-expect-error no-undef
-            true ? "9.3.3" : "running from source"
-          );
-          __publicField(this, "spector");
-          __publicField(this, "preregisteredAdapters", /* @__PURE__ */ new Map());
           if (globalThis.luma) {
             if (globalThis.luma.VERSION !== this.VERSION) {
               log2.error(`Found luma.gl ${globalThis.luma.VERSION} while initialzing ${this.VERSION}`)();
@@ -2694,13 +2690,6 @@ or create a device with the 'debug: true' prop.`;
           return null;
         }
       };
-      __publicField(_Luma, "defaultProps", {
-        ...Device.defaultProps,
-        type: "best-available",
-        adapters: void 0,
-        waitForPageLoad: true
-      });
-      Luma = _Luma;
       luma = new Luma();
     }
   });
@@ -2743,27 +2732,27 @@ or create a device with the 'debug: true' prop.`;
   var init_canvas_observer = __esm({
     "node_modules/@luma.gl/core/dist/adapter/canvas-observer.js"() {
       CanvasObserver = class {
-        constructor(props) {
-          __publicField(this, "props");
-          __publicField(this, "_resizeObserver");
-          __publicField(this, "_intersectionObserver");
-          __publicField(this, "_observeDevicePixelRatioTimeout", null);
-          __publicField(this, "_observeDevicePixelRatioMediaQuery", null);
-          __publicField(this, "_handleDevicePixelRatioChange", () => this._refreshDevicePixelRatio());
-          __publicField(this, "_trackPositionInterval", null);
-          __publicField(this, "_started", false);
-          this.props = props;
-        }
+        props;
+        _resizeObserver;
+        _intersectionObserver;
+        _observeDevicePixelRatioTimeout = null;
+        _observeDevicePixelRatioMediaQuery = null;
+        _handleDevicePixelRatioChange = () => this._refreshDevicePixelRatio();
+        _trackPositionInterval = null;
+        _started = false;
         get started() {
           return this._started;
+        }
+        constructor(props) {
+          this.props = props;
         }
         start() {
           if (this._started || !this.props.canvas) {
             return;
           }
           this._started = true;
-          this._intersectionObserver || (this._intersectionObserver = new IntersectionObserver((entries) => this.props.onIntersection(entries)));
-          this._resizeObserver || (this._resizeObserver = new ResizeObserver((entries) => this.props.onResize(entries)));
+          this._intersectionObserver ||= new IntersectionObserver((entries) => this.props.onIntersection(entries));
+          this._resizeObserver ||= new ResizeObserver((entries) => this.props.onResize(entries));
           this._intersectionObserver.observe(this.props.canvas);
           try {
             this._resizeObserver.observe(this.props.canvas, { box: "device-pixel-content-box" });
@@ -2919,7 +2908,7 @@ or create a device with the 'debug: true' prop.`;
   function scaleY(y, ratio, height, yInvert) {
     return yInvert ? Math.max(0, height - 1 - Math.round(y * ratio)) : Math.min(Math.round(y * ratio), height - 1);
   }
-  var _CanvasSurface, CanvasSurface;
+  var CanvasSurface;
   var init_canvas_surface = __esm({
     "node_modules/@luma.gl/core/dist/adapter/canvas-surface.js"() {
       init_dist();
@@ -2927,44 +2916,66 @@ or create a device with the 'debug: true' prop.`;
       init_uid();
       init_promise_utils();
       init_assert2();
-      _CanvasSurface = class _CanvasSurface {
+      CanvasSurface = class _CanvasSurface {
+        static isHTMLCanvas(canvas) {
+          return typeof HTMLCanvasElement !== "undefined" && canvas instanceof HTMLCanvasElement;
+        }
+        static isOffscreenCanvas(canvas) {
+          return typeof OffscreenCanvas !== "undefined" && canvas instanceof OffscreenCanvas;
+        }
+        static defaultProps = {
+          id: void 0,
+          canvas: null,
+          width: 800,
+          height: 600,
+          useDevicePixels: true,
+          autoResize: true,
+          container: null,
+          visible: true,
+          alphaMode: "opaque",
+          colorSpace: "srgb",
+          trackPosition: false
+        };
+        id;
+        props;
+        canvas;
+        /** Handle to HTML canvas */
+        htmlCanvas;
+        /** Handle to wrapped OffScreenCanvas */
+        offscreenCanvas;
+        type;
+        /** Promise that resolved once the resize observer has updated the pixel size */
+        initialized;
+        isInitialized = false;
+        /** Visibility is automatically updated (via an IntersectionObserver) */
+        isVisible = true;
+        /** Width of canvas in CSS units (tracked by a ResizeObserver) */
+        cssWidth;
+        /** Height of canvas in CSS units (tracked by a ResizeObserver) */
+        cssHeight;
+        /** Device pixel ratio. Automatically updated via media queries */
+        devicePixelRatio;
+        /** Exact width of canvas in physical pixels (tracked by a ResizeObserver) */
+        devicePixelWidth;
+        /** Exact height of canvas in physical pixels (tracked by a ResizeObserver) */
+        devicePixelHeight;
+        /** Width of drawing buffer: automatically tracks this.pixelWidth if props.autoResize is true */
+        drawingBufferWidth;
+        /** Height of drawing buffer: automatically tracks this.pixelHeight if props.autoResize is true */
+        drawingBufferHeight;
+        /** Resolves when the canvas is initialized, i.e. when the ResizeObserver has updated the pixel size */
+        _initializedResolvers = withResolvers();
+        _canvasObserver;
+        /** Position of the canvas in the document, updated by a timer */
+        _position = [0, 0];
+        /** Whether this canvas context has been destroyed */
+        destroyed = false;
+        /** Whether the drawing buffer size needs to be resized (deferred resizing to avoid flicker) */
+        _needsDrawingBufferResize = true;
+        toString() {
+          return `${this[Symbol.toStringTag]}(${this.id})`;
+        }
         constructor(props) {
-          __publicField(this, "id");
-          __publicField(this, "props");
-          __publicField(this, "canvas");
-          /** Handle to HTML canvas */
-          __publicField(this, "htmlCanvas");
-          /** Handle to wrapped OffScreenCanvas */
-          __publicField(this, "offscreenCanvas");
-          __publicField(this, "type");
-          /** Promise that resolved once the resize observer has updated the pixel size */
-          __publicField(this, "initialized");
-          __publicField(this, "isInitialized", false);
-          /** Visibility is automatically updated (via an IntersectionObserver) */
-          __publicField(this, "isVisible", true);
-          /** Width of canvas in CSS units (tracked by a ResizeObserver) */
-          __publicField(this, "cssWidth");
-          /** Height of canvas in CSS units (tracked by a ResizeObserver) */
-          __publicField(this, "cssHeight");
-          /** Device pixel ratio. Automatically updated via media queries */
-          __publicField(this, "devicePixelRatio");
-          /** Exact width of canvas in physical pixels (tracked by a ResizeObserver) */
-          __publicField(this, "devicePixelWidth");
-          /** Exact height of canvas in physical pixels (tracked by a ResizeObserver) */
-          __publicField(this, "devicePixelHeight");
-          /** Width of drawing buffer: automatically tracks this.pixelWidth if props.autoResize is true */
-          __publicField(this, "drawingBufferWidth");
-          /** Height of drawing buffer: automatically tracks this.pixelHeight if props.autoResize is true */
-          __publicField(this, "drawingBufferHeight");
-          /** Resolves when the canvas is initialized, i.e. when the ResizeObserver has updated the pixel size */
-          __publicField(this, "_initializedResolvers", withResolvers());
-          __publicField(this, "_canvasObserver");
-          /** Position of the canvas in the document, updated by a timer */
-          __publicField(this, "_position", [0, 0]);
-          /** Whether this canvas context has been destroyed */
-          __publicField(this, "destroyed", false);
-          /** Whether the drawing buffer size needs to be resized (deferred resizing to avoid flicker) */
-          __publicField(this, "_needsDrawingBufferResize", true);
           this.props = { ..._CanvasSurface.defaultProps, ...props };
           props = this.props;
           this.initialized = this._initializedResolvers.promise;
@@ -3005,15 +3016,6 @@ or create a device with the 'debug: true' prop.`;
             onDevicePixelRatioChange: () => this._observeDevicePixelRatio(),
             onPositionChange: () => this.updatePosition()
           });
-        }
-        static isHTMLCanvas(canvas) {
-          return typeof HTMLCanvasElement !== "undefined" && canvas instanceof HTMLCanvasElement;
-        }
-        static isOffscreenCanvas(canvas) {
-          return typeof OffscreenCanvas !== "undefined" && canvas instanceof OffscreenCanvas;
-        }
-        toString() {
-          return `${this[Symbol.toStringTag]}(${this.id})`;
         }
         destroy() {
           if (!this.destroyed) {
@@ -3200,7 +3202,7 @@ or create a device with the 'debug: true' prop.`;
           const newRect = this.htmlCanvas?.getBoundingClientRect();
           if (newRect) {
             const position = [newRect.left, newRect.top];
-            this._position ?? (this._position = position);
+            this._position ??= position;
             const positionChanged = position[0] !== this._position[0] || position[1] !== this._position[1];
             if (positionChanged) {
               const oldPosition = this._position;
@@ -3212,20 +3214,6 @@ or create a device with the 'debug: true' prop.`;
           }
         }
       };
-      __publicField(_CanvasSurface, "defaultProps", {
-        id: void 0,
-        canvas: null,
-        width: 800,
-        height: 600,
-        useDevicePixels: true,
-        autoResize: true,
-        container: null,
-        visible: true,
-        alphaMode: "opaque",
-        colorSpace: "srgb",
-        trackPosition: false
-      });
-      CanvasSurface = _CanvasSurface;
     }
   });
 
@@ -3235,8 +3223,8 @@ or create a device with the 'debug: true' prop.`;
     "node_modules/@luma.gl/core/dist/adapter/canvas-context.js"() {
       init_canvas_surface();
       CanvasContext = class extends CanvasSurface {
+        static defaultProps = CanvasSurface.defaultProps;
       };
-      __publicField(CanvasContext, "defaultProps", CanvasSurface.defaultProps);
     }
   });
 
@@ -3251,11 +3239,26 @@ or create a device with the 'debug: true' prop.`;
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/sampler.js
-  var _Sampler, Sampler;
+  var Sampler;
   var init_sampler = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/sampler.js"() {
       init_resource();
-      _Sampler = class _Sampler extends Resource {
+      Sampler = class _Sampler extends Resource {
+        static defaultProps = {
+          ...Resource.defaultProps,
+          type: "color-sampler",
+          addressModeU: "clamp-to-edge",
+          addressModeV: "clamp-to-edge",
+          addressModeW: "clamp-to-edge",
+          magFilter: "nearest",
+          minFilter: "nearest",
+          mipmapFilter: "none",
+          lodMinClamp: 0,
+          lodMaxClamp: 32,
+          // Per WebGPU spec
+          compare: "less-equal",
+          maxAnisotropy: 1
+        };
         get [Symbol.toStringTag]() {
           return "Sampler";
         }
@@ -3267,27 +3270,11 @@ or create a device with the 'debug: true' prop.`;
           return props;
         }
       };
-      __publicField(_Sampler, "defaultProps", {
-        ...Resource.defaultProps,
-        type: "color-sampler",
-        addressModeU: "clamp-to-edge",
-        addressModeV: "clamp-to-edge",
-        addressModeW: "clamp-to-edge",
-        magFilter: "nearest",
-        minFilter: "nearest",
-        mipmapFilter: "none",
-        lodMinClamp: 0,
-        lodMaxClamp: 32,
-        // Per WebGPU spec
-        compare: "less-equal",
-        maxAnisotropy: 1
-      });
-      Sampler = _Sampler;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/texture.js
-  var BASE_DIMENSIONS, _Texture, Texture;
+  var BASE_DIMENSIONS, Texture;
   var init_texture = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/texture.js"() {
       init_resource();
@@ -3302,35 +3289,55 @@ or create a device with the 'debug: true' prop.`;
         "cube-array": "2d",
         "3d": "3d"
       };
-      _Texture = class _Texture extends Resource {
+      Texture = class _Texture extends Resource {
+        /** The texture can be bound for use as a sampled texture in a shader */
+        static SAMPLE = 4;
+        /** The texture can be bound for use as a storage texture in a shader */
+        static STORAGE = 8;
+        /** The texture can be used as a color or depth/stencil attachment in a render pass */
+        static RENDER = 16;
+        /** The texture can be used as the source of a copy operation */
+        static COPY_SRC = 1;
+        /** he texture can be used as the destination of a copy or write operation */
+        static COPY_DST = 2;
+        /** @deprecated Use Texture.SAMPLE */
+        static TEXTURE = 4;
+        /** @deprecated Use Texture.RENDER */
+        static RENDER_ATTACHMENT = 16;
+        /** dimension of this texture */
+        dimension;
+        /** base dimension of this texture */
+        baseDimension;
+        /** format of this texture */
+        format;
+        /** width in pixels of this texture */
+        width;
+        /** height in pixels of this texture */
+        height;
+        /** depth of this texture */
+        depth;
+        /** mip levels in this texture */
+        mipLevels;
+        /** sample count */
+        samples;
+        /** Rows are multiples of this length, padded with extra bytes if needed */
+        byteAlignment;
+        /** The ready promise is always resolved. It is provided for type compatibility with DynamicTexture. */
+        ready = Promise.resolve(this);
+        /** isReady is always true. It is provided for type compatibility with DynamicTexture. */
+        isReady = true;
+        /** "Time" of last update. Monotonically increasing timestamp. TODO move to DynamicTexture? */
+        updateTimestamp;
+        get [Symbol.toStringTag]() {
+          return "Texture";
+        }
+        toString() {
+          return `Texture(${this.id},${this.format},${this.width}x${this.height})`;
+        }
         /** Do not use directly. Create with device.createTexture() */
         constructor(device, props, backendProps) {
           props = _Texture.normalizeProps(device, props);
           super(device, props, _Texture.defaultProps);
-          /** dimension of this texture */
-          __publicField(this, "dimension");
-          /** base dimension of this texture */
-          __publicField(this, "baseDimension");
-          /** format of this texture */
-          __publicField(this, "format");
-          /** width in pixels of this texture */
-          __publicField(this, "width");
-          /** height in pixels of this texture */
-          __publicField(this, "height");
-          /** depth of this texture */
-          __publicField(this, "depth");
-          /** mip levels in this texture */
-          __publicField(this, "mipLevels");
-          /** sample count */
-          __publicField(this, "samples");
-          /** Rows are multiples of this length, padded with extra bytes if needed */
-          __publicField(this, "byteAlignment");
-          /** The ready promise is always resolved. It is provided for type compatibility with DynamicTexture. */
-          __publicField(this, "ready", Promise.resolve(this));
-          /** isReady is always true. It is provided for type compatibility with DynamicTexture. */
-          __publicField(this, "isReady", true);
-          /** "Time" of last update. Monotonically increasing timestamp. TODO move to DynamicTexture? */
-          __publicField(this, "updateTimestamp");
           this.dimension = this.props.dimension;
           this.baseDimension = BASE_DIMENSIONS[this.dimension];
           this.format = this.props.format;
@@ -3357,12 +3364,6 @@ or create a device with the 'debug: true' prop.`;
           }
           this.byteAlignment = backendProps?.byteAlignment || 1;
           this.updateTimestamp = device.incrementTimestamp();
-        }
-        get [Symbol.toStringTag]() {
-          return "Texture";
-        }
-        toString() {
-          return `Texture(${this.id},${this.format},${this.width}x${this.height})`;
         }
         /**
          * Create a new texture with the same parameters and optionally a different size
@@ -3658,100 +3659,85 @@ or create a device with the 'debug: true' prop.`;
         static _omitUndefined(options) {
           return Object.fromEntries(Object.entries(options).filter(([, value]) => value !== void 0));
         }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          data: null,
+          dimension: "2d",
+          format: "rgba8unorm",
+          usage: _Texture.SAMPLE | _Texture.RENDER | _Texture.COPY_DST,
+          width: void 0,
+          height: void 0,
+          depth: 1,
+          mipLevels: 1,
+          samples: void 0,
+          sampler: {},
+          view: void 0
+        };
+        static defaultCopyDataOptions = {
+          data: void 0,
+          byteOffset: 0,
+          bytesPerRow: void 0,
+          rowsPerImage: void 0,
+          width: void 0,
+          height: void 0,
+          depthOrArrayLayers: void 0,
+          depth: 1,
+          mipLevel: 0,
+          x: 0,
+          y: 0,
+          z: 0,
+          aspect: "all"
+        };
+        /** Default options */
+        static defaultCopyExternalImageOptions = {
+          image: void 0,
+          sourceX: 0,
+          sourceY: 0,
+          width: void 0,
+          height: void 0,
+          depth: 1,
+          mipLevel: 0,
+          x: 0,
+          y: 0,
+          z: 0,
+          aspect: "all",
+          colorSpace: "srgb",
+          premultipliedAlpha: false,
+          flipY: false
+        };
+        static defaultTextureReadOptions = {
+          x: 0,
+          y: 0,
+          z: 0,
+          width: void 0,
+          height: void 0,
+          depthOrArrayLayers: 1,
+          mipLevel: 0,
+          aspect: "all"
+        };
+        static defaultTextureWriteOptions = {
+          byteOffset: 0,
+          bytesPerRow: void 0,
+          rowsPerImage: void 0,
+          x: 0,
+          y: 0,
+          z: 0,
+          width: void 0,
+          height: void 0,
+          depthOrArrayLayers: 1,
+          mipLevel: 0,
+          aspect: "all"
+        };
       };
-      /** The texture can be bound for use as a sampled texture in a shader */
-      __publicField(_Texture, "SAMPLE", 4);
-      /** The texture can be bound for use as a storage texture in a shader */
-      __publicField(_Texture, "STORAGE", 8);
-      /** The texture can be used as a color or depth/stencil attachment in a render pass */
-      __publicField(_Texture, "RENDER", 16);
-      /** The texture can be used as the source of a copy operation */
-      __publicField(_Texture, "COPY_SRC", 1);
-      /** he texture can be used as the destination of a copy or write operation */
-      __publicField(_Texture, "COPY_DST", 2);
-      /** @deprecated Use Texture.SAMPLE */
-      __publicField(_Texture, "TEXTURE", 4);
-      /** @deprecated Use Texture.RENDER */
-      __publicField(_Texture, "RENDER_ATTACHMENT", 16);
-      __publicField(_Texture, "defaultProps", {
-        ...Resource.defaultProps,
-        data: null,
-        dimension: "2d",
-        format: "rgba8unorm",
-        usage: _Texture.SAMPLE | _Texture.RENDER | _Texture.COPY_DST,
-        width: void 0,
-        height: void 0,
-        depth: 1,
-        mipLevels: 1,
-        samples: void 0,
-        sampler: {},
-        view: void 0
-      });
-      __publicField(_Texture, "defaultCopyDataOptions", {
-        data: void 0,
-        byteOffset: 0,
-        bytesPerRow: void 0,
-        rowsPerImage: void 0,
-        width: void 0,
-        height: void 0,
-        depthOrArrayLayers: void 0,
-        depth: 1,
-        mipLevel: 0,
-        x: 0,
-        y: 0,
-        z: 0,
-        aspect: "all"
-      });
-      /** Default options */
-      __publicField(_Texture, "defaultCopyExternalImageOptions", {
-        image: void 0,
-        sourceX: 0,
-        sourceY: 0,
-        width: void 0,
-        height: void 0,
-        depth: 1,
-        mipLevel: 0,
-        x: 0,
-        y: 0,
-        z: 0,
-        aspect: "all",
-        colorSpace: "srgb",
-        premultipliedAlpha: false,
-        flipY: false
-      });
-      __publicField(_Texture, "defaultTextureReadOptions", {
-        x: 0,
-        y: 0,
-        z: 0,
-        width: void 0,
-        height: void 0,
-        depthOrArrayLayers: 1,
-        mipLevel: 0,
-        aspect: "all"
-      });
-      __publicField(_Texture, "defaultTextureWriteOptions", {
-        byteOffset: 0,
-        bytesPerRow: void 0,
-        rowsPerImage: void 0,
-        x: 0,
-        y: 0,
-        z: 0,
-        width: void 0,
-        height: void 0,
-        depthOrArrayLayers: 1,
-        mipLevel: 0,
-        aspect: "all"
-      });
-      Texture = _Texture;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/texture-view.js
-  var _TextureView, TextureView;
+  var TextureView;
   var init_texture_view = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/texture-view.js"() {
       init_resource();
-      _TextureView = class _TextureView extends Resource {
+      TextureView = class _TextureView extends Resource {
         get [Symbol.toStringTag]() {
           return "TextureView";
         }
@@ -3759,18 +3745,17 @@ or create a device with the 'debug: true' prop.`;
         constructor(device, props) {
           super(device, props, _TextureView.defaultProps);
         }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          format: void 0,
+          dimension: void 0,
+          aspect: "all",
+          baseMipLevel: 0,
+          mipLevelCount: void 0,
+          baseArrayLayer: 0,
+          arrayLayerCount: void 0
+        };
       };
-      __publicField(_TextureView, "defaultProps", {
-        ...Resource.defaultProps,
-        format: void 0,
-        dimension: void 0,
-        aspect: "all",
-        baseMipLevel: 0,
-        mipLevelCount: void 0,
-        baseArrayLayer: 0,
-        arrayLayerCount: void 0
-      });
-      TextureView = _TextureView;
     }
   });
 
@@ -3869,28 +3854,28 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     const match = SHADER_NAME_REGEXP.exec(shader);
     return match?.[1] ?? defaultName;
   }
-  var _Shader, Shader;
+  var Shader;
   var init_shader = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/shader.js"() {
       init_resource();
       init_uid();
       init_format_compiler_log();
-      _Shader = class _Shader extends Resource {
+      Shader = class _Shader extends Resource {
+        get [Symbol.toStringTag]() {
+          return "Shader";
+        }
+        /** The stage of this shader */
+        stage;
+        /** The source code of this shader */
+        source;
+        /** The compilation status of the shader. 'pending' if compilation is asynchronous, and on production */
+        compilationStatus = "pending";
         /** Create a new Shader instance */
         constructor(device, props) {
           props = { ...props, debugShaders: props.debugShaders || device.props.debugShaders || "errors" };
           super(device, { id: getShaderIdFromProps(props), ...props }, _Shader.defaultProps);
-          /** The stage of this shader */
-          __publicField(this, "stage");
-          /** The source code of this shader */
-          __publicField(this, "source");
-          /** The compilation status of the shader. 'pending' if compilation is asynchronous, and on production */
-          __publicField(this, "compilationStatus", "pending");
           this.stage = this.props.stage;
           this.source = this.props.source;
-        }
-        get [Symbol.toStringTag]() {
-          return "Shader";
         }
         /** Get compiler log synchronously (WebGL only) */
         getCompilationInfoSync() {
@@ -3963,39 +3948,38 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
             navigator.clipboard.writeText(this.source);
           };
         }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          language: "auto",
+          stage: void 0,
+          source: "",
+          sourceMap: null,
+          entryPoint: "main",
+          debugShaders: void 0
+        };
       };
-      __publicField(_Shader, "defaultProps", {
-        ...Resource.defaultProps,
-        language: "auto",
-        stage: void 0,
-        source: "",
-        sourceMap: null,
-        entryPoint: "main",
-        debugShaders: void 0
-      });
-      Shader = _Shader;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/framebuffer.js
-  var _Framebuffer, Framebuffer;
+  var Framebuffer;
   var init_framebuffer = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/framebuffer.js"() {
       init_resource();
       init_texture();
       init_log();
-      _Framebuffer = class _Framebuffer extends Resource {
-        constructor(device, props = {}) {
-          super(device, props, _Framebuffer.defaultProps);
-          /** Width of all attachments in this framebuffer */
-          __publicField(this, "width");
-          /** Height of all attachments in this framebuffer */
-          __publicField(this, "height");
-          this.width = this.props.width;
-          this.height = this.props.height;
-        }
+      Framebuffer = class _Framebuffer extends Resource {
         get [Symbol.toStringTag]() {
           return "Framebuffer";
+        }
+        /** Width of all attachments in this framebuffer */
+        width;
+        /** Height of all attachments in this framebuffer */
+        height;
+        constructor(device, props = {}) {
+          super(device, props, _Framebuffer.defaultProps);
+          this.width = this.props.width;
+          this.height = this.props.height;
         }
         /**
          * Create a copy of this framebuffer with new attached textures, with same props but of the specified size.
@@ -4104,45 +4088,38 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           }
           this.updateAttachments();
         }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          width: 1,
+          height: 1,
+          colorAttachments: [],
+          // ['rgba8unorm'],
+          depthStencilAttachment: null
+          // 'depth24plus-stencil8'
+        };
       };
-      __publicField(_Framebuffer, "defaultProps", {
-        ...Resource.defaultProps,
-        width: 1,
-        height: 1,
-        colorAttachments: [],
-        // ['rgba8unorm'],
-        depthStencilAttachment: null
-        // 'depth24plus-stencil8'
-      });
-      Framebuffer = _Framebuffer;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/render-pipeline.js
-  var _RenderPipeline, RenderPipeline;
+  var RenderPipeline;
   var init_render_pipeline = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/render-pipeline.js"() {
       init_resource();
-      _RenderPipeline = class _RenderPipeline extends Resource {
-        constructor(device, props) {
-          super(device, props, _RenderPipeline.defaultProps);
-          /** The merged layout */
-          __publicField(this, "shaderLayout");
-          /** Buffer map describing buffer interleaving etc */
-          __publicField(this, "bufferLayout");
-          /** The linking status of the pipeline. 'pending' if linking is asynchronous, and on production */
-          __publicField(this, "linkStatus", "pending");
-          /** The hash of the pipeline */
-          __publicField(this, "hash", "");
-          /** Optional shared backend implementation */
-          __publicField(this, "sharedRenderPipeline", null);
-          this.shaderLayout = this.props.shaderLayout;
-          this.bufferLayout = this.props.bufferLayout || [];
-          this.sharedRenderPipeline = this.props._sharedRenderPipeline || null;
-        }
+      RenderPipeline = class _RenderPipeline extends Resource {
         get [Symbol.toStringTag]() {
           return "RenderPipeline";
         }
+        /** The merged layout */
+        shaderLayout;
+        /** Buffer map describing buffer interleaving etc */
+        bufferLayout;
+        /** The linking status of the pipeline. 'pending' if linking is asynchronous, and on production */
+        linkStatus = "pending";
+        /** The hash of the pipeline */
+        hash = "";
+        /** Optional shared backend implementation */
+        sharedRenderPipeline = null;
         /** Whether shader or pipeline compilation/linking is still in progress */
         get isPending() {
           return this.linkStatus === "pending" || this.vs.compilationStatus === "pending" || this.fs?.compilationStatus === "pending";
@@ -4151,29 +4128,34 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
         get isErrored() {
           return this.linkStatus === "error" || this.vs.compilationStatus === "error" || this.fs?.compilationStatus === "error";
         }
+        constructor(device, props) {
+          super(device, props, _RenderPipeline.defaultProps);
+          this.shaderLayout = this.props.shaderLayout;
+          this.bufferLayout = this.props.bufferLayout || [];
+          this.sharedRenderPipeline = this.props._sharedRenderPipeline || null;
+        }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          vs: null,
+          vertexEntryPoint: "vertexMain",
+          vsConstants: {},
+          fs: null,
+          fragmentEntryPoint: "fragmentMain",
+          fsConstants: {},
+          shaderLayout: null,
+          bufferLayout: [],
+          topology: "triangle-list",
+          colorAttachmentFormats: void 0,
+          depthStencilAttachmentFormat: void 0,
+          parameters: {},
+          varyings: void 0,
+          bufferMode: void 0,
+          disableWarnings: false,
+          _sharedRenderPipeline: void 0,
+          bindings: void 0,
+          bindGroups: void 0
+        };
       };
-      __publicField(_RenderPipeline, "defaultProps", {
-        ...Resource.defaultProps,
-        vs: null,
-        vertexEntryPoint: "vertexMain",
-        vsConstants: {},
-        fs: null,
-        fragmentEntryPoint: "fragmentMain",
-        fsConstants: {},
-        shaderLayout: null,
-        bufferLayout: [],
-        topology: "triangle-list",
-        colorAttachmentFormats: void 0,
-        depthStencilAttachmentFormat: void 0,
-        parameters: {},
-        varyings: void 0,
-        bufferMode: void 0,
-        disableWarnings: false,
-        _sharedRenderPipeline: void 0,
-        bindings: void 0,
-        bindGroups: void 0
-      });
-      RenderPipeline = _RenderPipeline;
     }
   });
 
@@ -4201,62 +4183,62 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/compute-pipeline.js
-  var _ComputePipeline, ComputePipeline;
+  var ComputePipeline;
   var init_compute_pipeline = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/compute-pipeline.js"() {
       init_resource();
-      _ComputePipeline = class _ComputePipeline extends Resource {
-        constructor(device, props) {
-          super(device, props, _ComputePipeline.defaultProps);
-          __publicField(this, "hash", "");
-          /** The merged shader layout */
-          __publicField(this, "shaderLayout");
-          this.shaderLayout = props.shaderLayout;
-        }
+      ComputePipeline = class _ComputePipeline extends Resource {
         get [Symbol.toStringTag]() {
           return "ComputePipeline";
         }
+        hash = "";
+        /** The merged shader layout */
+        shaderLayout;
+        constructor(device, props) {
+          super(device, props, _ComputePipeline.defaultProps);
+          this.shaderLayout = props.shaderLayout;
+        }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          shader: void 0,
+          entryPoint: void 0,
+          constants: {},
+          shaderLayout: void 0
+        };
       };
-      __publicField(_ComputePipeline, "defaultProps", {
-        ...Resource.defaultProps,
-        shader: void 0,
-        entryPoint: void 0,
-        constants: {},
-        shaderLayout: void 0
-      });
-      ComputePipeline = _ComputePipeline;
     }
   });
 
   // node_modules/@luma.gl/core/dist/factories/pipeline-factory.js
-  var _PipelineFactory, PipelineFactory;
+  var PipelineFactory;
   var init_pipeline_factory = __esm({
     "node_modules/@luma.gl/core/dist/factories/pipeline-factory.js"() {
       init_compute_pipeline();
       init_render_pipeline();
       init_log();
       init_uid();
-      _PipelineFactory = class _PipelineFactory {
-        constructor(device) {
-          __publicField(this, "device");
-          __publicField(this, "_hashCounter", 0);
-          __publicField(this, "_hashes", {});
-          __publicField(this, "_renderPipelineCache", {});
-          __publicField(this, "_computePipelineCache", {});
-          __publicField(this, "_sharedRenderPipelineCache", {});
-          this.device = device;
-        }
+      PipelineFactory = class _PipelineFactory {
+        static defaultProps = { ...RenderPipeline.defaultProps };
         /** Get the singleton default pipeline factory for the specified device */
         static getDefaultPipelineFactory(device) {
           const moduleData = device.getModuleData("@luma.gl/core");
-          moduleData.defaultPipelineFactory || (moduleData.defaultPipelineFactory = new _PipelineFactory(device));
+          moduleData.defaultPipelineFactory ||= new _PipelineFactory(device);
           return moduleData.defaultPipelineFactory;
         }
+        device;
+        _hashCounter = 0;
+        _hashes = {};
+        _renderPipelineCache = {};
+        _computePipelineCache = {};
+        _sharedRenderPipelineCache = {};
         get [Symbol.toStringTag]() {
           return "PipelineFactory";
         }
         toString() {
           return `PipelineFactory(${this.device.id})`;
+        }
+        constructor(device) {
+          this.device = device;
         }
         /**
          * WebGL has two cache layers with different priorities:
@@ -4464,35 +4446,34 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           }));
         }
       };
-      __publicField(_PipelineFactory, "defaultProps", { ...RenderPipeline.defaultProps });
-      PipelineFactory = _PipelineFactory;
     }
   });
 
   // node_modules/@luma.gl/core/dist/factories/shader-factory.js
-  var _ShaderFactory, ShaderFactory;
+  var ShaderFactory;
   var init_shader_factory = __esm({
     "node_modules/@luma.gl/core/dist/factories/shader-factory.js"() {
       init_shader();
       init_log();
-      _ShaderFactory = class _ShaderFactory {
-        /** @internal */
-        constructor(device) {
-          __publicField(this, "device");
-          __publicField(this, "_cache", {});
-          this.device = device;
-        }
+      ShaderFactory = class _ShaderFactory {
+        static defaultProps = { ...Shader.defaultProps };
         /** Returns the default ShaderFactory for the given {@link Device}, creating one if necessary. */
         static getDefaultShaderFactory(device) {
           const moduleData = device.getModuleData("@luma.gl/core");
-          moduleData.defaultShaderFactory || (moduleData.defaultShaderFactory = new _ShaderFactory(device));
+          moduleData.defaultShaderFactory ||= new _ShaderFactory(device);
           return moduleData.defaultShaderFactory;
         }
+        device;
+        _cache = {};
         get [Symbol.toStringTag]() {
           return "ShaderFactory";
         }
         toString() {
           return `${this[Symbol.toStringTag]}(${this.device.id})`;
+        }
+        /** @internal */
+        constructor(device) {
+          this.device = device;
         }
         /** Requests a {@link Shader} from the cache, creating a new Shader only if necessary. */
         createShader(props) {
@@ -4548,8 +4529,6 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           return `${value.stage}:${value.source}`;
         }
       };
-      __publicField(_ShaderFactory, "defaultProps", { ...Shader.defaultProps });
-      ShaderFactory = _ShaderFactory;
     }
   });
 
@@ -4573,7 +4552,7 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     for (const [bindingName, binding] of Object.entries(bindingsOrBindGroups)) {
       const bindingLayout = getShaderLayoutBinding(shaderLayout, bindingName);
       const group2 = bindingLayout?.group ?? 0;
-      bindGroups[group2] || (bindGroups[group2] = {});
+      bindGroups[group2] ||= {};
       bindGroups[group2][bindingName] = binding;
     }
     return bindGroups;
@@ -4596,11 +4575,17 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/render-pass.js
-  var _RenderPass, RenderPass;
+  var RenderPass;
   var init_render_pass = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/render-pass.js"() {
       init_resource();
-      _RenderPass = class _RenderPass extends Resource {
+      RenderPass = class _RenderPass extends Resource {
+        /** TODO - should be [0, 0, 0, 0], update once deck.gl tests run clean */
+        static defaultClearColor = [0, 0, 0, 1];
+        /** Depth 1.0 represents the far plance */
+        static defaultClearDepth = 1;
+        /** Clears all stencil bits */
+        static defaultClearStencil = 0;
         get [Symbol.toStringTag]() {
           return "RenderPass";
         }
@@ -4611,51 +4596,44 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
         static normalizeProps(device, props) {
           return props;
         }
+        /** Default properties for RenderPass */
+        static defaultProps = {
+          ...Resource.defaultProps,
+          framebuffer: null,
+          parameters: void 0,
+          clearColor: _RenderPass.defaultClearColor,
+          clearColors: void 0,
+          clearDepth: _RenderPass.defaultClearDepth,
+          clearStencil: _RenderPass.defaultClearStencil,
+          depthReadOnly: false,
+          stencilReadOnly: false,
+          discard: false,
+          occlusionQuerySet: void 0,
+          timestampQuerySet: void 0,
+          beginTimestampIndex: void 0,
+          endTimestampIndex: void 0
+        };
       };
-      /** TODO - should be [0, 0, 0, 0], update once deck.gl tests run clean */
-      __publicField(_RenderPass, "defaultClearColor", [0, 0, 0, 1]);
-      /** Depth 1.0 represents the far plance */
-      __publicField(_RenderPass, "defaultClearDepth", 1);
-      /** Clears all stencil bits */
-      __publicField(_RenderPass, "defaultClearStencil", 0);
-      /** Default properties for RenderPass */
-      __publicField(_RenderPass, "defaultProps", {
-        ...Resource.defaultProps,
-        framebuffer: null,
-        parameters: void 0,
-        clearColor: _RenderPass.defaultClearColor,
-        clearColors: void 0,
-        clearDepth: _RenderPass.defaultClearDepth,
-        clearStencil: _RenderPass.defaultClearStencil,
-        depthReadOnly: false,
-        stencilReadOnly: false,
-        discard: false,
-        occlusionQuerySet: void 0,
-        timestampQuerySet: void 0,
-        beginTimestampIndex: void 0,
-        endTimestampIndex: void 0
-      });
-      RenderPass = _RenderPass;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/command-encoder.js
-  var _CommandEncoder, CommandEncoder;
+  var CommandEncoder;
   var init_command_encoder = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/command-encoder.js"() {
       init_resource();
-      _CommandEncoder = class _CommandEncoder extends Resource {
+      CommandEncoder = class _CommandEncoder extends Resource {
+        get [Symbol.toStringTag]() {
+          return "CommandEncoder";
+        }
+        _timeProfilingQuerySet = null;
+        _timeProfilingSlotCount = 0;
+        _gpuTimeMs;
         constructor(device, props) {
           super(device, props, _CommandEncoder.defaultProps);
-          __publicField(this, "_timeProfilingQuerySet", null);
-          __publicField(this, "_timeProfilingSlotCount", 0);
-          __publicField(this, "_gpuTimeMs");
           this._timeProfilingQuerySet = props.timeProfilingQuerySet ?? null;
           this._timeProfilingSlotCount = 0;
           this._gpuTimeMs = void 0;
-        }
-        get [Symbol.toStringTag]() {
-          return "CommandEncoder";
         }
         /**
          * Reads all resolved timestamp pairs on the current profiler query set and caches the sum
@@ -4712,36 +4690,34 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
         _supportsTimestampQueries() {
           return this.device.features.has("timestamp-query");
         }
+        // TODO - luma.gl has these on the device, should we align with WebGPU API?
+        // beginRenderPass(GPURenderPassDescriptor descriptor): GPURenderPassEncoder;
+        // beginComputePass(optional GPUComputePassDescriptor descriptor = {}): GPUComputePassEncoder;
+        static defaultProps = {
+          ...Resource.defaultProps,
+          measureExecutionTime: void 0,
+          timeProfilingQuerySet: void 0
+        };
       };
-      // TODO - luma.gl has these on the device, should we align with WebGPU API?
-      // beginRenderPass(GPURenderPassDescriptor descriptor): GPURenderPassEncoder;
-      // beginComputePass(optional GPUComputePassDescriptor descriptor = {}): GPUComputePassEncoder;
-      __publicField(_CommandEncoder, "defaultProps", {
-        ...Resource.defaultProps,
-        measureExecutionTime: void 0,
-        timeProfilingQuerySet: void 0
-      });
-      CommandEncoder = _CommandEncoder;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/command-buffer.js
-  var _CommandBuffer, CommandBuffer;
+  var CommandBuffer;
   var init_command_buffer = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/command-buffer.js"() {
       init_resource();
-      _CommandBuffer = class _CommandBuffer extends Resource {
+      CommandBuffer = class _CommandBuffer extends Resource {
         get [Symbol.toStringTag]() {
           return "CommandBuffer";
         }
         constructor(device, props) {
           super(device, props, _CommandBuffer.defaultProps);
         }
+        static defaultProps = {
+          ...Resource.defaultProps
+        };
       };
-      __publicField(_CommandBuffer, "defaultProps", {
-        ...Resource.defaultProps
-      });
-      CommandBuffer = _CommandBuffer;
     }
   });
 
@@ -5074,28 +5050,33 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/vertex-array.js
-  var _VertexArray, VertexArray;
+  var VertexArray;
   var init_vertex_array = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/vertex-array.js"() {
       init_get_attribute_from_layouts();
       init_resource();
-      _VertexArray = class _VertexArray extends Resource {
+      VertexArray = class _VertexArray extends Resource {
+        static defaultProps = {
+          ...Resource.defaultProps,
+          shaderLayout: void 0,
+          bufferLayout: []
+        };
+        get [Symbol.toStringTag]() {
+          return "VertexArray";
+        }
+        /** Max number of vertex attributes */
+        maxVertexAttributes;
+        /** Attribute infos indexed by location - TODO only needed by webgl module? */
+        attributeInfos;
+        /** Index buffer */
+        indexBuffer = null;
+        /** Attributes indexed by buffer slot */
+        attributes;
         constructor(device, props) {
           super(device, props, _VertexArray.defaultProps);
-          /** Max number of vertex attributes */
-          __publicField(this, "maxVertexAttributes");
-          /** Attribute infos indexed by location - TODO only needed by webgl module? */
-          __publicField(this, "attributeInfos");
-          /** Index buffer */
-          __publicField(this, "indexBuffer", null);
-          /** Attributes indexed by buffer slot */
-          __publicField(this, "attributes");
           this.maxVertexAttributes = device.limits.maxVertexAttributes;
           this.attributes = new Array(this.maxVertexAttributes).fill(null);
           this.attributeInfos = getAttributeInfosByLocation(props.shaderLayout, props.bufferLayout, this.maxVertexAttributes);
-        }
-        get [Symbol.toStringTag]() {
-          return "VertexArray";
         }
         // DEPRECATED METHODS
         /** @deprecated Set constant attributes (WebGL only) */
@@ -5103,21 +5084,20 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           this.device.reportError(new Error("constant attributes not supported"), this)();
         }
       };
-      __publicField(_VertexArray, "defaultProps", {
-        ...Resource.defaultProps,
-        shaderLayout: void 0,
-        bufferLayout: []
-      });
-      VertexArray = _VertexArray;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/transform-feedback.js
-  var _TransformFeedback, TransformFeedback;
+  var TransformFeedback;
   var init_transform_feedback = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/transform-feedback.js"() {
       init_resource();
-      _TransformFeedback = class _TransformFeedback extends Resource {
+      TransformFeedback = class _TransformFeedback extends Resource {
+        static defaultProps = {
+          ...Resource.defaultProps,
+          layout: void 0,
+          buffers: {}
+        };
         get [Symbol.toStringTag]() {
           return "TransformFeedback";
         }
@@ -5125,43 +5105,39 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           super(device, props, _TransformFeedback.defaultProps);
         }
       };
-      __publicField(_TransformFeedback, "defaultProps", {
-        ...Resource.defaultProps,
-        layout: void 0,
-        buffers: {}
-      });
-      TransformFeedback = _TransformFeedback;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/query-set.js
-  var _QuerySet, QuerySet;
+  var QuerySet;
   var init_query_set = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/query-set.js"() {
       init_resource();
-      _QuerySet = class _QuerySet extends Resource {
+      QuerySet = class _QuerySet extends Resource {
         get [Symbol.toStringTag]() {
           return "QuerySet";
         }
         constructor(device, props) {
           super(device, props, _QuerySet.defaultProps);
         }
+        static defaultProps = {
+          ...Resource.defaultProps,
+          type: void 0,
+          count: void 0
+        };
       };
-      __publicField(_QuerySet, "defaultProps", {
-        ...Resource.defaultProps,
-        type: void 0,
-        count: void 0
-      });
-      QuerySet = _QuerySet;
     }
   });
 
   // node_modules/@luma.gl/core/dist/adapter/resources/fence.js
-  var _Fence, Fence;
+  var Fence;
   var init_fence = __esm({
     "node_modules/@luma.gl/core/dist/adapter/resources/fence.js"() {
       init_resource();
-      _Fence = class _Fence extends Resource {
+      Fence = class _Fence extends Resource {
+        static defaultProps = {
+          ...Resource.defaultProps
+        };
         get [Symbol.toStringTag]() {
           return "Fence";
         }
@@ -5169,10 +5145,6 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           super(device, props, _Fence.defaultProps);
         }
       };
-      __publicField(_Fence, "defaultProps", {
-        ...Resource.defaultProps
-      });
-      Fence = _Fence;
     }
   });
 
@@ -5420,12 +5392,12 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
       init_log();
       init_shader_block_layout();
       ShaderBlockWriter = class {
+        /** Layout metadata used to flatten and serialize values. */
+        layout;
         /**
          * Creates a writer for a precomputed shader-block layout.
          */
         constructor(layout) {
-          /** Layout metadata used to flatten and serialize values. */
-          __publicField(this, "layout");
           this.layout = layout;
         }
         /**
@@ -5623,13 +5595,13 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     "node_modules/@luma.gl/core/dist/portable/uniform-block.js"() {
       init_array_equal();
       UniformBlock = class {
+        name;
+        uniforms = {};
+        modifiedUniforms = {};
+        modified = true;
+        bindingLayout = {};
+        needsRedraw = "initialized";
         constructor(props) {
-          __publicField(this, "name");
-          __publicField(this, "uniforms", {});
-          __publicField(this, "modifiedUniforms", {});
-          __publicField(this, "modified", true);
-          __publicField(this, "bindingLayout", {});
-          __publicField(this, "needsRedraw", "initialized");
           this.name = props?.name || "unnamed";
           if (props?.name && props?.shaderLayout) {
             const binding = props?.shaderLayout.bindings?.find((binding_) => binding_.type === "uniform" && binding_.name === props?.name);
@@ -5687,20 +5659,20 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
       init_shader_block_writer();
       minUniformBufferSize = 1024;
       UniformStore = class {
+        /** Device used to infer layout and allocate buffers. */
+        device;
+        /** Stores the uniform values for each uniform block */
+        uniformBlocks = /* @__PURE__ */ new Map();
+        /** Flattened layout metadata for each block. */
+        shaderBlockLayouts = /* @__PURE__ */ new Map();
+        /** Serializers for block-backed uniform data. */
+        shaderBlockWriters = /* @__PURE__ */ new Map();
+        /** Actual buffer for the blocks */
+        uniformBuffers = /* @__PURE__ */ new Map();
         /**
          * Creates a new {@link UniformStore} for the supplied device and block definitions.
          */
         constructor(device, blocks) {
-          /** Device used to infer layout and allocate buffers. */
-          __publicField(this, "device");
-          /** Stores the uniform values for each uniform block */
-          __publicField(this, "uniformBlocks", /* @__PURE__ */ new Map());
-          /** Flattened layout metadata for each block. */
-          __publicField(this, "shaderBlockLayouts", /* @__PURE__ */ new Map());
-          /** Serializers for block-backed uniform data. */
-          __publicField(this, "shaderBlockWriters", /* @__PURE__ */ new Map());
-          /** Actual buffer for the blocks */
-          __publicField(this, "uniformBuffers", /* @__PURE__ */ new Map());
           this.device = device;
           for (const [bufferName, block] of Object.entries(blocks)) {
             const uniformBufferName = bufferName;
@@ -5794,7 +5766,7 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           let reason = false;
           for (const uniformBufferName of this.uniformBlocks.keys()) {
             const bufferReason = this.updateUniformBuffer(uniformBufferName);
-            reason || (reason = bufferReason);
+            reason ||= bufferReason;
           }
           if (reason) {
             log2.log(3, `UniformStore.updateUniformBuffers(): ${reason}`)();
@@ -5811,7 +5783,7 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           let uniformBuffer = this.uniformBuffers.get(uniformBufferName);
           let reason = false;
           if (uniformBuffer && uniformBlock11?.needsRedraw) {
-            reason || (reason = uniformBlock11.needsRedraw);
+            reason ||= uniformBlock11.needsRedraw;
             const uniformBufferData = this.getUniformBufferData(uniformBufferName);
             uniformBuffer = this.uniformBuffers.get(uniformBufferName);
             uniformBuffer?.write(uniformBufferData);
@@ -6665,8 +6637,8 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
       extensions: {},
       softwareRenderer: false
     };
-    contextData._polyfilled ?? (contextData._polyfilled = false);
-    contextData.extensions || (contextData.extensions = {});
+    contextData._polyfilled ??= false;
+    contextData.extensions ||= {};
     gl.luma = contextData;
     return contextData;
   }
@@ -7440,22 +7412,22 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
       init_deep_array_equal();
       init_webgl_parameter_tables();
       WebGLStateTracker = class {
+        static get(gl) {
+          return gl.lumaState;
+        }
+        gl;
+        program = null;
+        stateStack = [];
+        enable = true;
+        cache = null;
+        log;
+        initialized = false;
         constructor(gl, props) {
-          __publicField(this, "gl");
-          __publicField(this, "program", null);
-          __publicField(this, "stateStack", []);
-          __publicField(this, "enable", true);
-          __publicField(this, "cache", null);
-          __publicField(this, "log");
-          __publicField(this, "initialized", false);
           this.gl = gl;
           this.log = props?.log || (() => {
           });
           this._updateCache = this._updateCache.bind(this);
           Object.seal(this);
-        }
-        static get(gl) {
-          return gl.lumaState;
         }
         push(values = {}) {
           this.stateStack.push({});
@@ -7522,7 +7494,7 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     const onCreateError = (event) => {
       const statusMessage = event.statusMessage;
       if (statusMessage) {
-        errorMessage || (errorMessage = statusMessage);
+        errorMessage ||= statusMessage;
       }
     };
     canvas.addEventListener("webglcontextcreationerror", onCreateError, false);
@@ -7535,9 +7507,9 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     };
     let gl = null;
     try {
-      gl || (gl = canvas.getContext("webgl2", webglProps));
+      gl ||= canvas.getContext("webgl2", webglProps);
       if (!gl && webglProps.failIfMajorPerformanceCaveat) {
-        errorMessage || (errorMessage = "Only software GPU is available. Set `failIfMajorPerformanceCaveat: false` to allow.");
+        errorMessage ||= "Only software GPU is available. Set `failIfMajorPerformanceCaveat: false` to allow.";
       }
       let softwareRenderer = false;
       if (!gl && allowSoftwareRenderer) {
@@ -7549,11 +7521,11 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
         gl = canvas.getContext("webgl", {});
         if (gl) {
           gl = null;
-          errorMessage || (errorMessage = "Your browser only supports WebGL1");
+          errorMessage ||= "Your browser only supports WebGL1";
         }
       }
       if (!gl) {
-        errorMessage || (errorMessage = "Your browser does not support WebGL");
+        errorMessage ||= "Your browser does not support WebGL";
         throw new Error(`Failed to create WebGL context: ${errorMessage}`);
       }
       const luma2 = getWebGLContextData(gl);
@@ -8071,11 +8043,11 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
         // Textures are handled by getTextureFeatures()
       };
       WebGLDeviceFeatures = class extends DeviceFeatures {
+        gl;
+        extensions;
+        testedFeatures = /* @__PURE__ */ new Set();
         constructor(gl, extensions, disabledFeatures) {
           super([], disabledFeatures);
-          __publicField(this, "gl");
-          __publicField(this, "extensions");
-          __publicField(this, "testedFeatures", /* @__PURE__ */ new Set());
           this.gl = gl;
           this.extensions = extensions;
           getWebGLExtension(gl, "EXT_color_buffer_float", extensions);
@@ -8131,14 +8103,6 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     "node_modules/@luma.gl/webgl/dist/adapter/device-helpers/webgl-device-limits.js"() {
       init_dist4();
       WebGLDeviceLimits = class extends DeviceLimits {
-        constructor(gl) {
-          super();
-          // WebGL does not support compute shaders
-          // PRIVATE
-          __publicField(this, "gl");
-          __publicField(this, "limits", {});
-          this.gl = gl;
-        }
         get maxTextureDimension1D() {
           return 0;
         }
@@ -8230,6 +8194,14 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
         get maxComputeWorkgroupsPerDimension() {
           return 0;
         }
+        // WebGL does not support compute shaders
+        // PRIVATE
+        gl;
+        limits = {};
+        constructor(gl) {
+          super();
+          this.gl = gl;
+        }
         getParameter(parameter) {
           if (this.limits[parameter] === void 0) {
             this.limits[parameter] = this.gl.getParameter(parameter);
@@ -8271,13 +8243,13 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
       init_dist4();
       init_webgl_texture_table();
       WEBGLFramebuffer = class extends Framebuffer {
+        device;
+        gl;
+        handle;
+        colorAttachments = [];
+        depthStencilAttachment = null;
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "gl");
-          __publicField(this, "handle");
-          __publicField(this, "colorAttachments", []);
-          __publicField(this, "depthStencilAttachment", null);
           const isDefaultFramebuffer = props.handle === null;
           this.device = device;
           this.gl = device.gl;
@@ -8379,17 +8351,17 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
       init_dist4();
       init_webgl_framebuffer();
       WebGLCanvasContext = class extends CanvasContext {
+        device;
+        handle = null;
+        _framebuffer = null;
+        get [Symbol.toStringTag]() {
+          return "WebGLCanvasContext";
+        }
         constructor(device, props) {
           super(props);
-          __publicField(this, "device");
-          __publicField(this, "handle", null);
-          __publicField(this, "_framebuffer", null);
           this.device = device;
           this._setAutoCreatedCanvasId(`${this.device.id}-canvas`);
           this._configureDevice();
-        }
-        get [Symbol.toStringTag]() {
-          return "WebGLCanvasContext";
         }
         // IMPLEMENTATION OF ABSTRACT METHODS
         _configureDevice() {
@@ -8399,13 +8371,13 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           }
         }
         _getCurrentFramebuffer() {
-          this._framebuffer || (this._framebuffer = new WEBGLFramebuffer(this.device, {
+          this._framebuffer ||= new WEBGLFramebuffer(this.device, {
             id: "canvas-context-framebuffer",
             handle: null,
             // Setting handle to null returns a reference to the default WebGL framebuffer
             width: this.drawingBufferWidth,
             height: this.drawingBufferHeight
-          }));
+          });
           return this._framebuffer;
         }
       };
@@ -8418,11 +8390,14 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     "node_modules/@luma.gl/webgl/dist/adapter/webgl-presentation-context.js"() {
       init_dist4();
       WebGLPresentationContext = class extends PresentationContext {
+        device;
+        handle = null;
+        context2d;
+        get [Symbol.toStringTag]() {
+          return "WebGLPresentationContext";
+        }
         constructor(device, props = {}) {
           super(props);
-          __publicField(this, "device");
-          __publicField(this, "handle", null);
-          __publicField(this, "context2d");
           this.device = device;
           const contextLabel = `${this[Symbol.toStringTag]}(${this.id})`;
           const defaultCanvasContext = this.device.getDefaultCanvasContext();
@@ -8437,9 +8412,6 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
           this._setAutoCreatedCanvasId(`${this.device.id}-presentation-canvas`);
           this._configureDevice();
           this._startObservers();
-        }
-        get [Symbol.toStringTag]() {
-          return "WebGLPresentationContext";
         }
         present() {
           this._resizeDrawingBufferIfNeeded();
@@ -8509,21 +8481,21 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
     "node_modules/@luma.gl/webgl/dist/adapter/resources/webgl-buffer.js"() {
       init_dist4();
       WEBGLBuffer = class extends Buffer2 {
+        device;
+        gl;
+        handle;
+        /** Target in OpenGL defines the type of buffer */
+        glTarget;
+        /** Usage is a hint on how frequently the buffer will be updates */
+        glUsage;
+        /** Index type is needed when issuing draw calls, so we pre-compute it */
+        glIndexType = 5123;
+        /** Number of bytes allocated on the GPU for this buffer */
+        byteLength = 0;
+        /** Number of bytes used */
+        bytesUsed = 0;
         constructor(device, props = {}) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "gl");
-          __publicField(this, "handle");
-          /** Target in OpenGL defines the type of buffer */
-          __publicField(this, "glTarget");
-          /** Usage is a hint on how frequently the buffer will be updates */
-          __publicField(this, "glUsage");
-          /** Index type is needed when issuing draw calls, so we pre-compute it */
-          __publicField(this, "glIndexType", 5123);
-          /** Number of bytes allocated on the GPU for this buffer */
-          __publicField(this, "byteLength", 0);
-          /** Number of bytes used */
-          __publicField(this, "bytesUsed", 0);
           this.device = device;
           this.gl = this.device.gl;
           const handle = typeof props === "object" ? props.handle : void 0;
@@ -8704,10 +8676,10 @@ ${numberedLines}${positionIndicator}${message2.type.toUpperCase()}: ${message2.m
       init_dist4();
       init_parse_shader_compiler_log();
       WEBGLShader = class extends Shader {
+        device;
+        handle;
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle");
           this.device = device;
           switch (this.props.stage) {
             case "vertex":
@@ -9138,11 +9110,11 @@ ${source3}`;
       init_dist4();
       init_sampler_parameters();
       WEBGLSampler = class extends Sampler {
+        device;
+        handle;
+        parameters;
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle");
-          __publicField(this, "parameters");
           this.device = device;
           this.parameters = convertSamplerParametersToWebGL(props);
           this.handle = props.handle || this.device.gl.createSampler();
@@ -9217,13 +9189,13 @@ ${source3}`;
     "node_modules/@luma.gl/webgl/dist/adapter/resources/webgl-texture-view.js"() {
       init_dist4();
       WEBGLTextureView = class extends TextureView {
+        device;
+        gl;
+        handle;
+        // Does not have a WebGL representation
+        texture;
         constructor(device, props) {
           super(device, { ...Texture.defaultProps, ...props });
-          __publicField(this, "device");
-          __publicField(this, "gl");
-          __publicField(this, "handle");
-          // Does not have a WebGL representation
-          __publicField(this, "texture");
           this.device = device;
           this.gl = this.device.gl;
           this.handle = null;
@@ -9309,40 +9281,40 @@ ${source3}`;
       init_webgl_texture_view();
       init_shader_formats();
       WEBGLTexture = class extends Texture {
+        // readonly MAX_ATTRIBUTES: number;
+        device;
+        gl;
+        handle;
+        // @ts-ignore TODO - currently unused in WebGL. Create dummy sampler?
+        sampler = void 0;
+        view;
+        /**
+         * The WebGL target corresponding to the texture type
+         * @note `target` cannot be modified by bind:
+         * textures are special because when you first bind them to a target,
+         * When you first bind a texture as a GL_TEXTURE_2D, you are saying that this texture is a 2D texture.
+         * And it will always be a 2D texture; this state cannot be changed ever.
+         * A texture that was first bound as a GL_TEXTURE_2D, must always be bound as a GL_TEXTURE_2D;
+         * attempting to bind it as GL_TEXTURE_3D will give rise to a run-time error
+         */
+        glTarget;
+        /** The WebGL format - essentially channel structure */
+        glFormat;
+        /** The WebGL data format - the type of each channel */
+        glType;
+        /** The WebGL constant corresponding to the WebGPU style constant in format */
+        glInternalFormat;
+        /** Whether the internal format is compressed */
+        compressed;
+        // state
+        /** Texture binding slot - TODO - move to texture view? */
+        _textureUnit = 0;
+        /** Cached framebuffer reused for color texture readback. */
+        _framebuffer = null;
+        /** Cache key for the currently attached readback subresource `${mipLevel}:${layer}`. */
+        _framebufferAttachmentKey = null;
         constructor(device, props) {
           super(device, props, { byteAlignment: 1 });
-          // readonly MAX_ATTRIBUTES: number;
-          __publicField(this, "device");
-          __publicField(this, "gl");
-          __publicField(this, "handle");
-          // @ts-ignore TODO - currently unused in WebGL. Create dummy sampler?
-          __publicField(this, "sampler");
-          __publicField(this, "view");
-          /**
-           * The WebGL target corresponding to the texture type
-           * @note `target` cannot be modified by bind:
-           * textures are special because when you first bind them to a target,
-           * When you first bind a texture as a GL_TEXTURE_2D, you are saying that this texture is a 2D texture.
-           * And it will always be a 2D texture; this state cannot be changed ever.
-           * A texture that was first bound as a GL_TEXTURE_2D, must always be bound as a GL_TEXTURE_2D;
-           * attempting to bind it as GL_TEXTURE_3D will give rise to a run-time error
-           */
-          __publicField(this, "glTarget");
-          /** The WebGL format - essentially channel structure */
-          __publicField(this, "glFormat");
-          /** The WebGL data format - the type of each channel */
-          __publicField(this, "glType");
-          /** The WebGL constant corresponding to the WebGPU style constant in format */
-          __publicField(this, "glInternalFormat");
-          /** Whether the internal format is compressed */
-          __publicField(this, "compressed");
-          // state
-          /** Texture binding slot - TODO - move to texture view? */
-          __publicField(this, "_textureUnit", 0);
-          /** Cached framebuffer reused for color texture readback. */
-          __publicField(this, "_framebuffer", null);
-          /** Cache key for the currently attached readback subresource `${mipLevel}:${layer}`. */
-          __publicField(this, "_framebufferAttachmentKey", null);
           this.device = device;
           this.gl = this.device.gl;
           const formatInfo = getTextureFormatWebGL(this.props.format);
@@ -9560,12 +9532,12 @@ ${source3}`;
          * to read data from the texture object.
          */
         _getFramebuffer() {
-          this._framebuffer || (this._framebuffer = this.device.createFramebuffer({
+          this._framebuffer ||= this.device.createFramebuffer({
             id: `framebuffer-for-${this.id}`,
             width: this.width,
             height: this.height,
             colorAttachments: [this]
-          }));
+          });
           return this._framebuffer;
         }
         // WEBGL SPECIFIC
@@ -9896,26 +9868,30 @@ ${source3}`;
       init_webgl_texture_view();
       init_webgl_topology_utils();
       WEBGLRenderPipeline = class extends RenderPipeline {
+        /** The WebGL device that created this render pipeline */
+        device;
+        /** Handle to underlying WebGL program */
+        handle;
+        /** vertex shader */
+        vs;
+        /** fragment shader */
+        fs;
+        /** The layout extracted from shader by WebGL introspection APIs */
+        introspectedLayout;
+        /** Compatibility path for direct pipeline.setBindings() usage */
+        bindings = {};
+        /** Compatibility path for direct pipeline.uniforms usage */
+        uniforms = {};
+        /** WebGL varyings */
+        varyings = null;
+        _uniformCount = 0;
+        _uniformSetters = {};
+        // TODO are these used?
+        get [Symbol.toStringTag]() {
+          return "WEBGLRenderPipeline";
+        }
         constructor(device, props) {
           super(device, props);
-          /** The WebGL device that created this render pipeline */
-          __publicField(this, "device");
-          /** Handle to underlying WebGL program */
-          __publicField(this, "handle");
-          /** vertex shader */
-          __publicField(this, "vs");
-          /** fragment shader */
-          __publicField(this, "fs");
-          /** The layout extracted from shader by WebGL introspection APIs */
-          __publicField(this, "introspectedLayout");
-          /** Compatibility path for direct pipeline.setBindings() usage */
-          __publicField(this, "bindings", {});
-          /** Compatibility path for direct pipeline.uniforms usage */
-          __publicField(this, "uniforms", {});
-          /** WebGL varyings */
-          __publicField(this, "varyings", null);
-          __publicField(this, "_uniformCount", 0);
-          __publicField(this, "_uniformSetters", {});
           this.device = device;
           const webglSharedRenderPipeline = this.sharedRenderPipeline || this.device._createSharedRenderPipelineWebGL(props);
           this.sharedRenderPipeline = webglSharedRenderPipeline;
@@ -9926,10 +9902,6 @@ ${source3}`;
           this.introspectedLayout = webglSharedRenderPipeline.introspectedLayout;
           this.device._setWebGLDebugMetadata(this.handle, this, { spector: { id: this.props.id } });
           this.shaderLayout = props.shaderLayout ? mergeShaderLayout(this.introspectedLayout, props.shaderLayout) : this.introspectedLayout;
-        }
-        // TODO are these used?
-        get [Symbol.toStringTag]() {
-          return "WEBGLRenderPipeline";
         }
         destroy() {
           if (this.destroyed) {
@@ -10434,14 +10406,14 @@ ${source3}`;
       init_webgl_shadertypes();
       LOG_PROGRAM_PERF_PRIORITY = 4;
       WEBGLSharedRenderPipeline = class extends SharedRenderPipeline {
+        device;
+        handle;
+        vs;
+        fs;
+        introspectedLayout = { attributes: [], bindings: [], uniforms: [] };
+        linkStatus = "pending";
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle");
-          __publicField(this, "vs");
-          __publicField(this, "fs");
-          __publicField(this, "introspectedLayout", { attributes: [], bindings: [], uniforms: [] });
-          __publicField(this, "linkStatus", "pending");
           this.device = device;
           this.handle = props.handle || this.device.gl.createProgram();
           this.vs = props.vs;
@@ -10716,11 +10688,11 @@ ${source3}`;
       init_webgl_texture_table();
       init_webgl_texture();
       WEBGLCommandBuffer = class extends CommandBuffer {
+        device;
+        handle = null;
+        commands = [];
         constructor(device, props = {}) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle", null);
-          __publicField(this, "commands", []);
           this.device = device;
         }
         _executeCommands(commands = this.commands) {
@@ -10759,12 +10731,12 @@ ${source3}`;
       init_unified_parameter_api();
       COLOR_CHANNELS = [1, 2, 4, 8];
       WEBGLRenderPass = class extends RenderPass {
+        device;
+        handle = null;
+        /** Parameters that should be applied before each draw call */
+        glParameters = {};
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle", null);
-          /** Parameters that should be applied before each draw call */
-          __publicField(this, "glParameters", {});
           this.device = device;
           const webglFramebuffer = this.props.framebuffer;
           const isDefaultFramebuffer = !webglFramebuffer || webglFramebuffer.handle === null;
@@ -10931,11 +10903,11 @@ ${source3}`;
       init_webgl_command_buffer();
       init_webgl_render_pass();
       WEBGLCommandEncoder = class extends CommandEncoder {
+        device;
+        handle = null;
+        commandBuffer;
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle", null);
-          __publicField(this, "commandBuffer");
           this.device = device;
           this.commandBuffer = new WEBGLCommandBuffer(device, {
             id: `${this.props.id}-command-buffer`
@@ -11041,23 +11013,23 @@ ${source3}`;
       init_webgl_vertex_formats();
       init_fill_array();
       WEBGLVertexArray = class _WEBGLVertexArray extends VertexArray {
-        // Create a VertexArray
-        constructor(device, props) {
-          super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle");
-          /** Attribute 0 buffer constant */
-          __publicField(this, "buffer", null);
-          __publicField(this, "bufferValue", null);
-          this.device = device;
-          this.handle = this.device.gl.createVertexArray();
-        }
         get [Symbol.toStringTag]() {
           return "VertexArray";
         }
+        device;
+        handle;
+        /** Attribute 0 buffer constant */
+        buffer = null;
+        bufferValue = null;
         /** * Attribute 0 can not be disable on most desktop OpenGL based browsers */
         static isConstantAttributeZeroSupported(device) {
           return getBrowser() === "Chrome";
+        }
+        // Create a VertexArray
+        constructor(device, props) {
+          super(device, props);
+          this.device = device;
+          this.handle = this.device.gl.createVertexArray();
         }
         destroy() {
           super.destroy();
@@ -11204,7 +11176,7 @@ ${source3}`;
           }
           let updateNeeded = !this.buffer;
           this.buffer = this.buffer || this.device.createBuffer({ byteLength });
-          updateNeeded || (updateNeeded = !compareConstantArrayValues(constantValue, this.bufferValue));
+          updateNeeded ||= !compareConstantArrayValues(constantValue, this.bufferValue);
           if (updateNeeded) {
             const typedArray = getScratchArray(value.constructor, length4);
             fillArray2({ target: typedArray, source: constantValue, start: 0, count: length4 });
@@ -11231,26 +11203,26 @@ ${source3}`;
       init_dist5();
       init_webgl_topology_utils();
       WEBGLTransformFeedback = class extends TransformFeedback {
+        device;
+        gl;
+        handle;
+        /**
+         * NOTE: The Model already has this information while drawing, but
+         * TransformFeedback currently needs it internally, to look up
+         * varying information outside of a draw() call.
+         */
+        layout;
+        buffers = {};
+        unusedBuffers = {};
+        /**
+         * Allows us to avoid a Chrome bug where a buffer that is already bound to a
+         * different target cannot be bound to 'TRANSFORM_FEEDBACK_BUFFER' target.
+         * This a major workaround, see: https://github.com/KhronosGroup/WebGL/issues/2346
+         */
+        bindOnUse = true;
+        _bound = false;
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "gl");
-          __publicField(this, "handle");
-          /**
-           * NOTE: The Model already has this information while drawing, but
-           * TransformFeedback currently needs it internally, to look up
-           * varying information outside of a draw() call.
-           */
-          __publicField(this, "layout");
-          __publicField(this, "buffers", {});
-          __publicField(this, "unusedBuffers", {});
-          /**
-           * Allows us to avoid a Chrome bug where a buffer that is already bound to a
-           * different target cannot be bound to 'TRANSFORM_FEEDBACK_BUFFER' target.
-           * This a major workaround, see: https://github.com/KhronosGroup/WebGL/issues/2346
-           */
-          __publicField(this, "bindOnUse", true);
-          __publicField(this, "_bound", false);
           this.device = device;
           this.gl = device.gl;
           this.handle = this.props.handle || this.gl.createTransformFeedback();
@@ -11381,14 +11353,17 @@ ${source3}`;
     "node_modules/@luma.gl/webgl/dist/adapter/resources/webgl-query-set.js"() {
       init_dist4();
       WEBGLQuerySet = class extends QuerySet {
+        device;
+        handle;
+        _timestampPairs = [];
+        _pendingReads = /* @__PURE__ */ new Set();
+        _occlusionQuery = null;
+        _occlusionActive = false;
+        get [Symbol.toStringTag]() {
+          return "QuerySet";
+        }
         constructor(device, props) {
           super(device, props);
-          __publicField(this, "device");
-          __publicField(this, "handle");
-          __publicField(this, "_timestampPairs", []);
-          __publicField(this, "_pendingReads", /* @__PURE__ */ new Set());
-          __publicField(this, "_occlusionQuery", null);
-          __publicField(this, "_occlusionActive", false);
           this.device = device;
           if (props.type === "timestamp") {
             if (props.count < 2) {
@@ -11407,9 +11382,6 @@ ${source3}`;
             this.handle = handle;
           }
           Object.seal(this);
-        }
-        get [Symbol.toStringTag]() {
-          return "QuerySet";
         }
         destroy() {
           if (this.destroyed) {
@@ -11667,13 +11639,13 @@ ${source3}`;
     "node_modules/@luma.gl/webgl/dist/adapter/resources/webgl-fence.js"() {
       init_dist4();
       WEBGLFence = class extends Fence {
+        device;
+        gl;
+        handle;
+        signaled;
+        _signaled = false;
         constructor(device, props = {}) {
           super(device, {});
-          __publicField(this, "device");
-          __publicField(this, "gl");
-          __publicField(this, "handle");
-          __publicField(this, "signaled");
-          __publicField(this, "_signaled", false);
           this.device = device;
           this.gl = device.gl;
           const sync = this.props.handle || this.gl.fenceSync(this.gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -11777,15 +11749,15 @@ ${source3}`;
     } = options || {};
     const { framebuffer, deleteFramebuffer } = getFramebuffer2(source3);
     const { gl, handle } = framebuffer;
-    sourceWidth || (sourceWidth = framebuffer.width);
-    sourceHeight || (sourceHeight = framebuffer.height);
+    sourceWidth ||= framebuffer.width;
+    sourceHeight ||= framebuffer.height;
     const texture = framebuffer.colorAttachments[sourceAttachment]?.texture;
     if (!texture) {
       throw new Error(`Invalid framebuffer attachment ${sourceAttachment}`);
     }
     sourceDepth = texture?.depth || 1;
-    sourceFormat || (sourceFormat = texture?.glFormat || 6408);
-    sourceType || (sourceType = texture?.glType || 5121);
+    sourceFormat ||= texture?.glFormat || 6408;
+    sourceType ||= texture?.glType || 5121;
     target2 = getPixelArray(target2, sourceType, sourceFormat, sourceWidth, sourceHeight, sourceDepth);
     const signedType = dataTypeDecoder.getDataType(target2);
     sourceType = sourceType || convertDataTypeToGLDataType(signedType);
@@ -11850,7 +11822,7 @@ ${source3}`;
     if (pixelArray) {
       return pixelArray;
     }
-    glType || (glType = 5121);
+    glType ||= 5121;
     const shaderType = convertGLDataTypeToDataType(glType);
     const ArrayType = dataTypeDecoder.getTypedArrayConstructor(shaderType);
     const components = glFormatToComponents(glFormat);
@@ -11937,33 +11909,56 @@ ${source3}`;
       init_with_parameters();
       init_webgl_extensions();
       WebGLDevice = class _WebGLDevice extends Device {
+        static getDeviceFromContext(gl) {
+          if (!gl) {
+            return null;
+          }
+          return gl.luma?.device ?? null;
+        }
+        // Public `Device` API
+        /** type of this device */
+        type = "webgl";
+        // Use the ! assertion to handle the case where _reuseDevices causes the constructor to return early
+        /** The underlying WebGL context */
+        handle;
+        features;
+        limits;
+        info;
+        canvasContext;
+        preferredColorFormat = "rgba8unorm";
+        preferredDepthFormat = "depth24plus";
+        commandEncoder;
+        lost;
+        _resolveContextLost;
+        /** WebGL2 context. */
+        gl;
+        /** Store constants */
+        // @ts-ignore TODO fix
+        _constants;
+        /** State used by luma.gl classes - TODO - not used? */
+        extensions;
+        _polyfilled = false;
+        /** Instance of Spector.js (if initialized) */
+        spectorJS;
+        //
+        // Public API
+        //
+        get [Symbol.toStringTag]() {
+          return "WebGLDevice";
+        }
+        toString() {
+          return `${this[Symbol.toStringTag]}(${this.id})`;
+        }
+        isVertexFormatSupported(format2) {
+          switch (format2) {
+            case "unorm8x4-bgra":
+              return false;
+            default:
+              return true;
+          }
+        }
         constructor(props) {
           super({ ...props, id: props.id || uid3("webgl-device") });
-          // Public `Device` API
-          /** type of this device */
-          __publicField(this, "type", "webgl");
-          // Use the ! assertion to handle the case where _reuseDevices causes the constructor to return early
-          /** The underlying WebGL context */
-          __publicField(this, "handle");
-          __publicField(this, "features");
-          __publicField(this, "limits");
-          __publicField(this, "info");
-          __publicField(this, "canvasContext");
-          __publicField(this, "preferredColorFormat", "rgba8unorm");
-          __publicField(this, "preferredDepthFormat", "depth24plus");
-          __publicField(this, "commandEncoder");
-          __publicField(this, "lost");
-          __publicField(this, "_resolveContextLost");
-          /** WebGL2 context. */
-          __publicField(this, "gl");
-          /** Store constants */
-          // @ts-ignore TODO fix
-          __publicField(this, "_constants");
-          /** State used by luma.gl classes - TODO - not used? */
-          __publicField(this, "extensions");
-          __publicField(this, "_polyfilled", false);
-          /** Instance of Spector.js (if initialized) */
-          __publicField(this, "spectorJS");
           const canvasContextProps = Device._getCanvasContextProps(props);
           if (!canvasContextProps) {
             throw new Error("WebGLDevice requires props.createCanvasContext to be set");
@@ -12037,29 +12032,6 @@ ${source3}`;
           }
           this.commandEncoder = new WEBGLCommandEncoder(this, { id: `${this}-command-encoder` });
           this.canvasContext._startObservers();
-        }
-        static getDeviceFromContext(gl) {
-          if (!gl) {
-            return null;
-          }
-          return gl.luma?.device ?? null;
-        }
-        //
-        // Public API
-        //
-        get [Symbol.toStringTag]() {
-          return "WebGLDevice";
-        }
-        toString() {
-          return `${this[Symbol.toStringTag]}(${this.id})`;
-        }
-        isVertexFormatSupported(format2) {
-          switch (format2) {
-            case "unorm8x4-bgra":
-              return false;
-            default:
-              return true;
-          }
         }
         /**
          * Destroys the device
@@ -12308,10 +12280,10 @@ ${source3}`;
       init_webgl_developer_tools();
       LOG_LEVEL2 = 1;
       WebGLAdapter = class extends Adapter {
+        /** type of device's created by this adapter */
+        type = "webgl";
         constructor() {
           super();
-          /** type of device's created by this adapter */
-          __publicField(this, "type", "webgl");
           Device.defaultProps = { ...Device.defaultProps, ...DEFAULT_SPECTOR_PROPS };
         }
         /** Force any created WebGL contexts to be WebGL2 contexts, polyfilled with WebGL1 extensions */
@@ -13095,71 +13067,6 @@ ${source3}`;
     }
   });
 
-  // bundle-entry.js
-  var bundle_entry_exports = {};
-  __export(bundle_entry_exports, {
-    AnimatedFlowLinesLayer: () => AnimatedFlowLinesLayer_default2,
-    COLOR_SCHEMES: () => COLOR_SCHEMES,
-    COLOR_SCHEME_KEYS: () => COLOR_SCHEME_KEYS,
-    ColorScheme: () => ColorScheme,
-    DEFAULT_COLOR_SCHEME: () => DEFAULT_COLOR_SCHEME,
-    Deck: () => deck_default,
-    FlowCirclesLayer: () => FlowCirclesLayer_default2,
-    FlowLinesLayer: () => FlowLinesLayer_default2,
-    FlowmapAggregateAccessors: () => FlowmapAggregateAccessors,
-    FlowmapLayer: () => FlowmapLayer_default,
-    GRAYISH: () => GRAYISH,
-    LineLayer: () => line_layer_default,
-    LocalFlowmapDataProvider: () => LocalFlowmapDataProvider,
-    LocationFilterMode: () => LocationFilterMode,
-    MapboxOverlay: () => MapboxOverlay,
-    ScatterplotLayer: () => scatterplot_layer_default,
-    TIME_GRANULARITIES: () => TIME_GRANULARITIES,
-    TextLayer: () => text_layer_default,
-    TimeGranularityKey: () => TimeGranularityKey,
-    addClusterNames: () => addClusterNames,
-    areRangesEqual: () => areRangesEqual,
-    buildIndex: () => buildIndex,
-    clusterLocations: () => clusterLocations,
-    colorAsRgba: () => colorAsRgba,
-    createFlowColorScale: () => createFlowColorScale,
-    findAppropriateZoomLevel: () => findAppropriateZoomLevel,
-    getColors: () => getColors,
-    getColorsRGBA: () => getColorsRGBA,
-    getDiffColorsRGBA: () => getDiffColorsRGBA,
-    getFlowColorScale: () => getFlowColorScale,
-    getFlowLineAttributesByIndex: () => getFlowLineAttributesByIndex,
-    getFlowThicknessScale: () => getFlowThicknessScale,
-    getFlowmapColors: () => getFlowmapColors,
-    getLocationCoordsByIndex: () => getLocationCoordsByIndex,
-    getOuterCircleRadiusByIndex: () => getOuterCircleRadiusByIndex,
-    getTimeGranularityByKey: () => getTimeGranularityByKey,
-    getTimeGranularityByOrder: () => getTimeGranularityByOrder,
-    getTimeGranularityForDate: () => getTimeGranularityForDate,
-    getViewStateForFeatures: () => getViewStateForFeatures,
-    getViewStateForLocations: () => getViewStateForLocations,
-    getViewportBoundingBox: () => getViewportBoundingBox,
-    isAggregateFlow: () => isAggregateFlow,
-    isCluster: () => isCluster,
-    isClusterPoint: () => isClusterPoint,
-    isDiffColors: () => isDiffColors,
-    isDiffColorsRGBA: () => isDiffColorsRGBA,
-    isFlowmapData: () => isFlowmapData,
-    isFlowmapDataProvider: () => isFlowmapDataProvider,
-    isLeafPoint: () => isLeafPoint,
-    isLocationClusterNode: () => isLocationClusterNode,
-    makeLocationWeightGetter: () => makeLocationWeightGetter,
-    makeViewportProjector: () => makeViewportProjector,
-    midpoint: () => midpoint,
-    mixColorsRGBA: () => mixColorsRGBA,
-    opacifyHex: () => opacifyHex,
-    opacityFloatToInteger: () => opacityFloatToInteger,
-    parseTime: () => parseTime,
-    rgbaAsString: () => rgbaAsString,
-    schemeTeal: () => schemeTeal,
-    tickMultiFormat: () => tickMultiFormat
-  });
-
   // node_modules/@loaders.gl/loader-utils/dist/lib/env-utils/assert.js
   function assert(condition, message2) {
     if (!condition) {
@@ -13191,10 +13098,10 @@ ${source3}`;
   var version = VERSION2[0] >= "0" && VERSION2[0] <= "9" ? `v${VERSION2}` : "";
   function createLog() {
     const log3 = new ProbeLog({ id: "loaders.gl" });
-    globalThis.loaders || (globalThis.loaders = {});
+    globalThis.loaders ||= {};
     globalThis.loaders.log = log3;
     globalThis.loaders.version = version;
-    globalThis.probe || (globalThis.probe = {});
+    globalThis.probe ||= {};
     globalThis.probe.loaders = log3;
     return log3;
   }
@@ -13281,16 +13188,16 @@ ${source3}`;
 
   // node_modules/@loaders.gl/worker-utils/dist/lib/worker-farm/worker-job.js
   var WorkerJob = class {
+    name;
+    workerThread;
+    isRunning = true;
+    /** Promise that resolves when Job is done */
+    result;
+    _resolve = () => {
+    };
+    _reject = () => {
+    };
     constructor(jobName, workerThread) {
-      __publicField(this, "name");
-      __publicField(this, "workerThread");
-      __publicField(this, "isRunning", true);
-      /** Promise that resolves when Job is done */
-      __publicField(this, "result");
-      __publicField(this, "_resolve", () => {
-      });
-      __publicField(this, "_reject", () => {
-      });
       this.name = jobName;
       this.workerThread = workerThread;
       this.result = new Promise((resolve2, reject) => {
@@ -13411,15 +13318,19 @@ ${source3}`;
   var NOOP = () => {
   };
   var WorkerThread = class {
+    name;
+    source;
+    url;
+    terminated = false;
+    worker;
+    onMessage;
+    onError;
+    _loadableURL = "";
+    /** Checks if workers are supported on this platform */
+    static isSupported() {
+      return typeof Worker !== "undefined" && isBrowser3 || typeof NodeWorker !== "undefined" && !isBrowser3;
+    }
     constructor(props) {
-      __publicField(this, "name");
-      __publicField(this, "source");
-      __publicField(this, "url");
-      __publicField(this, "terminated", false);
-      __publicField(this, "worker");
-      __publicField(this, "onMessage");
-      __publicField(this, "onError");
-      __publicField(this, "_loadableURL", "");
       const { name: name2, source: source3, url } = props;
       assert3(source3 || url);
       this.name = name2;
@@ -13428,10 +13339,6 @@ ${source3}`;
       this.onMessage = NOOP;
       this.onError = (error) => console.log(error);
       this.worker = isBrowser3 ? this._createBrowserWorker() : this._createNodeWorker();
-    }
-    /** Checks if workers are supported on this platform */
-    static isSupported() {
-      return typeof Worker !== "undefined" && isBrowser3 || typeof NodeWorker !== "undefined" && !isBrowser3;
     }
     /**
      * Terminate this worker thread
@@ -13521,32 +13428,32 @@ ${source3}`;
 
   // node_modules/@loaders.gl/worker-utils/dist/lib/worker-farm/worker-pool.js
   var WorkerPool = class {
+    name = "unnamed";
+    source;
+    // | Function;
+    url;
+    maxConcurrency = 1;
+    maxMobileConcurrency = 1;
+    onDebug = () => {
+    };
+    reuseWorkers = true;
+    props = {};
+    jobQueue = [];
+    idleQueue = [];
+    count = 0;
+    isDestroyed = false;
+    /** Checks if workers are supported on this platform */
+    static isSupported() {
+      return WorkerThread.isSupported();
+    }
     /**
      * @param processor - worker function
      * @param maxConcurrency - max count of workers
      */
     constructor(props) {
-      __publicField(this, "name", "unnamed");
-      __publicField(this, "source");
-      // | Function;
-      __publicField(this, "url");
-      __publicField(this, "maxConcurrency", 1);
-      __publicField(this, "maxMobileConcurrency", 1);
-      __publicField(this, "onDebug", () => {
-      });
-      __publicField(this, "reuseWorkers", true);
-      __publicField(this, "props", {});
-      __publicField(this, "jobQueue", []);
-      __publicField(this, "idleQueue", []);
-      __publicField(this, "count", 0);
-      __publicField(this, "isDestroyed", false);
       this.source = props.source;
       this.url = props.url;
       this.setProps(props);
-    }
-    /** Checks if workers are supported on this platform */
-    static isSupported() {
-      return WorkerThread.isSupported();
     }
     /**
      * Terminates all workers in the pool
@@ -13670,15 +13577,11 @@ ${source3}`;
     onDebug: () => {
     }
   };
-  var _WorkerFarm = class _WorkerFarm {
-    /** get global instance with WorkerFarm.getWorkerFarm() */
-    constructor(props) {
-      __publicField(this, "props");
-      __publicField(this, "workerPools", /* @__PURE__ */ new Map());
-      this.props = { ...DEFAULT_PROPS };
-      this.setProps(props);
-      this.workerPools = /* @__PURE__ */ new Map();
-    }
+  var WorkerFarm = class _WorkerFarm {
+    props;
+    workerPools = /* @__PURE__ */ new Map();
+    // singleton
+    static _workerFarm;
     /** Checks if workers are supported on this platform */
     static isSupported() {
       return WorkerThread.isSupported();
@@ -13688,6 +13591,12 @@ ${source3}`;
       _WorkerFarm._workerFarm = _WorkerFarm._workerFarm || new _WorkerFarm({});
       _WorkerFarm._workerFarm.setProps(props);
       return _WorkerFarm._workerFarm;
+    }
+    /** get global instance with WorkerFarm.getWorkerFarm() */
+    constructor(props) {
+      this.props = { ...DEFAULT_PROPS };
+      this.setProps(props);
+      this.workerPools = /* @__PURE__ */ new Map();
     }
     /**
      * Terminate all workers in the farm
@@ -13741,9 +13650,6 @@ ${source3}`;
       };
     }
   };
-  // singleton
-  __publicField(_WorkerFarm, "_workerFarm");
-  var WorkerFarm = _WorkerFarm;
 
   // node_modules/@loaders.gl/worker-utils/dist/lib/worker-api/get-worker-url.js
   function getWorkerURL(worker, options = {}) {
@@ -14120,16 +14026,16 @@ ${source3}`;
   var FetchError = class extends Error {
     constructor(message2, info) {
       super(message2);
-      /** A best effort reason for why the fetch failed */
-      __publicField(this, "reason");
-      /** The URL that failed to load. Empty string if not available. */
-      __publicField(this, "url");
-      /** The Response object, if any. */
-      __publicField(this, "response");
       this.reason = info.reason;
       this.url = info.url;
       this.response = info.response;
     }
+    /** A best effort reason for why the fetch failed */
+    reason;
+    /** The URL that failed to load. Empty string if not available. */
+    url;
+    /** The Response object, if any. */
+    response;
   };
 
   // node_modules/@loaders.gl/core/dist/lib/utils/mime-type-utils.js
@@ -14345,8 +14251,8 @@ ${source3}`;
     }
   };
   var ConsoleLog = class {
+    console;
     constructor() {
-      __publicField(this, "console");
       this.console = console;
     }
     log(...args) {
@@ -14585,7 +14491,7 @@ ${source3}`;
     }
     const hasCoreBaseUrl = options.core?.baseUrl !== void 0;
     if (!hasCoreBaseUrl) {
-      options.core || (options.core = {});
+      options.core ||= {};
       options.core.baseUrl = path_exports.dirname(stripQueryString(url));
     }
   }
@@ -14598,7 +14504,7 @@ ${source3}`;
   }
   function moveDeprecatedTopLevelOptionsToCore(options) {
     if (options.baseUri !== void 0) {
-      options.core || (options.core = {});
+      options.core ||= {};
       if (options.core.baseUrl === void 0) {
         options.core.baseUrl = options.baseUri;
       }
@@ -14614,7 +14520,7 @@ ${source3}`;
     }
     const workerTypeAlias = options._worker;
     if (workerTypeAlias !== void 0) {
-      options.core || (options.core = {});
+      options.core ||= {};
       if (options.core._workerType === void 0) {
         options.core._workerType = workerTypeAlias;
       }
@@ -14691,7 +14597,7 @@ ${source3}`;
       return null;
     }
     const normalizedOptions = normalizeLoaderOptions(options || {});
-    normalizedOptions.core || (normalizedOptions.core = {});
+    normalizedOptions.core ||= {};
     if (data instanceof Response && mayContainText(data)) {
       const text = await data.clone().text();
       const textLoader = selectLoaderSync(text, loaders, { ...normalizedOptions, core: { ...normalizedOptions.core, nothrow: true } }, context);
@@ -14725,7 +14631,7 @@ ${source3}`;
       return null;
     }
     const normalizedOptions = normalizeLoaderOptions(options || {});
-    normalizedOptions.core || (normalizedOptions.core = {});
+    normalizedOptions.core ||= {};
     if (loaders && !Array.isArray(loaders)) {
       return normalizeLoader(loaders);
     }
@@ -15956,9 +15862,9 @@ ${source3}`;
       instance.propValidators = makePropValidators(propTypes);
     }
     module.instance = instance;
-    let defaultProps9 = {};
+    let defaultProps8 = {};
     if (propTypes) {
-      defaultProps9 = Object.entries(propTypes).reduce((obj, [key, propType]) => {
+      defaultProps8 = Object.entries(propTypes).reduce((obj, [key, propType]) => {
         const value = propType?.value;
         if (value) {
           obj[key] = value;
@@ -15966,7 +15872,7 @@ ${source3}`;
         return obj;
       }, {});
     }
-    module.defaultUniforms = { ...module.defaultUniforms, ...defaultProps9 };
+    module.defaultUniforms = { ...module.defaultUniforms, ...defaultProps8 };
   }
   function checkShaderModuleDeprecations(shaderModule, shaderSource, log3) {
     shaderModule.deprecations?.forEach((def) => {
@@ -17204,15 +17110,15 @@ ${getApplicationDefines(allDefines)}
   }
 
   // node_modules/@luma.gl/shadertools/dist/lib/shader-assembler.js
-  var _ShaderAssembler = class _ShaderAssembler {
-    constructor() {
-      /** Hook functions */
-      __publicField(this, "_hookFunctions", []);
-      /** Shader modules */
-      __publicField(this, "_defaultModules", []);
-      /** Stable per-run WGSL auto-binding assignments keyed by group/module/binding. */
-      __publicField(this, "_wgslBindingRegistry", /* @__PURE__ */ new Map());
-    }
+  var ShaderAssembler = class _ShaderAssembler {
+    /** Default ShaderAssembler instance */
+    static defaultShaderAssembler;
+    /** Hook functions */
+    _hookFunctions = [];
+    /** Shader modules */
+    _defaultModules = [];
+    /** Stable per-run WGSL auto-binding assignments keyed by group/module/binding. */
+    _wgslBindingRegistry = /* @__PURE__ */ new Map();
     /**
      * A default shader assembler instance - the natural place to register default modules and hooks
      * @returns
@@ -17326,9 +17232,6 @@ ${getApplicationDefines(allDefines)}
       return modules;
     }
   };
-  /** Default ShaderAssembler instance */
-  __publicField(_ShaderAssembler, "defaultShaderAssembler");
-  var ShaderAssembler = _ShaderAssembler;
 
   // node_modules/@luma.gl/shadertools/dist/lib/glsl-utils/shader-utils.js
   var FS_GLES = (
@@ -26843,12 +26746,12 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
   var channelHandles = 1;
   var animationHandles = 1;
   var Timeline = class {
+    time = 0;
+    channels = /* @__PURE__ */ new Map();
+    animations = /* @__PURE__ */ new Map();
+    playing = false;
+    lastEngineTime = -1;
     constructor() {
-      __publicField(this, "time", 0);
-      __publicField(this, "channels", /* @__PURE__ */ new Map());
-      __publicField(this, "animations", /* @__PURE__ */ new Map());
-      __publicField(this, "playing", false);
-      __publicField(this, "lastEngineTime", -1);
     }
     addChannel(props) {
       const { delay = 0, duration = Number.POSITIVE_INFINITY, rate = 1, repeat = 1 } = props;
@@ -26968,31 +26871,45 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
   init_dist3();
   var statIdCounter = 0;
   var ANIMATION_LOOP_STATS = "Animation Loop";
-  var _AnimationLoop = class _AnimationLoop {
+  var AnimationLoop = class _AnimationLoop {
+    static defaultAnimationLoopProps = {
+      device: null,
+      onAddHTML: () => "",
+      onInitialize: async () => null,
+      onRender: () => {
+      },
+      onFinalize: () => {
+      },
+      onError: (error) => console.error(error),
+      // eslint-disable-line no-console
+      stats: void 0,
+      // view parameters
+      autoResizeViewport: false
+    };
+    device = null;
+    canvas = null;
+    props;
+    animationProps = null;
+    timeline = null;
+    stats;
+    sharedStats;
+    cpuTime;
+    gpuTime;
+    frameRate;
+    display;
+    _needsRedraw = "initialized";
+    _initialized = false;
+    _running = false;
+    _animationFrameId = null;
+    _nextFramePromise = null;
+    _resolveNextFrame = null;
+    _cpuStartTime = 0;
+    _error = null;
+    _lastFrameTime = 0;
     /*
      * @param {HTMLCanvasElement} canvas - if provided, width and height will be passed to context
      */
     constructor(props) {
-      __publicField(this, "device", null);
-      __publicField(this, "canvas", null);
-      __publicField(this, "props");
-      __publicField(this, "animationProps", null);
-      __publicField(this, "timeline", null);
-      __publicField(this, "stats");
-      __publicField(this, "sharedStats");
-      __publicField(this, "cpuTime");
-      __publicField(this, "gpuTime");
-      __publicField(this, "frameRate");
-      __publicField(this, "display");
-      __publicField(this, "_needsRedraw", "initialized");
-      __publicField(this, "_initialized", false);
-      __publicField(this, "_running", false);
-      __publicField(this, "_animationFrameId", null);
-      __publicField(this, "_nextFramePromise", null);
-      __publicField(this, "_resolveNextFrame", null);
-      __publicField(this, "_cpuStartTime", 0);
-      __publicField(this, "_error", null);
-      __publicField(this, "_lastFrameTime", 0);
       this.props = { ..._AnimationLoop.defaultAnimationLoopProps, ...props };
       props = this.props;
       if (!props.device) {
@@ -27369,21 +27286,6 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
       this._getAnimationProps()._mousePosition = null;
     }
   };
-  __publicField(_AnimationLoop, "defaultAnimationLoopProps", {
-    device: null,
-    onAddHTML: () => "",
-    onInitialize: async () => null,
-    onRender: () => {
-    },
-    onFinalize: () => {
-    },
-    onError: (error) => console.error(error),
-    // eslint-disable-line no-console
-    stats: void 0,
-    // view parameters
-    autoResizeViewport: false
-  });
-  var AnimationLoop = _AnimationLoop;
 
   // node_modules/@luma.gl/engine/dist/model/model.js
   init_dist4();
@@ -27401,15 +27303,15 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
 
   // node_modules/@luma.gl/engine/dist/geometry/gpu-geometry.js
   var GPUGeometry = class {
+    id;
+    userData = {};
+    /** Determines how vertices are read from the 'vertex' attributes */
+    topology;
+    bufferLayout = [];
+    vertexCount;
+    indices;
+    attributes;
     constructor(props) {
-      __publicField(this, "id");
-      __publicField(this, "userData", {});
-      /** Determines how vertices are read from the 'vertex' attributes */
-      __publicField(this, "topology");
-      __publicField(this, "bufferLayout", []);
-      __publicField(this, "vertexCount");
-      __publicField(this, "indices");
-      __publicField(this, "attributes");
       this.id = props.id || uid2("geometry");
       this.topology = props.topology;
       this.indices = props.indices || null;
@@ -27592,11 +27494,10 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
     return [targetX0, targetY0, targetX1, targetY1, previewHeight];
   }
   function getDebugFramebufferState(device) {
-    var _a;
-    (_a = device.userData)[DEBUG_FRAMEBUFFER_STATE_KEY] || (_a[DEBUG_FRAMEBUFFER_STATE_KEY] = {
+    device.userData[DEBUG_FRAMEBUFFER_STATE_KEY] ||= {
       flushing: false,
       queuedFramebuffers: []
-    });
+    };
     return device.userData[DEBUG_FRAMEBUFFER_STATE_KEY];
   }
   function isFramebuffer(value) {
@@ -27658,8 +27559,8 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
   // node_modules/@luma.gl/engine/dist/utils/buffer-layout-helper.js
   init_dist4();
   var BufferLayoutHelper = class {
+    bufferLayouts;
     constructor(bufferLayouts) {
-      __publicField(this, "bufferLayouts");
       this.bufferLayouts = bufferLayouts;
     }
     getBufferLayout(name2) {
@@ -27777,6 +27678,19 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
 
   // node_modules/@luma.gl/engine/dist/shader-inputs.js
   var ShaderInputs = class {
+    options = {
+      disableWarnings: false
+    };
+    /**
+     * The map of modules
+     * @todo should should this include the resolved dependencies?
+     */
+    // @ts-ignore Fix typings
+    modules;
+    /** Stores the uniform values for each module */
+    moduleUniforms;
+    /** Stores the uniform bindings for each module  */
+    moduleBindings;
     /** Tracks if uniforms have changed */
     // moduleUniformsChanged: Record<keyof ShaderPropsT, false | string>;
     /**
@@ -27784,19 +27698,6 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
      * @param modules
      */
     constructor(modules, options) {
-      __publicField(this, "options", {
-        disableWarnings: false
-      });
-      /**
-       * The map of modules
-       * @todo should should this include the resolved dependencies?
-       */
-      // @ts-ignore Fix typings
-      __publicField(this, "modules");
-      /** Stores the uniform values for each module */
-      __publicField(this, "moduleUniforms");
-      /** Stores the uniform bindings for each module  */
-      __publicField(this, "moduleBindings");
       Object.assign(this.options, options);
       const resolvedModules = getShaderModuleDependencies(Object.values(modules).filter(isShaderInputsModuleWithDependencies));
       for (const resolvedModule of resolvedModules) {
@@ -28116,35 +28017,23 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
   }
 
   // node_modules/@luma.gl/engine/dist/dynamic-texture/dynamic-texture.js
-  var _DynamicTexture = class _DynamicTexture {
-    constructor(device, props) {
-      __publicField(this, "device");
-      __publicField(this, "id");
-      /** Props with defaults resolved (except `data` which is processed separately) */
-      __publicField(this, "props");
-      /** Created resources */
-      __publicField(this, "_texture", null);
-      __publicField(this, "_sampler", null);
-      __publicField(this, "_view", null);
-      /** Ready when GPU texture has been created and data (if any) uploaded */
-      __publicField(this, "ready");
-      __publicField(this, "isReady", false);
-      __publicField(this, "destroyed", false);
-      __publicField(this, "resolveReady", () => {
-      });
-      __publicField(this, "rejectReady", () => {
-      });
-      this.device = device;
-      const id = uid2("dynamic-texture");
-      const originalPropsWithAsyncData = props;
-      this.props = { ..._DynamicTexture.defaultProps, id, ...props, data: null };
-      this.id = this.props.id;
-      this.ready = new Promise((resolve2, reject) => {
-        this.resolveReady = resolve2;
-        this.rejectReady = reject;
-      });
-      this.initAsync(originalPropsWithAsyncData);
-    }
+  var DynamicTexture = class _DynamicTexture {
+    device;
+    id;
+    /** Props with defaults resolved (except `data` which is processed separately) */
+    props;
+    /** Created resources */
+    _texture = null;
+    _sampler = null;
+    _view = null;
+    /** Ready when GPU texture has been created and data (if any) uploaded */
+    ready;
+    isReady = false;
+    destroyed = false;
+    resolveReady = () => {
+    };
+    rejectReady = () => {
+    };
     get texture() {
       if (!this._texture)
         throw new Error("Texture not initialized yet");
@@ -28167,6 +28056,18 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
       const width = this._texture?.width ?? this.props.width ?? "?";
       const height = this._texture?.height ?? this.props.height ?? "?";
       return `DynamicTexture:"${this.id}":${width}x${height}px:(${this.isReady ? "ready" : "loading..."})`;
+    }
+    constructor(device, props) {
+      this.device = device;
+      const id = uid2("dynamic-texture");
+      const originalPropsWithAsyncData = props;
+      this.props = { ..._DynamicTexture.defaultProps, id, ...props, data: null };
+      this.id = this.props.id;
+      this.ready = new Promise((resolve2, reject) => {
+        this.resolveReady = resolve2;
+        this.rejectReady = reject;
+      });
+      this.initAsync(originalPropsWithAsyncData);
     }
     /** @note Fire and forget; caller can await `ready` */
     async initAsync(originalPropsWithAsyncData) {
@@ -28428,14 +28329,13 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
         log2.warn(`${this} Cannot perform this operation before ready`);
       }
     }
+    static defaultProps = {
+      ...Texture.defaultProps,
+      dimension: "2d",
+      data: null,
+      mipmaps: false
+    };
   };
-  __publicField(_DynamicTexture, "defaultProps", {
-    ...Texture.defaultProps,
-    dimension: "2d",
-    data: null,
-    mipmaps: false
-  });
-  var DynamicTexture = _DynamicTexture;
   function getTextureSubresources(props) {
     if (!props.data) {
       return [];
@@ -28588,78 +28488,109 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
   var LOG_DRAW_PRIORITY = 2;
   var LOG_DRAW_TIMEOUT = 1e4;
   var PIPELINE_INITIALIZATION_FAILED = "render pipeline initialization failed";
-  var _Model = class _Model {
+  var Model = class _Model {
+    static defaultProps = {
+      ...RenderPipeline.defaultProps,
+      source: void 0,
+      vs: null,
+      fs: null,
+      id: "unnamed",
+      handle: void 0,
+      userData: {},
+      defines: {},
+      modules: [],
+      geometry: null,
+      indexBuffer: null,
+      attributes: {},
+      constantAttributes: {},
+      bindings: {},
+      uniforms: {},
+      varyings: [],
+      isInstanced: void 0,
+      instanceCount: 0,
+      vertexCount: 0,
+      shaderInputs: void 0,
+      material: void 0,
+      pipelineFactory: void 0,
+      shaderFactory: void 0,
+      transformFeedback: void 0,
+      shaderAssembler: ShaderAssembler.getDefaultShaderAssembler(),
+      debugShaders: void 0,
+      disableWarnings: void 0
+    };
+    /** Device that created this model */
+    device;
+    /** Application provided identifier */
+    id;
+    /** WGSL shader source when using unified shader */
+    // @ts-expect-error assigned in function called from constructor
+    source;
+    /** GLSL vertex shader source */
+    // @ts-expect-error assigned in function called from constructor
+    vs;
+    /** GLSL fragment shader source */
+    // @ts-expect-error assigned in function called from constructor
+    fs;
+    /** Factory used to create render pipelines */
+    pipelineFactory;
+    /** Factory used to create shaders */
+    shaderFactory;
+    /** User-supplied per-model data */
+    userData = {};
+    // Fixed properties (change can trigger pipeline rebuild)
+    /** The render pipeline GPU parameters, depth testing etc */
+    parameters;
+    /** The primitive topology */
+    topology;
+    /** Buffer layout */
+    bufferLayout;
+    // Dynamic properties
+    /** Use instanced rendering */
+    isInstanced = void 0;
+    /** instance count. `undefined` means not instanced */
+    instanceCount = 0;
+    /** Vertex count */
+    vertexCount;
+    /** Index buffer */
+    indexBuffer = null;
+    /** Buffer-valued attributes */
+    bufferAttributes = {};
+    /** Constant-valued attributes */
+    constantAttributes = {};
+    /** Bindings (textures, samplers, uniform buffers) */
+    bindings = {};
+    /**
+     * VertexArray
+     * @note not implemented: if bufferLayout is updated, vertex array has to be rebuilt!
+     * @todo - allow application to define multiple vertex arrays?
+     * */
+    vertexArray;
+    /** TransformFeedback, WebGL 2 only. */
+    transformFeedback = null;
+    /** The underlying GPU "program". @note May be recreated if parameters change */
+    pipeline;
+    /** ShaderInputs instance */
+    // @ts-expect-error Assigned in function called by constructor
+    shaderInputs;
+    material = null;
+    // @ts-expect-error Assigned in function called by constructor
+    _uniformStore;
+    _attributeInfos = {};
+    _gpuGeometry = null;
+    props;
+    _pipelineNeedsUpdate = "newly created";
+    _needsRedraw = "initializing";
+    _destroyed = false;
+    /** "Time" of last draw. Monotonically increasing timestamp */
+    _lastDrawTimestamp = -1;
+    _bindingTable = [];
+    get [Symbol.toStringTag]() {
+      return "Model";
+    }
+    toString() {
+      return `Model(${this.id})`;
+    }
     constructor(device, props) {
-      /** Device that created this model */
-      __publicField(this, "device");
-      /** Application provided identifier */
-      __publicField(this, "id");
-      /** WGSL shader source when using unified shader */
-      // @ts-expect-error assigned in function called from constructor
-      __publicField(this, "source");
-      /** GLSL vertex shader source */
-      // @ts-expect-error assigned in function called from constructor
-      __publicField(this, "vs");
-      /** GLSL fragment shader source */
-      // @ts-expect-error assigned in function called from constructor
-      __publicField(this, "fs");
-      /** Factory used to create render pipelines */
-      __publicField(this, "pipelineFactory");
-      /** Factory used to create shaders */
-      __publicField(this, "shaderFactory");
-      /** User-supplied per-model data */
-      __publicField(this, "userData", {});
-      // Fixed properties (change can trigger pipeline rebuild)
-      /** The render pipeline GPU parameters, depth testing etc */
-      __publicField(this, "parameters");
-      /** The primitive topology */
-      __publicField(this, "topology");
-      /** Buffer layout */
-      __publicField(this, "bufferLayout");
-      // Dynamic properties
-      /** Use instanced rendering */
-      __publicField(this, "isInstanced");
-      /** instance count. `undefined` means not instanced */
-      __publicField(this, "instanceCount", 0);
-      /** Vertex count */
-      __publicField(this, "vertexCount");
-      /** Index buffer */
-      __publicField(this, "indexBuffer", null);
-      /** Buffer-valued attributes */
-      __publicField(this, "bufferAttributes", {});
-      /** Constant-valued attributes */
-      __publicField(this, "constantAttributes", {});
-      /** Bindings (textures, samplers, uniform buffers) */
-      __publicField(this, "bindings", {});
-      /**
-       * VertexArray
-       * @note not implemented: if bufferLayout is updated, vertex array has to be rebuilt!
-       * @todo - allow application to define multiple vertex arrays?
-       * */
-      __publicField(this, "vertexArray");
-      /** TransformFeedback, WebGL 2 only. */
-      __publicField(this, "transformFeedback", null);
-      /** The underlying GPU "program". @note May be recreated if parameters change */
-      __publicField(this, "pipeline");
-      /** ShaderInputs instance */
-      // @ts-expect-error Assigned in function called by constructor
-      __publicField(this, "shaderInputs");
-      __publicField(this, "material", null);
-      // @ts-expect-error Assigned in function called by constructor
-      __publicField(this, "_uniformStore");
-      __publicField(this, "_attributeInfos", {});
-      __publicField(this, "_gpuGeometry", null);
-      __publicField(this, "props");
-      __publicField(this, "_pipelineNeedsUpdate", "newly created");
-      __publicField(this, "_needsRedraw", "initializing");
-      __publicField(this, "_destroyed", false);
-      /** "Time" of last draw. Monotonically increasing timestamp */
-      __publicField(this, "_lastDrawTimestamp", -1);
-      __publicField(this, "_bindingTable", []);
-      /** Throttle draw call logging */
-      __publicField(this, "_lastLogTime", 0);
-      __publicField(this, "_logOpen", false);
-      __publicField(this, "_drawCount", 0);
       this.props = { ..._Model.defaultProps, ...props };
       props = this.props;
       this.id = props.id || uid2("model");
@@ -28741,12 +28672,6 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
         this.transformFeedback = props.transformFeedback;
       }
     }
-    get [Symbol.toStringTag]() {
-      return "Model";
-    }
-    toString() {
-      return `Model(${this.id})`;
-    }
     destroy() {
       if (!this._destroyed) {
         this.pipelineFactory.release(this.pipeline);
@@ -28771,7 +28696,7 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
     }
     /** Mark the model as needing a redraw */
     setNeedsRedraw(reason) {
-      this._needsRedraw || (this._needsRedraw = reason);
+      this._needsRedraw ||= reason;
     }
     /** Returns WGSL binding debug rows for the assembled shader. Returns an empty array for GLSL models. */
     getBindingDebugTable() {
@@ -29113,7 +29038,7 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
     }
     /** Mark pipeline as needing update */
     _setPipelineNeedsUpdate(reason) {
-      this._pipelineNeedsUpdate || (this._pipelineNeedsUpdate = reason);
+      this._pipelineNeedsUpdate ||= reason;
       this.setNeedsRedraw(reason);
     }
     /** Update pipeline if needed */
@@ -29163,6 +29088,9 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
       }
       return this.pipeline;
     }
+    /** Throttle draw call logging */
+    _lastLogTime = 0;
+    _logOpen = false;
     _logDrawCallStart() {
       const logDrawTimeout = log2.level > 3 ? 0 : LOG_DRAW_TIMEOUT;
       if (log2.level < 2 || Date.now() - this._lastLogTime < logDrawTimeout) {
@@ -29185,6 +29113,7 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
         this._logOpen = false;
       }
     }
+    _drawCount = 0;
     _logFramebuffer(renderPass) {
       const debugFramebuffers = this.device.props.debugFramebuffers;
       this._drawCount++;
@@ -29237,36 +29166,6 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
       return filteredBindings;
     }
   };
-  __publicField(_Model, "defaultProps", {
-    ...RenderPipeline.defaultProps,
-    source: void 0,
-    vs: null,
-    fs: null,
-    id: "unnamed",
-    handle: void 0,
-    userData: {},
-    defines: {},
-    modules: [],
-    geometry: null,
-    indexBuffer: null,
-    attributes: {},
-    constantAttributes: {},
-    bindings: {},
-    uniforms: {},
-    varyings: [],
-    isInstanced: void 0,
-    instanceCount: 0,
-    vertexCount: 0,
-    shaderInputs: void 0,
-    material: void 0,
-    pipelineFactory: void 0,
-    shaderFactory: void 0,
-    transformFeedback: void 0,
-    shaderAssembler: ShaderAssembler.getDefaultShaderAssembler(),
-    debugShaders: void 0,
-    disableWarnings: void 0
-  });
-  var Model = _Model;
   function getPlatformInfo(device) {
     return {
       type: device.type,
@@ -29280,11 +29179,19 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
 
   // node_modules/@luma.gl/engine/dist/compute/buffer-transform.js
   init_dist4();
-  var _BufferTransform = class _BufferTransform {
+  var BufferTransform = class _BufferTransform {
+    device;
+    model;
+    transformFeedback;
+    static defaultProps = {
+      ...Model.defaultProps,
+      outputs: void 0,
+      feedbackBuffers: void 0
+    };
+    static isSupported(device) {
+      return device?.info?.type === "webgl";
+    }
     constructor(device, props = _BufferTransform.defaultProps) {
-      __publicField(this, "device");
-      __publicField(this, "model");
-      __publicField(this, "transformFeedback");
       if (!_BufferTransform.isSupported(device)) {
         throw new Error("BufferTransform not yet implemented on WebGPU");
       }
@@ -29303,9 +29210,6 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
       });
       this.model.setTransformFeedback(this.transformFeedback);
       Object.seal(this);
-    }
-    static isSupported(device) {
-      return device?.info?.type === "webgl";
     }
     /** Destroy owned resources. */
     destroy() {
@@ -29347,23 +29251,17 @@ fn picking_isColorValid(color: vec3<f32>) -> bool {
       return buffer.readAsync(byteOffset, byteLength);
     }
   };
-  __publicField(_BufferTransform, "defaultProps", {
-    ...Model.defaultProps,
-    outputs: void 0,
-    feedbackBuffers: void 0
-  });
-  var BufferTransform = _BufferTransform;
 
   // node_modules/@luma.gl/engine/dist/geometry/geometry.js
   var Geometry = class {
+    id;
+    /** Determines how vertices are read from the 'vertex' attributes */
+    topology;
+    vertexCount;
+    indices;
+    attributes;
+    userData = {};
     constructor(props) {
-      __publicField(this, "id");
-      /** Determines how vertices are read from the 'vertex' attributes */
-      __publicField(this, "topology");
-      __publicField(this, "vertexCount");
-      __publicField(this, "indices");
-      __publicField(this, "attributes");
-      __publicField(this, "userData", {});
       const { attributes = {}, indices = null, vertexCount = null } = props;
       this.id = props.id || uid2("geometry");
       this.topology = props.topology;
@@ -36912,7 +36810,7 @@ void main(void) {
   };
   function parsePropTypes(propDefs) {
     const propTypes = {};
-    const defaultProps9 = {};
+    const defaultProps8 = {};
     const deprecatedProps = {};
     for (const [propName, propDef] of Object.entries(propDefs)) {
       const deprecated = propDef?.deprecatedFor;
@@ -36921,10 +36819,10 @@ void main(void) {
       } else {
         const propType = parsePropType(propName, propDef);
         propTypes[propName] = propType;
-        defaultProps9[propName] = propType.value;
+        defaultProps8[propName] = propType.value;
       }
     }
-    return { propTypes, defaultProps: defaultProps9, deprecatedProps };
+    return { propTypes, defaultProps: defaultProps8, deprecatedProps };
   }
   function parsePropType(name2, propDef) {
     switch (getTypeOf2(propDef)) {
@@ -37000,11 +36898,11 @@ void main(void) {
         }
       }
     }
-    const defaultProps9 = getOwnProperty(componentClass, cacheKey);
-    if (!defaultProps9) {
+    const defaultProps8 = getOwnProperty(componentClass, cacheKey);
+    if (!defaultProps8) {
       return componentClass[cacheKey] = createPropsPrototypeAndTypes(componentClass, extensions || []);
     }
-    return defaultProps9;
+    return defaultProps8;
   }
   function createPropsPrototypeAndTypes(componentClass, extensions) {
     const parent = componentClass.prototype;
@@ -37015,30 +36913,30 @@ void main(void) {
     const parentDefaultProps = getPropsPrototype(parentClass);
     const componentDefaultProps = getOwnProperty(componentClass, "defaultProps") || {};
     const componentPropDefs = parsePropTypes(componentDefaultProps);
-    const defaultProps9 = Object.assign(/* @__PURE__ */ Object.create(null), parentDefaultProps, componentPropDefs.defaultProps);
+    const defaultProps8 = Object.assign(/* @__PURE__ */ Object.create(null), parentDefaultProps, componentPropDefs.defaultProps);
     const propTypes = Object.assign(/* @__PURE__ */ Object.create(null), parentDefaultProps?.[PROP_TYPES_SYMBOL], componentPropDefs.propTypes);
     const deprecatedProps = Object.assign(/* @__PURE__ */ Object.create(null), parentDefaultProps?.[DEPRECATED_PROPS_SYMBOL], componentPropDefs.deprecatedProps);
     for (const extension of extensions) {
       const extensionDefaultProps = getPropsPrototype(extension.constructor);
       if (extensionDefaultProps) {
-        Object.assign(defaultProps9, extensionDefaultProps);
+        Object.assign(defaultProps8, extensionDefaultProps);
         Object.assign(propTypes, extensionDefaultProps[PROP_TYPES_SYMBOL]);
         Object.assign(deprecatedProps, extensionDefaultProps[DEPRECATED_PROPS_SYMBOL]);
       }
     }
-    createPropsPrototype(defaultProps9, componentClass);
-    addAsyncPropsToPropPrototype(defaultProps9, propTypes);
-    addDeprecatedPropsToPropPrototype(defaultProps9, deprecatedProps);
-    defaultProps9[PROP_TYPES_SYMBOL] = propTypes;
-    defaultProps9[DEPRECATED_PROPS_SYMBOL] = deprecatedProps;
+    createPropsPrototype(defaultProps8, componentClass);
+    addAsyncPropsToPropPrototype(defaultProps8, propTypes);
+    addDeprecatedPropsToPropPrototype(defaultProps8, deprecatedProps);
+    defaultProps8[PROP_TYPES_SYMBOL] = propTypes;
+    defaultProps8[DEPRECATED_PROPS_SYMBOL] = deprecatedProps;
     if (extensions.length === 0 && !hasOwnProperty(componentClass, "_propTypes")) {
       componentClass._propTypes = propTypes;
     }
-    return defaultProps9;
+    return defaultProps8;
   }
-  function createPropsPrototype(defaultProps9, componentClass) {
+  function createPropsPrototype(defaultProps8, componentClass) {
     const id = getComponentName(componentClass);
-    Object.defineProperties(defaultProps9, {
+    Object.defineProperties(defaultProps8, {
       // `id` is treated specially because layer might need to override it
       id: {
         writable: true,
@@ -37046,9 +36944,9 @@ void main(void) {
       }
     });
   }
-  function addDeprecatedPropsToPropPrototype(defaultProps9, deprecatedProps) {
+  function addDeprecatedPropsToPropPrototype(defaultProps8, deprecatedProps) {
     for (const propName in deprecatedProps) {
-      Object.defineProperty(defaultProps9, propName, {
+      Object.defineProperty(defaultProps8, propName, {
         enumerable: false,
         set(newValue) {
           const nameStr = `${this.id}: ${propName}`;
@@ -37062,7 +36960,7 @@ void main(void) {
       });
     }
   }
-  function addAsyncPropsToPropPrototype(defaultProps9, propTypes) {
+  function addAsyncPropsToPropPrototype(defaultProps8, propTypes) {
     const defaultValues = {};
     const descriptors = {};
     for (const propName in propTypes) {
@@ -37073,9 +36971,9 @@ void main(void) {
         descriptors[name2] = getDescriptorForAsyncProp(name2);
       }
     }
-    defaultProps9[ASYNC_DEFAULTS_SYMBOL] = defaultValues;
-    defaultProps9[ASYNC_ORIGINAL_SYMBOL] = {};
-    Object.defineProperties(defaultProps9, descriptors);
+    defaultProps8[ASYNC_DEFAULTS_SYMBOL] = defaultValues;
+    defaultProps8[ASYNC_ORIGINAL_SYMBOL] = {};
+    Object.defineProperties(defaultProps8, descriptors);
   }
   function getDescriptorForAsyncProp(name2) {
     return {
@@ -38671,6 +38569,567 @@ void main(void) {
   };
   GlobeView.displayName = "GlobeView";
   var globe_view_default = GlobeView;
+
+  // node_modules/@deck.gl/mapbox/dist/mapbox-layer-group.js
+  var MapboxLayerGroup = class {
+    /* eslint-disable no-this-before-super */
+    constructor(props) {
+      assert8(props.id, "id is required");
+      this.id = props.id;
+      this.type = "custom";
+      this.renderingMode = props.renderingMode || "3d";
+      this.slot = props.slot;
+      this.beforeId = props.beforeId;
+      this.map = null;
+    }
+    /* Mapbox custom layer methods */
+    onAdd(map4, gl) {
+      this.map = map4;
+    }
+    render(gl, renderParameters) {
+      if (!this.map)
+        return;
+      drawLayerGroup(this.map.__deck, this.map, this, renderParameters);
+    }
+  };
+
+  // node_modules/@deck.gl/mapbox/dist/resolve-layer-groups.js
+  var UNDEFINED_BEFORE_ID = "__UNDEFINED__";
+  function getLayerGroupId(layer) {
+    if (layer.props.beforeId) {
+      return `deck-layer-group-before:${layer.props.beforeId}`;
+    } else if (layer.props.slot) {
+      return `deck-layer-group-slot:${layer.props.slot}`;
+    }
+    return "deck-layer-group-last";
+  }
+  function resolveLayerGroups(map4, oldLayers, newLayers) {
+    if (!map4 || !map4.style || !map4.style._loaded) {
+      return;
+    }
+    const layers = flatten(newLayers, Boolean);
+    if (oldLayers !== newLayers) {
+      const prevLayers = flatten(oldLayers, Boolean);
+      const prevLayerGroupIds = new Set(prevLayers.map((l) => getLayerGroupId(l)));
+      const newLayerGroupIds = new Set(layers.map((l) => getLayerGroupId(l)));
+      for (const groupId of prevLayerGroupIds) {
+        if (!newLayerGroupIds.has(groupId)) {
+          if (map4.getLayer(groupId)) {
+            map4.removeLayer(groupId);
+          }
+        }
+      }
+    }
+    const layerGroups = {};
+    for (const layer of layers) {
+      const groupId = getLayerGroupId(layer);
+      const mapboxGroup = map4.getLayer(groupId);
+      if (mapboxGroup) {
+        const groupInstance = mapboxGroup.implementation || mapboxGroup;
+        layerGroups[groupId] = groupInstance;
+      } else {
+        const newGroup = new MapboxLayerGroup({
+          id: groupId,
+          slot: layer.props.slot,
+          beforeId: layer.props.beforeId
+        });
+        layerGroups[groupId] = newGroup;
+        map4.addLayer(newGroup, layer.props.beforeId);
+      }
+    }
+    const mapLayers = map4.style._order;
+    for (const [groupId, group2] of Object.entries(layerGroups)) {
+      const beforeId = group2.beforeId || UNDEFINED_BEFORE_ID;
+      const expectedGroupIndex = beforeId === UNDEFINED_BEFORE_ID ? mapLayers.length : mapLayers.indexOf(beforeId);
+      const currentGropupIndex = mapLayers.indexOf(groupId);
+      if (currentGropupIndex !== expectedGroupIndex - 1) {
+        const moveBeforeId = beforeId === UNDEFINED_BEFORE_ID ? void 0 : beforeId;
+        map4.moveLayer(groupId, moveBeforeId);
+      }
+    }
+  }
+
+  // node_modules/@deck.gl/mapbox/dist/deck-utils.js
+  var MAPBOX_VIEW_ID = "mapbox";
+  var TILE_SIZE2 = 512;
+  var DEGREES_TO_RADIANS7 = Math.PI / 180;
+  function getDeckInstance({ map: map4, deck }) {
+    if (map4.__deck) {
+      return map4.__deck;
+    }
+    const customRender = deck.props._customRender;
+    const onLoad = deck.props.onLoad;
+    const deckProps = {
+      ...deck.props,
+      _customRender: () => {
+        map4.triggerRepaint();
+        customRender?.("");
+      }
+    };
+    deckProps.views || (deckProps.views = getDefaultView(map4));
+    Object.assign(deckProps, {
+      width: null,
+      height: null,
+      touchAction: "unset",
+      viewState: getViewState(map4)
+    });
+    if (deck.isInitialized) {
+      watchMapMove(deck, map4);
+    } else {
+      deckProps.onLoad = () => {
+        onLoad?.();
+        watchMapMove(deck, map4);
+      };
+    }
+    deck.setProps(deckProps);
+    map4.__deck = deck;
+    map4.on("render", () => {
+      if (deck.isInitialized)
+        afterRender(deck, map4);
+    });
+    return deck;
+  }
+  function watchMapMove(deck, map4) {
+    const _handleMapMove = () => {
+      if (deck.isInitialized) {
+        onMapMove(deck, map4);
+      } else {
+        map4.off("move", _handleMapMove);
+      }
+    };
+    map4.on("move", _handleMapMove);
+  }
+  function removeDeckInstance(map4) {
+    map4.__deck?.finalize();
+    map4.__deck = null;
+  }
+  function getDefaultParameters(map4, interleaved) {
+    const result = interleaved ? {
+      depthWriteEnabled: true,
+      depthCompare: "less-equal",
+      depthBias: 0,
+      blend: true,
+      blendColorSrcFactor: "src-alpha",
+      blendColorDstFactor: "one-minus-src-alpha",
+      blendAlphaSrcFactor: "one",
+      blendAlphaDstFactor: "one-minus-src-alpha",
+      blendColorOperation: "add",
+      blendAlphaOperation: "add"
+    } : {};
+    if (getProjection(map4) === "globe") {
+      result.cullMode = "back";
+    }
+    return result;
+  }
+  function drawLayerGroup(deck, map4, group2, renderParameters) {
+    if (!deck.isInitialized) {
+      return;
+    }
+    let { currentViewport } = deck.userData;
+    let clearStack = false;
+    if (!currentViewport) {
+      currentViewport = getViewport(deck, map4, renderParameters);
+      deck.userData.currentViewport = currentViewport;
+      clearStack = true;
+    }
+    if (!currentViewport) {
+      return;
+    }
+    deck._drawLayers("mapbox-repaint", {
+      viewports: [currentViewport],
+      layerFilter: (params) => {
+        if (deck.props.layerFilter && !deck.props.layerFilter(params)) {
+          return false;
+        }
+        const layer = params.layer;
+        if (layer.props.beforeId === group2.beforeId && layer.props.slot === group2.slot) {
+          return true;
+        }
+        return false;
+      },
+      clearStack,
+      clearCanvas: false
+    });
+  }
+  function getProjection(map4) {
+    const projection = map4.getProjection?.();
+    const type = (
+      // maplibre projection spec
+      projection?.type || // mapbox projection spec
+      projection?.name
+    );
+    if (type === "globe") {
+      return "globe";
+    }
+    if (type && type !== "mercator") {
+      throw new Error("Unsupported projection");
+    }
+    return "mercator";
+  }
+  function getDefaultView(map4) {
+    if (getProjection(map4) === "globe") {
+      return new globe_view_default({ id: MAPBOX_VIEW_ID });
+    }
+    return new map_view_default({ id: MAPBOX_VIEW_ID });
+  }
+  function getViewState(map4) {
+    const { lng, lat } = map4.getCenter();
+    const viewState = {
+      // Longitude returned by getCenter can be outside of [-180, 180] when zooming near the anti meridian
+      // https://github.com/visgl/deck.gl/issues/6894
+      longitude: (lng + 540) % 360 - 180,
+      latitude: lat,
+      zoom: map4.getZoom(),
+      bearing: map4.getBearing(),
+      pitch: map4.getPitch(),
+      padding: map4.getPadding(),
+      repeat: map4.getRenderWorldCopies()
+    };
+    if (map4.getTerrain?.()) {
+      centerCameraOnTerrain(map4, viewState);
+    }
+    return viewState;
+  }
+  function centerCameraOnTerrain(map4, viewState) {
+    if (map4.getFreeCameraOptions) {
+      const { position } = map4.getFreeCameraOptions();
+      if (!position || position.z === void 0) {
+        return;
+      }
+      const height = map4.transform.height;
+      const { longitude, latitude, pitch } = viewState;
+      const cameraX = position.x * TILE_SIZE2;
+      const cameraY = (1 - position.y) * TILE_SIZE2;
+      const cameraZ = position.z * TILE_SIZE2;
+      const center = lngLatToWorld([longitude, latitude]);
+      const dx = cameraX - center[0];
+      const dy = cameraY - center[1];
+      const cameraToCenterDistanceGround = Math.sqrt(dx * dx + dy * dy);
+      const pitchRadians = pitch * DEGREES_TO_RADIANS7;
+      const altitudePixels = 1.5 * height;
+      const scale5 = pitchRadians < 1e-3 ? (
+        // Pitch angle too small to deduce the look at point, assume elevation is 0
+        altitudePixels * Math.cos(pitchRadians) / cameraZ
+      ) : altitudePixels * Math.sin(pitchRadians) / cameraToCenterDistanceGround;
+      viewState.zoom = Math.log2(scale5);
+      const cameraZFromSurface = altitudePixels * Math.cos(pitchRadians) / scale5;
+      const surfaceElevation = cameraZ - cameraZFromSurface;
+      viewState.position = [0, 0, surfaceElevation / unitsPerMeter(latitude)];
+    } else if (typeof map4.transform.elevation === "number") {
+      viewState.position = [0, 0, map4.transform.elevation];
+    }
+  }
+  function getViewport(deck, map4, renderParameters) {
+    const viewState = getViewState(map4);
+    const view = deck.getView(MAPBOX_VIEW_ID) || getDefaultView(map4);
+    if (renderParameters) {
+      view.props.nearZMultiplier = 0.2;
+    }
+    const nearZ = renderParameters?.nearZ ?? map4.transform._nearZ;
+    const farZ = renderParameters?.farZ ?? map4.transform._farZ;
+    if (Number.isFinite(nearZ)) {
+      viewState.nearZ = nearZ / map4.transform.height;
+      viewState.farZ = farZ / map4.transform.height;
+    }
+    return view.makeViewport({
+      width: deck.width,
+      height: deck.height,
+      viewState
+    });
+  }
+  function afterRender(deck, map4) {
+    const deckLayers = flatten(deck.props.layers, Boolean);
+    const hasNonMapboxLayers = deckLayers.some((layer) => layer && !map4.getLayer(getLayerGroupId(layer)));
+    let viewports = deck.getViewports();
+    const mapboxViewportIdx = viewports.findIndex((vp) => vp.id === MAPBOX_VIEW_ID);
+    const hasNonMapboxViews = viewports.length > 1 || mapboxViewportIdx < 0;
+    if (hasNonMapboxLayers || hasNonMapboxViews) {
+      if (mapboxViewportIdx >= 0) {
+        viewports = viewports.slice();
+        const mapboxViewport = getViewport(deck, map4);
+        if (mapboxViewport) {
+          viewports[mapboxViewportIdx] = mapboxViewport;
+        } else {
+          viewports.splice(mapboxViewportIdx, 1);
+        }
+      }
+      deck._drawLayers("mapbox-repaint", {
+        viewports,
+        layerFilter: (params) => (!deck.props.layerFilter || deck.props.layerFilter(params)) && (params.viewport.id !== MAPBOX_VIEW_ID || !map4.getLayer(getLayerGroupId(params.layer))),
+        clearCanvas: false
+      });
+    } else {
+      const device = deck.device;
+      const gl = device?.gl;
+      deck.props.onBeforeRender?.({ device, gl });
+      deck.props.onAfterRender?.({ device, gl });
+    }
+    deck.userData.currentViewport = null;
+  }
+  function onMapMove(deck, map4) {
+    deck.setProps({
+      viewState: getViewState(map4)
+    });
+    deck.needsRedraw({ clearRedrawFlags: true });
+  }
+
+  // node_modules/@deck.gl/mapbox/dist/mapbox-overlay.js
+  var MapboxOverlay = class {
+    constructor(props) {
+      this._handleStyleChange = () => {
+        this._resolveLayers(this._map, this._deck, this._props.layers, this._props.layers);
+        if (!this._map)
+          return;
+        const projection = getProjection(this._map);
+        if (projection) {
+          this._deck?.setProps({ views: this._getViews(this._map) });
+        }
+      };
+      this._updateContainerSize = () => {
+        if (this._map && this._container) {
+          const { clientWidth, clientHeight } = this._map.getContainer();
+          Object.assign(this._container.style, {
+            width: `${clientWidth}px`,
+            height: `${clientHeight}px`
+          });
+        }
+      };
+      this._updateViewState = () => {
+        const deck = this._deck;
+        const map4 = this._map;
+        if (deck && map4) {
+          deck.setProps({
+            views: this._getViews(map4),
+            viewState: getViewState(map4)
+          });
+          if (deck.isInitialized) {
+            deck.redraw();
+          }
+        }
+      };
+      this._handleMouseEvent = (event) => {
+        const deck = this._deck;
+        if (!deck || !deck.isInitialized) {
+          return;
+        }
+        const mockEvent = {
+          type: event.type,
+          offsetCenter: event.point,
+          srcEvent: event
+        };
+        const lastDown = this._lastMouseDownPoint;
+        if (!event.point && lastDown) {
+          mockEvent.deltaX = event.originalEvent.clientX - lastDown.clientX;
+          mockEvent.deltaY = event.originalEvent.clientY - lastDown.clientY;
+          mockEvent.offsetCenter = {
+            x: lastDown.x + mockEvent.deltaX,
+            y: lastDown.y + mockEvent.deltaY
+          };
+        }
+        switch (mockEvent.type) {
+          case "mousedown":
+            deck._onPointerDown(mockEvent);
+            this._lastMouseDownPoint = {
+              ...event.point,
+              clientX: event.originalEvent.clientX,
+              clientY: event.originalEvent.clientY
+            };
+            break;
+          case "dragstart":
+            mockEvent.type = "panstart";
+            deck._onEvent(mockEvent);
+            break;
+          case "drag":
+            mockEvent.type = "panmove";
+            deck._onEvent(mockEvent);
+            break;
+          case "dragend":
+            mockEvent.type = "panend";
+            deck._onEvent(mockEvent);
+            break;
+          case "click":
+            mockEvent.tapCount = 1;
+            deck._onEvent(mockEvent);
+            break;
+          case "dblclick":
+            mockEvent.type = "click";
+            mockEvent.tapCount = 2;
+            deck._onEvent(mockEvent);
+            break;
+          case "mousemove":
+            mockEvent.type = "pointermove";
+            deck._onPointerMove(mockEvent);
+            break;
+          case "mouseout":
+            mockEvent.type = "pointerleave";
+            deck._onPointerMove(mockEvent);
+            break;
+          default:
+            return;
+        }
+      };
+      const { interleaved = false } = props;
+      this._interleaved = interleaved;
+      this._props = this.filterProps(props);
+    }
+    /** Filter out props to pass to Deck **/
+    filterProps(props) {
+      const { interleaved = false, useDevicePixels, ...deckProps } = props;
+      if (!interleaved && useDevicePixels !== void 0) {
+        deckProps.useDevicePixels = useDevicePixels;
+      }
+      return deckProps;
+    }
+    /** Update (partial) props of the underlying Deck instance. */
+    setProps(props) {
+      if (this._interleaved && props.layers) {
+        this._resolveLayers(this._map, this._deck, this._props.layers, props.layers);
+      }
+      Object.assign(this._props, this.filterProps(props));
+      if (this._deck && this._map) {
+        this._deck.setProps({
+          ...this._props,
+          views: this._getViews(this._map),
+          parameters: {
+            ...getDefaultParameters(this._map, this._interleaved),
+            ...this._props.parameters
+          }
+        });
+      }
+    }
+    // The local Map type is for internal typecheck only. It does not necesarily satisefy mapbox/maplibre types at runtime.
+    // Do not restrict the argument type here to avoid type conflict.
+    /** Called when the control is added to a map */
+    onAdd(map4) {
+      this._map = map4;
+      return this._interleaved ? this._onAddInterleaved(map4) : this._onAddOverlaid(map4);
+    }
+    _onAddOverlaid(map4) {
+      const container = document.createElement("div");
+      Object.assign(container.style, {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        textAlign: "initial",
+        pointerEvents: "none"
+      });
+      this._container = container;
+      this._deck = new deck_default({
+        ...this._props,
+        parent: container,
+        parameters: { ...getDefaultParameters(map4, false), ...this._props.parameters },
+        views: this._getViews(map4),
+        viewState: getViewState(map4)
+      });
+      map4.on("resize", this._updateContainerSize);
+      map4.on("render", this._updateViewState);
+      map4.on("mousedown", this._handleMouseEvent);
+      map4.on("dragstart", this._handleMouseEvent);
+      map4.on("drag", this._handleMouseEvent);
+      map4.on("dragend", this._handleMouseEvent);
+      map4.on("mousemove", this._handleMouseEvent);
+      map4.on("mouseout", this._handleMouseEvent);
+      map4.on("click", this._handleMouseEvent);
+      map4.on("dblclick", this._handleMouseEvent);
+      this._updateContainerSize();
+      return container;
+    }
+    _onAddInterleaved(map4) {
+      const gl = map4.painter.context.gl;
+      if (gl instanceof WebGLRenderingContext) {
+        log_default.warn("Incompatible basemap library. See: https://deck.gl/docs/api-reference/mapbox/overview#compatibility")();
+      }
+      this._deck = getDeckInstance({
+        map: map4,
+        deck: new deck_default({
+          ...this._props,
+          views: this._getViews(map4),
+          gl,
+          parameters: { ...getDefaultParameters(map4, true), ...this._props.parameters }
+        })
+      });
+      map4.on("styledata", this._handleStyleChange);
+      this._resolveLayers(map4, this._deck, [], this._props.layers);
+      return document.createElement("div");
+    }
+    _resolveLayers(map4, _deck, prevLayers, newLayers) {
+      resolveLayerGroups(map4, prevLayers, newLayers);
+    }
+    /** Called when the control is removed from a map */
+    onRemove() {
+      const map4 = this._map;
+      if (map4) {
+        if (this._interleaved) {
+          this._onRemoveInterleaved(map4);
+        } else {
+          this._onRemoveOverlaid(map4);
+        }
+      }
+      this._deck = void 0;
+      this._map = void 0;
+      this._container = void 0;
+    }
+    _onRemoveOverlaid(map4) {
+      map4.off("resize", this._updateContainerSize);
+      map4.off("render", this._updateViewState);
+      map4.off("mousedown", this._handleMouseEvent);
+      map4.off("dragstart", this._handleMouseEvent);
+      map4.off("drag", this._handleMouseEvent);
+      map4.off("dragend", this._handleMouseEvent);
+      map4.off("mousemove", this._handleMouseEvent);
+      map4.off("mouseout", this._handleMouseEvent);
+      map4.off("click", this._handleMouseEvent);
+      map4.off("dblclick", this._handleMouseEvent);
+      this._deck?.finalize();
+    }
+    _onRemoveInterleaved(map4) {
+      map4.off("styledata", this._handleStyleChange);
+      this._resolveLayers(map4, this._deck, this._props.layers, []);
+      removeDeckInstance(map4);
+    }
+    getDefaultPosition() {
+      return "top-left";
+    }
+    /** Forwards the Deck.pickObject method */
+    pickObject(params) {
+      assert8(this._deck);
+      return this._deck.pickObject(params);
+    }
+    /** Forwards the Deck.pickMultipleObjects method */
+    pickMultipleObjects(params) {
+      assert8(this._deck);
+      return this._deck.pickMultipleObjects(params);
+    }
+    /** Forwards the Deck.pickObjects method */
+    pickObjects(params) {
+      assert8(this._deck);
+      return this._deck.pickObjects(params);
+    }
+    /** Remove from map and releases all resources */
+    finalize() {
+      if (this._map) {
+        this._map.removeControl(this);
+      }
+    }
+    /** If interleaved: true, returns base map's canvas, otherwise forwards the Deck.getCanvas method. */
+    getCanvas() {
+      if (!this._map) {
+        return null;
+      }
+      return this._interleaved ? this._map.getCanvas() : this._deck.getCanvas();
+    }
+    _getViews(map4) {
+      if (!this._props.views) {
+        return getDefaultView(map4);
+      }
+      const views = Array.isArray(this._props.views) ? this._props.views : [this._props.views];
+      const hasMapboxView = views.some((v) => v.id === MAPBOX_VIEW_ID);
+      if (hasMapboxView) {
+        return this._props.views;
+      }
+      return [getDefaultView(map4), ...views];
+    }
+  };
 
   // node_modules/@flowmap.gl/layers/dist/AnimatedFlowLinesLayer/AnimatedFlowLinesLayerFragment.glsl.js
   var AnimatedFlowLinesLayerFragment_glsl_default = `#version 300 es
@@ -40641,413 +41100,6 @@ fn fragmentMain(inp: Varyings) -> @location(0) vec4<f32> {
   IconLayer.layerName = "IconLayer";
   var icon_layer_default = IconLayer;
 
-  // node_modules/@deck.gl/layers/dist/line-layer/line-layer-uniforms.js
-  var uniformBlockGLSL = (
-    /* glsl */
-    `layout(std140) uniform lineUniforms {
-  float widthScale;
-  float widthMinPixels;
-  float widthMaxPixels;
-  float useShortestPath;
-  highp int widthUnits;
-} line;
-`
-  );
-  var lineUniforms = {
-    name: "line",
-    source: "",
-    vs: uniformBlockGLSL,
-    fs: uniformBlockGLSL,
-    uniformTypes: {
-      widthScale: "f32",
-      widthMinPixels: "f32",
-      widthMaxPixels: "f32",
-      useShortestPath: "f32",
-      widthUnits: "i32"
-    }
-  };
-
-  // node_modules/@deck.gl/layers/dist/line-layer/line-layer.wgsl.js
-  var shaderWGSL2 = (
-    /* wgsl */
-    `// ---------- Helper Structures & Functions ----------
-
-// Placeholder filter functions.
-fn deckgl_filter_size(offset: vec3<f32>, geometry: Geometry) -> vec3<f32> {
-  return offset;
-}
-fn deckgl_filter_gl_position(p: vec4<f32>, geometry: Geometry) -> vec4<f32> {
-  if (picking.isAttribute > 0.5) {
-    // For depth picking, write normalized depth into the picking payload.
-    // This mirrors the legacy DECKGL_FILTER_GL_POSITION hook on WebGL.
-  }
-  return p;
-}
-
-// Compute an extrusion offset given a line direction (in clipspace),
-// an offset direction (-1 or 1), and a width in pixels.
-// Assumes a uniform "project" with a viewportSize field is available.
-fn getExtrusionOffset(line_clipspace: vec2<f32>, offset_direction: f32, width: f32) -> vec2<f32> {
-  // project.viewportSize should be provided as a uniform (not shown here)
-  let dir_screenspace = normalize(line_clipspace * project.viewportSize);
-  // Rotate by 90\xB0: (x,y) becomes (-y,x)
-  let rotated = vec2<f32>(-dir_screenspace.y, dir_screenspace.x);
-  return rotated * offset_direction * width / 2.0;
-}
-
-// Splits the line between two points at a given x coordinate.
-// Interpolates the y and z components.
-fn splitLine(a: vec3<f32>, b: vec3<f32>, x: f32) -> vec3<f32> {
-  let t: f32 = (x - a.x) / (b.x - a.x);
-  return vec3<f32>(x, a.yz + t * (b.yz - a.yz));
-}
-
-// ---------- Uniforms & Global Structures ----------
-
-struct LineUniforms {
-  widthScale: f32,
-  widthMinPixels: f32,
-  widthMaxPixels: f32,
-  useShortestPath: f32,
-  widthUnits: i32,
-};
-
-@group(0) @binding(0)
-var<uniform> line: LineUniforms;
-
-
-
-// ---------- Vertex Output Structure ----------
-
-struct Varyings {
-  @builtin(position) gl_Position: vec4<f32>,
-  @location(0) vColor: vec4<f32>,
-  @location(1) uv: vec2<f32>,
-  @location(2) pickingColor: vec3<f32>,
-};
-
-// ---------- Vertex Shader Entry Point ----------
-
-@vertex
-fn vertexMain(
-  @location(0) positions: vec3<f32>,
-  @location(1) instanceSourcePositions: vec3<f32>,
-  @location(2) instanceTargetPositions: vec3<f32>,
-  @location(3) instanceSourcePositions64Low: vec3<f32>,
-  @location(4) instanceTargetPositions64Low: vec3<f32>,
-  @location(5) instanceColors: vec4<f32>,
-  @location(6) instancePickingColors: vec3<f32>,
-  @location(7) instanceWidths: f32
-) -> Varyings {
-  geometry.worldPosition = instanceSourcePositions;
-  geometry.worldPositionAlt = instanceTargetPositions;
-
-  var source_world: vec3<f32> = instanceSourcePositions;
-  var target_world: vec3<f32> = instanceTargetPositions;
-  var source_world_64low: vec3<f32> = instanceSourcePositions64Low;
-  var target_world_64low: vec3<f32> = instanceTargetPositions64Low;
-
-  // Apply shortest-path adjustments if needed.
-  if (line.useShortestPath > 0.5 || line.useShortestPath < -0.5) {
-    source_world.x = (source_world.x + 180.0 % 360.0) - 180.0;
-    target_world.x = (target_world.x + 180.0 % 360.0) - 180.0;
-    let deltaLng: f32 = target_world.x - source_world.x;
-
-    if (deltaLng * line.useShortestPath > 180.0) {
-      source_world.x = source_world.x + 360.0 * line.useShortestPath;
-      source_world = splitLine(source_world, target_world, 180.0 * line.useShortestPath);
-      source_world_64low = vec3<f32>(0.0, 0.0, 0.0);
-    } else if (deltaLng * line.useShortestPath < -180.0) {
-      target_world.x = target_world.x + 360.0 * line.useShortestPath;
-      target_world = splitLine(source_world, target_world, 180.0 * line.useShortestPath);
-      target_world_64low = vec3<f32>(0.0, 0.0, 0.0);
-    } else if (line.useShortestPath < 0.0) {
-      var abortOut: Varyings;
-      abortOut.gl_Position = vec4<f32>(0.0);
-      abortOut.vColor = vec4<f32>(0.0);
-      abortOut.uv = vec2<f32>(0.0);
-      return abortOut;
-    }
-  }
-
-  // Project Pos and target positions to clip space.
-  let sourceResult = project_position_to_clipspace_and_commonspace(source_world, source_world_64low, vec3<f32>(0.0));
-  let targetResult = project_position_to_clipspace_and_commonspace(target_world, target_world_64low, vec3<f32>(0.0));
-  let sourcePos: vec4<f32> = sourceResult.clipPosition;
-  let targetPos: vec4<f32> = targetResult.clipPosition;
-  let source_commonspace: vec4<f32> = sourceResult.commonPosition;
-  let target_commonspace: vec4<f32> = targetResult.commonPosition;
-
-  // Interpolate along the line segment.
-  let segmentIndex: f32 = positions.x;
-  let p: vec4<f32> = sourcePos + segmentIndex * (targetPos - sourcePos);
-  geometry.position = source_commonspace + segmentIndex * (target_commonspace - source_commonspace);
-  let uv: vec2<f32> = positions.xy;
-  geometry.uv = uv;
-  geometry.pickingColor = instancePickingColors;
-
-  // Determine width in pixels.
-  let widthPixels: f32 = clamp(
-    project_unit_size_to_pixel(instanceWidths * line.widthScale, line.widthUnits),
-    line.widthMinPixels, line.widthMaxPixels
-  );
-
-  // Compute extrusion offset.
-  let extrusion: vec2<f32> = getExtrusionOffset(targetPos.xy - sourcePos.xy, positions.y, widthPixels);
-  let offset: vec3<f32> = vec3<f32>(extrusion, 0.0);
-
-  // Apply deck.gl filter functions.
-  let filteredOffset = deckgl_filter_size(offset, geometry);
-  let filteredP = deckgl_filter_gl_position(p, geometry);
-
-  let clipOffset: vec2<f32> = project_pixel_size_to_clipspace(filteredOffset.xy);
-  let finalPosition: vec4<f32> = filteredP + vec4<f32>(clipOffset, 0.0, 0.0);
-
-  // Compute color.
-  var vColor: vec4<f32> = vec4<f32>(instanceColors.rgb, instanceColors.a * layer.opacity);
-  // vColor = deckgl_filter_color(vColor, geometry);
-
-  var output: Varyings;
-  output.gl_Position = finalPosition;
-  output.vColor = vColor;
-  output.uv = uv;
-  output.pickingColor = instancePickingColors;
-  return output;
-}
-
-@fragment
-fn fragmentMain(
-  @location(0) vColor: vec4<f32>,
-  @location(1) uv: vec2<f32>,
-  @location(2) pickingColor: vec3<f32>
-) -> @location(0) vec4<f32> {
-  // Create and initialize geometry with the provided uv.
-  var geometry: Geometry;
-  geometry.uv = uv;
-
-  // Start with the input color.
-  var fragColor: vec4<f32> = vColor;
-
-  if (picking.isActive > 0.5) {
-    if (!picking_isColorValid(pickingColor)) {
-      discard;
-    }
-    return vec4<f32>(pickingColor, 1.0);
-  }
-
-  if (picking.isHighlightActive > 0.5) {
-    let highlightedObjectColor = picking_normalizeColor(picking.highlightedObjectColor);
-    if (picking_isColorZero(abs(pickingColor - highlightedObjectColor))) {
-      let highLightAlpha = picking.highlightColor.a;
-      let blendedAlpha = highLightAlpha + fragColor.a * (1.0 - highLightAlpha);
-      if (blendedAlpha > 0.0) {
-        let highLightRatio = highLightAlpha / blendedAlpha;
-        fragColor = vec4<f32>(
-          mix(fragColor.rgb, picking.highlightColor.rgb, highLightRatio),
-          blendedAlpha
-        );
-      } else {
-        fragColor = vec4<f32>(fragColor.rgb, 0.0);
-      }
-    }
-  }
-
-  // Apply premultiplied alpha as required by transparent canvas
-  fragColor = deckgl_premultiplied_alpha(fragColor);
-
-  return fragColor;
-}
-`
-  );
-
-  // node_modules/@deck.gl/layers/dist/line-layer/line-layer-vertex.glsl.js
-  var line_layer_vertex_glsl_default = `#version 300 es
-#define SHADER_NAME line-layer-vertex-shader
-in vec3 positions;
-in vec3 instanceSourcePositions;
-in vec3 instanceTargetPositions;
-in vec3 instanceSourcePositions64Low;
-in vec3 instanceTargetPositions64Low;
-in vec4 instanceColors;
-in vec3 instancePickingColors;
-in float instanceWidths;
-out vec4 vColor;
-out vec2 uv;
-vec2 getExtrusionOffset(vec2 line_clipspace, float offset_direction, float width) {
-vec2 dir_screenspace = normalize(line_clipspace * project.viewportSize);
-dir_screenspace = vec2(-dir_screenspace.y, dir_screenspace.x);
-return dir_screenspace * offset_direction * width / 2.0;
-}
-vec3 splitLine(vec3 a, vec3 b, float x) {
-float t = (x - a.x) / (b.x - a.x);
-return vec3(x, mix(a.yz, b.yz, t));
-}
-void main(void) {
-geometry.worldPosition = instanceSourcePositions;
-geometry.worldPositionAlt = instanceTargetPositions;
-vec3 source_world = instanceSourcePositions;
-vec3 target_world = instanceTargetPositions;
-vec3 source_world_64low = instanceSourcePositions64Low;
-vec3 target_world_64low = instanceTargetPositions64Low;
-if (line.useShortestPath > 0.5 || line.useShortestPath < -0.5) {
-source_world.x = mod(source_world.x + 180., 360.0) - 180.;
-target_world.x = mod(target_world.x + 180., 360.0) - 180.;
-float deltaLng = target_world.x - source_world.x;
-if (deltaLng * line.useShortestPath > 180.) {
-source_world.x += 360. * line.useShortestPath;
-source_world = splitLine(source_world, target_world, 180. * line.useShortestPath);
-source_world_64low = vec3(0.0);
-} else if (deltaLng * line.useShortestPath < -180.) {
-target_world.x += 360. * line.useShortestPath;
-target_world = splitLine(source_world, target_world, 180. * line.useShortestPath);
-target_world_64low = vec3(0.0);
-} else if (line.useShortestPath < 0.) {
-gl_Position = vec4(0.);
-return;
-}
-}
-vec4 source_commonspace;
-vec4 target_commonspace;
-vec4 source = project_position_to_clipspace(source_world, source_world_64low, vec3(0.), source_commonspace);
-vec4 target = project_position_to_clipspace(target_world, target_world_64low, vec3(0.), target_commonspace);
-float segmentIndex = positions.x;
-vec4 p = mix(source, target, segmentIndex);
-geometry.position = mix(source_commonspace, target_commonspace, segmentIndex);
-uv = positions.xy;
-geometry.uv = uv;
-geometry.pickingColor = instancePickingColors;
-float widthPixels = clamp(
-project_size_to_pixel(instanceWidths * line.widthScale, line.widthUnits),
-line.widthMinPixels, line.widthMaxPixels
-);
-vec3 offset = vec3(
-getExtrusionOffset(target.xy - source.xy, positions.y, widthPixels),
-0.0);
-DECKGL_FILTER_SIZE(offset, geometry);
-DECKGL_FILTER_GL_POSITION(p, geometry);
-gl_Position = p + vec4(project_pixel_size_to_clipspace(offset.xy), 0.0, 0.0);
-vColor = vec4(instanceColors.rgb, instanceColors.a * layer.opacity);
-DECKGL_FILTER_COLOR(vColor, geometry);
-}
-`;
-
-  // node_modules/@deck.gl/layers/dist/line-layer/line-layer-fragment.glsl.js
-  var line_layer_fragment_glsl_default = `#version 300 es
-#define SHADER_NAME line-layer-fragment-shader
-precision highp float;
-in vec4 vColor;
-in vec2 uv;
-out vec4 fragColor;
-void main(void) {
-geometry.uv = uv;
-fragColor = vColor;
-DECKGL_FILTER_COLOR(fragColor, geometry);
-}
-`;
-
-  // node_modules/@deck.gl/layers/dist/line-layer/line-layer.js
-  var DEFAULT_COLOR6 = [0, 0, 0, 255];
-  var defaultProps4 = {
-    getSourcePosition: { type: "accessor", value: (x) => x.sourcePosition },
-    getTargetPosition: { type: "accessor", value: (x) => x.targetPosition },
-    getColor: { type: "accessor", value: DEFAULT_COLOR6 },
-    getWidth: { type: "accessor", value: 1 },
-    widthUnits: "pixels",
-    widthScale: { type: "number", value: 1, min: 0 },
-    widthMinPixels: { type: "number", value: 0, min: 0 },
-    widthMaxPixels: { type: "number", value: Number.MAX_SAFE_INTEGER, min: 0 }
-  };
-  var LineLayer = class extends layer_default {
-    getBounds() {
-      return this.getAttributeManager()?.getBounds([
-        "instanceSourcePositions",
-        "instanceTargetPositions"
-      ]);
-    }
-    getShaders() {
-      return super.getShaders({ vs: line_layer_vertex_glsl_default, fs: line_layer_fragment_glsl_default, source: shaderWGSL2, modules: [project32_default, color_default, picking_default, lineUniforms] });
-    }
-    // This layer has its own wrapLongitude logic
-    get wrapLongitude() {
-      return false;
-    }
-    initializeState() {
-      const attributeManager = this.getAttributeManager();
-      attributeManager.addInstanced({
-        instanceSourcePositions: {
-          size: 3,
-          type: "float64",
-          fp64: this.use64bitPositions(),
-          transition: true,
-          accessor: "getSourcePosition"
-        },
-        instanceTargetPositions: {
-          size: 3,
-          type: "float64",
-          fp64: this.use64bitPositions(),
-          transition: true,
-          accessor: "getTargetPosition"
-        },
-        instanceColors: {
-          size: this.props.colorFormat.length,
-          type: "unorm8",
-          transition: true,
-          accessor: "getColor",
-          defaultValue: [0, 0, 0, 255]
-        },
-        instanceWidths: {
-          size: 1,
-          transition: true,
-          accessor: "getWidth",
-          defaultValue: 1
-        }
-      });
-    }
-    updateState(params) {
-      super.updateState(params);
-      if (params.changeFlags.extensionsChanged) {
-        this.state.model?.destroy();
-        this.state.model = this._getModel();
-        this.getAttributeManager().invalidateAll();
-      }
-    }
-    draw({ uniforms }) {
-      const { widthUnits, widthScale, widthMinPixels, widthMaxPixels, wrapLongitude } = this.props;
-      const model = this.state.model;
-      const lineProps = {
-        widthUnits: UNIT[widthUnits],
-        widthScale,
-        widthMinPixels,
-        widthMaxPixels,
-        useShortestPath: wrapLongitude ? 1 : 0
-      };
-      model.shaderInputs.setProps({ line: lineProps });
-      model.draw(this.context.renderPass);
-      if (wrapLongitude) {
-        model.shaderInputs.setProps({ line: { ...lineProps, useShortestPath: -1 } });
-        model.draw(this.context.renderPass);
-      }
-    }
-    _getModel() {
-      const positions = [0, -1, 0, 0, 1, 0, 1, -1, 0, 1, 1, 0];
-      return new Model(this.context.device, {
-        ...this.getShaders(),
-        id: this.props.id,
-        bufferLayout: this.getAttributeManager().getBufferLayouts(),
-        geometry: new Geometry({
-          topology: "triangle-strip",
-          attributes: {
-            positions: { size: 3, value: new Float32Array(positions) }
-          }
-        }),
-        isInstanced: true
-      });
-    }
-  };
-  LineLayer.layerName = "LineLayer";
-  LineLayer.defaultProps = defaultProps4;
-  var line_layer_default = LineLayer;
-
   // node_modules/@deck.gl/layers/dist/scatterplot-layer/scatterplot-layer-uniforms.js
   var glslUniformBlock = `layout(std140) uniform scatterplotUniforms {
   float radiusScale;
@@ -41407,8 +41459,8 @@ fn fragmentMain(varyings: Varyings) -> @location(0) vec4<f32> {
   );
 
   // node_modules/@deck.gl/layers/dist/scatterplot-layer/scatterplot-layer.js
-  var DEFAULT_COLOR7 = [0, 0, 0, 255];
-  var defaultProps5 = {
+  var DEFAULT_COLOR6 = [0, 0, 0, 255];
+  var defaultProps4 = {
     radiusUnits: "meters",
     radiusScale: { type: "number", min: 0, value: 1 },
     radiusMinPixels: { type: "number", min: 0, value: 0 },
@@ -41425,8 +41477,8 @@ fn fragmentMain(varyings: Varyings) -> @location(0) vec4<f32> {
     antialiasing: true,
     getPosition: { type: "accessor", value: (x) => x.position },
     getRadius: { type: "accessor", value: 1 },
-    getFillColor: { type: "accessor", value: DEFAULT_COLOR7 },
-    getLineColor: { type: "accessor", value: DEFAULT_COLOR7 },
+    getFillColor: { type: "accessor", value: DEFAULT_COLOR6 },
+    getLineColor: { type: "accessor", value: DEFAULT_COLOR6 },
     getLineWidth: { type: "accessor", value: 1 },
     // deprecated
     strokeWidth: { deprecatedFor: "getLineWidth" },
@@ -41523,7 +41575,7 @@ fn fragmentMain(varyings: Varyings) -> @location(0) vec4<f32> {
       });
     }
   };
-  ScatterplotLayer.defaultProps = defaultProps5;
+  ScatterplotLayer.defaultProps = defaultProps4;
   ScatterplotLayer.layerName = "ScatterplotLayer";
   var scatterplot_layer_default = ScatterplotLayer;
 
@@ -41750,7 +41802,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
 
   // node_modules/@deck.gl/layers/dist/text-layer/multi-icon-layer/multi-icon-layer.js
   var DEFAULT_BUFFER2 = 192 / 256;
-  var defaultProps6 = {
+  var defaultProps5 = {
     getIconOffsets: { type: "accessor", value: (x) => x.offsets },
     getContentBox: { type: "accessor", value: [0, 0, -1, -1] },
     fontSize: 1,
@@ -41861,7 +41913,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       }
     }
   };
-  MultiIconLayer.defaultProps = defaultProps6;
+  MultiIconLayer.defaultProps = defaultProps5;
   MultiIconLayer.layerName = "MultiIconLayer";
   var multi_icon_layer_default = MultiIconLayer;
 
@@ -42625,7 +42677,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
 `;
 
   // node_modules/@deck.gl/layers/dist/text-layer/text-background-layer/text-background-layer.js
-  var defaultProps7 = {
+  var defaultProps6 = {
     billboard: true,
     sizeScale: 1,
     sizeUnits: "pixels",
@@ -42766,7 +42818,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       });
     }
   };
-  TextBackgroundLayer.defaultProps = defaultProps7;
+  TextBackgroundLayer.defaultProps = defaultProps6;
   TextBackgroundLayer.layerName = "TextBackgroundLayer";
   var text_background_layer_default = TextBackgroundLayer;
 
@@ -42781,9 +42833,9 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     center: 0,
     bottom: -1
   };
-  var DEFAULT_COLOR8 = [0, 0, 0, 255];
+  var DEFAULT_COLOR7 = [0, 0, 0, 255];
   var DEFAULT_LINE_HEIGHT = 1;
-  var defaultProps8 = {
+  var defaultProps7 = {
     billboard: true,
     sizeScale: 1,
     sizeUnits: "pixels",
@@ -42791,7 +42843,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     sizeMaxPixels: Number.MAX_SAFE_INTEGER,
     background: false,
     getBackgroundColor: { type: "accessor", value: [255, 255, 255, 255] },
-    getBorderColor: { type: "accessor", value: DEFAULT_COLOR8 },
+    getBorderColor: { type: "accessor", value: DEFAULT_COLOR7 },
     getBorderWidth: { type: "accessor", value: 0 },
     backgroundBorderRadius: { type: "object", value: 0 },
     backgroundPadding: { type: "array", value: [0, 0, 0, 0] },
@@ -42800,7 +42852,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     fontWeight: DEFAULT_FONT_SETTINGS.fontWeight,
     lineHeight: DEFAULT_LINE_HEIGHT,
     outlineWidth: { type: "number", value: 0, min: 0 },
-    outlineColor: { type: "color", value: DEFAULT_COLOR8 },
+    outlineColor: { type: "color", value: DEFAULT_COLOR7 },
     fontSettings: { type: "object", value: {}, compare: 1 },
     // auto wrapping options
     wordBreak: "break-word",
@@ -42810,7 +42862,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     contentAlignVertical: "none",
     getText: { type: "accessor", value: (x) => x.text },
     getPosition: { type: "accessor", value: (x) => x.position },
-    getColor: { type: "accessor", value: DEFAULT_COLOR8 },
+    getColor: { type: "accessor", value: DEFAULT_COLOR7 },
     getSize: { type: "accessor", value: 32 },
     getAngle: { type: "accessor", value: 0 },
     getTextAnchor: { type: "accessor", value: "middle" },
@@ -43084,7 +43136,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       setFontAtlasCacheLimit(limit);
     }
   };
-  TextLayer.defaultProps = defaultProps8;
+  TextLayer.defaultProps = defaultProps7;
   TextLayer.layerName = "TextLayer";
   var text_layer_default = TextLayer;
 
@@ -46172,15 +46224,6 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       negative: getFlowAndCircleColors(colors && colors.negative, DEFAULT_FLOW_COLOR_SCHEME_NEGATIVE, baseColorsRGBA.darkMode)
     };
   }
-  function rgbaAsString(color2) {
-    return `rgba(${color2.join(",")})`;
-  }
-  function midpoint(a, b, zeroToOne) {
-    return a + (b - a) * zeroToOne;
-  }
-  function mixColorsRGBA(color1, color2, zeroToOne) {
-    return color1.map((v, i) => midpoint(v, color2[i], zeroToOne));
-  }
   var colors_default2 = getColors;
 
   // node_modules/kdbush/index.js
@@ -46197,14 +46240,15 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
   ];
   var VERSION6 = 1;
   var HEADER_SIZE = 8;
+  var STACK = new Uint32Array(96);
   var KDBush = class _KDBush {
     /**
      * Creates an index from raw `ArrayBuffer` data.
-     * @param {ArrayBuffer} data
+     * @param {ArrayBufferLike} data
      */
     static from(data) {
-      if (!(data instanceof ArrayBuffer)) {
-        throw new Error("Data must be an instance of ArrayBuffer.");
+      if (!data || data.byteLength === void 0 || data.buffer) {
+        throw new Error("Data must be an instance of ArrayBuffer or SharedArrayBuffer.");
       }
       const [magic, versionAndType] = new Uint8Array(data, 0, 2);
       if (magic !== 219) {
@@ -46220,17 +46264,18 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       }
       const [nodeSize] = new Uint16Array(data, 2, 1);
       const [numItems] = new Uint32Array(data, 4, 1);
-      return new _KDBush(numItems, nodeSize, ArrayType, data);
+      return new _KDBush(numItems, nodeSize, ArrayType, void 0, data);
     }
     /**
      * Creates an index that will hold a given number of items.
      * @param {number} numItems
      * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
      * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
-     * @param {ArrayBuffer} [data] (For internal use only)
+     * @param {ArrayBufferConstructor | SharedArrayBufferConstructor} [ArrayBufferType=ArrayBuffer] The array buffer type used for storage (`ArrayBuffer` by default).
+     * @param {ArrayBufferLike} [data] (For internal use only)
      */
-    constructor(numItems, nodeSize = 64, ArrayType = Float64Array, data) {
-      if (isNaN(numItems) || numItems < 0) throw new Error(`Unpexpected numItems value: ${numItems}.`);
+    constructor(numItems, nodeSize = 64, ArrayType = Float64Array, ArrayBufferType = ArrayBuffer, data) {
+      if (isNaN(numItems) || numItems < 0) throw new Error(`Unexpected numItems value: ${numItems}.`);
       this.numItems = +numItems;
       this.nodeSize = Math.min(Math.max(+nodeSize, 2), 65535);
       this.ArrayType = ArrayType;
@@ -46242,21 +46287,21 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       if (arrayTypeIndex < 0) {
         throw new Error(`Unexpected typed array class: ${ArrayType}.`);
       }
-      if (data && data instanceof ArrayBuffer) {
+      if (data) {
         this.data = data;
-        this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
-        this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+        this.ids = new this.IndexArrayType(data, HEADER_SIZE, numItems);
+        this.coords = new ArrayType(data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
         this._pos = numItems * 2;
         this._finished = true;
       } else {
-        this.data = new ArrayBuffer(HEADER_SIZE + coordsByteSize + idsByteSize + padCoords);
-        this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
-        this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+        const data2 = this.data = new ArrayBufferType(HEADER_SIZE + coordsByteSize + idsByteSize + padCoords);
+        this.ids = new this.IndexArrayType(data2, HEADER_SIZE, numItems);
+        this.coords = new ArrayType(data2, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
         this._pos = 0;
         this._finished = false;
-        new Uint8Array(this.data, 0, 2).set([219, (VERSION6 << 4) + arrayTypeIndex]);
-        new Uint16Array(this.data, 2, 1)[0] = nodeSize;
-        new Uint32Array(this.data, 4, 1)[0] = numItems;
+        new Uint8Array(data2, 0, 2).set([219, (VERSION6 << 4) + arrayTypeIndex]);
+        new Uint16Array(data2, 2, 1)[0] = nodeSize;
+        new Uint32Array(data2, 4, 1)[0] = numItems;
       }
     }
     /**
@@ -46295,12 +46340,15 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     range(minX, minY, maxX, maxY) {
       if (!this._finished) throw new Error("Data not yet indexed - call index.finish().");
       const { ids, coords, nodeSize } = this;
-      const stack = [0, ids.length - 1, 0];
+      STACK[0] = 0;
+      STACK[1] = ids.length - 1;
+      STACK[2] = 0;
+      let sp = 3;
       const result = [];
-      while (stack.length) {
-        const axis = stack.pop() || 0;
-        const right = stack.pop() || 0;
-        const left = stack.pop() || 0;
+      while (sp > 0) {
+        const axis = STACK[--sp];
+        const right = STACK[--sp];
+        const left = STACK[--sp];
         if (right - left <= nodeSize) {
           for (let i = left; i <= right; i++) {
             const x2 = coords[2 * i];
@@ -46314,14 +46362,14 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
         const y = coords[2 * m + 1];
         if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
         if (axis === 0 ? minX <= x : minY <= y) {
-          stack.push(left);
-          stack.push(m - 1);
-          stack.push(1 - axis);
+          STACK[sp++] = left;
+          STACK[sp++] = m - 1;
+          STACK[sp++] = 1 - axis;
         }
         if (axis === 0 ? maxX >= x : maxY >= y) {
-          stack.push(m + 1);
-          stack.push(right);
-          stack.push(1 - axis);
+          STACK[sp++] = m + 1;
+          STACK[sp++] = right;
+          STACK[sp++] = 1 - axis;
         }
       }
       return result;
@@ -46334,37 +46382,59 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
      * @returns {number[]} An array of indices correponding to the found items.
      */
     within(qx, qy, r) {
+      const result = (
+        /** @type {number[]} */
+        []
+      );
+      this.withinInto(qx, qy, r, result);
+      return result;
+    }
+    /**
+     * Search the index for items within a given radius, writing matching ids into `out`
+     * via indexed assignment (`out[i] = id`). Accepts any indexed-writable container —
+     * a typed array sized to the expected upper bound (allocation-free, fast) or a plain
+     * `Array` (which will grow as needed). Returns the number of matches written.
+     * @param {number} qx
+     * @param {number} qy
+     * @param {number} r Query radius.
+     * @param {number[] | TypedArray} out Container to write matching ids into.
+     * @returns {number} The number of matches written to `out`.
+     */
+    withinInto(qx, qy, r, out) {
       if (!this._finished) throw new Error("Data not yet indexed - call index.finish().");
       const { ids, coords, nodeSize } = this;
-      const stack = [0, ids.length - 1, 0];
-      const result = [];
+      STACK[0] = 0;
+      STACK[1] = ids.length - 1;
+      STACK[2] = 0;
+      let sp = 3;
+      let count2 = 0;
       const r2 = r * r;
-      while (stack.length) {
-        const axis = stack.pop() || 0;
-        const right = stack.pop() || 0;
-        const left = stack.pop() || 0;
+      while (sp > 0) {
+        const axis = STACK[--sp];
+        const right = STACK[--sp];
+        const left = STACK[--sp];
         if (right - left <= nodeSize) {
           for (let i = left; i <= right; i++) {
-            if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) result.push(ids[i]);
+            if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) out[count2++] = ids[i];
           }
           continue;
         }
         const m = left + right >> 1;
         const x = coords[2 * m];
         const y = coords[2 * m + 1];
-        if (sqDist(x, y, qx, qy) <= r2) result.push(ids[m]);
+        if (sqDist(x, y, qx, qy) <= r2) out[count2++] = ids[m];
         if (axis === 0 ? qx - r <= x : qy - r <= y) {
-          stack.push(left);
-          stack.push(m - 1);
-          stack.push(1 - axis);
+          STACK[sp++] = left;
+          STACK[sp++] = m - 1;
+          STACK[sp++] = 1 - axis;
         }
         if (axis === 0 ? qx + r >= x : qy + r >= y) {
-          stack.push(m + 1);
-          stack.push(right);
-          stack.push(1 - axis);
+          STACK[sp++] = m + 1;
+          STACK[sp++] = right;
+          STACK[sp++] = 1 - axis;
         }
       }
-      return result;
+      return count2;
     }
   };
   function sort(ids, coords, nodeSize, left, right, axis) {
@@ -47257,13 +47327,6 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     }).getBounds();
     return [bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1]];
   };
-  var makeViewportProjector = (viewport) => {
-    const mercatorViewport = new WebMercatorViewport(viewport);
-    return (coords) => {
-      const [x, y] = mercatorViewport.project(coords);
-      return [x, y];
-    };
-  };
   var getFlowThicknessScale = (magnitudeExtent) => {
     if (!magnitudeExtent)
       return void 0;
@@ -47309,20 +47372,6 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     timeParse("%Y"),
     timeParse("%Y-%m")
   ];
-  function parseTime(input) {
-    if (input != null) {
-      if (input instanceof Date) {
-        return input;
-      }
-      for (const parse2 of dateParsers) {
-        const date = parse2(input);
-        if (date) {
-          return date;
-        }
-      }
-    }
-    return void 0;
-  }
   var TimeGranularityKey;
   (function(TimeGranularityKey2) {
     TimeGranularityKey2["SECOND"] = "SECOND";
@@ -47340,9 +47389,6 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
   var formatWeek = timeFormat("%b %d");
   var formatMonth = timeFormat("%b");
   var formatYear2 = timeFormat("%Y");
-  function tickMultiFormat(date) {
-    return (second(date) < date ? formatMillisecond : timeMinute(date) < date ? formatSecond : timeHour(date) < date ? formatMinute : timeDay(date) < date ? formatHour : timeMonth(date) < date ? timeSunday(date) < date ? formatDay : formatWeek : timeYear(date) < date ? formatMonth : formatYear2)(date);
-  }
   var TIME_GRANULARITIES = [
     {
       order: 0,
@@ -47408,13 +47454,6 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     }
     return TIME_GRANULARITIES[TIME_GRANULARITIES.length - 1];
   }
-  function areRangesEqual(a, b) {
-    if (!a && !b)
-      return true;
-    if (!a || !b)
-      return false;
-    return a[0] === b[0] && a[1] === b[1];
-  }
 
   // node_modules/@flowmap.gl/data/dist/FlowmapSelectors.js
   var MAX_CLUSTER_ZOOM_LEVEL = 20;
@@ -47435,6 +47474,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       this.getZoom = (state, props) => state.viewport.zoom;
       this.getViewport = (state, props) => state.viewport;
       this.getSelectedTimeRange = (state, props) => state.filter?.selectedTimeRange;
+      this.getTemporalScaleDomain = (state, props) => state.settings.temporalScaleDomain;
       this.getColorScheme = (state, props) => state.settings.colorScheme;
       this.getDarkMode = (state, props) => state.settings.darkMode;
       this.getFadeEnabled = (state, props) => state.settings.fadeEnabled;
@@ -47677,6 +47717,18 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
         }
         return missing;
       });
+      this.getSortedAggregatedFlows = createSelector(this.getClusterIndex, this.getClusteringEnabled, this.getSortedFlowsForKnownLocations, this.getClusterZoom, (clusterTree, isClusteringEnabled, flows, clusterZoom) => {
+        if (!flows)
+          return void 0;
+        let aggregated;
+        if (isClusteringEnabled && clusterTree && clusterZoom != null) {
+          aggregated = clusterTree.aggregateFlows(flows, clusterZoom, this.accessors.getFlowmapDataAccessors());
+        } else {
+          aggregated = aggregateFlows(flows, this.accessors.getFlowmapDataAccessors());
+        }
+        aggregated.sort((a, b) => descending(Math.abs(this.accessors.getFlowMagnitude(a)), Math.abs(this.accessors.getFlowMagnitude(b))));
+        return aggregated;
+      });
       this.getSortedAggregatedFilteredFlows = createSelector(this.getClusterIndex, this.getClusteringEnabled, this.getSortedFlowsForKnownLocationsFilteredByTime, this.getClusterZoom, this.getTimeExtent, (clusterTree, isClusteringEnabled, flows, clusterZoom, timeExtent) => {
         if (!flows)
           return void 0;
@@ -47696,6 +47748,9 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
         }
         aggregated.sort((a, b) => descending(Math.abs(this.accessors.getFlowMagnitude(a)), Math.abs(this.accessors.getFlowMagnitude(b))));
         return aggregated;
+      });
+      this.getFlowsForScaleDomain = createSelector(this.getTemporalScaleDomain, this.getSortedAggregatedFlows, this.getSortedAggregatedFilteredFlows, (temporalScaleDomain, allFlows, selectedFlows) => {
+        return temporalScaleDomain === "all" ? allFlows : selectedFlows;
       });
       this.getExpandedSelectedLocationsSet = createSelector(this.getClusteringEnabled, this.getSelectedLocationsSet, this.getClusterIndex, (clusteringEnabled, selectedLocations, clusterIndex) => {
         if (!selectedLocations || !clusterIndex) {
@@ -47864,7 +47919,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
         }
         return picked.reverse();
       });
-      this._getFlowMagnitudeExtent = createSelector(this.getSortedAggregatedFilteredFlows, this.getSelectedLocationsSet, this.getLocationFilterMode, (flows, selectedLocationsSet, locationFilterMode) => {
+      this._getFlowMagnitudeExtent = createSelector(this.getFlowsForScaleDomain, this.getSelectedLocationsSet, this.getLocationFilterMode, (flows, selectedLocationsSet, locationFilterMode) => {
         if (!flows)
           return void 0;
         let rv = void 0;
@@ -47883,10 +47938,29 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
         }
         return rv;
       });
-      this._getAdaptiveFlowMagnitudeExtent = createSelector(this.getFlowsForFlowmapLayer, (flows) => {
-        if (!flows)
+      this._getAdaptiveFlowMagnitudeExtent = createSelector(this.getFlowsForScaleDomain, this.getLocationIdsInViewport, this.getSelectedLocationsSet, this.getLocationFilterMode, this.getMaxTopFlowsDisplayNum, this.getFlowEndpointsInViewportMode, (flows, locationIdsInViewport, selectedLocationsSet, locationFilterMode, maxTopFlowsDisplayNum, flowEndpointsInViewportMode) => {
+        if (!flows || !locationIdsInViewport)
           return void 0;
-        const rv = extent(flows, this.accessors.getFlowMagnitude);
+        const picked = [];
+        let pickedCount = 0;
+        for (const flow of flows) {
+          const origin = this.accessors.getFlowOriginId(flow);
+          const dest = this.accessors.getFlowDestId(flow);
+          const originInView = locationIdsInViewport.has(origin);
+          const destInView = locationIdsInViewport.has(dest);
+          const isInViewport = flowEndpointsInViewportMode === "both" ? originInView && destInView : originInView || destInView;
+          if (isInViewport) {
+            if (this.isFlowInSelection(flow, selectedLocationsSet, locationFilterMode)) {
+              if (origin !== dest) {
+                picked.push(flow);
+                pickedCount++;
+              }
+            }
+          }
+          if (pickedCount > maxTopFlowsDisplayNum)
+            break;
+        }
+        const rv = extent(picked, this.accessors.getFlowMagnitude);
         return rv[0] !== void 0 && rv[1] !== void 0 ? rv : void 0;
       });
       this.getFlowMagnitudeExtent = (state, props) => {
@@ -47960,8 +48034,8 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       this.getLocationOrClusterByIdGetter = createSelector(this.getClusterIndex, this.getLocationsById, (clusterIndex, locationsById) => {
         return (id) => clusterIndex?.getClusterById(id) ?? locationsById?.get(id);
       });
-      this.getLayersData = createSelector(this.getLocationsForFlowmapLayer, this.getFlowsForFlowmapLayer, this.getFlowmapColorsRGBA, this.getLocationsForFlowmapLayerById, this.getLocationIdsInViewport, this.getInCircleSizeGetter, this.getOutCircleSizeGetter, this.getFlowThicknessScale, this.getViewport, this.getFlowLinesRenderingMode, this.getLocationLabelsEnabled, (locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, viewport, flowLinesRenderingMode, locationLabelsEnabled) => {
-        return this._prepareLayersData(locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, viewport, flowLinesRenderingMode, locationLabelsEnabled);
+      this.getLayersData = createSelector(this.getLocationsForFlowmapLayer, this.getFlowsForFlowmapLayer, this.getFlowmapColorsRGBA, this.getLocationsForFlowmapLayerById, this.getLocationIdsInViewport, this.getInCircleSizeGetter, this.getOutCircleSizeGetter, this.getFlowThicknessScale, this.getFlowMagnitudeExtent, this.getViewport, this.getFlowLinesRenderingMode, this.getLocationLabelsEnabled, (locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, flowMagnitudeExtent, viewport, flowLinesRenderingMode, locationLabelsEnabled) => {
+        return this._prepareLayersData(locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, flowMagnitudeExtent, viewport, flowLinesRenderingMode, locationLabelsEnabled);
       });
       this.accessors = new FlowmapAggregateAccessors(accessors);
       this.setAccessors(accessors);
@@ -47981,17 +48055,17 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
       const getInCircleSize = this.getInCircleSizeGetter(state, props);
       const getOutCircleSize = this.getOutCircleSizeGetter(state, props);
       const flowThicknessScale = this.getFlowThicknessScale(state, props);
+      const flowMagnitudeExtent = this.getFlowMagnitudeExtent(state, props);
       const locationLabelsEnabled = this.getLocationLabelsEnabled(state, props);
       const viewport = this.getViewport(state, props);
-      return this._prepareLayersData(locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, viewport, state.settings.flowLinesRenderingMode, locationLabelsEnabled);
+      return this._prepareLayersData(locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, flowMagnitudeExtent, viewport, state.settings.flowLinesRenderingMode, locationLabelsEnabled);
     }
-    _prepareLayersData(locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, viewport, flowLinesRenderingMode, locationLabelsEnabled) {
+    _prepareLayersData(locations, flows, flowmapColors, locationsById, locationIdsInViewport, getInCircleSize, getOutCircleSize, flowThicknessScale, flowMagnitudeExtent, viewport, flowLinesRenderingMode, locationLabelsEnabled) {
       if (!locations)
         locations = [];
       if (!flows)
         flows = [];
       const { getFlowOriginId, getFlowDestId, getFlowMagnitude, getLocationId, getLocationLon, getLocationLat, getLocationName } = this.accessors;
-      const flowMagnitudeExtent = extent(flows, (f) => getFlowMagnitude(f));
       const flowColorScale = getFlowColorScale(flowmapColors, flowMagnitudeExtent, flowLinesRenderingMode === "animated-straight");
       const circlePositions = Float64Array.from((function* () {
         for (const location of locations) {
@@ -48760,6 +48834,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     "fadeAmount",
     "colorScheme",
     "highlightColor",
+    "temporalScaleDomain",
     "maxTopFlowsDisplayNum",
     "flowEndpointsInViewportMode"
   ];
@@ -48888,7 +48963,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     _getSettingsState() {
       const props = this.typedProps;
       const defaults = _FlowmapLayer.defaultProps;
-      const { locationsEnabled, locationTotalsEnabled, locationLabelsEnabled, adaptiveScalesEnabled, flowLinesRenderingMode, clusteringEnabled, clusteringLevel, fadeEnabled, fadeOpacityEnabled, clusteringAuto, darkMode, fadeAmount, colorScheme, highlightColor, maxTopFlowsDisplayNum, flowEndpointsInViewportMode } = props;
+      const { locationsEnabled, locationTotalsEnabled, locationLabelsEnabled, adaptiveScalesEnabled, flowLinesRenderingMode, clusteringEnabled, clusteringLevel, fadeEnabled, fadeOpacityEnabled, clusteringAuto, darkMode, fadeAmount, colorScheme, highlightColor, temporalScaleDomain, maxTopFlowsDisplayNum, flowEndpointsInViewportMode } = props;
       return {
         locationsEnabled: locationsEnabled ?? defaults.locationsEnabled,
         locationTotalsEnabled: locationTotalsEnabled ?? defaults.locationTotalsEnabled,
@@ -48904,6 +48979,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
         fadeAmount: fadeAmount ?? defaults.fadeAmount,
         colorScheme,
         highlightColor: highlightColor ?? defaults.highlightColor,
+        temporalScaleDomain: temporalScaleDomain ?? defaults.temporalScaleDomain,
         maxTopFlowsDisplayNum: maxTopFlowsDisplayNum ?? defaults.maxTopFlowsDisplayNum,
         flowEndpointsInViewportMode: flowEndpointsInViewportMode ?? defaults.flowEndpointsInViewportMode
       };
@@ -49196,6 +49272,7 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     clusteringAuto: true,
     clusteringLevel: void 0,
     adaptiveScalesEnabled: true,
+    temporalScaleDomain: "selected",
     flowLineThicknessScale: 1,
     flowLineCurviness: 1,
     colorScheme: "Teal",
@@ -49217,566 +49294,11 @@ DECKGL_FILTER_COLOR(fragColor, geometry);
     };
   }
 
-  // node_modules/@deck.gl/mapbox/dist/mapbox-layer-group.js
-  var MapboxLayerGroup = class {
-    /* eslint-disable no-this-before-super */
-    constructor(props) {
-      assert8(props.id, "id is required");
-      this.id = props.id;
-      this.type = "custom";
-      this.renderingMode = props.renderingMode || "3d";
-      this.slot = props.slot;
-      this.beforeId = props.beforeId;
-      this.map = null;
-    }
-    /* Mapbox custom layer methods */
-    onAdd(map4, gl) {
-      this.map = map4;
-    }
-    render(gl, renderParameters) {
-      if (!this.map)
-        return;
-      drawLayerGroup(this.map.__deck, this.map, this, renderParameters);
-    }
+  // entry.js
+  window.FlowmapGL = {
+    Deck: deck_default,
+    FlowmapLayer: FlowmapLayer_default,
+    MapboxOverlay
   };
-
-  // node_modules/@deck.gl/mapbox/dist/resolve-layer-groups.js
-  var UNDEFINED_BEFORE_ID = "__UNDEFINED__";
-  function getLayerGroupId(layer) {
-    if (layer.props.beforeId) {
-      return `deck-layer-group-before:${layer.props.beforeId}`;
-    } else if (layer.props.slot) {
-      return `deck-layer-group-slot:${layer.props.slot}`;
-    }
-    return "deck-layer-group-last";
-  }
-  function resolveLayerGroups(map4, oldLayers, newLayers) {
-    if (!map4 || !map4.style || !map4.style._loaded) {
-      return;
-    }
-    const layers = flatten(newLayers, Boolean);
-    if (oldLayers !== newLayers) {
-      const prevLayers = flatten(oldLayers, Boolean);
-      const prevLayerGroupIds = new Set(prevLayers.map((l) => getLayerGroupId(l)));
-      const newLayerGroupIds = new Set(layers.map((l) => getLayerGroupId(l)));
-      for (const groupId of prevLayerGroupIds) {
-        if (!newLayerGroupIds.has(groupId)) {
-          if (map4.getLayer(groupId)) {
-            map4.removeLayer(groupId);
-          }
-        }
-      }
-    }
-    const layerGroups = {};
-    for (const layer of layers) {
-      const groupId = getLayerGroupId(layer);
-      const mapboxGroup = map4.getLayer(groupId);
-      if (mapboxGroup) {
-        const groupInstance = mapboxGroup.implementation || mapboxGroup;
-        layerGroups[groupId] = groupInstance;
-      } else {
-        const newGroup = new MapboxLayerGroup({
-          id: groupId,
-          slot: layer.props.slot,
-          beforeId: layer.props.beforeId
-        });
-        layerGroups[groupId] = newGroup;
-        map4.addLayer(newGroup, layer.props.beforeId);
-      }
-    }
-    const mapLayers = map4.style._order;
-    for (const [groupId, group2] of Object.entries(layerGroups)) {
-      const beforeId = group2.beforeId || UNDEFINED_BEFORE_ID;
-      const expectedGroupIndex = beforeId === UNDEFINED_BEFORE_ID ? mapLayers.length : mapLayers.indexOf(beforeId);
-      const currentGropupIndex = mapLayers.indexOf(groupId);
-      if (currentGropupIndex !== expectedGroupIndex - 1) {
-        const moveBeforeId = beforeId === UNDEFINED_BEFORE_ID ? void 0 : beforeId;
-        map4.moveLayer(groupId, moveBeforeId);
-      }
-    }
-  }
-
-  // node_modules/@deck.gl/mapbox/dist/deck-utils.js
-  var MAPBOX_VIEW_ID = "mapbox";
-  var TILE_SIZE2 = 512;
-  var DEGREES_TO_RADIANS7 = Math.PI / 180;
-  function getDeckInstance({ map: map4, deck }) {
-    if (map4.__deck) {
-      return map4.__deck;
-    }
-    const customRender = deck.props._customRender;
-    const onLoad = deck.props.onLoad;
-    const deckProps = {
-      ...deck.props,
-      _customRender: () => {
-        map4.triggerRepaint();
-        customRender?.("");
-      }
-    };
-    deckProps.views || (deckProps.views = getDefaultView(map4));
-    Object.assign(deckProps, {
-      width: null,
-      height: null,
-      touchAction: "unset",
-      viewState: getViewState(map4)
-    });
-    if (deck.isInitialized) {
-      watchMapMove(deck, map4);
-    } else {
-      deckProps.onLoad = () => {
-        onLoad?.();
-        watchMapMove(deck, map4);
-      };
-    }
-    deck.setProps(deckProps);
-    map4.__deck = deck;
-    map4.on("render", () => {
-      if (deck.isInitialized)
-        afterRender(deck, map4);
-    });
-    return deck;
-  }
-  function watchMapMove(deck, map4) {
-    const _handleMapMove = () => {
-      if (deck.isInitialized) {
-        onMapMove(deck, map4);
-      } else {
-        map4.off("move", _handleMapMove);
-      }
-    };
-    map4.on("move", _handleMapMove);
-  }
-  function removeDeckInstance(map4) {
-    map4.__deck?.finalize();
-    map4.__deck = null;
-  }
-  function getDefaultParameters(map4, interleaved) {
-    const result = interleaved ? {
-      depthWriteEnabled: true,
-      depthCompare: "less-equal",
-      depthBias: 0,
-      blend: true,
-      blendColorSrcFactor: "src-alpha",
-      blendColorDstFactor: "one-minus-src-alpha",
-      blendAlphaSrcFactor: "one",
-      blendAlphaDstFactor: "one-minus-src-alpha",
-      blendColorOperation: "add",
-      blendAlphaOperation: "add"
-    } : {};
-    if (getProjection(map4) === "globe") {
-      result.cullMode = "back";
-    }
-    return result;
-  }
-  function drawLayerGroup(deck, map4, group2, renderParameters) {
-    if (!deck.isInitialized) {
-      return;
-    }
-    let { currentViewport } = deck.userData;
-    let clearStack = false;
-    if (!currentViewport) {
-      currentViewport = getViewport(deck, map4, renderParameters);
-      deck.userData.currentViewport = currentViewport;
-      clearStack = true;
-    }
-    if (!currentViewport) {
-      return;
-    }
-    deck._drawLayers("mapbox-repaint", {
-      viewports: [currentViewport],
-      layerFilter: (params) => {
-        if (deck.props.layerFilter && !deck.props.layerFilter(params)) {
-          return false;
-        }
-        const layer = params.layer;
-        if (layer.props.beforeId === group2.beforeId && layer.props.slot === group2.slot) {
-          return true;
-        }
-        return false;
-      },
-      clearStack,
-      clearCanvas: false
-    });
-  }
-  function getProjection(map4) {
-    const projection = map4.getProjection?.();
-    const type = (
-      // maplibre projection spec
-      projection?.type || // mapbox projection spec
-      projection?.name
-    );
-    if (type === "globe") {
-      return "globe";
-    }
-    if (type && type !== "mercator") {
-      throw new Error("Unsupported projection");
-    }
-    return "mercator";
-  }
-  function getDefaultView(map4) {
-    if (getProjection(map4) === "globe") {
-      return new globe_view_default({ id: MAPBOX_VIEW_ID });
-    }
-    return new map_view_default({ id: MAPBOX_VIEW_ID });
-  }
-  function getViewState(map4) {
-    const { lng, lat } = map4.getCenter();
-    const viewState = {
-      // Longitude returned by getCenter can be outside of [-180, 180] when zooming near the anti meridian
-      // https://github.com/visgl/deck.gl/issues/6894
-      longitude: (lng + 540) % 360 - 180,
-      latitude: lat,
-      zoom: map4.getZoom(),
-      bearing: map4.getBearing(),
-      pitch: map4.getPitch(),
-      padding: map4.getPadding(),
-      repeat: map4.getRenderWorldCopies()
-    };
-    if (map4.getTerrain?.()) {
-      centerCameraOnTerrain(map4, viewState);
-    }
-    return viewState;
-  }
-  function centerCameraOnTerrain(map4, viewState) {
-    if (map4.getFreeCameraOptions) {
-      const { position } = map4.getFreeCameraOptions();
-      if (!position || position.z === void 0) {
-        return;
-      }
-      const height = map4.transform.height;
-      const { longitude, latitude, pitch } = viewState;
-      const cameraX = position.x * TILE_SIZE2;
-      const cameraY = (1 - position.y) * TILE_SIZE2;
-      const cameraZ = position.z * TILE_SIZE2;
-      const center = lngLatToWorld([longitude, latitude]);
-      const dx = cameraX - center[0];
-      const dy = cameraY - center[1];
-      const cameraToCenterDistanceGround = Math.sqrt(dx * dx + dy * dy);
-      const pitchRadians = pitch * DEGREES_TO_RADIANS7;
-      const altitudePixels = 1.5 * height;
-      const scale5 = pitchRadians < 1e-3 ? (
-        // Pitch angle too small to deduce the look at point, assume elevation is 0
-        altitudePixels * Math.cos(pitchRadians) / cameraZ
-      ) : altitudePixels * Math.sin(pitchRadians) / cameraToCenterDistanceGround;
-      viewState.zoom = Math.log2(scale5);
-      const cameraZFromSurface = altitudePixels * Math.cos(pitchRadians) / scale5;
-      const surfaceElevation = cameraZ - cameraZFromSurface;
-      viewState.position = [0, 0, surfaceElevation / unitsPerMeter(latitude)];
-    } else if (typeof map4.transform.elevation === "number") {
-      viewState.position = [0, 0, map4.transform.elevation];
-    }
-  }
-  function getViewport(deck, map4, renderParameters) {
-    const viewState = getViewState(map4);
-    const view = deck.getView(MAPBOX_VIEW_ID) || getDefaultView(map4);
-    if (renderParameters) {
-      view.props.nearZMultiplier = 0.2;
-    }
-    const nearZ = renderParameters?.nearZ ?? map4.transform._nearZ;
-    const farZ = renderParameters?.farZ ?? map4.transform._farZ;
-    if (Number.isFinite(nearZ)) {
-      viewState.nearZ = nearZ / map4.transform.height;
-      viewState.farZ = farZ / map4.transform.height;
-    }
-    return view.makeViewport({
-      width: deck.width,
-      height: deck.height,
-      viewState
-    });
-  }
-  function afterRender(deck, map4) {
-    const deckLayers = flatten(deck.props.layers, Boolean);
-    const hasNonMapboxLayers = deckLayers.some((layer) => layer && !map4.getLayer(getLayerGroupId(layer)));
-    let viewports = deck.getViewports();
-    const mapboxViewportIdx = viewports.findIndex((vp) => vp.id === MAPBOX_VIEW_ID);
-    const hasNonMapboxViews = viewports.length > 1 || mapboxViewportIdx < 0;
-    if (hasNonMapboxLayers || hasNonMapboxViews) {
-      if (mapboxViewportIdx >= 0) {
-        viewports = viewports.slice();
-        const mapboxViewport = getViewport(deck, map4);
-        if (mapboxViewport) {
-          viewports[mapboxViewportIdx] = mapboxViewport;
-        } else {
-          viewports.splice(mapboxViewportIdx, 1);
-        }
-      }
-      deck._drawLayers("mapbox-repaint", {
-        viewports,
-        layerFilter: (params) => (!deck.props.layerFilter || deck.props.layerFilter(params)) && (params.viewport.id !== MAPBOX_VIEW_ID || !map4.getLayer(getLayerGroupId(params.layer))),
-        clearCanvas: false
-      });
-    } else {
-      const device = deck.device;
-      const gl = device?.gl;
-      deck.props.onBeforeRender?.({ device, gl });
-      deck.props.onAfterRender?.({ device, gl });
-    }
-    deck.userData.currentViewport = null;
-  }
-  function onMapMove(deck, map4) {
-    deck.setProps({
-      viewState: getViewState(map4)
-    });
-    deck.needsRedraw({ clearRedrawFlags: true });
-  }
-
-  // node_modules/@deck.gl/mapbox/dist/mapbox-overlay.js
-  var MapboxOverlay = class {
-    constructor(props) {
-      this._handleStyleChange = () => {
-        this._resolveLayers(this._map, this._deck, this._props.layers, this._props.layers);
-        if (!this._map)
-          return;
-        const projection = getProjection(this._map);
-        if (projection) {
-          this._deck?.setProps({ views: this._getViews(this._map) });
-        }
-      };
-      this._updateContainerSize = () => {
-        if (this._map && this._container) {
-          const { clientWidth, clientHeight } = this._map.getContainer();
-          Object.assign(this._container.style, {
-            width: `${clientWidth}px`,
-            height: `${clientHeight}px`
-          });
-        }
-      };
-      this._updateViewState = () => {
-        const deck = this._deck;
-        const map4 = this._map;
-        if (deck && map4) {
-          deck.setProps({
-            views: this._getViews(map4),
-            viewState: getViewState(map4)
-          });
-          if (deck.isInitialized) {
-            deck.redraw();
-          }
-        }
-      };
-      this._handleMouseEvent = (event) => {
-        const deck = this._deck;
-        if (!deck || !deck.isInitialized) {
-          return;
-        }
-        const mockEvent = {
-          type: event.type,
-          offsetCenter: event.point,
-          srcEvent: event
-        };
-        const lastDown = this._lastMouseDownPoint;
-        if (!event.point && lastDown) {
-          mockEvent.deltaX = event.originalEvent.clientX - lastDown.clientX;
-          mockEvent.deltaY = event.originalEvent.clientY - lastDown.clientY;
-          mockEvent.offsetCenter = {
-            x: lastDown.x + mockEvent.deltaX,
-            y: lastDown.y + mockEvent.deltaY
-          };
-        }
-        switch (mockEvent.type) {
-          case "mousedown":
-            deck._onPointerDown(mockEvent);
-            this._lastMouseDownPoint = {
-              ...event.point,
-              clientX: event.originalEvent.clientX,
-              clientY: event.originalEvent.clientY
-            };
-            break;
-          case "dragstart":
-            mockEvent.type = "panstart";
-            deck._onEvent(mockEvent);
-            break;
-          case "drag":
-            mockEvent.type = "panmove";
-            deck._onEvent(mockEvent);
-            break;
-          case "dragend":
-            mockEvent.type = "panend";
-            deck._onEvent(mockEvent);
-            break;
-          case "click":
-            mockEvent.tapCount = 1;
-            deck._onEvent(mockEvent);
-            break;
-          case "dblclick":
-            mockEvent.type = "click";
-            mockEvent.tapCount = 2;
-            deck._onEvent(mockEvent);
-            break;
-          case "mousemove":
-            mockEvent.type = "pointermove";
-            deck._onPointerMove(mockEvent);
-            break;
-          case "mouseout":
-            mockEvent.type = "pointerleave";
-            deck._onPointerMove(mockEvent);
-            break;
-          default:
-            return;
-        }
-      };
-      const { interleaved = false } = props;
-      this._interleaved = interleaved;
-      this._props = this.filterProps(props);
-    }
-    /** Filter out props to pass to Deck **/
-    filterProps(props) {
-      const { interleaved = false, useDevicePixels, ...deckProps } = props;
-      if (!interleaved && useDevicePixels !== void 0) {
-        deckProps.useDevicePixels = useDevicePixels;
-      }
-      return deckProps;
-    }
-    /** Update (partial) props of the underlying Deck instance. */
-    setProps(props) {
-      if (this._interleaved && props.layers) {
-        this._resolveLayers(this._map, this._deck, this._props.layers, props.layers);
-      }
-      Object.assign(this._props, this.filterProps(props));
-      if (this._deck && this._map) {
-        this._deck.setProps({
-          ...this._props,
-          views: this._getViews(this._map),
-          parameters: {
-            ...getDefaultParameters(this._map, this._interleaved),
-            ...this._props.parameters
-          }
-        });
-      }
-    }
-    // The local Map type is for internal typecheck only. It does not necesarily satisefy mapbox/maplibre types at runtime.
-    // Do not restrict the argument type here to avoid type conflict.
-    /** Called when the control is added to a map */
-    onAdd(map4) {
-      this._map = map4;
-      return this._interleaved ? this._onAddInterleaved(map4) : this._onAddOverlaid(map4);
-    }
-    _onAddOverlaid(map4) {
-      const container = document.createElement("div");
-      Object.assign(container.style, {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        textAlign: "initial",
-        pointerEvents: "none"
-      });
-      this._container = container;
-      this._deck = new deck_default({
-        ...this._props,
-        parent: container,
-        parameters: { ...getDefaultParameters(map4, false), ...this._props.parameters },
-        views: this._getViews(map4),
-        viewState: getViewState(map4)
-      });
-      map4.on("resize", this._updateContainerSize);
-      map4.on("render", this._updateViewState);
-      map4.on("mousedown", this._handleMouseEvent);
-      map4.on("dragstart", this._handleMouseEvent);
-      map4.on("drag", this._handleMouseEvent);
-      map4.on("dragend", this._handleMouseEvent);
-      map4.on("mousemove", this._handleMouseEvent);
-      map4.on("mouseout", this._handleMouseEvent);
-      map4.on("click", this._handleMouseEvent);
-      map4.on("dblclick", this._handleMouseEvent);
-      this._updateContainerSize();
-      return container;
-    }
-    _onAddInterleaved(map4) {
-      const gl = map4.painter.context.gl;
-      if (gl instanceof WebGLRenderingContext) {
-        log_default.warn("Incompatible basemap library. See: https://deck.gl/docs/api-reference/mapbox/overview#compatibility")();
-      }
-      this._deck = getDeckInstance({
-        map: map4,
-        deck: new deck_default({
-          ...this._props,
-          views: this._getViews(map4),
-          gl,
-          parameters: { ...getDefaultParameters(map4, true), ...this._props.parameters }
-        })
-      });
-      map4.on("styledata", this._handleStyleChange);
-      this._resolveLayers(map4, this._deck, [], this._props.layers);
-      return document.createElement("div");
-    }
-    _resolveLayers(map4, _deck, prevLayers, newLayers) {
-      resolveLayerGroups(map4, prevLayers, newLayers);
-    }
-    /** Called when the control is removed from a map */
-    onRemove() {
-      const map4 = this._map;
-      if (map4) {
-        if (this._interleaved) {
-          this._onRemoveInterleaved(map4);
-        } else {
-          this._onRemoveOverlaid(map4);
-        }
-      }
-      this._deck = void 0;
-      this._map = void 0;
-      this._container = void 0;
-    }
-    _onRemoveOverlaid(map4) {
-      map4.off("resize", this._updateContainerSize);
-      map4.off("render", this._updateViewState);
-      map4.off("mousedown", this._handleMouseEvent);
-      map4.off("dragstart", this._handleMouseEvent);
-      map4.off("drag", this._handleMouseEvent);
-      map4.off("dragend", this._handleMouseEvent);
-      map4.off("mousemove", this._handleMouseEvent);
-      map4.off("mouseout", this._handleMouseEvent);
-      map4.off("click", this._handleMouseEvent);
-      map4.off("dblclick", this._handleMouseEvent);
-      this._deck?.finalize();
-    }
-    _onRemoveInterleaved(map4) {
-      map4.off("styledata", this._handleStyleChange);
-      this._resolveLayers(map4, this._deck, this._props.layers, []);
-      removeDeckInstance(map4);
-    }
-    getDefaultPosition() {
-      return "top-left";
-    }
-    /** Forwards the Deck.pickObject method */
-    pickObject(params) {
-      assert8(this._deck);
-      return this._deck.pickObject(params);
-    }
-    /** Forwards the Deck.pickMultipleObjects method */
-    pickMultipleObjects(params) {
-      assert8(this._deck);
-      return this._deck.pickMultipleObjects(params);
-    }
-    /** Forwards the Deck.pickObjects method */
-    pickObjects(params) {
-      assert8(this._deck);
-      return this._deck.pickObjects(params);
-    }
-    /** Remove from map and releases all resources */
-    finalize() {
-      if (this._map) {
-        this._map.removeControl(this);
-      }
-    }
-    /** If interleaved: true, returns base map's canvas, otherwise forwards the Deck.getCanvas method. */
-    getCanvas() {
-      if (!this._map) {
-        return null;
-      }
-      return this._interleaved ? this._map.getCanvas() : this._deck.getCanvas();
-    }
-    _getViews(map4) {
-      if (!this._props.views) {
-        return getDefaultView(map4);
-      }
-      const views = Array.isArray(this._props.views) ? this._props.views : [this._props.views];
-      const hasMapboxView = views.some((v) => v.id === MAPBOX_VIEW_ID);
-      if (hasMapboxView) {
-        return this._props.views;
-      }
-      return [getDefaultView(map4), ...views];
-    }
-  };
-  return __toCommonJS(bundle_entry_exports);
 })();
 //# sourceMappingURL=flowmap-gl-bundle.js.map

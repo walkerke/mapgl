@@ -247,6 +247,130 @@ test_that("add_flowmap validates flow_opacity boundaries", {
   expect_error(flowmap_test_map(flow_opacity = "1"), "between 0 and 1")
 })
 
+test_that("set_flowmap_settings updates one setting on a regular map", {
+  map <- flowmap_test_map() |>
+    set_flowmap_settings("flows", "opacity", 0.25)
+
+  expect_equal(map$x$flowmaps[[1]]$settings$opacity, 0.25)
+})
+
+test_that("set_flowmap_settings normalizes snake_case aliases", {
+  map <- flowmap_test_map() |>
+    set_flowmap_settings("flows", "color_scheme", "Viridis") |>
+    set_flowmap_settings("flows", "temporal_scale_domain", "all") |>
+    set_flowmap_settings("flows", "max_top_flows_display_num", 100)
+
+  settings <- map$x$flowmaps[[1]]$settings
+  expect_equal(settings$colorScheme, "Viridis")
+  expect_equal(settings$temporalScaleDomain, "all")
+  expect_equal(settings$maxTopFlowsDisplayNum, 100)
+})
+
+test_that("set_flowmap_settings sends unchanged proxy message shape", {
+  messages <- list()
+  session <- list(
+    sendCustomMessage = function(type, message) {
+      messages[[length(messages) + 1]] <<- list(type = type, message = message)
+    }
+  )
+  proxy <- structure(
+    list(id = "map", session = session),
+    class = "maplibre_proxy"
+  )
+
+  result <- set_flowmap_settings(proxy, "flows", "color_scheme", "Viridis")
+
+  expect_identical(result, proxy)
+  expect_length(messages, 1)
+  expect_equal(messages[[1]]$type, "maplibre-proxy")
+  expect_equal(messages[[1]]$message$id, "map")
+  expect_equal(messages[[1]]$message$message$type, "set_flowmap_settings")
+  expect_equal(messages[[1]]$message$message$id, "flows")
+  expect_equal(
+    messages[[1]]$message$message$settings,
+    list(colorScheme = "Viridis")
+  )
+})
+
+test_that("set_flowmap_settings preserves NULL setting values", {
+  map <- flowmap_test_map(flow_clustering_level = 5) |>
+    set_flowmap_settings("flows", "clusteringLevel", NULL)
+
+  settings <- map$x$flowmaps[[1]]$settings
+  expect_true("clusteringLevel" %in% names(settings))
+  expect_null(settings$clusteringLevel)
+})
+
+test_that("set_flowmap_settings rejects unknown and filter settings", {
+  expect_error(
+    set_flowmap_settings(flowmap_test_map(), "flows", "unknownSetting", 1),
+    "Supported names"
+  )
+  expect_error(
+    set_flowmap_settings(flowmap_test_map(), "flows", "selectedTimeRange", 1),
+    "set_flowmap_filter"
+  )
+  expect_error(
+    set_flowmap_settings(flowmap_test_map(), "flows", "selected_time_range", 1),
+    "set_flowmap_filter"
+  )
+})
+
+test_that("set_flowmap_settings validates setting values", {
+  expect_error(
+    set_flowmap_settings(flowmap_test_map(), "flows", "opacity", -0.1),
+    "between 0 and 1"
+  )
+  expect_error(
+    set_flowmap_settings(flowmap_test_map(), "flows", "fadeAmount", 101),
+    "between 0 and 100"
+  )
+  expect_error(
+    set_flowmap_settings(flowmap_test_map(), "flows", "darkMode", "TRUE"),
+    "TRUE or FALSE"
+  )
+  expect_error(
+    set_flowmap_settings(
+      flowmap_test_map(),
+      "flows",
+      "temporalScaleDomain",
+      "hour"
+    ),
+    "selected"
+  )
+  expect_error(
+    set_flowmap_settings(flowmap_test_map(), "flows", "colorScheme", "red"),
+    "FlowMapGL preset"
+  )
+  expect_error(
+    set_flowmap_settings(
+      flowmap_test_map(),
+      "flows",
+      "flowLinesRenderingMode",
+      "arc"
+    ),
+    "animated-straight"
+  )
+  expect_error(
+    set_flowmap_settings(
+      flowmap_test_map(),
+      "flows",
+      "flowEndpointsInViewportMode",
+      "none"
+    ),
+    "both"
+  )
+  expect_error(
+    set_flowmap_settings(
+      flowmap_test_map(),
+      "flows",
+      "maxTopFlowsDisplayNum",
+      0
+    ),
+    "positive number"
+  )
+})
+
 test_that("flowmap can be included in explicit layers control config", {
   locations <- data.frame(
     id = c("a", "b"),
@@ -525,8 +649,42 @@ test_that("flowmap vendoring manifest matches committed bundle", {
     manifest$bundle$path,
     "inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js"
   )
-  expect_equal(manifest$copyrights$path, "inst/COPYRIGHTS")
-  expect_equal(file.exists(system.file("COPYRIGHTS", package = "mapgl")), TRUE)
+  expect_equal(manifest$copyrights$path, "LICENSE.note")
+})
+
+test_that("flowmap vendoring manifest records temporal-scale patch", {
+  manifest_path <- system.file(
+    "htmlwidgets/lib/flowmap-gl/flowmap-gl-vendor-manifest.json",
+    package = "mapgl"
+  )
+  manifest <- jsonlite::read_json(manifest_path)
+  patch_paths <- vapply(manifest$patches, `[[`, character(1), "path")
+  patch_path <- "data-raw/flowmap-vendor/patches/flowmap-temporal-scale-domain.patch"
+
+  expect_equal(intersect(patch_paths, patch_path), patch_path)
+
+  source_patch_path <- patch_path
+  if (!file.exists(source_patch_path)) {
+    source_patch_path <- file.path("..", "..", patch_path)
+  }
+  if (!file.exists(source_patch_path)) {
+    skip("flowmap vendor patch source is not available in installed package")
+  }
+
+  patch <- manifest$patches[[match(patch_path, patch_paths)]]
+  expect_equal(unname(tools::sha256sum(source_patch_path)), patch$sha256)
+  expect_equal(file.info(source_patch_path)$size, patch$bytes)
+  expect_match(patch$purpose, "temporalScaleDomain", fixed = TRUE)
+})
+
+test_that("flowmap loaded bundle includes temporalScaleDomain", {
+  bundle_path <- system.file(
+    "htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js",
+    package = "mapgl"
+  )
+  bundle <- paste(readLines(bundle_path, warn = FALSE), collapse = "\n")
+
+  expect_match(bundle, "temporalScaleDomain", fixed = TRUE)
 })
 
 test_that("is_dark_style utility classifies basemaps correctly", {

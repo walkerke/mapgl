@@ -1120,6 +1120,22 @@ HTMLWidgets.widget({
                 }
                 layerState.layoutProperties[message.layer][message.name] =
                   message.value;
+              } else if (message.type === "set_flowmap_filter") {
+                if (window.MapGLFlowmapPlugin) {
+                  window.MapGLFlowmapPlugin.setFilter(
+                    map,
+                    message.id,
+                    message.filter,
+                  );
+                }
+              } else if (message.type === "set_flowmap_settings") {
+                if (window.MapGLFlowmapPlugin) {
+                  window.MapGLFlowmapPlugin.setSettings(
+                    map,
+                    message.id,
+                    message.settings,
+                  );
+                }
               } else if (message.type === "set_paint_property") {
                 const layerId = message.layer;
                 const propertyName = message.name;
