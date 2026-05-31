@@ -629,6 +629,34 @@ test_that("compare widgets include and initialize flowmap support", {
   }
 })
 
+test_that("flowmap plugin prepends Flowmap.gl to native attribution", {
+  js <- paste(
+    readLines(system.file("htmlwidgets/flowmap.js", package = "mapgl")),
+    collapse = "\n"
+  )
+
+  expect_match(
+    js,
+    ".mapboxgl-ctrl-attrib-inner, .maplibregl-ctrl-attrib-inner",
+    fixed = TRUE
+  )
+  expect_match(js, "https://flowmap.gl/", fixed = TRUE)
+  expect_match(js, 'data-mapgl-flowmap-attribution", "true"', fixed = TRUE)
+  expect_match(
+    js,
+    "data-mapgl-flowmap-attribution-separator",
+    fixed = TRUE
+  )
+  expect_match(
+    js,
+    "insertBefore(link, attributionInner.firstChild)",
+    fixed = TRUE
+  )
+  expect_match(js, 'map.on("styledata", refresh)', fixed = TRUE)
+  expect_match(js, 'map.on("sourcedata", refresh)', fixed = TRUE)
+  expect_match(js, 'map.on("idle", refresh)', fixed = TRUE)
+})
+
 test_that("flowmap vendoring manifest matches committed bundle", {
   manifest_path <- system.file(
     "htmlwidgets/lib/flowmap-gl/flowmap-gl-vendor-manifest.json",

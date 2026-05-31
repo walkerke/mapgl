@@ -1,4 +1,11 @@
 window.MapGLFlowmapPlugin = (function () {
+  const FLOWMAP_ATTRIBUTION_SELECTOR =
+    ".mapboxgl-ctrl-attrib-inner, .maplibregl-ctrl-attrib-inner";
+  const FLOWMAP_ATTRIBUTION_LINK_SELECTOR =
+    'a[data-mapgl-flowmap-attribution="true"]';
+  const FLOWMAP_ATTRIBUTION_SEPARATOR_SELECTOR =
+    '[data-mapgl-flowmap-attribution-separator="true"]';
+
   function dataframeToRows(data, HTMLWidgets) {
     if (!data || Array.isArray(data) || typeof data !== "object") {
       return data;
@@ -9,6 +16,137 @@ window.MapGLFlowmapPlugin = (function () {
     }
 
     return data;
+  }
+
+  function attributionNodeHasContent(node) {
+    if (!node) {
+      return false;
+    }
+
+    if (
+      node.nodeType === 1 &&
+      (node.matches(FLOWMAP_ATTRIBUTION_LINK_SELECTOR) ||
+        node.matches(FLOWMAP_ATTRIBUTION_SEPARATOR_SELECTOR))
+    ) {
+      return false;
+    }
+
+    return node.textContent && node.textContent.trim() !== "";
+  }
+
+  function hasNativeAttributionContent(attributionInner) {
+    for (var i = 0; i < attributionInner.childNodes.length; i++) {
+      if (attributionNodeHasContent(attributionInner.childNodes[i])) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function makeFlowmapAttributionLink() {
+    const link = document.createElement("a");
+    link.href = "https://flowmap.gl/";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.setAttribute("data-mapgl-flowmap-attribution", "true");
+    link.textContent = "Flowmap.gl";
+    return link;
+  }
+
+  function normalizeFlowmapAttributionLink(link) {
+    link.href = "https://flowmap.gl/";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.setAttribute("data-mapgl-flowmap-attribution", "true");
+    link.textContent = "Flowmap.gl";
+  }
+
+  function ensureFlowmapAttribution(map) {
+    if (!map || typeof map.getContainer !== "function") {
+      return;
+    }
+
+    const container = map.getContainer();
+    if (!container || typeof container.querySelector !== "function") {
+      return;
+    }
+
+    const attributionInner = container.querySelector(
+      FLOWMAP_ATTRIBUTION_SELECTOR
+    );
+    if (!attributionInner) {
+      return;
+    }
+
+    const existingLinks = attributionInner.querySelectorAll(
+      FLOWMAP_ATTRIBUTION_LINK_SELECTOR
+    );
+    var link = existingLinks[0] || makeFlowmapAttributionLink();
+
+    normalizeFlowmapAttributionLink(link);
+
+    for (var i = 1; i < existingLinks.length; i++) {
+      existingLinks[i].remove();
+    }
+
+    const separators = attributionInner.querySelectorAll(
+      FLOWMAP_ATTRIBUTION_SEPARATOR_SELECTOR
+    );
+    for (var j = 0; j < separators.length; j++) {
+      separators[j].remove();
+    }
+
+    if (attributionInner.firstChild !== link) {
+      attributionInner.insertBefore(link, attributionInner.firstChild);
+    }
+
+    if (hasNativeAttributionContent(attributionInner)) {
+      const separator = document.createElement("span");
+      separator.setAttribute(
+        "data-mapgl-flowmap-attribution-separator",
+        "true"
+      );
+      separator.textContent = " | ";
+      attributionInner.insertBefore(separator, link.nextSibling);
+    }
+  }
+
+  function installFlowmapAttributionRefresh(map) {
+    if (!map || map._mapglFlowmapAttributionRefreshInstalled) {
+      return;
+    }
+
+    var timer = null;
+    const refresh = function () {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(function () {
+        timer = null;
+        ensureFlowmapAttribution(map);
+      }, 50);
+    };
+
+    map._mapglFlowmapAttributionRefreshInstalled = true;
+    map._mapglFlowmapAttributionRefresh = refresh;
+
+    map.on("styledata", refresh);
+    map.on("sourcedata", refresh);
+    map.on("idle", refresh);
+    map.once("remove", function () {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      map.off("styledata", refresh);
+      map.off("sourcedata", refresh);
+      map.off("idle", refresh);
+      map._mapglFlowmapAttributionRefreshInstalled = false;
+      map._mapglFlowmapAttributionRefresh = null;
+    });
+
+    ensureFlowmapAttribution(map);
   }
 
   function ensureOverlay(map, interleaved, elId, settings) {
@@ -332,6 +470,8 @@ window.MapGLFlowmapPlugin = (function () {
       console.error("FlowmapGL is not loaded. Cannot add flowmap layers.");
       return;
     }
+
+    installFlowmapAttributionRefresh(map);
 
     const interleaved = x.flowmaps.some(function (flowmap) {
       return Boolean(flowmap.beforeId || flowmap.slot);
