@@ -1,5 +1,7 @@
 # mapgl 0.5.0
 
+* Update MapLibre GL JS to v5.24.0 and Mapbox GL JS to v3.24.0.
+
 * Fixed `add_legend()` silently ignoring the `target` argument for MapLibre compare widgets: the compare dispatch checked for class `"maplibre_compare"` while the widget class is `"maplibregl_compare"`, so legends were attached as regular map legends instead of compare-level legends.
 
 * `compare()` now supports synchronizing more than two maps (#204). Pass additional maps after `map1` and `map2` with `mode = "sync"`, and control the grid layout with the new `ncol` argument. In Shiny, maps in multi-map widgets are addressed as `"map1"` through `"mapN"` via `map_side` in the compare proxy functions (integers also accepted, e.g. `map_side = 3`), and emit input values like `input$id_map3_view`. Legends can be targeted at individual grid maps with `target = "map3"`.
