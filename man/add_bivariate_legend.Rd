@@ -46,7 +46,7 @@ object, or a proxy object.}
 
 \item{layer_id}{Optional associated layer ID for layer-control show/hide.}
 
-\item{target}{For compare objects, one of \code{"compare"}, \code{"before"}, or \code{"after"}.}
+\item{target}{For compare objects, one of \code{"compare"}, \code{"before"}, or \code{"after"}; for synced grids with more than two maps, a map identifier such as \code{"map3"} can also be used.}
 
 \item{draggable}{Logical, whether the legend can be dragged.}
 

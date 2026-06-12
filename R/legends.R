@@ -24,7 +24,7 @@
 #' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
 #' @param margin_right Custom right margin in pixels. Default is NULL.
 #' @param style Optional styling options created by \code{legend_style()} or a list of style options.
-#' @param target For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare".
+#' @param target For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare". For synced grids with more than two maps, a map identifier such as "map3" can also be used.
 #'
 #' @return The updated map object with the legend added.
 #'
@@ -300,7 +300,7 @@ if (is.null(values) || is.null(colors)) {
   }
 
   # For compare objects, use S3 method dispatch
-  if (inherits(map, "mapboxgl_compare") || inherits(map, "maplibre_compare")) {
+  if (inherits(map, "mapboxgl_compare") || inherits(map, "maplibregl_compare")) {
     UseMethod("add_legend")
   } else {
     # For regular maps, ignore target parameter and use existing functions
@@ -379,7 +379,7 @@ if (is.null(values) || is.null(colors)) {
 #' @param add Logical, whether to add to existing legends.
 #' @param unique_id Optional unique legend ID.
 #' @param layer_id Optional associated layer ID for layer-control show/hide.
-#' @param target For compare objects, one of `"compare"`, `"before"`, or `"after"`.
+#' @param target For compare objects, one of `"compare"`, `"before"`, or `"after"`; for synced grids with more than two maps, a map identifier such as `"map3"` can also be used.
 #' @param draggable Logical, whether the legend can be dragged.
 #' @param collapsible Logical, whether the legend can collapse.
 #' @param collapsed Logical, whether the legend starts collapsed.
@@ -429,7 +429,7 @@ add_bivariate_legend <- function(
     collapsed = collapsed
   )
 
-  if (inherits(map, "mapboxgl_compare") || inherits(map, "maplibre_compare")) {
+  if (inherits(map, "mapboxgl_compare") || inherits(map, "maplibregl_compare")) {
     if (is.null(map$x$compare_legends)) {
       map$x$compare_legends <- list()
     }

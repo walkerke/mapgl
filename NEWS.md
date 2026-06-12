@@ -1,5 +1,9 @@
 # mapgl 0.5.0
 
+* Fixed `add_legend()` silently ignoring the `target` argument for MapLibre compare widgets: the compare dispatch checked for class `"maplibre_compare"` while the widget class is `"maplibregl_compare"`, so legends were attached as regular map legends instead of compare-level legends.
+
+* `compare()` now supports synchronizing more than two maps (#204). Pass additional maps after `map1` and `map2` with `mode = "sync"`, and control the grid layout with the new `ncol` argument. In Shiny, maps in multi-map widgets are addressed as `"map1"` through `"mapN"` via `map_side` in the compare proxy functions (integers also accepted, e.g. `map_side = 3`), and emit input values like `input$id_map3_view`. Legends can be targeted at individual grid maps with `target = "map3"`.
+
 * New bivariate mapping support with `bivariate_scale()`, `bivariate_palettes()`, and `add_bivariate_legend()`. Bivariate scales use 3-by-3 palettes, support custom 3-by-3 color matrices, optional `x_breaks` and `y_breaks` for stable bins, and explicit `na_color` handling (#181).
 
 * Continuous legends can now expose an opt-in color-ramp picker. Use `color_ramps`, `selected_ramp`, and `ramp_picker = TRUE` with continuous legends to let readers switch palettes directly from the legend; named ramps display labels by default, and `ramp_labels = FALSE` creates a compact picker.

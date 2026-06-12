@@ -15,7 +15,10 @@ mapboxgl_compare_proxy(
 
 \item{session}{The Shiny session object.}
 
-\item{map_side}{Which map side to target in the compare widget, either "before" or "after".}
+\item{map_side}{Which map to target in the compare widget: "before" or
+"after" for two-map widgets, or a map identifier such as "map3" (or its
+position as an integer, e.g. \code{3}) for synced grids with more than two
+maps. "before" and "after" are aliases for the first and second maps.}
 }
 \value{
 A proxy object for the Mapbox GL Compare widget.

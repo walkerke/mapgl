@@ -7,6 +7,7 @@
 \alias{add_continuous_legend}
 \alias{add_legend.mapboxgl_compare}
 \alias{add_legend.maplibre_compare}
+\alias{add_legend.maplibregl_compare}
 \title{Add legends to Mapbox GL and MapLibre GL maps}
 \usage{
 add_legend(
@@ -176,6 +177,43 @@ add_continuous_legend(
   collapsible = FALSE,
   collapsed = FALSE
 )
+
+\method{add_legend}{maplibregl_compare}(
+  map,
+  legend_title,
+  values,
+  colors,
+  type = c("continuous", "categorical"),
+  circular_patches = FALSE,
+  patch_shape = "square",
+  position = "top-left",
+  sizes = NULL,
+  add = FALSE,
+  unique_id = NULL,
+  width = NULL,
+  layer_id = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL,
+  style = NULL,
+  target = "compare",
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  classification = NULL,
+  breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE
+)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function.}
@@ -214,7 +252,7 @@ add_continuous_legend(
 
 \item{style}{Optional styling options created by \code{legend_style()} or a list of style options.}
 
-\item{target}{For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare".}
+\item{target}{For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare". For synced grids with more than two maps, a map identifier such as "map3" can also be used.}
 
 \item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.}
 

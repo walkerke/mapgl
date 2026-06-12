@@ -154,6 +154,10 @@ add_legend.mapboxgl_compare <- function(
 #' @export
 add_legend.maplibre_compare <- add_legend.mapboxgl_compare
 
+#' @rdname map_legends
+#' @export
+add_legend.maplibregl_compare <- add_legend.mapboxgl_compare
+
 # Helper functions to build legend HTML/CSS without attaching to a map
 build_continuous_legend <- function(
   legend_title,
