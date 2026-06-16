@@ -1,5 +1,7 @@
 # mapgl 0.5.0
 
+* New `add_slider_control()` adds an interactive slider that filters and/or animates one or more layers by a numeric feature property. It composes with a layer's initial `filter`, later `set_filter()` calls, and interactive legends (intersecting via `["all", ...]`) rather than replacing them. Modes are `"sequential"` (one value), `"cumulative"` (everything through a value), and `"window"` (a draggable two-handle range that can also drive flowmap time ranges). Supports paint-property animation, an optional play button, and an optional density histogram (`histogram`/`histogram_data`/`counts`, drawn with d3 loaded on demand) adapted from Egor Kotov's time-control contribution in #205. Companions `update_slider_control()` (for Shiny proxies) and `as_time_property()` (coerce `Date`/`POSIXct` to a numeric filter property) round out the feature.
+
 * Update MapLibre GL JS to v5.24.0 and Mapbox GL JS to v3.24.0.
 
 * Fixed `add_legend()` silently ignoring the `target` argument for MapLibre compare widgets: the compare dispatch checked for class `"maplibre_compare"` while the widget class is `"maplibregl_compare"`, so legends were attached as regular map legends instead of compare-level legends.

@@ -567,6 +567,42 @@ function initializeDrawAttributeEditor(map, drawControl, options) {
   };
 }
 
+// Shared layer-state and filter-composition helpers. See the twin block
+// in mapboxgl.js for the design notes.
+function _mapglEnsureLayerState(map) {
+  if (!window._mapglLayerState) window._mapglLayerState = {};
+  const mapId = map.getContainer().id;
+  const s =
+    window._mapglLayerState[mapId] ||
+    (window._mapglLayerState[mapId] = {});
+  if (!s.filters) s.filters = {};
+  if (!s.paintProperties) s.paintProperties = {};
+  if (!s.layoutProperties) s.layoutProperties = {};
+  if (!s.tooltips) s.tooltips = {};
+  if (!s.popups) s.popups = {};
+  if (!s.legends) s.legends = {};
+  if (!s.interactiveFilters) s.interactiveFilters = {};
+  if (!s.filterStack) s.filterStack = {};
+  return s;
+}
+
+function _mapglComposeAndApplyFilter(map, layerId) {
+  const state = _mapglEnsureLayerState(map);
+  const stack = state.filterStack[layerId] || {};
+  const active = [stack.base, stack.user, stack.legend, stack.slider].filter(
+    (f) => f != null,
+  );
+  const composed =
+    active.length === 0 ? null : active.length === 1 ? active[0] : ["all", ...active];
+  if (map.getLayer && map.getLayer(layerId)) {
+    map.setFilter(layerId, composed);
+  }
+  state.filters[layerId] = composed;
+}
+
+window._mapglEnsureLayerState = _mapglEnsureLayerState;
+window._mapglComposeFilter = _mapglComposeAndApplyFilter;
+
 // Measurement functionality
 function createMeasurementBox(map) {
   const box = document.createElement("div");
@@ -1994,6 +2030,15 @@ HTMLWidgets.widget({
                 map.addLayer(layerConfig);
               }
 
+              // Seed the filter registry with this layer's initial filter
+              // so later filter sources compose with it rather than clobber it.
+              (function () {
+                const _s = _mapglEnsureLayerState(map);
+                _s.filterStack[layer.id] = _s.filterStack[layer.id] || {};
+                _s.filterStack[layer.id].base = layer.filter || null;
+                _s.filters[layer.id] = layer.filter || null;
+              })();
+
               // Add popups or tooltips if provided
               if (layer.popup) {
                 // Initialize popup tracking if it doesn't exist
@@ -2825,6 +2870,17 @@ HTMLWidgets.widget({
             map.controls.push({ type: "fullscreen", control: fullscreen });
           }
 
+          // Add slider control if configured
+          if (
+            x.slider_control &&
+            typeof window.MapglSliderControl === "function"
+          ) {
+            const _tsCfg = x.slider_control;
+            const _ts = new window.MapglSliderControl(_tsCfg);
+            map.addControl(_ts, _tsCfg.position || "top-left");
+            map.controls.push({ type: "slider", control: _ts });
+          }
+
           // Add geolocate control if enabled
           if (x.geolocate_control) {
             const geolocate = new maplibregl.GeolocateControl({
@@ -3384,22 +3440,9 @@ if (HTMLWidgets.shinyMode) {
     if (map) {
       var message = data.message;
 
-      // Initialize layer state tracking if not already present
-      if (!window._mapglLayerState) {
-        window._mapglLayerState = {};
-      }
+      // Initialize (or upgrade) layer state tracking via the shared helper.
       const mapId = map.getContainer().id;
-      if (!window._mapglLayerState[mapId]) {
-        window._mapglLayerState[mapId] = {
-          filters: {}, // layerId -> filter expression
-          paintProperties: {}, // layerId -> {propertyName -> value}
-          layoutProperties: {}, // layerId -> {propertyName -> value}
-          tooltips: {}, // layerId -> tooltip property
-          popups: {}, // layerId -> popup property
-          legends: {}, // legendId -> {html: string, css: string}
-        };
-      }
-      const layerState = window._mapglLayerState[mapId];
+      const layerState = _mapglEnsureLayerState(map);
 
       // Helper function to update drawn features
       function updateDrawnFeatures(debounce) {
@@ -3412,9 +3455,12 @@ if (HTMLWidgets.shinyMode) {
         });
       }
       if (message.type === "set_filter") {
-        map.setFilter(message.layer, message.filter);
-        // Track filter state for layer restoration
-        layerState.filters[message.layer] = message.filter;
+        // Route through the filter registry so `user` composes with
+        // base/legend/slider slots.
+        layerState.filterStack[message.layer] =
+          layerState.filterStack[message.layer] || {};
+        layerState.filterStack[message.layer].user = message.filter || null;
+        _mapglComposeAndApplyFilter(map, message.layer);
       } else if (message.type === "add_source") {
         if (message.source.type === "vector") {
           const sourceConfig = {
@@ -3511,6 +3557,27 @@ if (HTMLWidgets.shinyMode) {
               message.layer.source,
             );
           }
+
+          // Seed the filter registry for this late-added layer. If an
+          // active slider targets this layer id, compose its filter
+          // in immediately.
+          layerState.filterStack[message.layer.id] =
+            layerState.filterStack[message.layer.id] || {};
+          layerState.filterStack[message.layer.id].base =
+            message.layer.filter || null;
+          const _ts = map._mapglSliderControl;
+          if (
+            _ts &&
+            _ts.targetsLayer &&
+            _ts.targetsLayer(message.layer.id)
+          ) {
+            layerState.filterStack[message.layer.id].slider =
+              _ts.currentFilter();
+            if (typeof _ts.captureAndApplyPaintForLayer === "function") {
+              _ts.captureAndApplyPaintForLayer(message.layer.id);
+            }
+          }
+          _mapglComposeAndApplyFilter(map, message.layer.id);
 
           // Add popups or tooltips if provided
           if (message.layer.popup) {
@@ -3751,14 +3818,14 @@ if (HTMLWidgets.shinyMode) {
         }
 
         // Clean up tracked layer state
-        const mapId = map.getContainer().id;
         if (window._mapglLayerState && window._mapglLayerState[mapId]) {
-          const layerState = window._mapglLayerState[mapId];
-          delete layerState.filters[message.layer];
-          delete layerState.paintProperties[message.layer];
-          delete layerState.layoutProperties[message.layer];
-          delete layerState.tooltips[message.layer];
-          delete layerState.popups[message.layer];
+          const _ls = window._mapglLayerState[mapId];
+          delete _ls.filters[message.layer];
+          delete _ls.paintProperties[message.layer];
+          delete _ls.layoutProperties[message.layer];
+          delete _ls.tooltips[message.layer];
+          delete _ls.popups[message.layer];
+          delete _ls.filterStack[message.layer];
           // Note: legends are not tied to specific layers, so we don't clear them here
         }
       } else if (message.type === "fit_bounds") {
@@ -5794,6 +5861,26 @@ if (HTMLWidgets.shinyMode) {
         const fullscreen = new maplibregl.FullscreenControl();
         map.addControl(fullscreen, position);
         map.controls.push({ type: "fullscreen", control: fullscreen });
+      } else if (message.type === "add_slider_control") {
+        if (typeof window.MapglSliderControl === "function") {
+          if (map._mapglSliderControl) {
+            try {
+              map.removeControl(map._mapglSliderControl);
+            } catch (e) { /* noop */ }
+            map.controls = map.controls.filter(function (c) {
+              return c.type !== "slider";
+            });
+          }
+          const _ts = new window.MapglSliderControl(message.options || {});
+          map.addControl(_ts, (message.options && message.options.position) || "top-left");
+          map.controls.push({ type: "slider", control: _ts });
+        } else {
+          console.warn("MapglSliderControl is not loaded.");
+        }
+      } else if (message.type === "update_slider_control") {
+        if (map._mapglSliderControl) {
+          map._mapglSliderControl.update(message.options || {});
+        }
       } else if (message.type === "add_scale_control") {
         const scaleControl = new maplibregl.ScaleControl({
           maxWidth: message.options.maxWidth,
@@ -6279,6 +6366,9 @@ if (HTMLWidgets.shinyMode) {
             }
           });
           map.controls = [];
+          if (map._mapglSliderControl) {
+            delete map._mapglSliderControl;
+          }
 
           const layersControl = document.querySelector(
             `#${data.id} .layers-control`,

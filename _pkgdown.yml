@@ -92,6 +92,9 @@ reference:
       - add_screenshot_control
       - add_coordinates_control
       - add_control
+      - add_slider_control
+      - update_slider_control
+      - as_time_property
       - clear_controls
 
   - title: "Legends"
