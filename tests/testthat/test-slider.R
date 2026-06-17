@@ -220,6 +220,16 @@ test_that("presentation = 'timeline' implies the histogram and needs data", {
   )
 })
 
+test_that("draggable serializes and defaults to FALSE", {
+  m <- maplibre()
+  d <- add_slider_control(m, layers = "l", property = "t", values = 1:3,
+    draggable = TRUE)
+  expect_true(d$x$slider_control$draggable)
+  # default is docked (FALSE)
+  s <- add_slider_control(m, layers = "l", property = "t", values = 1:3)
+  expect_false(s$x$slider_control$draggable)
+})
+
 test_that("flowmap target in window mode needs an absolute time_unit", {
   m <- maplibre()
   # Simulate a flowmap having been added (the validation reads map$x$flowmaps).

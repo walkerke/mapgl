@@ -33,6 +33,7 @@ add_slider_control(
   slider_style = NULL,
   width = 280,
   position = "top-left",
+  draggable = FALSE,
   background_color = "#ffffffcc",
   text_color = "#404040",
   accent_color = "#4a90e2"
@@ -165,6 +166,10 @@ omitted, the legacy \code{width}, \code{background_color}, \code{text_color}, an
 
 \item{position}{One of \code{"top-left"}, \code{"top-right"}, \code{"bottom-left"},
 \code{"bottom-right"}. Default \code{"top-left"}.}
+
+\item{draggable}{Logical, whether the slider panel can be dragged to a new
+position on the map by the user. Default \code{FALSE}, keeping it docked at
+\code{position}.}
 
 \item{background_color, text_color, accent_color}{Styling overrides.
 Defaults match the package's other controls. For full control of the

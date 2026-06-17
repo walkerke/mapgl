@@ -125,6 +125,7 @@
         this._histogram = !!options.histogram || this._presentation === "timeline";
         this._counts = (options.counts || []).map(Number);
         this._playButton = !!options.play_button;
+        this._draggable = !!options.draggable;
         this._animationDuration = Math.max(50, options.animation_duration || 1000);
         this._loop = options.loop !== false;
         this._title = options.title || null;
@@ -416,6 +417,12 @@
         root.appendChild(body);
         this._root = root;
 
+        // Optionally let the user drag the panel off its docked corner.
+        if (this._draggable) {
+            root.classList.add("mapgl-slider-draggable");
+            this._setupDrag(map);
+        }
+
         // Seed filter registry slots for each target layer and apply.
         // Initial mount uses the synchronous path so the first paint
         // already has the filter applied (no flash of unfiltered data).
@@ -444,6 +451,78 @@
         map.on("styledata", this._onStyleData);
 
         return root;
+    };
+
+    // ---- Draggable panel ----
+    // Mirrors the interactive-legend drag (legend-interactivity.js
+    // makeLegendDraggable): grab the panel body and reposition it freely,
+    // but never start a drag from an interactive control (the range input,
+    // play button, window handles, or timeline brush/chart).
+    var DRAG_SKIP_SELECTOR =
+        "input, button, .mapgl-slider-play, .mapgl-slider-range, " +
+        ".mapgl-slider-brush, .mapgl-slider-brush-grip, " +
+        ".mapgl-slider-histogram, .mapgl-slider-timeline-chart";
+
+    SliderControl.prototype._setupDrag = function (map) {
+        if (this._dragInit) return;
+        this._dragInit = true;
+
+        var root = this._root;
+        var container = map.getContainer();
+        var dragging = false;
+        var startX, startY, startLeft, startTop;
+
+        var onDown = function (e) {
+            if (e.button != null && e.button !== 0) return;
+            if (e.target.closest(DRAG_SKIP_SELECTOR)) return;
+
+            // Switch from the native corner docking to absolute positioning
+            // relative to the map container, so left/top math is correct.
+            var rect = root.getBoundingClientRect();
+            var cRect = container.getBoundingClientRect();
+            if (root.parentNode !== container) container.appendChild(root);
+            startLeft = rect.left - cRect.left;
+            startTop = rect.top - cRect.top;
+            root.style.position = "absolute";
+            root.style.left = startLeft + "px";
+            root.style.top = startTop + "px";
+            root.style.right = "auto";
+            root.style.bottom = "auto";
+
+            dragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            root.classList.add("is-dragging");
+            try { root.setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        var onMove = function (e) {
+            if (!dragging) return;
+            var newLeft = startLeft + (e.clientX - startX);
+            var newTop = startTop + (e.clientY - startY);
+            var maxLeft = container.clientWidth - root.offsetWidth;
+            var maxTop = container.clientHeight - root.offsetHeight;
+            root.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + "px";
+            root.style.top = Math.max(0, Math.min(newTop, maxTop)) + "px";
+            e.preventDefault();
+        };
+
+        var onUp = function (e) {
+            if (!dragging) return;
+            dragging = false;
+            root.classList.remove("is-dragging");
+            try { root.releasePointerCapture(e.pointerId); } catch (err) { /* noop */ }
+        };
+
+        // Listeners live on the panel itself (pointer capture keeps move/up
+        // flowing during the drag), so they are torn down with the node in
+        // onRemove — no document-level leak.
+        root.addEventListener("pointerdown", onDown);
+        root.addEventListener("pointermove", onMove);
+        root.addEventListener("pointerup", onUp);
+        root.addEventListener("pointercancel", onUp);
     };
 
     // ---- Histogram density strip (adapted from Egor Kotov's PR #205) ----

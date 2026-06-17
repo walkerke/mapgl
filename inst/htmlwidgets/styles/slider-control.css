@@ -413,3 +413,13 @@
 .mapgl-slider .mapgl-slider-axis-tick:last-child {
     transform: translateX(-100%);
 }
+
+/* Draggable panel: grabbable body, no text selection while dragging. */
+.mapgl-slider.mapgl-slider-draggable {
+    cursor: move;
+}
+
+.mapgl-slider.mapgl-slider-draggable.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+}

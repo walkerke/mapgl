@@ -382,6 +382,9 @@ mapgl_normalize_slider_style <- function(x, arg = "slider_style") {
 #' @param width Slider container width in pixels. Default `280`.
 #' @param position One of `"top-left"`, `"top-right"`, `"bottom-left"`,
 #'   `"bottom-right"`. Default `"top-left"`.
+#' @param draggable Logical, whether the slider panel can be dragged to a new
+#'   position on the map by the user. Default `FALSE`, keeping it docked at
+#'   `position`.
 #' @param background_color,text_color,accent_color Styling overrides.
 #'   Defaults match the package's other controls. For full control of the
 #'   slider appearance, use `slider_style`.
@@ -465,6 +468,7 @@ add_slider_control <- function(
   slider_style = NULL,
   width = 280,
   position = "top-left",
+  draggable = FALSE,
   background_color = "#ffffffcc",
   text_color = "#404040",
   accent_color = "#4a90e2"
@@ -797,6 +801,7 @@ add_slider_control <- function(
     show_value = isTRUE(show_value),
     width = as.integer(width),
     position = position,
+    draggable = isTRUE(draggable),
     background_color = background_color,
     text_color = text_color,
     accent_color = accent_color
