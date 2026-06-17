@@ -764,8 +764,8 @@ add_categorical_legend <- function(
 
   max_size <- max(sizes)
   patch_spacing <- match.arg(patch_spacing)
-  proportional  <- identical(patch_spacing, "proportional")
-  
+  proportional <- identical(patch_spacing, "proportional")
+
   # Function to process custom SVG shapes
   .process_custom_svg <- function(svg_string, color, size) {
     # Remove whitespace and normalize
