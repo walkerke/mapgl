@@ -37,6 +37,51 @@
         return ["==", ["get", property], value];
     }
 
+    function cssSize(value, unit) {
+        if (value == null || value === "") return null;
+        unit = unit || "px";
+        if (typeof value === "number" && isFinite(value)) return value + unit;
+        if (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value.trim())) {
+            return value.trim() + unit;
+        }
+        return String(value);
+    }
+
+    function setStyle(el, prop, value) {
+        if (value != null && value !== "") el.style[prop] = String(value);
+    }
+
+    function setVar(el, name, value, unit) {
+        var size = unit ? cssSize(value, unit) : value;
+        if (size != null && size !== "") el.style.setProperty(name, String(size));
+    }
+
+    function withOpacity(color, opacity) {
+        if (color == null || opacity == null || opacity === "") return color;
+        opacity = Math.max(0, Math.min(1, Number(opacity)));
+        if (!isFinite(opacity)) return color;
+
+        var hex = String(color).trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (hex) {
+            var raw = hex[1];
+            if (raw.length === 3) raw = raw.replace(/(.)/g, "$1$1");
+            var r = parseInt(raw.slice(0, 2), 16);
+            var g = parseInt(raw.slice(2, 4), 16);
+            var b = parseInt(raw.slice(4, 6), 16);
+            return "rgba(" + r + ", " + g + ", " + b + ", " + opacity + ")";
+        }
+
+        var rgb = String(color).trim().match(/^rgba?\((.*)\)$/i);
+        if (rgb) {
+            var parts = rgb[1].split(",").map(function (x) { return x.trim(); });
+            if (parts.length >= 3) {
+                return "rgba(" + parts.slice(0, 3).join(", ") + ", " + opacity + ")";
+            }
+        }
+
+        return "color-mix(in srgb, " + color + " " + (opacity * 100) + "%, transparent)";
+    }
+
     function SliderControl(options) {
         this.options = options || {};
         this._layers = (options.layers || []).slice();
@@ -48,6 +93,17 @@
         this._mode = (options.mode === "cumulative" || options.mode === "window")
             ? options.mode
             : "sequential";
+        this._presentation =
+            options.presentation === "timeline" ? "timeline" : "compact";
+        // Window mode interaction: "fixed" pins the width and pans the band;
+        // "resizable" lets either edge move. (Back-compat: accept the old
+        // window_control/window_ui payloads.)
+        this._windowBehavior =
+            options.window_behavior === "fixed" ||
+            options.window_control === "fixed" ||
+            options.window_ui === "playhead"
+                ? "fixed"
+                : "resizable";
         // Window mode only: size of the moving [start, end] range. null =>
         // cumulative range [min, T]; number => sliding range [T - window, T].
         this._window = (options.window != null) ? options.window : null;
@@ -56,7 +112,7 @@
         this._timeUnit = options.time_unit || null;
         this._index = this._clampIndex(options.initial_index || 0);
         // Window mode tracks an explicit [start, end] range over the value
-        // grid. _endIndex is the playhead/end and mirrors _index so paint and
+        // grid. _endIndex is the window end and mirrors _index so paint and
         // the value label reuse the same machinery; _startIndex is derived
         // from `window` (initial width in value units), or 0 for a [min, end]
         // range when `window` is NULL.
@@ -64,17 +120,40 @@
         this._startIndex = this._computeStartIndex(this._endIndex);
         // Optional density histogram (d3, loaded on demand). `counts` is one
         // bar height per value, binned in R against the value axis.
-        this._histogram = !!options.histogram;
+        // The timeline presentation IS the histogram, so it implies it even if
+        // the histogram flag wasn't passed explicitly.
+        this._histogram = !!options.histogram || this._presentation === "timeline";
         this._counts = (options.counts || []).map(Number);
         this._playButton = !!options.play_button;
         this._animationDuration = Math.max(50, options.animation_duration || 1000);
         this._loop = options.loop !== false;
         this._title = options.title || null;
         this._showValue = options.show_value !== false;
-        this._width = options.width || 280;
-        this._background = options.background_color || "#ffffffcc";
-        this._textColor = options.text_color || "#404040";
-        this._accent = options.accent_color || "#4a90e2";
+        this._style = (options.slider_style && typeof options.slider_style === "object")
+            ? options.slider_style
+            : {};
+        this._width = this._style.width || options.width || 280;
+        this._background = withOpacity(
+            this._style.background_color || options.background_color || "#ffffffcc",
+            this._style.background_opacity
+        );
+        this._textColor = this._style.text_color || options.text_color || "#404040";
+        this._accent = this._style.accent_color || options.accent_color || "#4a90e2";
+        this._activeColor = this._style.active_color || this._accent;
+        this._trackColor = this._style.track_color || "rgba(0, 0, 0, 0.15)";
+        this._thumbColor = this._style.thumb_color || this._accent;
+        this._thumbBorderColor = this._style.thumb_border_color || "#ffffff";
+        this._histogramHeight = Number(this._style.histogram_height) ||
+            (this._presentation === "timeline" ? 88 : 46);
+        this._histogramBarColor = this._style.histogram_bar_color || this._accent;
+        this._histActiveOpacity = this._style.histogram_active_opacity != null
+            ? Number(this._style.histogram_active_opacity)
+            : 1;
+        this._histInactiveOpacity = this._style.histogram_inactive_opacity != null
+            ? Number(this._style.histogram_inactive_opacity)
+            : 0.28;
+        if (!isFinite(this._histActiveOpacity)) this._histActiveOpacity = 1;
+        if (!isFinite(this._histInactiveOpacity)) this._histInactiveOpacity = 0.28;
         this._playing = false;
         this._timer = null;
         // Shiny input name: either explicitly provided or derived from the
@@ -221,20 +300,64 @@
         // options so we don't need a style injection step for each instance.
         var root = document.createElement("div");
         root.className = "mapboxgl-ctrl maplibregl-ctrl mapgl-slider";
-        root.style.width = this._width + "px";
+        root.style.width = cssSize(this._width) || "280px";
         root.style.background = this._background;
         root.style.color = this._textColor;
+        setStyle(root, "fontFamily", this._style.font_family);
+        setStyle(root, "fontSize", cssSize(this._style.font_size));
+        setStyle(root, "fontWeight", this._style.font_weight);
+        setStyle(root, "padding", cssSize(this._style.padding));
+        if (this._style.border_radius != null) {
+            root.style.borderRadius = cssSize(this._style.border_radius);
+        }
+        if (this._style.border_width != null || this._style.border_color) {
+            root.style.border =
+                (cssSize(this._style.border_width != null ? this._style.border_width : 1) || "1px") +
+                " solid " +
+                (this._style.border_color || "rgba(0, 0, 0, 0.15)");
+        }
+        if (this._style.shadow === false) {
+            root.style.boxShadow = "none";
+        } else if (
+            this._style.shadow === true ||
+            this._style.shadow_color ||
+            this._style.shadow_size != null
+        ) {
+            root.style.boxShadow =
+                "0 2px " +
+                (cssSize(this._style.shadow_size != null ? this._style.shadow_size : 6) || "6px") +
+                " " +
+                (this._style.shadow_color || "rgba(0, 0, 0, 0.15)");
+        }
 
-        // CSS custom property powers the accent color in the range thumb.
+        // CSS custom properties power the native range pieces, including
+        // browser pseudo-elements that cannot be styled directly inline.
         root.style.setProperty("--mapgl-slider-accent", this._accent);
+        root.style.setProperty("--mapgl-slider-active-color", this._activeColor);
+        root.style.setProperty("--mapgl-slider-track-color", this._trackColor);
+        root.style.setProperty("--mapgl-slider-thumb-color", this._thumbColor);
+        root.style.setProperty("--mapgl-slider-thumb-border-color", this._thumbBorderColor);
+        root.style.setProperty("--mapgl-slider-play-background", this._style.play_button_background || "#ffffff");
+        root.style.setProperty("--mapgl-slider-play-color", this._style.play_button_color || this._accent);
+        root.style.setProperty("--mapgl-slider-play-border-color", this._style.play_button_border_color || "rgba(0, 0, 0, 0.15)");
+        setVar(root, "--mapgl-slider-track-height", this._style.track_height, "px");
+        setVar(root, "--mapgl-slider-thumb-size", this._style.thumb_size, "px");
 
-        var body = document.createElement("div");
+        var body;
+        if (this._presentation === "timeline") {
+            root.classList.add("mapgl-slider-timeline-root");
+            body = this._buildTimeline();
+        } else {
+        body = document.createElement("div");
         body.className = "mapgl-slider-body";
 
         if (this._title) {
             var titleEl = document.createElement("div");
             titleEl.className = "mapgl-slider-title";
             titleEl.textContent = this._title;
+            setStyle(titleEl, "color", this._style.title_color);
+            setStyle(titleEl, "fontSize", cssSize(this._style.title_size));
+            setStyle(titleEl, "fontWeight", this._style.title_weight);
             body.appendChild(titleEl);
         }
 
@@ -245,6 +368,9 @@
         valueEl.className = "mapgl-slider-value";
         if (!this._showValue) valueEl.style.display = "none";
         valueEl.textContent = this._labels[this._index] || "";
+        setStyle(valueEl, "color", this._style.value_color);
+        setStyle(valueEl, "fontSize", cssSize(this._style.value_size));
+        setStyle(valueEl, "fontWeight", this._style.value_weight);
         header.appendChild(valueEl);
         this._valueEl = valueEl;
 
@@ -272,15 +398,21 @@
             this._playBtn = playBtn;
         }
 
-        // Window mode renders a two-handle range; all other modes render a
-        // single thumb.
+        // Window mode can render either a two-handle resizable range or a
+        // fixed-duration single-handle control. Both use the same [start, end]
+        // state and filtering.
         if (this._mode === "window") {
-            row.appendChild(this._buildRangeInput());
+            row.appendChild(
+                this._windowBehavior === "fixed"
+                    ? this._buildFixedWindowInput()
+                    : this._buildRangeInput()
+            );
         } else {
             row.appendChild(this._buildSingleInput());
         }
 
         body.appendChild(row);
+        }
         root.appendChild(body);
         this._root = root;
 
@@ -358,7 +490,7 @@
         var d3 = window.d3;
         if (!d3 || !this._histEl || !this._counts.length) return;
         var width = this._histEl.clientWidth || this._width;
-        var height = 46;
+        var height = Math.max(8, this._histogramHeight);
         var n = this._counts.length;
         var maxIdx = Math.max(1, n - 1);
         var maxC = d3.max(this._counts) || 1;
@@ -385,7 +517,7 @@
             .attr("width", barW)
             .attr("height", function (d) { return Math.max(0, height - y(d)); })
             .attr("rx", 1)
-            .attr("fill", self._accent);
+            .attr("fill", self._histogramBarColor);
 
         this._renderedHist = true;
         this._updateHistogramHighlight();
@@ -404,12 +536,209 @@
         if (!this._renderedHist || typeof window.d3 === "undefined") return;
         var r = this._histActiveRange();
         var lo = r[0], hi = r[1];
+        var activeOpacity = this._histActiveOpacity;
+        var inactiveOpacity = this._histInactiveOpacity;
         window.d3
             .select(this._histEl)
             .selectAll(".mapgl-bar")
             .attr("opacity", function (d, i) {
-                return i >= lo && i <= hi ? 1 : 0.28;
+                return i >= lo && i <= hi
+                    ? activeOpacity
+                    : inactiveOpacity;
             });
+    };
+
+    // ---- Timeline presentation (brushable histogram) ----------------------
+    // Egor Kotov's time-control idea: a prominent histogram IS the control.
+    // Drag the selected window across the bars, drag its edges to resize it
+    // (resizable mode), and read the range in the header.
+    SliderControl.prototype._buildTimeline = function () {
+        var self = this;
+        var panel = document.createElement("div");
+        panel.className = "mapgl-slider-body mapgl-slider-timeline";
+
+        var header = document.createElement("div");
+        header.className = "mapgl-slider-timeline-header";
+
+        if (this._playButton) {
+            var playBtn = document.createElement("button");
+            playBtn.type = "button";
+            playBtn.className = "mapgl-slider-play";
+            playBtn.setAttribute("aria-label", "Play");
+            playBtn.innerHTML = ICON_PLAY;
+            playBtn.addEventListener("click", function () { self._togglePlay(); });
+            header.appendChild(playBtn);
+            this._playBtn = playBtn;
+        }
+
+        if (this._title) {
+            var titleEl = document.createElement("div");
+            titleEl.className = "mapgl-slider-title mapgl-slider-timeline-title";
+            titleEl.textContent = this._title;
+            setStyle(titleEl, "color", this._style.title_color);
+            setStyle(titleEl, "fontWeight", this._style.title_weight);
+            header.appendChild(titleEl);
+        }
+
+        panel.appendChild(header);
+
+        // The selected-range readout sits on its own line so a long date range
+        // never squeezes out the title (matches Egor Kotov's layout).
+        var readout = document.createElement("div");
+        readout.className = "mapgl-slider-value mapgl-slider-timeline-readout";
+        if (!this._showValue) readout.style.display = "none";
+        setStyle(readout, "color", this._style.value_color);
+        setStyle(readout, "fontSize", cssSize(this._style.value_size));
+        panel.appendChild(readout);
+        this._valueEl = readout;
+
+        var chart = document.createElement("div");
+        chart.className = "mapgl-slider-timeline-chart";
+        chart.style.height = Math.max(8, this._histogramHeight) + "px";
+
+        var histHost = document.createElement("div");
+        histHost.className = "mapgl-slider-histogram mapgl-slider-timeline-hist";
+        this._histEl = histHost;
+        chart.appendChild(histHost);
+
+        var band = document.createElement("div");
+        band.className = "mapgl-slider-brush";
+        var gripStart = document.createElement("div");
+        gripStart.className = "mapgl-slider-brush-grip mapgl-slider-brush-grip-start";
+        var gripEnd = document.createElement("div");
+        gripEnd.className = "mapgl-slider-brush-grip mapgl-slider-brush-grip-end";
+        band.appendChild(gripStart);
+        band.appendChild(gripEnd);
+        chart.appendChild(band);
+        this._brushBand = band;
+        this._brushGripStart = gripStart;
+        this._brushGripEnd = gripEnd;
+        if (this._windowBehavior === "fixed" || this._mode !== "window") {
+            band.classList.add("mapgl-slider-brush-fixed");
+        }
+
+        panel.appendChild(chart);
+
+        var axis = document.createElement("div");
+        axis.className = "mapgl-slider-axis";
+        this._axisEl = axis;
+        panel.appendChild(axis);
+
+        this._attachBrush(chart, band, gripStart, gripEnd);
+        this._renderBrush();
+        this._renderAxisTicks();
+        this._updateWindowLabel();
+        return panel;
+    };
+
+    // Position the brush band + grips over the chart (percent of width).
+    SliderControl.prototype._renderBrush = function () {
+        if (!this._brushBand) return;
+        var maxIdx = Math.max(1, this._values.length - 1);
+        var r = this._histActiveRange();
+        var lo = r[0], hi = r[1];
+        this._brushBand.style.left = ((lo / maxIdx) * 100) + "%";
+        this._brushBand.style.width = Math.max(0, ((hi - lo) / maxIdx) * 100) + "%";
+        this._updateHistogramHighlight();
+    };
+
+    // A handful of evenly spaced value labels under the bars.
+    SliderControl.prototype._renderAxisTicks = function () {
+        if (!this._axisEl) return;
+        var n = this._values.length;
+        if (!n) return;
+        var maxTicks = Math.min(4, n);
+        this._axisEl.innerHTML = "";
+        for (var t = 0; t < maxTicks; t++) {
+            var idx = maxTicks === 1 ? 0 : Math.round((t / (maxTicks - 1)) * (n - 1));
+            var tick = document.createElement("span");
+            tick.className = "mapgl-slider-axis-tick";
+            tick.style.left = ((idx / Math.max(1, n - 1)) * 100) + "%";
+            // Compact the label for the axis: drop a leading 4-digit year so
+            // long timestamps ("2019-07-01 20:00" -> "07-01 20:00") fit.
+            tick.textContent = (this._labels[idx] || "").replace(/^\d{4}-/, "");
+            this._axisEl.appendChild(tick);
+        }
+    };
+
+    // Brush interaction: drag the band body to pan at fixed width, drag the
+    // edge grips to resize (resizable window mode), or click the bars to scrub
+    // the window end. In non-window modes a drag/click moves the single cursor.
+    SliderControl.prototype._attachBrush = function (chart, band, gripStart, gripEnd) {
+        var self = this;
+        var mode = null;
+        var startClientX = 0;
+        var startStart = 0;
+        var width = 0;
+        function maxIdx() { return Math.max(1, self._values.length - 1); }
+        function idxAt(clientX) {
+            var rect = chart.getBoundingClientRect();
+            var frac = rect.width ? (clientX - rect.left) / rect.width : 0;
+            return self._clampIndex(Math.round(frac * maxIdx()));
+        }
+        function setEndOrCursor(idx) {
+            if (self._mode === "window") self._setEnd(idx, { pause: true });
+            else self._setIndex(idx, { pause: true, fromUser: true });
+        }
+        function onMove(e) {
+            if (!mode) return;
+            if (mode === "resize-start") {
+                self._setStart(idxAt(e.clientX), { pause: true });
+            } else if (mode === "resize-end") {
+                setEndOrCursor(idxAt(e.clientX));
+            } else if (mode === "pan") {
+                var rect = chart.getBoundingClientRect();
+                var deltaIdx = Math.round(
+                    ((e.clientX - startClientX) / (rect.width || 1)) * maxIdx()
+                );
+                var ns = startStart + deltaIdx;
+                if (ns < 0) ns = 0;
+                if (ns + width > maxIdx()) ns = maxIdx() - width;
+                self._setBand(ns, ns + width, { pause: true });
+            }
+        }
+        function onUp() {
+            mode = null;
+            band.classList.remove("is-dragging");
+            document.removeEventListener("pointermove", onMove);
+            document.removeEventListener("pointerup", onUp);
+        }
+        function begin(e, m) {
+            mode = m;
+            startClientX = e.clientX;
+            startStart = self._startIndex;
+            width = self._endIndex - self._startIndex;
+            self._stopLoop();
+            band.classList.add("is-dragging");
+            document.addEventListener("pointermove", onMove);
+            document.addEventListener("pointerup", onUp);
+            e.preventDefault();
+        }
+        var canResize = function () {
+            return self._windowBehavior !== "fixed" && self._mode === "window";
+        };
+        gripStart.addEventListener("pointerdown", function (e) {
+            e.stopPropagation();
+            begin(e, canResize() ? "resize-start" : (self._mode === "window" ? "pan" : "resize-end"));
+        });
+        gripEnd.addEventListener("pointerdown", function (e) {
+            e.stopPropagation();
+            begin(e, canResize() ? "resize-end" : (self._mode === "window" ? "pan" : "resize-end"));
+        });
+        band.addEventListener("pointerdown", function (e) {
+            if (e.target === gripStart || e.target === gripEnd) return;
+            begin(e, self._mode === "window" ? "pan" : "resize-end");
+        });
+        chart.addEventListener("pointerdown", function (e) {
+            if (e.target === band || e.target === gripStart || e.target === gripEnd) return;
+            // Clicked on the bars: scrub the window end (or the cursor) here.
+            if (self._mode === "window") {
+                self._setWindowEnd(idxAt(e.clientX), { pause: true });
+            } else {
+                self._setIndex(idxAt(e.clientX), { pause: true, fromUser: true });
+            }
+            begin(e, self._mode === "window" ? "pan" : "resize-end");
+        });
     };
 
     // Single-thumb input for sequential/cumulative modes.
@@ -485,8 +814,53 @@
         return wrap;
     };
 
+    // Fixed-duration window UI: the thumb controls the end time; the filled
+    // band shows [end - window, end]. This is the temporal playback affordance
+    // for fixed-width windows where two handles would visually overlap.
+    SliderControl.prototype._buildFixedWindowInput = function () {
+        var self = this;
+        var maxIdx = Math.max(0, this._values.length - 1);
+
+        var wrap = document.createElement("div");
+        wrap.className = "mapgl-slider-range mapgl-slider-range-fixed";
+
+        var track = document.createElement("div");
+        track.className = "mapgl-slider-range-track";
+        wrap.appendChild(track);
+
+        var fill = document.createElement("div");
+        fill.className = "mapgl-slider-range-fill";
+        wrap.appendChild(fill);
+        this._rangeFill = fill;
+        this._rangeWrap = wrap;
+
+        var input = document.createElement("input");
+        input.type = "range";
+        input.className = "mapgl-slider-fixed-input";
+        input.min = "0";
+        input.max = String(maxIdx);
+        input.step = "1";
+        input.value = String(this._endIndex);
+        input.addEventListener("input", function (e) {
+            self._setWindowEnd(parseInt(e.target.value, 10), { pause: true });
+        });
+
+        wrap.appendChild(input);
+        this._endInput = input;
+
+        this._renderRangeFill();
+        this._updateWindowLabel();
+        return wrap;
+    };
+
     // Position the filled band between the two handles (percent of track).
     SliderControl.prototype._renderRangeFill = function () {
+        // Timeline presentation has no native range track; the brush band is
+        // the selection, so reposition it instead.
+        if (this._brushBand) {
+            this._renderBrush();
+            return;
+        }
         if (!this._rangeFill) return;
         var maxIdx = Math.max(1, this._values.length - 1);
         var a = (this._startIndex / maxIdx) * 100;
@@ -570,6 +944,10 @@
         if (idx > this._endIndex) idx = this._endIndex; // start cannot pass end
         var changed = idx !== this._startIndex;
         this._startIndex = idx;
+        // Resizing redefines the window duration (in value units) so playback
+        // and later end-scrubbing preserve the user's new width instead of
+        // snapping back to the original `window`.
+        this._syncWindowFromBand();
         if (this._startInput) this._startInput.value = String(idx);
         this._renderRangeFill();
         this._updateWindowLabel();
@@ -580,6 +958,15 @@
         }
     };
 
+    // After a resize, store the window width in value units so the fixed-window
+    // playback path (_setWindowEnd -> _computeStartIndex) keeps it.
+    SliderControl.prototype._syncWindowFromBand = function () {
+        if (this._mode !== "window") return;
+        if (!this._values.length) return;
+        this._window =
+            this._values[this._endIndex] - this._values[this._startIndex];
+    };
+
     SliderControl.prototype._setEnd = function (idx, opts) {
         opts = opts || {};
         idx = this._clampIndex(idx);
@@ -587,6 +974,7 @@
         var changed = idx !== this._endIndex;
         this._endIndex = idx;
         this._index = idx; // keep _index synced to the end for paint/label reuse
+        this._syncWindowFromBand();
         if (this._endInput) this._endInput.value = String(idx);
         this._renderRangeFill();
         this._updateWindowLabel();
@@ -597,18 +985,14 @@
         }
     };
 
-    // Slide the band so its end sits at idx, preserving width (clamped at the
-    // left edge). Used by the proxy updater and could back a "go to" jump.
+    // Slide the band so its end sits at idx. For a fixed `window`, recompute
+    // the start from value units (`end - window`) rather than preserving index
+    // distance; this keeps temporal windows correct when the value grid has
+    // missing hours/days.
     SliderControl.prototype._setWindowEnd = function (idx, opts) {
         opts = opts || {};
-        var maxIdx = this._values.length - 1;
-        var width = this._endIndex - this._startIndex;
         idx = this._clampIndex(idx);
-        var startIdx = idx - width;
-        if (startIdx < 0) {
-            startIdx = 0;
-            idx = Math.min(width, maxIdx);
-        }
+        var startIdx = this._computeStartIndex(idx);
         if (opts.pause) this._stopLoop();
         this._setBand(startIdx, idx, { force: true });
     };
@@ -623,9 +1007,9 @@
                 this._stopLoop();
                 return;
             }
-            this._setBand(0, Math.min(width, maxIdx), { force: true });
+            this._setWindowEnd(Math.min(width, maxIdx), { force: true });
         } else {
-            this._setBand(this._startIndex + 1, this._endIndex + 1, { force: true });
+            this._setWindowEnd(this._endIndex + 1, { force: true });
         }
     };
 
@@ -793,6 +1177,7 @@
         if (this._input) this._input.value = String(clamped);
         if (this._valueEl) this._valueEl.textContent = this._labels[clamped] || "";
         this._updateHistogramHighlight();
+        if (this._brushBand) this._renderBrush();
         if (opts.pause) this._stopLoop();
         if (changed || opts.force) {
             this._applyFilterToLayers();

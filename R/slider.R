@@ -1,3 +1,248 @@
+#' Style a slider control
+#'
+#' Builds an appearance specification for [add_slider_control()]. Use a preset
+#' string (`"light"`, `"dark"`, or `"auto"`) as a starting point and override
+#' individual pieces of the control on top of it. The older
+#' `background_color`, `text_color`, `accent_color`, and `width` arguments on
+#' [add_slider_control()] continue to work for simple styling; use
+#' `slider_style()` when you need control over the container, play button,
+#' track, thumb, and histogram.
+#'
+#' @param preset Optional base theme: `"light"`, `"dark"`, or `"auto"`.
+#'   `"auto"` currently resolves to the light preset.
+#' @param width Slider container width in pixels.
+#' @param background_color CSS color for the control background.
+#' @param background_opacity Numeric in `[0, 1]` for background opacity.
+#' @param text_color CSS color for general text.
+#' @param border_color CSS color for the container border.
+#' @param border_width Border width in pixels.
+#' @param border_radius Corner radius in pixels.
+#' @param font_family CSS `font-family` string.
+#' @param font_size Font size in pixels.
+#' @param font_weight CSS `font-weight`.
+#' @param padding Internal padding as a CSS size string or numeric pixels.
+#' @param shadow Logical; whether to draw a drop shadow.
+#' @param shadow_color CSS color of the drop shadow.
+#' @param shadow_size Blur radius of the drop shadow in pixels.
+#' @param title_color,title_size,title_weight Styling for the optional title.
+#' @param value_color,value_size,value_weight Styling for the current value
+#'   label.
+#' @param accent_color Main accent color. Used as the default active track,
+#'   thumb, play hover, and histogram color.
+#' @param play_button_background,play_button_color,play_button_border_color
+#'   Styling for the play/pause button.
+#' @param track_color,active_color CSS colors for the inactive and active track.
+#' @param track_height Track height in pixels.
+#' @param thumb_color,thumb_border_color CSS colors for the slider thumb.
+#' @param thumb_size Thumb diameter in pixels.
+#' @param histogram_height Histogram height in pixels.
+#' @param histogram_bar_color Histogram bar color.
+#' @param histogram_active_opacity,histogram_inactive_opacity Bar opacity for
+#'   selected and unselected histogram bins.
+#'
+#' @return A list of class `mapgl_slider_style`.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' slider_style("dark", accent_color = "#9fd3ff")
+#'
+#' slider_style(
+#'   background_color = "rgba(20, 30, 48, 0.92)",
+#'   text_color = "#f8fafc",
+#'   active_color = "#7dd3fc",
+#'   thumb_size = 18
+#' )
+#' }
+slider_style <- function(
+  preset = NULL,
+  width = NULL,
+  background_color = NULL,
+  background_opacity = NULL,
+  text_color = NULL,
+  border_color = NULL,
+  border_width = NULL,
+  border_radius = NULL,
+  font_family = NULL,
+  font_size = NULL,
+  font_weight = NULL,
+  padding = NULL,
+  shadow = NULL,
+  shadow_color = NULL,
+  shadow_size = NULL,
+  title_color = NULL,
+  title_size = NULL,
+  title_weight = NULL,
+  value_color = NULL,
+  value_size = NULL,
+  value_weight = NULL,
+  accent_color = NULL,
+  play_button_background = NULL,
+  play_button_color = NULL,
+  play_button_border_color = NULL,
+  track_color = NULL,
+  active_color = NULL,
+  track_height = NULL,
+  thumb_color = NULL,
+  thumb_border_color = NULL,
+  thumb_size = NULL,
+  histogram_height = NULL,
+  histogram_bar_color = NULL,
+  histogram_active_opacity = NULL,
+  histogram_inactive_opacity = NULL
+) {
+  if (!is.null(preset)) {
+    preset <- match.arg(preset, c("light", "dark", "auto"))
+  }
+
+  style <- list(
+    preset = preset,
+    width = width,
+    background_color = background_color,
+    background_opacity = background_opacity,
+    text_color = text_color,
+    border_color = border_color,
+    border_width = border_width,
+    border_radius = border_radius,
+    font_family = font_family,
+    font_size = font_size,
+    font_weight = font_weight,
+    padding = padding,
+    shadow = shadow,
+    shadow_color = shadow_color,
+    shadow_size = shadow_size,
+    title_color = title_color,
+    title_size = title_size,
+    title_weight = title_weight,
+    value_color = value_color,
+    value_size = value_size,
+    value_weight = value_weight,
+    accent_color = accent_color,
+    play_button_background = play_button_background,
+    play_button_color = play_button_color,
+    play_button_border_color = play_button_border_color,
+    track_color = track_color,
+    active_color = active_color,
+    track_height = track_height,
+    thumb_color = thumb_color,
+    thumb_border_color = thumb_border_color,
+    thumb_size = thumb_size,
+    histogram_height = histogram_height,
+    histogram_bar_color = histogram_bar_color,
+    histogram_active_opacity = histogram_active_opacity,
+    histogram_inactive_opacity = histogram_inactive_opacity
+  )
+
+  style <- style[!vapply(style, is.null, logical(1))]
+  class(style) <- "mapgl_slider_style"
+  style
+}
+
+mapgl_slider_style_preset <- function(name) {
+  switch(
+    name,
+    light = list(
+      width = 280,
+      background_color = "#ffffffcc",
+      text_color = "#404040",
+      border_color = "rgba(0, 0, 0, 0.15)",
+      border_width = 1,
+      border_radius = 4,
+      font_family = "\"Open Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      font_size = 12,
+      font_weight = 400,
+      padding = "10px 12px 8px 12px",
+      shadow = TRUE,
+      shadow_color = "rgba(0, 0, 0, 0.15)",
+      shadow_size = 6,
+      title_size = 13,
+      title_weight = 500,
+      value_size = 12,
+      value_weight = 500,
+      # accent_color is the single source of truth; the active/thumb/play/bar
+      # colors derive from it (in JS) unless explicitly overridden, so setting
+      # accent_color alone re-themes the whole control.
+      accent_color = "#4a90e2",
+      play_button_background = "#ffffff",
+      play_button_border_color = "rgba(0, 0, 0, 0.15)",
+      track_color = "rgba(0, 0, 0, 0.15)",
+      track_height = 4,
+      thumb_border_color = "#ffffff",
+      thumb_size = 15,
+      histogram_height = 46,
+      histogram_active_opacity = 1,
+      histogram_inactive_opacity = 0.28
+    ),
+    dark = list(
+      width = 280,
+      background_color = "rgba(24, 30, 38, 0.92)",
+      text_color = "#f3f4f6",
+      border_color = "rgba(255, 255, 255, 0.18)",
+      border_width = 1,
+      border_radius = 6,
+      font_family = "\"Open Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      font_size = 12,
+      font_weight = 400,
+      padding = "10px 12px 8px 12px",
+      shadow = TRUE,
+      shadow_color = "rgba(0, 0, 0, 0.35)",
+      shadow_size = 10,
+      title_size = 13,
+      title_weight = 600,
+      value_size = 12,
+      value_weight = 500,
+      # accent_color drives active/thumb/play/bar colors unless overridden.
+      accent_color = "#8cc8ff",
+      play_button_background = "rgba(255, 255, 255, 0.08)",
+      play_button_border_color = "rgba(255, 255, 255, 0.22)",
+      track_color = "rgba(255, 255, 255, 0.22)",
+      track_height = 4,
+      thumb_border_color = "#10151d",
+      thumb_size = 15,
+      histogram_height = 46,
+      histogram_active_opacity = 1,
+      histogram_inactive_opacity = 0.24
+    ),
+    NULL
+  )
+}
+
+mapgl_normalize_slider_style <- function(x, arg = "slider_style") {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (is.character(x) && length(x) == 1 && !is.na(x)) {
+    x <- slider_style(preset = x)
+  }
+  if (!inherits(x, "mapgl_slider_style")) {
+    rlang::abort(paste0(
+      "`",
+      arg,
+      "` must be a preset string (\"light\", \"dark\", or \"auto\") or a ",
+      "`slider_style()` object."
+    ))
+  }
+
+  preset <- x$preset
+  base <- list()
+  if (!is.null(preset)) {
+    if (identical(preset, "auto")) {
+      preset <- "light"
+    }
+    base <- mapgl_slider_style_preset(preset)
+    if (is.null(base)) {
+      rlang::abort(sprintf("Unknown slider style preset \"%s\".", preset))
+    }
+  }
+
+  overrides <- x[setdiff(names(x), "preset")]
+  spec <- utils::modifyList(base, overrides)
+  if (length(spec) == 0) {
+    return(NULL)
+  }
+  spec
+}
+
 #' Add a slider control to a map
 #'
 #' Adds an interactive slider to a Mapbox GL or MapLibre GL map that
@@ -55,7 +300,12 @@
 #' @param values Numeric vector of steps. Required unless `min` and
 #'   `max` are supplied.
 #' @param labels Optional character vector of display labels (one per
-#'   value). Defaults to `as.character(values)`.
+#'   value). When omitted, labels default to `as.character(values)`, except
+#'   when `time_unit` is `"seconds"` or `"date"`: then the numeric values are
+#'   formatted back into readable timestamps (`"%Y-%m-%d %H:%M"` in UTC for
+#'   seconds, `"%Y-%m-%d"` for dates) so a time-driven slider does not display
+#'   raw epoch numbers. Pass an explicit vector to localize or change the
+#'   format.
 #' @param min,max,step Numeric range specification used when `values` is
 #'   not supplied. `values` is generated via `seq(min, max, by = step)`.
 #' @param mode One of `"sequential"` (default) — each step shows only
@@ -70,6 +320,17 @@
 #'   sliding window `[T - window, T]`, where `window` is expressed in the
 #'   same units as `values` (e.g. for [as_time_property()] `unit =
 #'   "date"`, `window = 7` is a 7-day window).
+#' @param presentation Visual style of the control. `"compact"` (default) is
+#'   a small slider (optionally with a density strip behind it). `"timeline"`
+#'   renders a prominent, brushable histogram as the control itself -- drag the
+#'   selected window across the bars, or drag its edges to resize it (as in
+#'   FlowMapBlue's time control). `"timeline"` requires histogram data
+#'   (`counts` or `histogram_data`) and implies `histogram = TRUE`.
+#' @param window_behavior Only used when `mode = "window"`. `"auto"` (default)
+#'   uses a fixed-duration window when `window` is supplied and a resizable
+#'   range otherwise. `"fixed"` pins the window width to `window` and moves the
+#'   whole `[end - window, end]` band. `"resizable"` lets the user drag either
+#'   edge to resize the selected range.
 #' @param histogram Logical; if `TRUE`, draw a density strip behind the
 #'   slider showing how many features fall at each value (a data-density
 #'   backdrop, most useful with `mode = "window"` where the selected band
@@ -82,7 +343,9 @@
 #' @param counts Numeric vector of pre-computed bar heights, one per
 #'   `values`. An alternative to `histogram_data` when you already have
 #'   per-step counts. Ignored unless `histogram = TRUE`.
-#' @param initial_value Value to start on. Defaults to the first value.
+#' @param initial_value Value to start on. In `"window"` mode this is the
+#'   window end value and defaults to the last value; other modes default
+#'   to the first value.
 #' @param paint_property Optional Mapbox paint property the slider
 #'   should animate, supplied in snake_case to match the rest of the
 #'   package (e.g. `"fill_color"`, `"fill_extrusion_height"`,
@@ -112,11 +375,16 @@
 #' @param title Optional title shown above the slider.
 #' @param show_value Logical; show the current label beside the slider.
 #'   Default `TRUE`.
+#' @param slider_style Optional appearance for the slider: a preset string
+#'   (`"light"`, `"dark"`, or `"auto"`) or a [slider_style()] object. When
+#'   omitted, the legacy `width`, `background_color`, `text_color`, and
+#'   `accent_color` arguments are used.
 #' @param width Slider container width in pixels. Default `280`.
 #' @param position One of `"top-left"`, `"top-right"`, `"bottom-left"`,
 #'   `"bottom-right"`. Default `"top-left"`.
 #' @param background_color,text_color,accent_color Styling overrides.
-#'   Defaults match the package's other controls.
+#'   Defaults match the package's other controls. For full control of the
+#'   slider appearance, use `slider_style`.
 #'
 #' @return The modified map or proxy object, invisibly.
 #'
@@ -180,6 +448,8 @@ add_slider_control <- function(
   step = 1,
   mode = c("sequential", "cumulative", "window"),
   window = NULL,
+  presentation = c("compact", "timeline"),
+  window_behavior = c("auto", "resizable", "fixed"),
   histogram = FALSE,
   histogram_data = NULL,
   counts = NULL,
@@ -192,6 +462,7 @@ add_slider_control <- function(
   loop = TRUE,
   title = NULL,
   show_value = TRUE,
+  slider_style = NULL,
   width = 280,
   position = "top-left",
   background_color = "#ffffffcc",
@@ -200,6 +471,8 @@ add_slider_control <- function(
 ) {
   # ---- arg validation -------------------------------------------------
   mode <- match.arg(mode)
+  presentation <- match.arg(presentation)
+  window_behavior <- match.arg(window_behavior)
 
   if (!is.character(layers) || length(layers) == 0) {
     rlang::abort("`layers` must be a non-empty character vector of layer IDs.")
@@ -319,6 +592,31 @@ add_slider_control <- function(
   if (mode == "window" && !has_filter) {
     rlang::abort('`mode = "window"` requires `property` (range filtering needs a property to filter on).')
   }
+  if (window_behavior == "auto") {
+    window_behavior <- if (mode == "window" && !is.null(window)) {
+      "fixed"
+    } else {
+      "resizable"
+    }
+  }
+  if (window_behavior == "fixed" && mode != "window") {
+    rlang::abort('`window_behavior = "fixed"` only applies when `mode = "window"`.')
+  }
+  if (window_behavior == "fixed" && is.null(window)) {
+    rlang::abort('`window_behavior = "fixed"` requires a positive `window` duration.')
+  }
+
+  # The timeline presentation IS the histogram (you brush on it), so it
+  # implies the density data and turns the histogram on.
+  if (presentation == "timeline") {
+    if (is.null(counts) && is.null(histogram_data)) {
+      rlang::abort(c(
+        '`presentation = "timeline"` needs the bar data to draw the brushable histogram.',
+        i = "Supply `counts` (one per value) or `histogram_data` (raw values to bin)."
+      ))
+    }
+    histogram <- TRUE
+  }
 
   # `time_unit` is only consequential when a target layer is a flowmap:
   # ordinary layers filter on the numeric property directly, but flowmap
@@ -382,7 +680,7 @@ add_slider_control <- function(
   }
 
   if (is.null(labels)) {
-    labels <- as.character(values)
+    labels <- slider_default_labels(values, time_unit)
   } else {
     if (length(labels) != length(values)) {
       rlang::abort("`labels` must have the same length as `values`.")
@@ -413,6 +711,11 @@ add_slider_control <- function(
       )
     )
   }
+
+  slider_style_spec <- mapgl_normalize_slider_style(
+    slider_style,
+    arg = "slider_style"
+  )
 
   # Every paint property's expression list must match `values` length
   # (checked after `values` is resolved from `min`/`max`). Applies to
@@ -485,6 +788,8 @@ add_slider_control <- function(
     values = as.list(values),
     labels = as.list(labels),
     mode = mode,
+    presentation = presentation,
+    window_behavior = window_behavior,
     initial_index = initial_index,
     play_button = isTRUE(play_button),
     animation_duration = as.integer(animation_duration),
@@ -496,6 +801,7 @@ add_slider_control <- function(
     text_color = text_color,
     accent_color = accent_color
   )
+  if (!is.null(slider_style_spec)) options$slider_style <- slider_style_spec
   if (!is.null(title)) options$title <- title
   if (!is.null(window)) options$window <- window
   if (!is.null(time_unit)) options$time_unit <- time_unit
@@ -688,5 +994,29 @@ as_time_property <- function(
     day     = as.integer(posix$mday),
     date    = as.numeric(as.Date(posix)),
     seconds = as.numeric(as.POSIXct(posix))
+  )
+}
+
+# Build readable default labels when none are supplied. For absolute time
+# units the numeric `values` are timestamps (the inverse of as_time_property()),
+# so they are formatted back into dates/times rather than shown as raw epoch
+# numbers. UTC is used to mirror as_time_property()'s absolute encoding; pass
+# an explicit `labels` vector to localize or change the format.
+slider_default_labels <- function(values, time_unit = NULL) {
+  if (is.null(time_unit)) {
+    return(as.character(values))
+  }
+
+  switch(
+    time_unit,
+    seconds = format(
+      as.POSIXct(values, origin = "1970-01-01", tz = "UTC"),
+      "%Y-%m-%d %H:%M"
+    ),
+    date = format(
+      as.Date(values, origin = "1970-01-01"),
+      "%Y-%m-%d"
+    ),
+    as.character(values)
   )
 }

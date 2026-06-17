@@ -19,6 +19,110 @@ test_that("as_time_property handles POSIXct, tz, and numeric passthrough", {
   expect_error(as_time_property(list(1), "year"), "Date, POSIXct, or numeric")
 })
 
+test_that("slider_style() builds, resolves, and serializes", {
+  s <- slider_style("dark", accent_color = "#ffcc00", thumb_size = 18)
+  expect_s3_class(s, "mapgl_slider_style")
+  expect_equal(s$preset, "dark")
+  expect_equal(s$accent_color, "#ffcc00")
+
+  resolved <- mapgl_normalize_slider_style(s)
+  expect_equal(resolved$background_color, "rgba(24, 30, 38, 0.92)")
+  expect_equal(resolved$text_color, "#f3f4f6")
+  expect_equal(resolved$accent_color, "#ffcc00")
+  expect_equal(resolved$thumb_size, 18)
+
+  custom <- mapgl_normalize_slider_style(
+    slider_style(background_color = "navy", text_color = "white")
+  )
+  expect_equal(custom$background_color, "navy")
+  expect_equal(custom$text_color, "white")
+  expect_null(mapgl_normalize_slider_style(NULL))
+  expect_error(mapgl_normalize_slider_style(42), "preset string")
+  expect_error(slider_style("sepia"), "should be one of")
+
+  w <- maplibre() |>
+    add_slider_control(
+      layers = "l",
+      property = "t",
+      values = 1:3,
+      slider_style = s
+    )
+  expect_equal(w$x$slider_control$slider_style$background_color, "rgba(24, 30, 38, 0.92)")
+  expect_equal(w$x$slider_control$slider_style$accent_color, "#ffcc00")
+  expect_equal(w$x$slider_control$slider_style$thumb_size, 18)
+})
+
+test_that("omitting slider_style keeps legacy styling payload unchanged", {
+  w <- maplibre() |>
+    add_slider_control(
+      layers = "l",
+      property = "t",
+      values = 1:3,
+      width = 320,
+      background_color = "#f8fafc",
+      text_color = "#111827",
+      accent_color = "#2563eb"
+    )
+
+  expect_null(w$x$slider_control$slider_style)
+  expect_equal(w$x$slider_control$width, 320L)
+  expect_equal(w$x$slider_control$background_color, "#f8fafc")
+  expect_equal(w$x$slider_control$text_color, "#111827")
+  expect_equal(w$x$slider_control$accent_color, "#2563eb")
+})
+
+test_that("slider auto-formats time labels from time_unit when labels are NULL", {
+  # seconds -> formatted datetime (UTC), the inverse of as_time_property()
+  secs <- as_time_property(
+    as.POSIXct(c("2019-07-01 00:00", "2019-07-01 01:00"), tz = "UTC"),
+    "seconds"
+  )
+  m <- maplibre() |>
+    add_slider_control(
+      layers = "x",
+      property = "t",
+      values = secs,
+      time_unit = "seconds",
+      mode = "window",
+      window = 3600
+    )
+  expect_equal(
+    unlist(m$x$slider$labels),
+    c("2019-07-01 00:00", "2019-07-01 01:00")
+  )
+
+  # date -> ISO date
+  dts <- as_time_property(as.Date(c("2020-01-01", "2020-06-15")), "date")
+  m2 <- maplibre() |>
+    add_slider_control(
+      layers = "x",
+      property = "d",
+      values = dts,
+      time_unit = "date",
+      mode = "window",
+      window = 30
+    )
+  expect_equal(unlist(m2$x$slider$labels), c("2020-01-01", "2020-06-15"))
+
+  # No time_unit -> raw numeric labels (unchanged behavior)
+  m3 <- maplibre() |>
+    add_slider_control(layers = "x", property = "year", values = 2015:2017)
+  expect_equal(unlist(m3$x$slider$labels), c("2015", "2016", "2017"))
+
+  # Explicit labels always win over auto-formatting
+  m4 <- maplibre() |>
+    add_slider_control(
+      layers = "x",
+      property = "t",
+      values = secs,
+      time_unit = "seconds",
+      labels = c("midnight", "1am"),
+      mode = "window",
+      window = 3600
+    )
+  expect_equal(unlist(m4$x$slider$labels), c("midnight", "1am"))
+})
+
 test_that("add_slider_control validates core args", {
   m <- maplibre()
   expect_error(
@@ -76,8 +180,44 @@ test_that("window mode validates correctly", {
     mode = "window", window = 3, time_unit = "year")
   expect_equal(w$x$slider_control$mode, "window")
   expect_equal(w$x$slider_control$window, 3)
+  expect_equal(w$x$slider_control$presentation, "compact")
+  # auto window_behavior -> fixed when a window duration is supplied
+  expect_equal(w$x$slider_control$window_behavior, "fixed")
   expect_equal(w$x$slider_control$time_unit, "year")
   expect_equal(w$x$slider_control$initial_index, 9L) # last value
+
+  # window_behavior can be forced to a resizable two-edge range
+  r <- add_slider_control(m, layers = "l", property = "t", values = 2015:2024,
+    mode = "window", window = 3, window_behavior = "resizable")
+  expect_equal(r$x$slider_control$window_behavior, "resizable")
+
+  # fixed behavior needs window mode + a window duration
+  expect_error(
+    add_slider_control(m, layers = "l", property = "t", values = 1:3,
+      window_behavior = "fixed"),
+    "only applies"
+  )
+  expect_error(
+    add_slider_control(m, layers = "l", property = "t", values = 1:3,
+      mode = "window", window_behavior = "fixed"),
+    "requires a positive"
+  )
+})
+
+test_that("presentation = 'timeline' implies the histogram and needs data", {
+  m <- maplibre()
+  t <- add_slider_control(m, layers = "l", property = "t", values = 1:10,
+    mode = "window", window = 3, presentation = "timeline",
+    counts = rep(1, 10))
+  expect_equal(t$x$slider_control$presentation, "timeline")
+  expect_true(t$x$slider_control$histogram)
+  expect_equal(length(t$x$slider_control$counts), 10)
+
+  expect_error(
+    add_slider_control(m, layers = "l", property = "t", values = 1:10,
+      mode = "window", window = 3, presentation = "timeline"),
+    "needs the bar data"
+  )
 })
 
 test_that("flowmap target in window mode needs an absolute time_unit", {

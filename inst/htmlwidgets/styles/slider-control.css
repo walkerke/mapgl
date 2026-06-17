@@ -22,6 +22,15 @@
     padding: 10px 12px 8px 12px;
     pointer-events: auto;
     --mapgl-slider-accent: #4a90e2;
+    --mapgl-slider-active-color: var(--mapgl-slider-accent);
+    --mapgl-slider-track-color: rgba(0, 0, 0, 0.15);
+    --mapgl-slider-track-height: 4px;
+    --mapgl-slider-thumb-color: var(--mapgl-slider-accent);
+    --mapgl-slider-thumb-border-color: #fff;
+    --mapgl-slider-thumb-size: 15px;
+    --mapgl-slider-play-background: #fff;
+    --mapgl-slider-play-color: var(--mapgl-slider-accent);
+    --mapgl-slider-play-border-color: rgba(0, 0, 0, 0.15);
 }
 
 .mapgl-slider .mapgl-slider-body {
@@ -67,9 +76,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #fff;
-    color: var(--mapgl-slider-accent);
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: var(--mapgl-slider-play-background);
+    color: var(--mapgl-slider-play-color);
+    border: 1px solid var(--mapgl-slider-play-border-color);
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease,
@@ -78,9 +87,9 @@
 }
 
 .mapgl-slider .mapgl-slider-play:hover {
-    background: var(--mapgl-slider-accent);
+    background: var(--mapgl-slider-active-color);
     color: #fff;
-    border-color: var(--mapgl-slider-accent);
+    border-color: var(--mapgl-slider-active-color);
 }
 
 .mapgl-slider .mapgl-slider-play:focus {
@@ -106,21 +115,21 @@
 
 /* WebKit */
 .mapgl-slider .mapgl-slider-input::-webkit-slider-runnable-track {
-    height: 4px;
-    background: rgba(0, 0, 0, 0.15);
+    height: var(--mapgl-slider-track-height);
+    background: var(--mapgl-slider-track-color);
     border-radius: 2px;
 }
 
 .mapgl-slider .mapgl-slider-input::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    height: 14px;
-    width: 14px;
+    height: var(--mapgl-slider-thumb-size);
+    width: var(--mapgl-slider-thumb-size);
     border-radius: 50%;
-    background: var(--mapgl-slider-accent);
-    border: 2px solid #fff;
+    background: var(--mapgl-slider-thumb-color);
+    border: 2px solid var(--mapgl-slider-thumb-border-color);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-    margin-top: -5px;
+    margin-top: calc((var(--mapgl-slider-track-height) - var(--mapgl-slider-thumb-size)) / 2);
     cursor: ew-resize;
     transition: transform 0.1s ease;
 }
@@ -131,18 +140,18 @@
 
 /* Firefox */
 .mapgl-slider .mapgl-slider-input::-moz-range-track {
-    height: 4px;
-    background: rgba(0, 0, 0, 0.15);
+    height: var(--mapgl-slider-track-height);
+    background: var(--mapgl-slider-track-color);
     border-radius: 2px;
     border: none;
 }
 
 .mapgl-slider .mapgl-slider-input::-moz-range-thumb {
-    height: 14px;
-    width: 14px;
+    height: var(--mapgl-slider-thumb-size);
+    width: var(--mapgl-slider-thumb-size);
     border-radius: 50%;
-    background: var(--mapgl-slider-accent);
-    border: 2px solid #fff;
+    background: var(--mapgl-slider-thumb-color);
+    border: 2px solid var(--mapgl-slider-thumb-border-color);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     cursor: ew-resize;
     transition: transform 0.1s ease;
@@ -168,9 +177,9 @@
     position: absolute;
     left: 0;
     right: 0;
-    height: 4px;
+    height: var(--mapgl-slider-track-height);
     border-radius: 2px;
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--mapgl-slider-track-color);
     pointer-events: none;
 }
 
@@ -193,13 +202,18 @@
     left: 0;
     right: 0;
     transform: translateY(-50%);
-    height: 4px;
+    height: var(--mapgl-slider-track-height);
     border-radius: 2px;
-    background: var(--mapgl-slider-accent);
+    background: var(--mapgl-slider-active-color);
 }
 
 .mapgl-slider .mapgl-slider-range-fill.is-dragging {
     cursor: grabbing;
+}
+
+.mapgl-slider .mapgl-slider-range-fixed .mapgl-slider-range-fill {
+    pointer-events: none;
+    cursor: default;
 }
 
 .mapgl-slider .mapgl-slider-range input[type="range"] {
@@ -219,11 +233,11 @@
     -webkit-appearance: none;
     appearance: none;
     pointer-events: auto;
-    height: 15px;
-    width: 15px;
+    height: var(--mapgl-slider-thumb-size);
+    width: var(--mapgl-slider-thumb-size);
     border-radius: 50%;
-    background: var(--mapgl-slider-accent);
-    border: 2px solid #fff;
+    background: var(--mapgl-slider-thumb-color);
+    border: 2px solid var(--mapgl-slider-thumb-border-color);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     cursor: ew-resize;
 }
@@ -236,11 +250,11 @@
 /* Firefox thumbs */
 .mapgl-slider .mapgl-slider-range input[type="range"]::-moz-range-thumb {
     pointer-events: auto;
-    height: 15px;
-    width: 15px;
+    height: var(--mapgl-slider-thumb-size);
+    width: var(--mapgl-slider-thumb-size);
     border-radius: 50%;
-    background: var(--mapgl-slider-accent);
-    border: 2px solid #fff;
+    background: var(--mapgl-slider-thumb-color);
+    border: 2px solid var(--mapgl-slider-thumb-border-color);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     cursor: ew-resize;
 }
@@ -267,4 +281,135 @@
    smooths the active/dimmed change as the selection moves. */
 .mapgl-slider .mapgl-bar {
     transition: opacity 0.12s ease;
+}
+
+/* ---- Timeline presentation (brushable histogram) ---------------------- */
+.mapgl-slider.mapgl-slider-timeline-root {
+    min-width: 320px;
+    padding: 8px 10px 6px 10px;
+}
+
+.mapgl-slider .mapgl-slider-timeline-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.mapgl-slider .mapgl-slider-timeline-header .mapgl-slider-play {
+    width: 24px;
+    height: 24px;
+}
+
+.mapgl-slider .mapgl-slider-timeline-title {
+    margin: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mapgl-slider .mapgl-slider-timeline-readout {
+    margin: 0 0 5px 2px;
+    font-size: 11px;
+    opacity: 0.85;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mapgl-slider .mapgl-slider-timeline-chart {
+    position: relative;
+    width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    cursor: crosshair;
+}
+
+.mapgl-slider .mapgl-slider-timeline-hist {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.mapgl-slider .mapgl-slider-timeline-hist svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.mapgl-slider .mapgl-slider-brush {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    background: color-mix(in srgb, var(--mapgl-slider-accent) 16%, transparent);
+    border-left: 1px solid var(--mapgl-slider-accent);
+    border-right: 1px solid var(--mapgl-slider-accent);
+    cursor: grab;
+    min-width: 2px;
+}
+
+.mapgl-slider .mapgl-slider-brush.is-dragging {
+    cursor: grabbing;
+}
+
+.mapgl-slider .mapgl-slider-brush-grip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    cursor: ew-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+}
+
+.mapgl-slider .mapgl-slider-brush-grip::after {
+    content: "";
+    width: 3px;
+    height: 56%;
+    border-radius: 2px;
+    background: var(--mapgl-slider-accent);
+}
+
+.mapgl-slider .mapgl-slider-brush-grip-start {
+    left: -6px;
+}
+
+.mapgl-slider .mapgl-slider-brush-grip-end {
+    right: -6px;
+}
+
+/* Fixed-width window: edges pan rather than resize (no resize cursor). */
+.mapgl-slider .mapgl-slider-brush-fixed,
+.mapgl-slider .mapgl-slider-brush-fixed .mapgl-slider-brush-grip {
+    cursor: grab;
+}
+
+.mapgl-slider .mapgl-slider-axis {
+    position: relative;
+    height: 14px;
+    margin-top: 4px;
+}
+
+.mapgl-slider .mapgl-slider-axis-tick {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 8px;
+    line-height: 1;
+    opacity: 0.65;
+    white-space: nowrap;
+}
+
+.mapgl-slider .mapgl-slider-axis-tick:first-child {
+    transform: translateX(0);
+}
+
+.mapgl-slider .mapgl-slider-axis-tick:last-child {
+    transform: translateX(-100%);
 }

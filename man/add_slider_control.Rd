@@ -16,6 +16,8 @@ add_slider_control(
   step = 1,
   mode = c("sequential", "cumulative", "window"),
   window = NULL,
+  presentation = c("compact", "timeline"),
+  window_behavior = c("auto", "resizable", "fixed"),
   histogram = FALSE,
   histogram_data = NULL,
   counts = NULL,
@@ -28,6 +30,7 @@ add_slider_control(
   loop = TRUE,
   title = NULL,
   show_value = TRUE,
+  slider_style = NULL,
   width = 280,
   position = "top-left",
   background_color = "#ffffffcc",
@@ -61,7 +64,12 @@ drive a flowmap window.}
 \code{max} are supplied.}
 
 \item{labels}{Optional character vector of display labels (one per
-value). Defaults to \code{as.character(values)}.}
+value). When omitted, labels default to \code{as.character(values)}, except
+when \code{time_unit} is \code{"seconds"} or \code{"date"}: then the numeric values are
+formatted back into readable timestamps (\code{"\%Y-\%m-\%d \%H:\%M"} in UTC for
+seconds, \code{"\%Y-\%m-\%d"} for dates) so a time-driven slider does not display
+raw epoch numbers. Pass an explicit vector to localize or change the
+format.}
 
 \item{min, max, step}{Numeric range specification used when \code{values} is
 not supplied. \code{values} is generated via \code{seq(min, max, by = step)}.}
@@ -79,6 +87,19 @@ a cumulative range \verb{[min(values), T]}; a positive number makes a
 sliding window \verb{[T - window, T]}, where \code{window} is expressed in the
 same units as \code{values} (e.g. for \code{\link[=as_time_property]{as_time_property()}} \code{unit = "date"}, \code{window = 7} is a 7-day window).}
 
+\item{presentation}{Visual style of the control. \code{"compact"} (default) is
+a small slider (optionally with a density strip behind it). \code{"timeline"}
+renders a prominent, brushable histogram as the control itself -- drag the
+selected window across the bars, or drag its edges to resize it (as in
+FlowMapBlue's time control). \code{"timeline"} requires histogram data
+(\code{counts} or \code{histogram_data}) and implies \code{histogram = TRUE}.}
+
+\item{window_behavior}{Only used when \code{mode = "window"}. \code{"auto"} (default)
+uses a fixed-duration window when \code{window} is supplied and a resizable
+range otherwise. \code{"fixed"} pins the window width to \code{window} and moves the
+whole \verb{[end - window, end]} band. \code{"resizable"} lets the user drag either
+edge to resize the selected range.}
+
 \item{histogram}{Logical; if \code{TRUE}, draw a density strip behind the
 slider showing how many features fall at each value (a data-density
 backdrop, most useful with \code{mode = "window"} where the selected band
@@ -94,7 +115,9 @@ to hand. Ignored unless \code{histogram = TRUE}.}
 \code{values}. An alternative to \code{histogram_data} when you already have
 per-step counts. Ignored unless \code{histogram = TRUE}.}
 
-\item{initial_value}{Value to start on. Defaults to the first value.}
+\item{initial_value}{Value to start on. In \code{"window"} mode this is the
+window end value and defaults to the last value; other modes default
+to the first value.}
 
 \item{paint_property}{Optional Mapbox paint property the slider
 should animate, supplied in snake_case to match the rest of the
@@ -133,13 +156,19 @@ the first. Default \code{TRUE}.}
 \item{show_value}{Logical; show the current label beside the slider.
 Default \code{TRUE}.}
 
+\item{slider_style}{Optional appearance for the slider: a preset string
+(\code{"light"}, \code{"dark"}, or \code{"auto"}) or a \code{\link[=slider_style]{slider_style()}} object. When
+omitted, the legacy \code{width}, \code{background_color}, \code{text_color}, and
+\code{accent_color} arguments are used.}
+
 \item{width}{Slider container width in pixels. Default \code{280}.}
 
 \item{position}{One of \code{"top-left"}, \code{"top-right"}, \code{"bottom-left"},
 \code{"bottom-right"}. Default \code{"top-left"}.}
 
 \item{background_color, text_color, accent_color}{Styling overrides.
-Defaults match the package's other controls.}
+Defaults match the package's other controls. For full control of the
+slider appearance, use \code{slider_style}.}
 }
 \value{
 The modified map or proxy object, invisibly.
