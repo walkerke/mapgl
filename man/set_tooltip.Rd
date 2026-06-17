@@ -4,16 +4,20 @@
 \alias{set_tooltip}
 \title{Set tooltip on a map layer}
 \usage{
-set_tooltip(map, layer_id = NULL, tooltip, layer = NULL)
+set_tooltip(map, layer_id = NULL, tooltip, layer = NULL, style = NULL)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or a proxy object.}
 
 \item{layer_id}{The ID of the layer to update.}
 
-\item{tooltip}{The name of the tooltip to set.}
+\item{tooltip}{Tooltip content: a column name, a \code{{brace}} template, or a
+\code{concat()}/\code{number_format()} expression.}
 
 \item{layer}{Deprecated. Use \code{layer_id} instead.}
+
+\item{style}{Optional tooltip appearance: a preset string (\code{"light"} or
+\code{"dark"}) or a \code{\link[=tooltip_style]{tooltip_style()}} object.}
 }
 \value{
 The updated map object.

@@ -1,9 +1,11 @@
 Package: mapgl
 Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS'
 Version: 0.4.9.9000
-Date: 2026-06-12
-Authors@R:
-    person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre"))
+Date: 2026-06-16
+Authors@R: c(
+    person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre")),
+    person(given = "Egor", family = "Kotov", email = "kotov.egor@gmail.com", role = "ctb",
+           comment = "flowmap support and histogram time control, adapted from #205"))
 Description: Provides an interface to the 'Mapbox GL JS' (<https://docs.mapbox.com/mapbox-gl-js/guides>)
     and the 'MapLibre GL JS' (<https://maplibre.org/maplibre-gl-js/docs/>) interactive mapping libraries to help users
     create custom interactive maps in R.  Users can create interactive globe visualizations; layer 'sf' objects to create
@@ -13,6 +15,7 @@ URL: https://walker-data.com/mapgl/
 BugReports: https://github.com/walkerke/mapgl/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends:

@@ -19,7 +19,9 @@ add_layer(
   tooltip = NULL,
   hover_options = NULL,
   before_id = NULL,
-  filter = NULL
+  filter = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL
 )
 }
 \arguments{
@@ -43,15 +45,17 @@ add_layer(
 
 \item{max_zoom}{The maximum zoom level for the layer.}
 
-\item{popup}{A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.}
+\item{popup}{Popup content shown on click: a column name, a \code{{brace}} template (e.g. \code{"{name}: {value}"}), or a \code{concat()}/\code{number_format()} expression. Columns containing HTML are parsed.}
 
-\item{tooltip}{A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.}
+\item{tooltip}{Tooltip content shown on hover; same forms as \code{popup}.}
 
 \item{hover_options}{A named list of options for highlighting features in the layer on hover.}
 
 \item{before_id}{The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).}
 
 \item{filter}{An optional filter expression to subset features in the layer.}
+
+\item{tooltip_style, popup_style}{Optional appearance for the tooltip/popup: a preset string (\code{"light"} or \code{"dark"}) or a \code{\link[=tooltip_style]{tooltip_style()}} object. When omitted, the native (unstyled) appearance is kept.}
 }
 \value{
 The modified map object with the new layer added.

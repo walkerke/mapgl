@@ -572,3 +572,35 @@ legend_style <- function(
   class(style_list) <- "mapgl_legend_style"
   return(style_list)
 }
+
+# Internal function to invoke a method on a map proxy
+mapgl_invoke_method <- function(map, type, ...) {
+  args <- list(...)
+  if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
+    if (
+      inherits(map, "mapboxgl_compare_proxy") ||
+        inherits(map, "maplibre_compare_proxy")
+    ) {
+      proxy_class <- if (inherits(map, "mapboxgl_compare_proxy"))
+        "mapboxgl-compare-proxy" else "maplibre-compare-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = c(list(type = type, map = map$map_side), args)
+        )
+      )
+    } else {
+      proxy_class <- if (inherits(map, "mapboxgl_proxy")) "mapboxgl-proxy" else
+        "maplibre-proxy"
+      map$session$sendCustomMessage(
+        proxy_class,
+        list(
+          id = map$id,
+          message = c(list(type = type), args)
+        )
+      )
+    }
+  }
+  return(map)
+}

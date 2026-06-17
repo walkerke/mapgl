@@ -524,12 +524,15 @@ move_layer <- function(map, layer_id, before_id = NULL) {
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param layer_id The ID of the layer to update.
-#' @param tooltip  The name of the tooltip to set.
+#' @param tooltip Tooltip content: a column name, a `{brace}` template, or a
+#'   `concat()`/`number_format()` expression.
 #' @param layer Deprecated. Use `layer_id` instead.
+#' @param style Optional tooltip appearance: a preset string (`"light"` or
+#'   `"dark"`) or a [tooltip_style()] object.
 #'
 #' @return The updated map object.
 #' @export
-set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
+set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL, style = NULL) {
   # Handle backwards compatibility
   if (!is.null(layer) && is.null(layer_id)) {
     layer_id <- layer
@@ -542,6 +545,7 @@ set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
   if (is.null(layer_id)) {
     stop("layer_id is required")
   }
+  style_spec <- mapgl_normalize_tooltip_style(style, arg = "style")
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
@@ -558,6 +562,7 @@ set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
             type = "set_tooltip",
             layer = layer_id,
             tooltip = tooltip,
+            tooltip_style = style_spec,
             map = map$map_side
           )
         )
@@ -573,7 +578,8 @@ set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
           message = list(
             type = "set_tooltip",
             layer = layer_id,
-            tooltip = tooltip
+            tooltip = tooltip,
+            tooltip_style = style_spec
           )
         )
       )
@@ -590,12 +596,15 @@ set_tooltip <- function(map, layer_id = NULL, tooltip, layer = NULL) {
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param layer_id The ID of the layer to update.
-#' @param popup The name of the popup property or an expression to set.
+#' @param popup Popup content: a column name, a `{brace}` template, or a
+#'   `concat()`/`number_format()` expression.
 #' @param layer Deprecated. Use `layer_id` instead.
+#' @param style Optional popup appearance: a preset string (`"light"` or
+#'   `"dark"`) or a [tooltip_style()]/[popup_style()] object.
 #'
 #' @return The updated map object.
 #' @export
-set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
+set_popup <- function(map, layer_id = NULL, popup, layer = NULL, style = NULL) {
   # Handle backwards compatibility
   if (!is.null(layer) && is.null(layer_id)) {
     layer_id <- layer
@@ -608,6 +617,7 @@ set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
   if (is.null(layer_id)) {
     stop("layer_id is required")
   }
+  style_spec <- mapgl_normalize_tooltip_style(style, arg = "style")
   if (any(inherits(map, "mapboxgl_proxy"), inherits(map, "maplibre_proxy"))) {
     if (
       inherits(map, "mapboxgl_compare_proxy") ||
@@ -624,6 +634,7 @@ set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
             type = "set_popup",
             layer = layer_id,
             popup = popup,
+            popup_style = style_spec,
             map = map$map_side
           )
         )
@@ -639,7 +650,8 @@ set_popup <- function(map, layer_id = NULL, popup, layer = NULL) {
           message = list(
             type = "set_popup",
             layer = layer_id,
-            popup = popup
+            popup = popup,
+            popup_style = style_spec
           )
         )
       )

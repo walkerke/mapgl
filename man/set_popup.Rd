@@ -4,16 +4,20 @@
 \alias{set_popup}
 \title{Set popup on a map layer}
 \usage{
-set_popup(map, layer_id = NULL, popup, layer = NULL)
+set_popup(map, layer_id = NULL, popup, layer = NULL, style = NULL)
 }
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function, or a proxy object.}
 
 \item{layer_id}{The ID of the layer to update.}
 
-\item{popup}{The name of the popup property or an expression to set.}
+\item{popup}{Popup content: a column name, a \code{{brace}} template, or a
+\code{concat()}/\code{number_format()} expression.}
 
 \item{layer}{Deprecated. Use \code{layer_id} instead.}
+
+\item{style}{Optional popup appearance: a preset string (\code{"light"} or
+\code{"dark"}) or a \code{\link[=tooltip_style]{tooltip_style()}}/\code{\link[=popup_style]{popup_style()}} object.}
 }
 \value{
 The updated map object.

@@ -21,5 +21,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Kyle Walker \email{kyle@walker-data.com}
 
+Other contributors:
+\itemize{
+  \item Egor Kotov \email{kotov.egor@gmail.com} (flowmap support and histogram time control, adapted from #205) [contributor]
+}
+
 }
 \keyword{internal}

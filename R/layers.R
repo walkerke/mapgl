@@ -12,8 +12,9 @@
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
 #' @param max_zoom The maximum zoom level for the layer.
-#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
-#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param popup Popup content shown on click: a column name, a `{brace}` template (e.g. `"{name}: {value}"`), or a `concat()`/`number_format()` expression. Columns containing HTML are parsed.
+#' @param tooltip Tooltip content shown on hover; same forms as `popup`.
+#' @param tooltip_style,popup_style Optional appearance for the tooltip/popup: a preset string (`"light"` or `"dark"`) or a [tooltip_style()] object. When omitted, the native (unstyled) appearance is kept.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
@@ -68,7 +69,9 @@ add_layer <- function(
   tooltip = NULL,
   hover_options = NULL,
   before_id = NULL,
-  filter = NULL
+  filter = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL
 ) {
   if (length(paint) == 0) {
     paint <- NULL
@@ -77,6 +80,12 @@ add_layer <- function(
   if (length(layout) == 0) {
     layout <- NULL
   }
+
+  tooltip_style <- mapgl_normalize_tooltip_style(
+    tooltip_style,
+    arg = "tooltip_style"
+  )
+  popup_style <- mapgl_normalize_tooltip_style(popup_style, arg = "popup_style")
 
   # Convert sfc/sf objects to GeoJSON source
   if (inherits(source, "sfc")) {
@@ -95,6 +104,8 @@ add_layer <- function(
     )
   }
 
+  map <- mapgl_resolve_pending_flowmaps(map, before_id = id)
+
   map$x$layers <- c(
     map$x$layers,
     list(list(
@@ -109,11 +120,15 @@ add_layer <- function(
       maxzoom = max_zoom,
       popup = popup,
       tooltip = tooltip,
+      tooltip_style = tooltip_style,
+      popup_style = popup_style,
       hover_options = hover_options,
       before_id = before_id,
       filter = filter
     ))
   )
+
+  map <- mapgl_record_layer_order(map, id)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
     layer <- list(
@@ -124,6 +139,8 @@ add_layer <- function(
       paint = paint,
       popup = popup,
       tooltip = tooltip,
+      tooltip_style = tooltip_style,
+      popup_style = popup_style,
       hover_options = hover_options,
       before_id = before_id
     )
@@ -206,8 +223,9 @@ add_layer <- function(
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
 #' @param max_zoom The maximum zoom level for the layer.
-#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
-#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param popup Popup content shown on click: a column name, a `{brace}` template (e.g. `"{name}: {value}"`), or a `concat()`/`number_format()` expression. Columns containing HTML are parsed.
+#' @param tooltip Tooltip content shown on hover; same forms as `popup`.
+#' @param tooltip_style,popup_style Optional appearance for the tooltip/popup: a preset string (`"light"` or `"dark"`) or a [tooltip_style()] object. When omitted, the native (unstyled) appearance is kept.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
@@ -263,6 +281,8 @@ add_fill_layer <- function(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
   hover_options = NULL,
   before_id = NULL,
   filter = NULL
@@ -303,7 +323,9 @@ add_fill_layer <- function(
     tooltip,
     hover_options,
     before_id,
-    filter
+    filter,
+    tooltip_style = tooltip_style,
+    popup_style = popup_style
   )
 
   return(map)
@@ -358,10 +380,9 @@ add_fill_layer <- function(
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
 #' @param max_zoom The maximum zoom level for the layer.
-#' @param popup A column name containing information to display in a popup on click.
-#'   Columns containing HTML will be parsed.
-#' @param tooltip A column name containing information to display in a tooltip on hover.
-#'   Columns containing HTML will be parsed.
+#' @param popup Popup content shown on click: a column name, a `{brace}` template (e.g. `"{name}: {value}"`), or a `concat()`/`number_format()` expression. Columns containing HTML are parsed.
+#' @param tooltip Tooltip content shown on hover; same forms as `popup`.
+#' @param tooltip_style,popup_style Optional appearance for the tooltip/popup: a preset string (`"light"` or `"dark"`) or a [tooltip_style()] object. When omitted, the native (unstyled) appearance is kept.
 #' @param hover_options A named list of options for highlighting features in the
 #'   layer on hover.
 #' @param before_id The name of the layer that this layer appears "before",
@@ -423,6 +444,8 @@ add_line_layer <- function(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
   hover_options = NULL,
   before_id = NULL,
   filter = NULL
@@ -483,7 +506,9 @@ add_line_layer <- function(
     tooltip,
     hover_options,
     before_id,
-    filter
+    filter,
+    tooltip_style = tooltip_style,
+    popup_style = popup_style
   )
 
   return(map)
@@ -617,8 +642,9 @@ add_heatmap_layer <- function(
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
 #' @param max_zoom The maximum zoom level for the layer.
-#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
-#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param popup Popup content shown on click: a column name, a `{brace}` template (e.g. `"{name}: {value}"`), or a `concat()`/`number_format()` expression. Columns containing HTML are parsed.
+#' @param tooltip Tooltip content shown on hover; same forms as `popup`.
+#' @param tooltip_style,popup_style Optional appearance for the tooltip/popup: a preset string (`"light"` or `"dark"`) or a [tooltip_style()] object. When omitted, the native (unstyled) appearance is kept.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
@@ -688,6 +714,8 @@ add_fill_extrusion_layer <- function(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
   hover_options = NULL,
   before_id = NULL,
   filter = NULL
@@ -765,7 +793,9 @@ add_fill_extrusion_layer <- function(
     tooltip,
     hover_options,
     before_id,
-    filter
+    filter,
+    tooltip_style = tooltip_style,
+    popup_style = popup_style
   )
 
   return(map)
@@ -947,8 +977,9 @@ cluster_options <- function(
 #' @param slot An optional slot for layer order.
 #' @param min_zoom The minimum zoom level for the layer.
 #' @param max_zoom The maximum zoom level for the layer.
-#' @param popup A column name containing information to display in a popup on click.  Columns containing HTML will be parsed.
-#' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param popup Popup content shown on click: a column name, a `{brace}` template (e.g. `"{name}: {value}"`), or a `concat()`/`number_format()` expression. Columns containing HTML are parsed.
+#' @param tooltip Tooltip content shown on hover; same forms as `popup`.
+#' @param tooltip_style,popup_style Optional appearance for the tooltip/popup: a preset string (`"light"` or `"dark"`) or a [tooltip_style()] object. When omitted, the native (unstyled) appearance is kept.
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
@@ -1053,6 +1084,8 @@ add_circle_layer <- function(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
   hover_options = NULL,
   before_id = NULL,
   filter = NULL,
@@ -1194,6 +1227,8 @@ add_circle_layer <- function(
       layout = layout,
       popup = popup,
       tooltip = tooltip,
+      tooltip_style = tooltip_style,
+      popup_style = popup_style,
       hover_options = hover_options,
       slot = slot,
       min_zoom = min_zoom,
@@ -1216,7 +1251,9 @@ add_circle_layer <- function(
       tooltip,
       hover_options,
       before_id,
-      filter
+      filter,
+      tooltip_style = tooltip_style,
+      popup_style = popup_style
     )
   }
 
@@ -1430,6 +1467,7 @@ add_raster_layer <- function(
 #' @param max_zoom The maximum zoom level for the layer.
 #' @param popup A column name containing information to display in a popup on click. Columns containing HTML will be parsed.
 #' @param tooltip A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.
+#' @param tooltip_style,popup_style Optional appearance for the tooltip/popup: a preset string (`"light"` or `"dark"`) or a [tooltip_style()] object. When omitted, the native (unstyled) appearance is kept.
 #' @param hover_options A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
@@ -1564,6 +1602,8 @@ add_symbol_layer <- function(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
   hover_options = NULL,
   before_id = NULL,
   filter = NULL,
@@ -1777,6 +1817,8 @@ add_symbol_layer <- function(
       layout = layout,
       popup = popup,
       tooltip = tooltip,
+      tooltip_style = tooltip_style,
+      popup_style = popup_style,
       hover_options = hover_options,
       slot = slot,
       min_zoom = min_zoom,
@@ -1799,7 +1841,9 @@ add_symbol_layer <- function(
       tooltip,
       hover_options,
       before_id,
-      filter
+      filter,
+      tooltip_style = tooltip_style,
+      popup_style = popup_style
     )
   }
 
