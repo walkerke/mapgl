@@ -3504,6 +3504,20 @@ HTMLWidgets.widget({
               });
             });
           }
+          // Process H3T (tiled h3j) sources if provided
+          if (mapData.h3t_sources) {
+            mapData.h3t_sources.forEach(function (source) {
+              map.addH3TSource(source.id, {
+                tiles: source.tiles,
+                sourcelayer: source.sourcelayer,
+                geometry_type: source.geometry_type,
+                minzoom: source.minzoom,
+                maxzoom: source.maxzoom,
+                promoteId: source.promoteId,
+                debug: source.debug,
+              });
+            });
+          }
 
           if (mapData.markers) {
             if (!window.maplibreglMarkers) {
@@ -4754,7 +4768,13 @@ HTMLWidgets.widget({
                 link.setAttribute("data-layer-ids", JSON.stringify(layerIds));
                 link.setAttribute("data-layer-type", config.type);
 
-                // Check if the first layer's visibility is set to "none" initially
+                // Check if the first layer's visibility is set to "none" initially.
+                // In a compare widget each side only has its own layers, but a single
+                // layers_control can reference ids from both sides (e.g. "sp" and "env")
+                // so the toggle can fire on both maps. If the first id isn't present on
+                // this map, fall back to "visible". We pre-check with getLayer() because
+                // getLayoutProperty() on a missing layer fires an error event (not a
+                // throw), which try/catch cannot silence.
                 const firstLayerId = layerIds[0];
                 const initialVisibility = getLayerControlVisibility(
                   map,
@@ -4771,6 +4791,9 @@ HTMLWidgets.widget({
                   const layerIds = JSON.parse(
                     this.getAttribute("data-layer-ids"),
                   );
+                  // read visibility from whichever map actually has this layer
+                  // (pre-check with getLayer() — getLayoutProperty fires an error
+                  // event on missing layers and try/catch cannot silence it)
                   const firstLayerId = layerIds[0];
                   const visibility = getLayerControlVisibility(
                     map,
