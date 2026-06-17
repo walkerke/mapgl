@@ -329,13 +329,18 @@ compare.mapboxgl <- function(
         stylesheet = "layers-control.css"
     )
 
+    dependencies <- c(
+        list(control_css),
+        unlist(lapply(maps, function(m) m$dependencies), recursive = FALSE)
+    )
+
     widget <- htmlwidgets::createWidget(
         name = "mapboxgl_compare",
         x,
         width = width,
         height = height,
         package = "mapgl",
-        dependencies = list(control_css),
+        dependencies = dependencies,
         elementId = if (is.null(shiny::getDefaultReactiveDomain()))
             elementId else NULL,
         sizingPolicy = htmlwidgets::sizingPolicy(
@@ -408,13 +413,18 @@ compare.maplibre <- function(
         stylesheet = "layers-control.css"
     )
 
+    dependencies <- c(
+        list(control_css),
+        unlist(lapply(maps, function(m) m$dependencies), recursive = FALSE)
+    )
+
     widget <- htmlwidgets::createWidget(
         name = "maplibregl_compare",
         x,
         width = width,
         height = height,
         package = "mapgl",
-        dependencies = list(control_css),
+        dependencies = dependencies,
         elementId = if (is.null(shiny::getDefaultReactiveDomain()))
             elementId else NULL,
         sizingPolicy = htmlwidgets::sizingPolicy(

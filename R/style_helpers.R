@@ -67,6 +67,142 @@ normalize_color_ramps <- function(color_ramps, selected_ramp = NULL, n = NULL) {
   normalized
 }
 
+mapgl_validate_color_vector <- function(colors, arg = "`colors`") {
+  if (!is.character(colors) || length(colors) < 2) {
+    rlang::abort(paste0(
+      arg,
+      " must be a character vector with at least two CSS colors."
+    ))
+  }
+
+  if (anyNA(colors) || any(!nzchar(trimws(colors)))) {
+    rlang::abort(paste0(arg, " must not contain missing or empty values."))
+  }
+
+  valid <- vapply(colors, mapgl_is_css_color, logical(1))
+  if (!all(valid)) {
+    rlang::abort(paste0(
+      arg,
+      " contains invalid CSS color",
+      if (sum(!valid) == 1) "" else "s",
+      ": ",
+      paste(utils::head(colors[!valid], 5), collapse = ", "),
+      if (sum(!valid) > 5) ", ..." else ""
+    ))
+  }
+
+  colors
+}
+
+mapgl_is_css_color <- function(color) {
+  color <- trimws(color)
+
+  if (grepl(
+    "^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$",
+    color,
+    perl = TRUE
+  )) {
+    return(TRUE)
+  }
+
+  if (mapgl_is_rgb_css_color(color)) {
+    return(TRUE)
+  }
+
+  !inherits(
+    try(grDevices::col2rgb(color, alpha = TRUE), silent = TRUE),
+    "try-error"
+  )
+}
+
+mapgl_is_rgb_css_color <- function(color) {
+  parsed <- mapgl_parse_rgb_css_color(color)
+  !is.null(parsed)
+}
+
+mapgl_parse_rgb_css_color <- function(color) {
+  match <- regexec(
+    "^(rgba?)\\((.*)\\)$",
+    trimws(color),
+    ignore.case = TRUE,
+    perl = TRUE
+  )
+  parts <- regmatches(trimws(color), match)[[1]]
+  if (length(parts) != 3) {
+    return(NULL)
+  }
+
+  fun <- tolower(parts[[2]])
+  values <- trimws(strsplit(parts[[3]], ",", fixed = TRUE)[[1]])
+  expected_length <- if (fun == "rgb") 3 else 4
+  if (length(values) != expected_length) {
+    return(NULL)
+  }
+
+  channels <- vapply(values[1:3], mapgl_parse_css_channel, numeric(1))
+  if (anyNA(channels)) {
+    return(NULL)
+  }
+
+  alpha <- 1
+  if (fun == "rgba") {
+    alpha <- mapgl_parse_css_alpha(values[[4]])
+    if (is.na(alpha)) {
+      return(NULL)
+    }
+  }
+
+  c(channels, alpha)
+}
+
+mapgl_parse_css_channel <- function(value) {
+  if (!grepl("^[-+]?(?:\\d+\\.?\\d*|\\.\\d+)%?$", value, perl = TRUE)) {
+    return(NA_real_)
+  }
+
+  is_percent <- grepl("%$", value)
+  parsed <- as.numeric(sub("%$", "", value))
+  if (!is.finite(parsed)) {
+    return(NA_real_)
+  }
+
+  if (is_percent) {
+    if (parsed < 0 || parsed > 100) {
+      return(NA_real_)
+    }
+    parsed * 255 / 100
+  } else {
+    if (parsed < 0 || parsed > 255) {
+      return(NA_real_)
+    }
+    parsed
+  }
+}
+
+mapgl_parse_css_alpha <- function(value) {
+  if (!grepl("^[-+]?(?:\\d+\\.?\\d*|\\.\\d+)%?$", value, perl = TRUE)) {
+    return(NA_real_)
+  }
+
+  is_percent <- grepl("%$", value)
+  parsed <- as.numeric(sub("%$", "", value))
+  if (!is.finite(parsed)) {
+    return(NA_real_)
+  }
+
+  if (is_percent) {
+    if (parsed < 0 || parsed > 100) {
+      return(NA_real_)
+    }
+    parsed / 100
+  } else {
+    if (parsed < 0 || parsed > 1) {
+      return(NA_real_)
+    }
+    parsed
+  }
+}
+
 #' Create an interpolation expression
 #'
 #' This function generates an interpolation expression that can be used to style your data.

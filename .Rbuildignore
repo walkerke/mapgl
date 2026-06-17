@@ -1,4 +1,5 @@
 ^.*\.Rproj$
+^\.git$
 ^\.Rproj\.user$
 ^docs$
 ^vignettes$
@@ -20,4 +21,8 @@ CLAUDE.md
 .DS_Store
 ^tools/check-save-map-integration\.R$
 ^tmp$
+^slider-demo\.R$
+^flowmap-demo\.R$
+^tooltip-demo\.R$
+^flowmap-screenshot\.png$
 ^\.dockerignore$

@@ -23,7 +23,7 @@ Useful links:
 
 Other contributors:
 \itemize{
-  \item Egor Kotov \email{kotov.egor@gmail.com} (histogram time control, adapted from #205) [contributor]
+  \item Egor Kotov \email{kotov.egor@gmail.com} (flowmap support and histogram time control, adapted from #205) [contributor]
 }
 
 }

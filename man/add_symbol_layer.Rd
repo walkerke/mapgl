@@ -81,6 +81,8 @@ add_symbol_layer(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
   hover_options = NULL,
   before_id = NULL,
   filter = NULL,
@@ -245,6 +247,8 @@ Requires \code{symbol_placement} to be set to \code{"point"} and \code{symbol-z-
 \item{popup}{A column name containing information to display in a popup on click. Columns containing HTML will be parsed.}
 
 \item{tooltip}{A column name containing information to display in a tooltip on hover. Columns containing HTML will be parsed.}
+
+\item{tooltip_style, popup_style}{Optional appearance for the tooltip/popup: a preset string (\code{"light"} or \code{"dark"}) or a \code{\link[=tooltip_style]{tooltip_style()}} object. When omitted, the native (unstyled) appearance is kept.}
 
 \item{hover_options}{A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.}
 

@@ -64,6 +64,14 @@ reference:
       - add_symbol_layer
       - add_view
 
+  - title: "Flow Maps"
+    desc: "Functions to add and customize origin-destination flow maps"
+    contents:
+      - add_flowmap
+      - set_flowmap_filter
+      - set_flowmap_settings
+      - flowmap_color_schemes
+
   - title: "Data Sources"
     desc: "Functions to add different types of data sources"
     contents:
@@ -133,6 +141,8 @@ reference:
       - get_column
       - concat
       - number_format
+      - tooltip_style
+      - popup_style
       - cluster_options
       - palette_to_lut
 
@@ -230,3 +240,9 @@ reference:
       - story_leaflet
       - story_section
       - on_section
+
+  - title: "Datasets"
+    desc: "Bundled example datasets"
+    contents:
+      - bixi_locations
+      - bixi_flows
