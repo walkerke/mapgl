@@ -196,6 +196,10 @@
 #' @param draggable Logical, whether the legend can be dragged to a new position by the user. Default is FALSE.
 #' @param collapsible Logical, whether to render a toggle button that collapses the legend to a header-only view. Default is FALSE. Most useful for categorical legends with tall bodies on small viewports.
 #' @param collapsed Logical, whether the legend starts in the collapsed state. Only applies when \code{collapsible = TRUE}. Default is FALSE.
+#' @param patch_spacing For categorical legends with per-item `sizes`, either
+#'   `"uniform"` (default; every row uses the largest symbol's height) or
+#'   `"proportional"` (each row's height tracks its own symbol size, so vertical
+#'   spacing scales with symbol size - useful for graduated-symbol legends).
 #'
 #' @details
 #' \strong{Collapsible legends.} When \code{collapsible = TRUE}, a 26x26px toggle
@@ -247,7 +251,8 @@ add_legend <- function(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
@@ -359,7 +364,8 @@ if (is.null(values) || is.null(colors)) {
         breaks,
         draggable,
         collapsible = collapsible,
-        collapsed = collapsed
+        collapsed = collapsed,
+        patch_spacing = patch_spacing
       )
     }
   }
@@ -677,7 +683,8 @@ add_categorical_legend <- function(
   breaks = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -756,6 +763,8 @@ add_categorical_legend <- function(
   }
 
   max_size <- max(sizes)
+  patch_spacing <- match.arg(patch_spacing)
+  proportional <- identical(patch_spacing, "proportional")
 
   # Function to process custom SVG shapes
   .process_custom_svg <- function(svg_string, color, size) {
@@ -948,7 +957,7 @@ add_categorical_legend <- function(
       container_height <- max(sizes) # Use max line thickness for consistent spacing
     } else {
       container_width <- max_size
-      container_height <- max_size
+      container_height <- if (proportional) sizes[[i]] else max_size
     }
 
     # Add data-value attribute for interactive legends

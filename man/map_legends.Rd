@@ -44,7 +44,8 @@ add_legend(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 
 add_categorical_legend(
@@ -71,7 +72,8 @@ add_categorical_legend(
   breaks = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 
 add_continuous_legend(
@@ -283,6 +285,11 @@ add_continuous_legend(
 \item{collapsible}{Logical, whether to render a toggle button that collapses the legend to a header-only view. Default is FALSE. Most useful for categorical legends with tall bodies on small viewports.}
 
 \item{collapsed}{Logical, whether the legend starts in the collapsed state. Only applies when \code{collapsible = TRUE}. Default is FALSE.}
+
+\item{patch_spacing}{For categorical legends with per-item \code{sizes}, either
+\code{"uniform"} (default; every row uses the largest symbol's height) or
+\code{"proportional"} (each row's height tracks its own symbol size, so vertical
+spacing scales with symbol size - useful for graduated-symbol legends).}
 }
 \value{
 The updated map object with the legend added.
