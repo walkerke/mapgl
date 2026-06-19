@@ -764,7 +764,18 @@
             if (mode === "resize-start") {
                 self._setStart(idxAt(e.clientX), { pause: true });
             } else if (mode === "resize-end") {
-                setEndOrCursor(idxAt(e.clientX));
+                var ei = idxAt(e.clientX);
+                if (self._mode === "window" && ei < self._startIndex) {
+                    // Dragged the end grip left past the start. This happens when
+                    // the window has collapsed against the right edge (start ==
+                    // end) and the end grip sits on top: without this the end
+                    // clamps at the start and the window is stuck. Hand off to a
+                    // start-resize so dragging left reopens the window instead.
+                    mode = "resize-start";
+                    self._setStart(ei, { pause: true });
+                } else {
+                    setEndOrCursor(ei);
+                }
             } else if (mode === "pan") {
                 var rect = chart.getBoundingClientRect();
                 var deltaIdx = Math.round(
