@@ -140,7 +140,8 @@ add_continuous_legend(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 
 \method{add_legend}{maplibre_compare}(
@@ -177,7 +178,8 @@ add_continuous_legend(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 
 \method{add_legend}{maplibregl_compare}(
@@ -214,7 +216,8 @@ add_continuous_legend(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 }
 \arguments{

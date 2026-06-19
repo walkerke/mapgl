@@ -34,7 +34,8 @@ add_legend.mapboxgl_compare <- function(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 ) {
 
   # Warn if interactive features are requested (not yet supported for compare maps)
@@ -126,7 +127,8 @@ add_legend.mapboxgl_compare <- function(
       patch_shape, position, unique_id, sizes, width,
       layer_id, margin_top, margin_right, margin_bottom,
       margin_left, style,
-      collapsible = collapsible, collapsed = collapsed
+      collapsible = collapsible, collapsed = collapsed,
+      patch_spacing = patch_spacing
     )
   }
   
@@ -504,7 +506,8 @@ build_categorical_legend <- function(
   margin_left = NULL,
   style = NULL,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -583,6 +586,8 @@ build_categorical_legend <- function(
   }
 
   max_size <- max(sizes)
+  patch_spacing <- match.arg(patch_spacing)
+  proportional <- identical(patch_spacing, "proportional")
 
   # Function to process custom SVG shapes
   .process_custom_svg <- function(svg_string, color, size) {
@@ -775,7 +780,7 @@ build_categorical_legend <- function(
       container_height <- max(sizes) # Use max line thickness for consistent spacing
     } else {
       container_width <- max_size
-      container_height <- max_size
+      container_height <- if (proportional) sizes[[i]] else max_size
     }
 
     paste0(

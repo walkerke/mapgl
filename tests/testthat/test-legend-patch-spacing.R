@@ -34,6 +34,26 @@ test_that("patch_spacing controls categorical legend row heights", {
   )
 })
 
+test_that("patch_spacing controls compare categorical legend row heights", {
+  sizes <- c(8, 16, 32)
+
+  widget <- compare(maplibre(), maplibre()) |>
+    add_legend(
+      legend_title = "Population",
+      values = c("Small", "Medium", "Large"),
+      colors = "#3182bd",
+      type = "categorical",
+      patch_shape = "circle",
+      sizes = sizes,
+      patch_spacing = "proportional"
+    )
+
+  legend_html <- widget$x$compare_legends[[1]]$html
+  for (s in sizes) {
+    expect_match(legend_html, paste0("height:", s, "px"), fixed = TRUE)
+  }
+})
+
 test_that("patch_spacing rejects unknown values", {
   expect_error(
     maplibre() |>
