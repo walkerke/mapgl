@@ -1,8 +1,8 @@
 # Create a Compare widget
 
-This function creates a comparison view between two Mapbox GL or
-Maplibre GL maps, allowing users to either swipe between the two maps or
-view them side-by-side with synchronized navigation.
+This function creates a comparison view between two or more Mapbox GL or
+Maplibre GL maps, allowing users to either swipe between two maps or
+view multiple maps side-by-side with synchronized navigation.
 
 ## Usage
 
@@ -10,13 +10,18 @@ view them side-by-side with synchronized navigation.
 compare(
   map1,
   map2,
+  ...,
   width = "100%",
   height = NULL,
   elementId = NULL,
   mousemove = FALSE,
   orientation = "vertical",
   mode = "swipe",
-  swiper_color = NULL
+  ncol = NULL,
+  swiper_color = NULL,
+  laser = FALSE,
+  laser_color = "#ff2d55",
+  laser_size = 14
 )
 ```
 
@@ -29,6 +34,14 @@ compare(
 - map2:
 
   A `mapboxgl` or `maplibre` object representing the second map.
+
+- ...:
+
+  Additional `mapboxgl` or `maplibre` objects to include in the
+  comparison. Supplying more than two maps requires `mode = "sync"`, and
+  the synced maps are arranged in a grid controlled by `ncol`. When
+  extra maps are supplied, all other arguments (`width`, `height`, etc.)
+  must be passed by name.
 
 - width:
 
@@ -60,11 +73,31 @@ compare(
   swipeable comparison with a slider, or "sync" for synchronized maps
   displayed next to each other.
 
+- ncol:
+
+  Number of columns in the synced map grid. Defaults to
+  `ceiling(sqrt(n))` for more than two maps; for two maps, `orientation`
+  controls the layout unless `ncol` is given. Only applicable when
+  `mode = "sync"`.
+
 - swiper_color:
 
   An optional CSS color value (e.g., "#000000", "rgb(0,0,0)", "black")
   to customize the color of the swiper handle. Only applicable when
   `mode="swipe"`.
+
+- laser:
+
+  Logical; if `TRUE`, show a laser pointer on the other maps that
+  follows the cursor location. Only applies when `mode = "sync"`.
+
+- laser_color:
+
+  CSS color for the laser pointer.
+
+- laser_size:
+
+  Size of the laser pointer in pixels.
 
 ## Value
 
@@ -77,10 +110,11 @@ A comparison widget.
 The `compare()` function supports two modes:
 
 - `mode="swipe"` (default) - Creates a swipeable interface with a slider
-  to reveal portions of each map
+  to reveal portions of each map. Swipe mode supports exactly two maps.
 
 - `mode="sync"` - Places the maps next to each other with synchronized
-  navigation
+  navigation. Sync mode supports two or more maps; pass additional maps
+  after `map1` and `map2` and control the grid layout with `ncol`.
 
 In both modes, navigation (panning, zooming, rotating, tilting) is
 synchronized between the maps.
@@ -133,6 +167,18 @@ clicks. For a compare widget with ID "mycompare", you'll have:
 
 - `input$mycompare_after_click` - Click events on the right/bottom map
 
+### Comparing more than two maps
+
+When more than two maps are supplied with `mode = "sync"`, the maps are
+identified as "map1", "map2", "map3", and so on, in the order they were
+passed to `compare()`. Use these identifiers (or their position as an
+integer) as `map_side` in the proxy functions, e.g.
+`maplibre_compare_proxy("mycompare", map_side = "map3")` or
+`map_side = 3`. Shiny input values follow the same naming:
+`input$mycompare_map1_view`, `input$mycompare_map3_click`, etc. Legends
+can be targeted at individual maps in the grid with
+`add_legend(..., target = "map3")`.
+
 ## Examples
 
 ``` r
@@ -147,6 +193,14 @@ compare(m1, m2)
 
 # Synchronized side-by-side mode
 compare(m1, m2, mode = "sync")
+
+# Synchronized maps with a laser pointer
+compare(m1, m2, mode = "sync", laser = TRUE)
+
+# Synchronize four maps in a 2 x 2 grid
+m3 <- mapboxgl(style = mapbox_style("streets"))
+m4 <- mapboxgl(style = mapbox_style("satellite"))
+compare(m1, m2, m3, m4, mode = "sync", ncol = 2)
 
 # Custom swiper color
 compare(m1, m2, swiper_color = "#FF0000")  # Red swiper
@@ -172,7 +226,7 @@ server <- function(input, output, session) {
     right_proxy <- maplibre_compare_proxy("comparison", map_side = "after")
     set_style(right_proxy, carto_style("voyager"))
   })
-  
+
   # Example with custom swiper color
   output$comparison2 <- renderMaplibreCompare({
     compare(

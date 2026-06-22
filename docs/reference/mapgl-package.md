@@ -20,3 +20,7 @@ Useful links:
 ## Author
 
 **Maintainer**: Kyle Walker <kyle@walker-data.com>
+
+Other contributors:
+
+- Egor Kotov <kotov.egor@gmail.com> \[contributor\]

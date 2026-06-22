@@ -78,7 +78,9 @@ add_bivariate_legend(
 
 - target:
 
-  For compare objects, one of `"compare"`, `"before"`, or `"after"`.
+  For compare objects, one of `"compare"`, `"before"`, or `"after"`; for
+  synced grids with more than two maps, a map identifier such as
+  `"map3"` can also be used.
 
 - draggable:
 

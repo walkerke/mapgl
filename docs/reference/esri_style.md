@@ -36,10 +36,9 @@ esri_style(
 - token:
 
   An ArcGIS access token (character) or an `httr2_token` object as
-  returned by
-  [`arcgisutils::auth_user()`](https://rdrr.io/pkg/arcgisutils/man/auth.html)
-  and similar functions. If not provided, the function will attempt to
-  use the `ARCGIS_API_KEY` environment variable.
+  returned by `arcgisutils::auth_user()` and similar functions. If not
+  provided, the function will attempt to use the `ARCGIS_API_KEY`
+  environment variable.
 
 - language:
 

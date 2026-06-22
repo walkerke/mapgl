@@ -149,6 +149,7 @@ draw_attribute("numeric", min = 0, max = 1, step = 0.1, default = 1)
 #> [1] 0.1
 #> 
 
+if (FALSE) { # \dontrun{
 mapboxgl() |>
   add_draw_control(
     attributes = list(
@@ -160,6 +161,5 @@ mapboxgl() |>
       value = draw_attribute("numeric")
     )
   )
-
-{"x":{"style":null,"center":[0,0],"zoom":0,"bearing":0,"pitch":0,"projection":"globe","parallels":null,"access_token":"pk.eyJ1Ijoia3dhbGtlcnRjdSIsImEiOiJMRk9JSmRvIn0.l1y2jHZ6IARHM_rA1-X45A","additional_params":[],"mapgl_id":"fa921692-5390-6552-81f7-0b06b589156b","draw_control":{"enabled":true,"position":"top-left","freehand":false,"simplify_freehand":false,"rectangle":false,"radius":false,"bezier":false,"bezier_polygon":false,"orientation":"vertical","options":[],"source":null,"attributes":[{"name":"status","type":"select","label":"status","choices":[{"value":"candidate","label":"Candidate"},{"value":"active","label":"Active"}],"required":false},{"name":"notes","type":"textarea","label":"notes","required":false},{"name":"value","type":"number","label":"value","required":false}],"download_button":false,"download_filename":"drawn-features","show_measurements":false,"measurement_units":"both","styling":{"point_color":"#3bb2d0","line_color":"#3bb2d0","fill_color":"#3bb2d0","fill_opacity":0.1,"active_color":"#fbb03b","vertex_radius":5,"line_width":2}}},"evals":[],"jsHooks":[]}
+} # }
 ```

@@ -14,6 +14,7 @@ sidebar using the **bslib** package that does nothing more than display
 North Carolina’s counties over a basemap.
 
 ``` r
+
 library(shiny)
 library(bslib)
 library(mapgl)
@@ -81,6 +82,7 @@ click.
 Try this example to see how this works:
 
 ``` r
+
 ui <- page_sidebar(
   title = "mapgl with Shiny",
   sidebar = sidebar(
@@ -152,6 +154,7 @@ color on the map, and a slider to filter the visible counties based on
 an expression.
 
 ``` r
+
 library(colourpicker)
 
 ui <- page_sidebar(

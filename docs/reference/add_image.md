@@ -1,7 +1,12 @@
 # Add an image to the map
 
 This function adds an image to the map's style. The image can be used
-with icon-image, background-pattern, fill-pattern, or line-pattern.
+with icon-image, background-pattern, fill-pattern, or line-pattern. It
+can also be used with a style list, such as one created by
+[`basemap_style()`](https://walker-data.com/mapgl/reference/basemap_style.md),
+before the style is supplied to
+[`maplibre()`](https://walker-data.com/mapgl/reference/maplibre.md) or
+[`mapboxgl()`](https://walker-data.com/mapgl/reference/mapboxgl.md).
 
 ## Usage
 
@@ -22,7 +27,8 @@ add_image(
 
 - map:
 
-  A map object created by the `mapboxgl` or `maplibre` functions.
+  A map object created by the `mapboxgl` or `maplibre` functions, a map
+  proxy, or a style list.
 
 - id:
 
@@ -61,7 +67,7 @@ add_image(
 
 ## Value
 
-The modified map object with the image added.
+The modified map object or style list with the image added.
 
 ## Examples
 

@@ -25,8 +25,10 @@ maplibre_compare_proxy(
 
 - map_side:
 
-  Which map side to target in the compare widget, either "before" or
-  "after".
+  Which map to target in the compare widget: "before" or "after" for
+  two-map widgets, or a map identifier such as "map3" (or its position
+  as an integer, e.g. `3`) for synced grids with more than two maps.
+  "before" and "after" are aliases for the first and second maps.
 
 ## Value
 

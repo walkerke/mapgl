@@ -82,6 +82,7 @@ reference:
       - add_image_source
       - add_video_source
       - add_h3j_source
+      - add_h3t_source
       - add_pmtiles_source
 
   - title: "Map Controls"
@@ -102,6 +103,7 @@ reference:
       - add_control
       - add_slider_control
       - update_slider_control
+      - slider_style
       - as_time_property
       - clear_controls
 

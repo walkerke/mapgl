@@ -82,6 +82,8 @@ add_symbol_layer(
   max_zoom = NULL,
   popup = NULL,
   tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
   hover_options = NULL,
   before_id = NULL,
   filter = NULL,
@@ -418,6 +420,13 @@ add_symbol_layer(
 
   A column name containing information to display in a tooltip on hover.
   Columns containing HTML will be parsed.
+
+- tooltip_style, popup_style:
+
+  Optional appearance for the tooltip/popup: a preset string (`"light"`
+  or `"dark"`) or a
+  [`tooltip_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
+  object. When omitted, the native (unstyled) appearance is kept.
 
 - hover_options:
 

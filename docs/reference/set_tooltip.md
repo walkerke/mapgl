@@ -5,7 +5,7 @@ Set tooltip on a map layer
 ## Usage
 
 ``` r
-set_tooltip(map, layer_id = NULL, tooltip, layer = NULL)
+set_tooltip(map, layer_id = NULL, tooltip, layer = NULL, style = NULL)
 ```
 
 ## Arguments
@@ -21,11 +21,20 @@ set_tooltip(map, layer_id = NULL, tooltip, layer = NULL)
 
 - tooltip:
 
-  The name of the tooltip to set.
+  Tooltip content: a column name, a `{brace}` template, or a
+  [`concat()`](https://walker-data.com/mapgl/reference/concat.md)/[`number_format()`](https://walker-data.com/mapgl/reference/number_format.md)
+  expression.
 
 - layer:
 
   Deprecated. Use `layer_id` instead.
+
+- style:
+
+  Optional tooltip appearance: a preset string (`"light"` or `"dark"`)
+  or a
+  [`tooltip_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
+  object.
 
 ## Value
 

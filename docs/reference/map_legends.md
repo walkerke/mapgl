@@ -43,7 +43,8 @@ add_legend(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 
 add_categorical_legend(
@@ -70,7 +71,8 @@ add_categorical_legend(
   breaks = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 
 add_continuous_legend(
@@ -138,7 +140,8 @@ add_legend(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 
 # S3 method for class 'maplibre_compare'
@@ -176,7 +179,47 @@ add_legend(
   na_color = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
+)
+
+# S3 method for class 'maplibregl_compare'
+add_legend(
+  map,
+  legend_title,
+  values,
+  colors,
+  type = c("continuous", "categorical"),
+  circular_patches = FALSE,
+  patch_shape = "square",
+  position = "top-left",
+  sizes = NULL,
+  add = FALSE,
+  unique_id = NULL,
+  width = NULL,
+  layer_id = NULL,
+  margin_top = NULL,
+  margin_right = NULL,
+  margin_bottom = NULL,
+  margin_left = NULL,
+  style = NULL,
+  target = "compare",
+  interactive = FALSE,
+  filter_column = NULL,
+  filter_values = NULL,
+  classification = NULL,
+  breaks = NULL,
+  color_ramps = NULL,
+  selected_ramp = NULL,
+  ramp_picker = !is.null(color_ramps),
+  ramp_labels = TRUE,
+  color_column = NULL,
+  color_property = NULL,
+  na_color = NULL,
+  draggable = FALSE,
+  collapsible = FALSE,
+  collapsed = FALSE,
+  patch_spacing = c("uniform", "proportional")
 )
 ```
 
@@ -279,7 +322,8 @@ add_legend(
   For compare objects only: where to place the legend. Can be "compare"
   (attached to compare container, persists during swipe), "before"
   (attached to left/top map), or "after" (attached to right/bottom map).
-  Default is "compare".
+  Default is "compare". For synced grids with more than two maps, a map
+  identifier such as "map3" can also be used.
 
 - interactive:
 
@@ -369,6 +413,14 @@ add_legend(
 
   Logical, whether the legend starts in the collapsed state. Only
   applies when `collapsible = TRUE`. Default is FALSE.
+
+- patch_spacing:
+
+  For categorical legends with per-item `sizes`, either `"uniform"`
+  (default; every row uses the largest symbol's height) or
+  `"proportional"` (each row's height tracks its own symbol size, so
+  vertical spacing scales with symbol size - useful for graduated-symbol
+  legends).
 
 ## Value
 

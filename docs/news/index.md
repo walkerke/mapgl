@@ -2,6 +2,127 @@
 
 ## mapgl 0.5.0
 
+CRAN release: 2026-06-20
+
+- Tooltips and popups now accept `{brace}` templates package-wide. Any
+  layer’s `tooltip`/`popup` (and
+  [`set_tooltip()`](https://walker-data.com/mapgl/reference/set_tooltip.md)/[`set_popup()`](https://walker-data.com/mapgl/reference/set_popup.md))
+  can take a glue-style template such as `"{name}: {population}"`, in
+  addition to the existing column name and
+  [`concat()`](https://walker-data.com/mapgl/reference/concat.md)/[`number_format()`](https://walker-data.com/mapgl/reference/number_format.md)
+  expression forms; substituted values are HTML-escaped.
+
+- New
+  [`tooltip_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
+  /
+  [`popup_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
+  helpers theme tooltips and popups without hand-written HTML/CSS,
+  mirroring
+  [`legend_style()`](https://walker-data.com/mapgl/reference/legend_style.md).
+  Pass a preset (`"light"`/`"dark"`) or custom appearance (background,
+  border, radius, font, padding, shadow) to the new
+  `tooltip_style`/`popup_style` argument on layer functions (and
+  [`set_tooltip()`](https://walker-data.com/mapgl/reference/set_tooltip.md)/[`set_popup()`](https://walker-data.com/mapgl/reference/set_popup.md)).
+  Tooltips are unstyled by default, so existing maps are unchanged.
+
+- New
+  [`add_flowmap()`](https://walker-data.com/mapgl/reference/add_flowmap.md)
+  draws animated origin-destination flow maps powered by Flowmap.gl
+  (deck.gl). It supports temporal flows, location clustering,
+  customizable color schemes
+  ([`flowmap_color_schemes()`](https://walker-data.com/mapgl/reference/flowmap_color_schemes.md)),
+  CSS blend modes, and themeable tooltips and popups (per-object-type
+  content via `list(location = , flow = )`, styled with
+  [`tooltip_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)/[`popup_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)).
+  Flow filters and settings can be updated reactively in Shiny with
+  [`set_flowmap_filter()`](https://walker-data.com/mapgl/reference/set_flowmap_filter.md)
+  and
+  [`set_flowmap_settings()`](https://walker-data.com/mapgl/reference/set_flowmap_settings.md),
+  and a `"window"`-mode
+  [`add_slider_control()`](https://walker-data.com/mapgl/reference/add_slider_control.md)
+  can drive a flowmap’s temporal range. The heavy flow-mapping libraries
+  load on demand, so maps without a flowmap are unaffected. Adapted from
+  Egor Kotov’s contribution in
+  [\#205](https://github.com/walkerke/mapgl/issues/205), with the
+  bundled `bixi_locations` and `bixi_flows` datasets as a ready-to-use
+  example.
+
+- New
+  [`add_slider_control()`](https://walker-data.com/mapgl/reference/add_slider_control.md)
+  adds an interactive slider that filters and/or animates one or more
+  layers by a numeric feature property. It composes with a layer’s
+  initial `filter`, later
+  [`set_filter()`](https://walker-data.com/mapgl/reference/set_filter.md)
+  calls, and interactive legends (intersecting via `["all", ...]`)
+  rather than replacing them. Modes are `"sequential"` (one value),
+  `"cumulative"` (everything through a value), and `"window"` (a
+  selected range that can also drive flowmap time ranges;
+  `window_behavior` chooses a `"resizable"` two-edge range or a
+  `"fixed"`-width band you pan). Two presentations: the default
+  `"compact"` slider, or `presentation = "timeline"` — a prominent,
+  brushable histogram (drag the selected window across the bars, drag
+  its edges to resize) modeled on Egor Kotov’s FlowMapBlue time control
+  ([\#205](https://github.com/walkerke/mapgl/issues/205)). Supports
+  paint-property animation, an optional play button, and an optional
+  density histogram (`histogram`/`histogram_data`/`counts`, drawn with
+  d3 loaded on demand). New
+  [`slider_style()`](https://walker-data.com/mapgl/reference/slider_style.md)
+  presets and overrides control the container, play button, track,
+  thumb, and histogram appearance, and `draggable = TRUE` lets the user
+  reposition the panel anywhere on the map (as with
+  [`add_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)).
+  Companions
+  [`update_slider_control()`](https://walker-data.com/mapgl/reference/update_slider_control.md)
+  (for Shiny proxies) and
+  [`as_time_property()`](https://walker-data.com/mapgl/reference/as_time_property.md)
+  (coerce `Date`/`POSIXct` to a numeric filter property) round out the
+  feature.
+
+- [`add_categorical_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)
+  and
+  [`add_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)
+  gain a `patch_spacing` argument (`"uniform"`/`"proportional"`). With
+  `"proportional"`, each legend row’s height tracks its own symbol size,
+  giving proportional vertical spacing for graduated-symbol legends; the
+  default `"uniform"` preserves existing behavior
+  ([\#206](https://github.com/walkerke/mapgl/issues/206), thanks to
+  [@mtennekes](https://github.com/mtennekes)).
+
+- 
+
+- New
+  [`add_h3t_source()`](https://walker-data.com/mapgl/reference/add_h3t_source.md)
+  adds a tiled H3 (h3t) source for MapLibre maps, fetching only the H3
+  cells in the current viewport from a `{z}/{x}/{y}` tile endpoint via
+  the `h3tiles://` protocol — a scalable alternative to
+  [`add_h3j_source()`](https://walker-data.com/mapgl/reference/add_h3j_source.md)
+  for large datasets. Works with multiple sources per map and on both
+  sides of
+  [`compare()`](https://walker-data.com/mapgl/reference/compare.md).
+  Bundled `h3j-h3t` library updated to 0.9.7
+  ([\#199](https://github.com/walkerke/mapgl/issues/199), thanks to
+  [@bbest](https://github.com/bbest)).
+
+- Update MapLibre GL JS to v5.24.0 and Mapbox GL JS to v3.24.0.
+
+- Fixed
+  [`add_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)
+  silently ignoring the `target` argument for MapLibre compare widgets:
+  the compare dispatch checked for class `"maplibre_compare"` while the
+  widget class is `"maplibregl_compare"`, so legends were attached as
+  regular map legends instead of compare-level legends.
+
+- [`compare()`](https://walker-data.com/mapgl/reference/compare.md) now
+  supports synchronizing more than two maps
+  ([\#204](https://github.com/walkerke/mapgl/issues/204)). Pass
+  additional maps after `map1` and `map2` with `mode = "sync"`, and
+  control the grid layout with the new `ncol` argument. In Shiny, maps
+  in multi-map widgets are addressed as `"map1"` through `"mapN"` via
+  `map_side` in the compare proxy functions (integers also accepted,
+  e.g. `map_side = 3`), and emit input values like `input$id_map3_view`.
+  Legends can be targeted at individual grid maps with
+  `target = "map3"`.
+
 - New bivariate mapping support with
   [`bivariate_scale()`](https://walker-data.com/mapgl/reference/bivariate_scale.md),
   [`bivariate_palettes()`](https://walker-data.com/mapgl/reference/bivariate_palettes.md),

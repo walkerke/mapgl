@@ -36,6 +36,20 @@ Functions to add various types of visualization layers to your map
 - [`add_view()`](https://walker-data.com/mapgl/reference/add_view.md) :
   Add a visualization layer to an existing map
 
+## Flow Maps
+
+Functions to add and customize origin-destination flow maps
+
+- [`add_flowmap()`](https://walker-data.com/mapgl/reference/add_flowmap.md)
+  : Adds a FlowmapGL layer for visualizing origin-destination flows
+  between point locations.
+- [`set_flowmap_filter()`](https://walker-data.com/mapgl/reference/set_flowmap_filter.md)
+  : Update flowmap filter
+- [`set_flowmap_settings()`](https://walker-data.com/mapgl/reference/set_flowmap_settings.md)
+  : Update a flowmap setting
+- [`flowmap_color_schemes()`](https://walker-data.com/mapgl/reference/flowmap_color_schemes.md)
+  : FlowMapGL color scheme names
+
 ## Data Sources
 
 Functions to add different types of data sources
@@ -54,6 +68,8 @@ Functions to add different types of data sources
   : Add a video source to a Mapbox GL or Maplibre GL map
 - [`add_h3j_source()`](https://walker-data.com/mapgl/reference/add_h3j_source.md)
   : Add a hexagon source from the H3 geospatial indexing system.
+- [`add_h3t_source()`](https://walker-data.com/mapgl/reference/add_h3t_source.md)
+  : Add a tiled hexagon source from the H3 geospatial indexing system.
 - [`add_pmtiles_source()`](https://walker-data.com/mapgl/reference/add_pmtiles_source.md)
   : Add a PMTiles source to a Mapbox GL or Maplibre GL map
 
@@ -87,6 +103,14 @@ Functions to add interactive controls to your map
   : Add a coordinates control to a map
 - [`add_control()`](https://walker-data.com/mapgl/reference/add_control.md)
   : Add a custom control to a map
+- [`add_slider_control()`](https://walker-data.com/mapgl/reference/add_slider_control.md)
+  : Add a slider control to a map
+- [`update_slider_control()`](https://walker-data.com/mapgl/reference/update_slider_control.md)
+  : Update a slider control from Shiny
+- [`slider_style()`](https://walker-data.com/mapgl/reference/slider_style.md)
+  : Style a slider control
+- [`as_time_property()`](https://walker-data.com/mapgl/reference/as_time_property.md)
+  : Coerce a time column to a numeric property for filtering
 - [`clear_controls()`](https://walker-data.com/mapgl/reference/clear_controls.md)
   : Clear controls from a Mapbox GL or Maplibre GL map in a Shiny app
 
@@ -153,6 +177,9 @@ Functions to help with map styling and expressions
   Create a concatenation expression
 - [`number_format()`](https://walker-data.com/mapgl/reference/number_format.md)
   : Create a number formatting expression
+- [`tooltip_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
+  [`popup_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
+  : Style a tooltip or popup
 - [`cluster_options()`](https://walker-data.com/mapgl/reference/cluster_options.md)
   : Prepare cluster options for circle layers
 - [`palette_to_lut()`](https://walker-data.com/mapgl/reference/palette_to_lut.md)
@@ -330,3 +357,12 @@ Functions for creating scrollytelling story maps
   : Create a story section for story maps
 - [`on_section()`](https://walker-data.com/mapgl/reference/on_section.md)
   : Observe events on story map section transitions
+
+## Datasets
+
+Bundled example datasets
+
+- [`bixi_locations`](https://walker-data.com/mapgl/reference/bixi_locations.md)
+  : BIXI Montréal Bike Share Stations (2019)
+- [`bixi_flows`](https://walker-data.com/mapgl/reference/bixi_flows.md)
+  : BIXI Montréal Hourly Bike Sharing Flows (July 1-7, 2019)

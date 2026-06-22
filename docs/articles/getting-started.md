@@ -8,6 +8,7 @@ function. Run the function with no arguments to get an interactive globe
 using Mapbox’s Standard style:
 
 ``` r
+
 library(mapgl)
 
 mapboxgl()
@@ -20,8 +21,7 @@ package and have installed your Mapbox access token,
 [`mapboxgl()`](https://walker-data.com/mapgl/reference/mapboxgl.md) will
 pick up your token for you. If you are new to my R packages, you’ll want
 to get a token from your Mapbox account, run
-[`usethis::edit_r_environ()`](https://usethis.r-lib.org/reference/edit.html),
-and set the environment variable
+`usethis::edit_r_environ()`, and set the environment variable
 `MAPBOX_PUBLIC_TOKEN="your_token_here"`. It’s important for you to know
 that Mapbox GL JS is a commercial product that charges you for map
 views; however, it does have a generous free tier.
@@ -34,6 +34,7 @@ we use `projection = "winkelTripel"` for the Winkel Tripel global
 projection.
 
 ``` r
+
 mapboxgl(
   style = mapbox_style("satellite"),
   projection = "winkelTripel")
@@ -47,6 +48,7 @@ Standard style includes custom-rendered buildings around the world, such
 as the American Airlines Center in Dallas.
 
 ``` r
+
 mapboxgl(
   center = c(-97.6, 25.4)
 ) |> 
@@ -71,6 +73,7 @@ default tiles in
 CARTO’s Voyager tiles, which are usable without an API key.
 
 ``` r
+
 library(mapgl)
 
 maplibre()
@@ -90,6 +93,7 @@ well; **mapgl** aims to provide a consistent API to work with either
 Mapbox or MapLibre.
 
 ``` r
+
 maplibre(
   style = maptiler_style("bright"),
   center = c(-43.23412, -22.91370),
@@ -116,18 +120,20 @@ specify a column for styling, and the functions will create appropriate
 color scales for you.
 
 ``` r
+
 library(sf)
 ```
 
     ## Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 
 ``` r
+
 # Quick view of the North Carolina dataset
 nc <- st_read(system.file("shape/nc.shp", package="sf"))
 ```
 
     ## Reading layer `nc' from data source 
-    ##   `/Users/kylewalker/Library/R/arm64/4.5/library/sf/shape/nc.shp' 
+    ##   `/Library/Frameworks/R.framework/Versions/4.6/Resources/library/sf/shape/nc.shp' 
     ##   using driver `ESRI Shapefile'
     ## Simple feature collection with 100 features and 14 fields
     ## Geometry type: MULTIPOLYGON
@@ -136,6 +142,7 @@ nc <- st_read(system.file("shape/nc.shp", package="sf"))
     ## Geodetic CRS:  NAD27
 
 ``` r
+
 maplibre_view(nc, column = "AREA")
 ```
 
@@ -155,6 +162,7 @@ allows users to create synced swipe maps that can compare two styles.
 This function works for either Mapbox or MapLibre maps.
 
 ``` r
+
 m1 <- mapboxgl()
 m2 <- mapboxgl(mapbox_style("satellite-streets"))
 
