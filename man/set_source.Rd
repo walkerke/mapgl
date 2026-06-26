@@ -11,7 +11,7 @@ set_source(map, layer_id = NULL, source, layer = NULL)
 
 \item{layer_id}{The ID of the layer to update.}
 
-\item{source}{An sf object (which will be converted to a GeoJSON source).}
+\item{source}{An sf object or a \code{duckspatial_df} object (both converted to a GeoJSON source).}
 
 \item{layer}{Deprecated. Use \code{layer_id} instead.}
 }

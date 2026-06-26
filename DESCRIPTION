@@ -16,24 +16,24 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Depends:
   R (>= 4.1.0)
 Imports:
-  htmlwidgets,
-  geojsonsf,
-  sf,
-  rlang,
-  htmltools,
-  grDevices,
-  base64enc,
-  terra,
-  classInt,
-  shiny,
-  viridisLite,
-  png,
-  jsonlite,
-  httpuv
+    htmlwidgets,
+    geojsonsf,
+    sf,
+    rlang,
+    htmltools,
+    grDevices,
+    base64enc,
+    terra,
+    classInt,
+    shiny,
+    viridisLite,
+    png,
+    jsonlite,
+    httpuv,
+    duckspatial
 Suggests:
   chromote,
   knitr,
@@ -42,3 +42,4 @@ Suggests:
   usethis,
   leaflet
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

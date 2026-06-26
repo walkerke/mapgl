@@ -604,3 +604,17 @@ mapgl_invoke_method <- function(map, type, ...) {
   }
   return(map)
 }
+
+# Ensures a duckspatial_df is in EPSG:4326, transforming if needed.
+# Stops if the object has no CRS set.
+ddbs_ensure_wgs84 <- function(x, arg = deparse(substitute(x))) {
+  crs <- duckspatial::ddbs_crs(x)
+  if (is.na(crs)) {
+    stop(sprintf("`%s` doesn't have a CRS set.", arg))
+  }
+  if (!crs$input %in% c("EPSG:4326", "WGS 84", "4326")) {
+    x <- duckspatial::ddbs_transform(x, "EPSG:4326")
+  }
+  x
+}
+
