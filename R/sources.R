@@ -16,7 +16,7 @@ add_source <- function(map, id, data, ...) {
     if (sf::st_crs(data) != 4326) {
       data <- sf::st_transform(data, crs = 4326)
     }
-    geojson <- geojsonsf::sf_geojson(data)
+    geojson <- geojsonsf::sf_geojson(data, simplify = FALSE)
   } else if (inherits(data, "duckspatial_df")) {
     data <- ddbs_ensure_wgs84(data, "data")
     geojson <- duckspatial::ddbs_as_geojson(data)

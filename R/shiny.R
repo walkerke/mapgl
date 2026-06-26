@@ -696,7 +696,7 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
       source <- geojsonsf::sf_geojson(sf::st_transform(
         source,
         crs = 4326
-      ))
+      ), simplify = FALSE)
     } else if (inherits(source, "duckspatial_df")) {
       source <- duckspatial::ddbs_as_geojson(ddbs_ensure_wgs84(source, "source"))
     }
