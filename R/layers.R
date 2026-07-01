@@ -96,7 +96,7 @@ add_layer <- function(
     if (sf::st_crs(source) != 4326) {
       source <- sf::st_transform(source, crs = 4326)
     }
-    geojson <- geojsonsf::sf_geojson(source)
+    geojson <- geojsonsf::sf_geojson(source, simplify = FALSE)
     source <- list(
       type = "geojson",
       data = geojson,

@@ -66,7 +66,7 @@ turf_buffer <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Validate coordinates
@@ -176,7 +176,7 @@ turf_union <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Handle proxy objects (Shiny)
@@ -287,7 +287,7 @@ turf_intersect <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Convert sf data_2 to GeoJSON if provided
@@ -299,7 +299,7 @@ turf_intersect <- function(
     geojson_data_2 <- geojsonsf::sf_geojson(sf::st_transform(
       data_2,
       crs = 4326
-    ))
+    ), simplify = FALSE)
   }
 
   # Handle proxy objects (Shiny)
@@ -414,7 +414,7 @@ turf_difference <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Convert sf data_2 to GeoJSON if provided
@@ -426,7 +426,7 @@ turf_difference <- function(
     geojson_data_2 <- geojsonsf::sf_geojson(sf::st_transform(
       data_2,
       crs = 4326
-    ))
+    ), simplify = FALSE)
   }
 
   # Handle proxy objects (Shiny)
@@ -529,7 +529,7 @@ turf_convex_hull <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Validate and process coordinates
@@ -649,7 +649,7 @@ turf_concave_hull <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Validate and process coordinates
@@ -769,7 +769,7 @@ turf_voronoi <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Process bbox parameter
@@ -931,7 +931,7 @@ turf_distance <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Validate coordinates
@@ -1011,7 +1011,7 @@ turf_area <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   proxy_class <- if (inherits(proxy, "mapboxgl_proxy")) {
@@ -1074,7 +1074,7 @@ turf_centroid <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Validate and process coordinates
@@ -1196,7 +1196,7 @@ turf_center_of_mass <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Validate and process coordinates
@@ -1332,7 +1332,7 @@ turf_filter <- function(
     if (!inherits(data, "sf")) {
       stop("data must be an sf object.")
     }
-    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326))
+    geojson_data <- geojsonsf::sf_geojson(sf::st_transform(data, crs = 4326), simplify = FALSE)
   }
 
   # Convert sf filter_data to GeoJSON if provided
@@ -1344,7 +1344,7 @@ turf_filter <- function(
     geojson_filter_data <- geojsonsf::sf_geojson(sf::st_transform(
       filter_data,
       crs = 4326
-    ))
+    ), simplify = FALSE)
   }
 
   # Handle proxy objects (Shiny)
