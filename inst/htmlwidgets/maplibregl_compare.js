@@ -4113,6 +4113,42 @@ HTMLWidgets.widget({
             map.controls.push({ type: "navigation", control: nav });
           }
 
+          // Add custom controls if any are defined
+          if (mapData.custom_controls) {
+            Object.keys(mapData.custom_controls).forEach(function (key) {
+              const controlOptions = mapData.custom_controls[key];
+              const customControlContainer = document.createElement("div");
+
+              if (controlOptions.className) {
+                customControlContainer.className = controlOptions.className;
+              } else {
+                customControlContainer.className =
+                  "maplibregl-ctrl maplibregl-ctrl-group";
+              }
+
+              customControlContainer.innerHTML = controlOptions.html;
+
+              const customControl = {
+                onAdd: function () {
+                  return customControlContainer;
+                },
+                onRemove: function () {
+                  if (customControlContainer.parentNode) {
+                    customControlContainer.parentNode.removeChild(
+                      customControlContainer,
+                    );
+                  }
+                },
+              };
+
+              map.addControl(
+                customControl,
+                controlOptions.position || "top-right",
+              );
+              map.controls.push({ type: key, control: customControl });
+            });
+          }
+
           // Add geolocate control if enabled
           if (mapData.geolocate_control) {
             const geolocate = new maplibregl.GeolocateControl({

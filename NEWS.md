@@ -2,6 +2,8 @@
 
 * Fixed a bug where `before_id` was silently ignored in `add_raster_layer()` and `add_heatmap_layer()`, and `filter` was silently ignored in `add_heatmap_layer()`, due to positional argument mismatches in the internal `add_layer()` call.
 
+* `add_control()` now works on maps rendered inside `compare()`; previously custom controls were dropped at initial render (they only worked via compare proxies).
+
 * Fixed a bug where passing a geometry-only `sf` object (no non-geometry columns) as a layer source caused a serialization error. `geojsonsf::sf_geojson()` simplifies property-less sf objects into a vector of individual geometry strings rather than a FeatureCollection, which `htmlwidgets` cannot serialize. All internal calls now use `simplify = FALSE` to consistently return a FeatureCollection (#212).
 
 # mapgl 0.5.0
