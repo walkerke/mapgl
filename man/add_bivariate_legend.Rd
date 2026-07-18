@@ -36,7 +36,8 @@ object, or a proxy object.}
 
 \item{position}{The legend position.}
 
-\item{width}{Legend width.}
+\item{width}{Legend width. Defaults to \code{"fit-content"} (capped at 340px)
+so titles and axis labels stay on one line.}
 
 \item{style}{Optional styling options from \code{legend_style()} or a list.}
 
