@@ -211,12 +211,12 @@ seconds, days-since-epoch).
 \section{Positioning and collisions}{
 
 The slider is implemented as a native control and stacks beside
-other native controls (navigation, scale, geolocate, fullscreen) via
-Mapbox/MapLibre's built-in positioning. Overlays such as
-\code{\link[=add_legend]{add_legend()}} and \code{\link[=add_layers_control]{add_layers_control()}} are absolutely-positioned
-and do not participate in that flow — placing a slider in the same
-corner as a legend will overlap it. Choose a different corner or
-adjust the overlay's margins.
+other native controls (navigation, scale, geolocate, fullscreen,
+\code{\link[=add_layers_control]{add_layers_control()}}) via Mapbox/MapLibre's built-in positioning.
+Overlays such as \code{\link[=add_legend]{add_legend()}} are absolutely-positioned and do not
+participate in that flow — placing a slider in the same corner as a
+legend will overlap it. Choose a different corner or adjust the
+overlay's margins.
 }
 
 \examples{

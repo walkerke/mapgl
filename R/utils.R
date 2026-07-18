@@ -604,3 +604,17 @@ mapgl_invoke_method <- function(map, type, ...) {
   }
   return(map)
 }
+
+# Shared htmlDependency for the layers control (JS IControl + stylesheet),
+# used by mapboxgl(), maplibre(), and both compare widgets
+layers_control_dependency <- function() {
+  htmltools::htmlDependency(
+    name = "layers-control",
+    version = "2.0.0",
+    src = c(
+      file = system.file("htmlwidgets/lib/layers-control", package = "mapgl")
+    ),
+    script = "layers-control.js",
+    stylesheet = "layers-control.css"
+  )
+}

@@ -1,5 +1,13 @@
 # mapgl (development version)
 
+* The layers control from `add_layers_control()` is now a first-class map control: it is added through the GL `addControl()` API and stacks with the other controls in its corner (in call order) instead of floating over them, so it no longer collides with navigation, fullscreen, and similar controls. Related changes:
+    * **Visual change:** the default appearance now matches the native controls — white background, monochrome items (active layers in dark text, inactive in gray), and a 29x29 collapsed icon button. All styling arguments work as before; to restore the previous blue active style, use `active_color = "#4a90e2"` and `active_text_color = "#ffffff"`.
+    * The `margin_*` arguments are no longer applied by default (the native stack handles spacing) but are still honored when explicitly set.
+    * In `compare()`, each side's layers control now lives in that side's own control stack (previously both sides rendered into the same overlay space and overlapped), custom colors are now honored, layer-linked legends now show/hide with their layers, and `clear_controls("layers")` now works (previously it errored or did nothing).
+    * A layers control added through a MapLibre compare proxy now toggles layers only on the side targeted by `map_side` (previously it toggled every side at once).
+    * When a proxy call omits `layers`, the control now lists the map's non-basemap style layers instead of rendering empty. Note this covers regular GL layers only (flowmap layers are managed outside the style), and the basemap filter reflects the initially loaded style.
+    * After `set_style()`, the control now reflects each layer's restored visibility instead of resetting every entry to active.
+
 * Fixed a bug where `before_id` was silently ignored in `add_raster_layer()` and `add_heatmap_layer()`, and `filter` was silently ignored in `add_heatmap_layer()`, due to positional argument mismatches in the internal `add_layer()` call.
 
 * `add_control()` now works on maps rendered inside `compare()`; previously custom controls were dropped at initial render (they only worked via compare proxies).
