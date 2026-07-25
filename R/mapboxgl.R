@@ -98,12 +98,7 @@ mapboxgl <- function(
         additional_params$bounds <- bounds
     }
 
-    control_css <- htmltools::htmlDependency(
-        name = "layers-control",
-        version = "1.0.0",
-        src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
-        stylesheet = "layers-control.css"
-    )
+    control_css <- layers_control_dependency()
 
     x <- list(
         style = style,

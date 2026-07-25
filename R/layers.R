@@ -96,7 +96,7 @@ add_layer <- function(
     if (sf::st_crs(source) != 4326) {
       source <- sf::st_transform(source, crs = 4326)
     }
-    geojson <- geojsonsf::sf_geojson(source)
+    geojson <- geojsonsf::sf_geojson(source, simplify = FALSE)
     source <- list(
       type = "geojson",
       data = geojson,
@@ -612,8 +612,8 @@ add_heatmap_layer <- function(
     slot,
     min_zoom,
     max_zoom,
-    before_id,
-    filter
+    before_id = before_id,
+    filter = filter
   )
 
   return(map)
@@ -1376,7 +1376,7 @@ add_raster_layer <- function(
     slot,
     min_zoom,
     max_zoom,
-    before_id
+    before_id = before_id
   )
 
   return(map)

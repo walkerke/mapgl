@@ -3231,270 +3231,12 @@ HTMLWidgets.widget({
 
           // Add the layers control if provided
           if (x.layers_control) {
-            const layersControl = document.createElement("div");
-            layersControl.id = x.layers_control.control_id;
-            layersControl.className = x.layers_control.collapsible
-              ? "layers-control collapsible"
-              : "layers-control";
-            layersControl.style.position = "absolute";
-
-            // Set the position correctly - fix position bug by using correct CSS positioning
-            const position = x.layers_control.position || "top-left";
-            if (position === "top-left") {
-              layersControl.style.top =
-                (x.layers_control.margin_top || 10) + "px";
-              layersControl.style.left =
-                (x.layers_control.margin_left || 10) + "px";
-            } else if (position === "top-right") {
-              layersControl.style.top =
-                (x.layers_control.margin_top || 10) + "px";
-              layersControl.style.right =
-                (x.layers_control.margin_right || 10) + "px";
-            } else if (position === "bottom-left") {
-              layersControl.style.bottom =
-                (x.layers_control.margin_bottom || 10) + "px";
-              layersControl.style.left =
-                (x.layers_control.margin_left || 10) + "px";
-            } else if (position === "bottom-right") {
-              layersControl.style.bottom =
-                (x.layers_control.margin_bottom || 40) + "px";
-              layersControl.style.right =
-                (x.layers_control.margin_right || 10) + "px";
-            }
-
-            // Apply custom colors if provided
-            if (x.layers_control.custom_colors) {
-              const colors = x.layers_control.custom_colors;
-
-              // Create a style element for custom colors
-              const styleEl = document.createElement("style");
-              let css = "";
-
-              if (colors.background) {
-                css += `#${x.layers_control.control_id} { background-color: ${colors.background}; }\n`;
-              }
-
-              if (colors.text) {
-                css += `#${x.layers_control.control_id} a { color: ${colors.text}; }\n`;
-              }
-
-              if (colors.active) {
-                css += `#${x.layers_control.control_id} a.active { background-color: ${colors.active}; }\n`;
-                css += `#${x.layers_control.control_id} .toggle-button { background-color: ${colors.active}; }\n`;
-              }
-
-              if (colors.activeText) {
-                css += `#${x.layers_control.control_id} a.active { color: ${colors.activeText}; }\n`;
-                css += `#${x.layers_control.control_id} .toggle-button { color: ${colors.activeText}; }\n`;
-              }
-
-              if (colors.hover) {
-                css += `#${x.layers_control.control_id} a:hover { background-color: ${colors.hover}; }\n`;
-                css += `#${x.layers_control.control_id} .toggle-button:hover { background-color: ${colors.hover}; }\n`;
-              }
-
-              styleEl.textContent = css;
-              document.head.appendChild(styleEl);
-            }
-
-            el.appendChild(layersControl);
-
-            const layersList = document.createElement("div");
-            layersList.className = "layers-list";
-            layersControl.appendChild(layersList);
-
-            // Fetch layers to be included in the control
-            let layers =
-              x.layers_control.layers ||
-              map.getStyle().layers.map((layer) => layer.id);
-            let layersConfig = x.layers_control.layers_config;
-            const getLayerControlVisibility = (layerId) => {
-              if (
-                window.MapGLFlowmapPlugin &&
-                window.MapGLFlowmapPlugin.hasLayer(map, layerId)
-              ) {
-                return window.MapGLFlowmapPlugin.getVisibility(map, layerId);
-              }
-              return map.getLayoutProperty(layerId, "visibility") || "visible";
-            };
-            const setLayerControlVisibility = (layerId, visibility) => {
-              if (
-                window.MapGLFlowmapPlugin &&
-                window.MapGLFlowmapPlugin.setVisibility(map, layerId, visibility)
-              ) {
-                return;
-              }
-              if (map.getLayer(layerId)) {
-                map.setLayoutProperty(layerId, "visibility", visibility);
-              }
-            };
-
-            // If we have a layers_config, use that; otherwise fall back to original behavior
-            if (layersConfig && Array.isArray(layersConfig)) {
-              layersConfig.forEach((config, index) => {
-                const link = document.createElement("a");
-                // Ensure config.ids is always an array
-                const layerIds = Array.isArray(config.ids)
-                  ? config.ids
-                  : [config.ids];
-                link.id = layerIds.join("-");
-                link.href = "#";
-                link.textContent = config.label;
-                link.setAttribute("data-layer-ids", JSON.stringify(layerIds));
-                link.setAttribute("data-layer-type", config.type);
-
-                // Check if the first layer's visibility is set to "none" initially
-                const firstLayerId = layerIds[0];
-                const initialVisibility =
-                  getLayerControlVisibility(firstLayerId);
-                link.className = initialVisibility === "none" ? "" : "active";
-
-                // Also hide any associated legends if the layer is initially hidden
-                if (initialVisibility === "none") {
-                  layerIds.forEach((layerId) => {
-                    const associatedLegends = document.querySelectorAll(
-                      `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-                    );
-                    associatedLegends.forEach((legend) => {
-                      legend.style.display = "none";
-                    });
-                  });
-                }
-
-                // Show or hide layer(s) when the toggle is clicked
-                link.onclick = function (e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  const layerIds = JSON.parse(
-                    this.getAttribute("data-layer-ids"),
-                  );
-                  const firstLayerId = layerIds[0];
-                  const visibility = getLayerControlVisibility(firstLayerId);
-
-                  // Toggle visibility for all layer IDs in the group
-                  if (visibility === "visible") {
-                    layerIds.forEach((layerId) => {
-                      setLayerControlVisibility(layerId, "none");
-                      // Hide associated legends
-                      const associatedLegends = document.querySelectorAll(
-                        `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-                      );
-                      associatedLegends.forEach((legend) => {
-                        legend.style.display = "none";
-                      });
-                    });
-                    this.className = "";
-                  } else {
-                    layerIds.forEach((layerId) => {
-                      setLayerControlVisibility(layerId, "visible");
-                      // Show associated legends
-                      const associatedLegends = document.querySelectorAll(
-                        `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-                      );
-                      associatedLegends.forEach((legend) => {
-                        legend.style.display = "";
-                      });
-                    });
-                    this.className = "active";
-                  }
-                };
-
-                layersList.appendChild(link);
-              });
-            } else {
-              // Fallback to original behavior for simple layer arrays
-              // Ensure layers is always an array
-              if (!Array.isArray(layers)) {
-                layers = [layers];
-              }
-
-              layers.forEach((layerId, index) => {
-                const link = document.createElement("a");
-                link.id = layerId;
-                link.href = "#";
-                link.textContent = layerId;
-
-                // Check if the layer visibility is set to "none" initially
-                const initialVisibility = getLayerControlVisibility(layerId);
-                link.className = initialVisibility === "none" ? "" : "active";
-
-                // Also hide any associated legends if the layer is initially hidden
-                if (initialVisibility === "none") {
-                  const associatedLegends = document.querySelectorAll(
-                    `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-                  );
-                  associatedLegends.forEach((legend) => {
-                    legend.style.display = "none";
-                  });
-                }
-
-                // Show or hide layer when the toggle is clicked
-                link.onclick = function (e) {
-                  const clickedLayer = this.textContent;
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  const visibility = getLayerControlVisibility(clickedLayer);
-
-                  // Toggle layer visibility by changing the layout object's visibility property
-                  if (visibility === "visible") {
-                    setLayerControlVisibility(clickedLayer, "none");
-                    this.className = "";
-
-                    // Hide associated legends
-                    const associatedLegends = document.querySelectorAll(
-                      `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
-                    );
-                    associatedLegends.forEach((legend) => {
-                      legend.style.display = "none";
-                    });
-                  } else {
-                    this.className = "active";
-                    setLayerControlVisibility(clickedLayer, "visible");
-
-                    // Show associated legends
-                    const associatedLegends = document.querySelectorAll(
-                      `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
-                    );
-                    associatedLegends.forEach((legend) => {
-                      legend.style.display = "";
-                    });
-                  }
-                };
-
-                layersList.appendChild(link);
-              });
-            }
-
-            // Handle collapsible behavior
-            if (x.layers_control.collapsible) {
-              const toggleButton = document.createElement("div");
-              toggleButton.className = "toggle-button";
-
-              // Use stacked layers icon instead of text if requested
-              if (x.layers_control.use_icon) {
-                // Add icon-only class to the control for compact styling
-                layersControl.classList.add("icon-only");
-
-                // More GIS-like layers stack icon
-                toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                    <polyline points="2 17 12 22 22 17"></polyline>
-                                    <polyline points="2 12 12 17 22 12"></polyline>
-                                </svg>`;
-                toggleButton.style.display = "flex";
-                toggleButton.style.alignItems = "center";
-                toggleButton.style.justifyContent = "center";
-              } else {
-                toggleButton.textContent = "Layers";
-              }
-
-              toggleButton.onclick = function () {
-                layersControl.classList.toggle("open");
-              };
-              layersControl.insertBefore(toggleButton, layersList);
-            }
+            const layersControl = new MapglLayersControl(x.layers_control);
+            map.addControl(
+              layersControl,
+              x.layers_control.position || "top-left",
+            );
+            map.controls.push({ type: "layers", control: layersControl });
           }
 
             // Mark initial style as loaded to prevent control duplication on subsequent set_style() calls
@@ -4480,15 +4222,6 @@ if (HTMLWidgets.shinyMode) {
           const onStyleLoad = function () {
             console.log("[MapGL Debug] style.load event fired");
 
-            // HACK: Reset layers control UI to show all layers as active
-            const layersControl = document.querySelector('.layers-control');
-            if (layersControl) {
-              const layerLinks = layersControl.querySelectorAll('a');
-              layerLinks.forEach(link => {
-                link.className = 'active';
-              });
-            }
-
             try {
               // Re-add user sources
               userSourceIds.forEach(function (sourceId) {
@@ -4878,6 +4611,11 @@ if (HTMLWidgets.shinyMode) {
 
             // Re-add user images after style change
             reAddUserImages(map, mapId);
+
+            // Sync layers-control link states with the restored visibility
+            (map._mapglLayersControls || []).forEach((c) =>
+              c.syncVisibilityStates(),
+            );
 
             // Mark style loading as complete and execute any pending operations
             window._mapgl.styleLoading[mapId] = false;
@@ -6367,250 +6105,10 @@ if (HTMLWidgets.shinyMode) {
           }
         }
       } else if (message.type === "add_layers_control") {
-        const layersControl = document.createElement("div");
-        layersControl.id = message.control_id;
-        layersControl.className = message.collapsible
-          ? "layers-control collapsible"
-          : "layers-control";
-        layersControl.style.position = "absolute";
-
-        // Set the position correctly
-        const position = message.position || "top-left";
-        if (position === "top-left") {
-          layersControl.style.top = (message.margin_top || 10) + "px";
-          layersControl.style.left = (message.margin_left || 10) + "px";
-        } else if (position === "top-right") {
-          layersControl.style.top = (message.margin_top || 10) + "px";
-          layersControl.style.right = (message.margin_right || 10) + "px";
-        } else if (position === "bottom-left") {
-          layersControl.style.bottom = (message.margin_bottom || 10) + "px";
-          layersControl.style.left = (message.margin_left || 10) + "px";
-        } else if (position === "bottom-right") {
-          layersControl.style.bottom = (message.margin_bottom || 40) + "px";
-          layersControl.style.right = (message.margin_right || 10) + "px";
-        }
-
-        // Apply custom colors if provided
-        if (message.custom_colors) {
-          const colors = message.custom_colors;
-
-          // Create a style element for custom colors
-          const styleEl = document.createElement("style");
-          let css = "";
-
-          if (colors.background) {
-            css += `#${message.control_id} { background-color: ${colors.background}; }\n`;
-          }
-
-          if (colors.text) {
-            css += `#${message.control_id} a { color: ${colors.text}; }\n`;
-          }
-
-          if (colors.active) {
-            css += `#${message.control_id} a.active { background-color: ${colors.active}; }\n`;
-            css += `#${message.control_id} .toggle-button { background-color: ${colors.active}; }\n`;
-          }
-
-          if (colors.activeText) {
-            css += `#${message.control_id} a.active { color: ${colors.activeText}; }\n`;
-            css += `#${message.control_id} .toggle-button { color: ${colors.activeText}; }\n`;
-          }
-
-          if (colors.hover) {
-            css += `#${message.control_id} a:hover { background-color: ${colors.hover}; }\n`;
-            css += `#${message.control_id} .toggle-button:hover { background-color: ${colors.hover}; }\n`;
-          }
-
-          styleEl.textContent = css;
-          document.head.appendChild(styleEl);
-        }
-
-        const layersList = document.createElement("div");
-        layersList.className = "layers-list";
-        layersControl.appendChild(layersList);
-
-        let layers = message.layers || [];
-        let layersConfig = message.layers_config;
-
-        // If we have a layers_config, use that; otherwise fall back to original behavior
-        if (layersConfig && Array.isArray(layersConfig)) {
-          layersConfig.forEach((config, index) => {
-            const link = document.createElement("a");
-            // Ensure config.ids is always an array
-            const layerIds = Array.isArray(config.ids)
-              ? config.ids
-              : [config.ids];
-            link.id = layerIds.join("-");
-            link.href = "#";
-            link.textContent = config.label;
-            link.setAttribute("data-layer-ids", JSON.stringify(layerIds));
-            link.setAttribute("data-layer-type", config.type);
-
-            // Check if the first layer's visibility is set to "none" initially
-            const firstLayerId = layerIds[0];
-            const initialVisibility = map.getLayoutProperty(
-              firstLayerId,
-              "visibility",
-            );
-            link.className = initialVisibility === "none" ? "" : "active";
-
-            // Also hide any associated legends if the layer is initially hidden
-            if (initialVisibility === "none") {
-              layerIds.forEach((layerId) => {
-                const associatedLegends = document.querySelectorAll(
-                  `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-                );
-                associatedLegends.forEach((legend) => {
-                  legend.style.display = "none";
-                });
-              });
-            }
-
-            // Show or hide layer(s) when the toggle is clicked
-            link.onclick = function (e) {
-              e.preventDefault();
-              e.stopPropagation();
-
-              const layerIds = JSON.parse(this.getAttribute("data-layer-ids"));
-              const firstLayerId = layerIds[0];
-              const visibility = map.getLayoutProperty(
-                firstLayerId,
-                "visibility",
-              );
-
-              // Toggle visibility for all layer IDs in the group
-              if (visibility === "visible") {
-                layerIds.forEach((layerId) => {
-                  map.setLayoutProperty(layerId, "visibility", "none");
-                  // Hide associated legends
-                  const associatedLegends = document.querySelectorAll(
-                    `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-                  );
-                  associatedLegends.forEach((legend) => {
-                    legend.style.display = "none";
-                  });
-                });
-                this.className = "";
-              } else {
-                layerIds.forEach((layerId) => {
-                  map.setLayoutProperty(layerId, "visibility", "visible");
-                  // Show associated legends
-                  const associatedLegends = document.querySelectorAll(
-                    `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-                  );
-                  associatedLegends.forEach((legend) => {
-                    legend.style.display = "";
-                  });
-                });
-                this.className = "active";
-              }
-            };
-
-            layersList.appendChild(link);
-          });
-        } else {
-          // Fallback to original behavior for simple layer arrays
-          // Ensure layers is always an array
-          if (!Array.isArray(layers)) {
-            layers = [layers];
-          }
-
-          layers.forEach((layerId, index) => {
-            const link = document.createElement("a");
-            link.id = layerId;
-            link.href = "#";
-            link.textContent = layerId;
-
-            // Check if the layer visibility is set to "none" initially
-            const initialVisibility = map.getLayoutProperty(
-              layerId,
-              "visibility",
-            );
-            link.className = initialVisibility === "none" ? "" : "active";
-
-            // Also hide any associated legends if the layer is initially hidden
-            if (initialVisibility === "none") {
-              const associatedLegends = document.querySelectorAll(
-                `.mapboxgl-legend[data-layer-id="${layerId}"]`,
-              );
-              associatedLegends.forEach((legend) => {
-                legend.style.display = "none";
-              });
-            }
-
-            link.onclick = function (e) {
-              const clickedLayer = this.textContent;
-              e.preventDefault();
-              e.stopPropagation();
-
-              const visibility = map.getLayoutProperty(
-                clickedLayer,
-                "visibility",
-              );
-
-              if (visibility === "visible") {
-                map.setLayoutProperty(clickedLayer, "visibility", "none");
-                this.className = "";
-
-                // Hide associated legends
-                const associatedLegends = document.querySelectorAll(
-                  `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
-                );
-                associatedLegends.forEach((legend) => {
-                  legend.style.display = "none";
-                });
-              } else {
-                this.className = "active";
-                map.setLayoutProperty(clickedLayer, "visibility", "visible");
-
-                // Show associated legends
-                const associatedLegends = document.querySelectorAll(
-                  `.mapboxgl-legend[data-layer-id="${clickedLayer}"]`,
-                );
-                associatedLegends.forEach((legend) => {
-                  legend.style.display = "";
-                });
-              }
-            };
-
-            layersList.appendChild(link);
-          });
-        }
-
-        if (message.collapsible) {
-          const toggleButton = document.createElement("div");
-          toggleButton.className = "toggle-button";
-
-          // Use stacked layers icon instead of text if requested
-          if (message.use_icon) {
-            // Add icon-only class to the control for compact styling
-            layersControl.classList.add("icon-only");
-
-            // More GIS-like layers stack icon
-            toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                            <polyline points="2 17 12 22 22 17"></polyline>
-                            <polyline points="2 12 12 17 22 12"></polyline>
-                        </svg>`;
-            toggleButton.style.display = "flex";
-            toggleButton.style.alignItems = "center";
-            toggleButton.style.justifyContent = "center";
-          } else {
-            toggleButton.textContent = "Layers";
-          }
-
-          toggleButton.onclick = function () {
-            layersControl.classList.toggle("open");
-          };
-          layersControl.insertBefore(toggleButton, layersList);
-        }
-
-        const mapContainer = document.getElementById(data.id);
-        if (mapContainer) {
-          mapContainer.appendChild(layersControl);
-        } else {
-          console.error(`Cannot find map container with ID ${data.id}`);
-        }
+        const layersControl = new MapglLayersControl(message);
+        map.addControl(layersControl, message.position || "top-left");
+        if (!map.controls) map.controls = [];
+        map.controls.push({ type: "layers", control: layersControl });
       } else if (message.type === "clear_legend") {
         if (message.ids && Array.isArray(message.ids)) {
           message.ids.forEach((id) => {
@@ -6656,12 +6154,11 @@ if (HTMLWidgets.shinyMode) {
             delete map._mapglSliderControl;
           }
 
-          const layersControl = document.querySelector(
-            `#${data.id} .layers-control`,
-          );
-          if (layersControl) {
-            layersControl.remove();
-          }
+          // Defensive sweep: remove any layers controls not tracked in
+          // map.controls (onRemove cleans up the registry)
+          (map._mapglLayersControls || [])
+            .slice()
+            .forEach((c) => map.removeControl(c));
 
           // Remove globe minimap if it exists
           const globeMinimap = document.querySelector(
@@ -6689,12 +6186,11 @@ if (HTMLWidgets.shinyMode) {
           // Handle special controls that aren't in the controls array
           controlsToRemove.forEach((controlType) => {
             if (controlType === "layers") {
-              const layersControl = document.querySelector(
-                `#${data.id} .layers-control`,
-              );
-              if (layersControl) {
-                layersControl.remove();
-              }
+              // Defensive sweep for any untracked layers controls; normally
+              // already removed via map.controls above
+              (map._mapglLayersControls || [])
+                .slice()
+                .forEach((c) => map.removeControl(c));
             } else if (controlType === "globe_minimap") {
               const globeMinimap = document.querySelector(
                 ".mapboxgl-ctrl-globe-minimap",

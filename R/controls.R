@@ -157,6 +157,14 @@ add_navigation_control <- function(
 
 #' Add a layers control to the map
 #'
+#' The layers control is a native map control: it stacks alongside other
+#' controls (navigation, fullscreen, etc.) in its corner rather than
+#' overlapping them, following the order in which controls are added to the
+#' map. Its default appearance matches the other map controls (white
+#' background, dark monochrome items). To restore the blue active style from
+#' earlier versions of mapgl, set `active_color = "#4a90e2"` and
+#' `active_text_color = "#ffffff"`.
+#'
 #' @param map A map object.
 #' @param position The position of the control on the map (one of "top-left", "top-right", "bottom-left", "bottom-right").
 #' @param layers Either a character vector of layer IDs to include in the control,
@@ -171,10 +179,13 @@ add_navigation_control <- function(
 #' @param hover_color The background color for layer items when hovered.
 #' @param active_text_color The text color for active layer items.
 #' @param inactive_text_color The text color for inactive layer items.
-#' @param margin_top Custom top margin in pixels, allowing for fine control over control positioning to avoid overlaps. Default is NULL (uses standard positioning).
-#' @param margin_right Custom right margin in pixels. Default is NULL.
-#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
-#' @param margin_left Custom left margin in pixels. Default is NULL.
+#' @param margin_top Optional top margin in pixels, applied to the control
+#'        within the native control stack. Rarely needed now that the control
+#'        no longer overlaps other controls; NULL (the default) uses standard
+#'        control spacing.
+#' @param margin_right Optional right margin in pixels. Default is NULL.
+#' @param margin_bottom Optional bottom margin in pixels. Default is NULL.
+#' @param margin_left Optional left margin in pixels. Default is NULL.
 #'
 #' @return The modified map object with the layers control added.
 #' @export

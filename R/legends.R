@@ -380,7 +380,8 @@ if (is.null(values) || is.null(colors)) {
 #' @param x_title Label for the horizontal axis. Defaults to the x column name.
 #' @param y_title Label for the vertical axis. Defaults to the y column name.
 #' @param position The legend position.
-#' @param width Legend width.
+#' @param width Legend width. Defaults to `"fit-content"` (capped at 340px)
+#'   so titles and axis labels stay on one line.
 #' @param style Optional styling options from `legend_style()` or a list.
 #' @param add Logical, whether to add to existing legends.
 #' @param unique_id Optional unique legend ID.
@@ -495,7 +496,11 @@ build_bivariate_legend <- function(
   collapsible = FALSE,
   collapsed = FALSE
 ) {
-  width_style <- if (!is.null(width)) paste0("width: ", width, ";") else "width: 142px;"
+  width_style <- if (!is.null(width)) {
+    paste0("width: ", width, ";")
+  } else {
+    "width: fit-content; max-width: 340px;"
+  }
   layer_attr <- if (!is.null(layer_id)) paste0(' data-layer-id="', paste(layer_id, collapse = " "), '"') else ""
   draggable_attr <- if (draggable) ' data-draggable="true"' else ""
   collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
@@ -576,16 +581,18 @@ build_bivariate_legend <- function(
     }
     #", unique_id, " .mapgl-bivariate-body {
       display: grid;
-      grid-template-columns: 18px 96px;
-      grid-template-rows: 96px auto;
+      grid-template-columns: 18px minmax(96px, max-content);
+      grid-template-rows: minmax(96px, max-content) auto;
       gap: 6px;
       align-items: center;
-      width: 120px;
+      justify-items: center;
+      width: fit-content;
     }
     #", unique_id, " .mapgl-bivariate-y-title {
       writing-mode: vertical-rl;
       transform: rotate(180deg);
       text-align: center;
+      white-space: nowrap;
       font-size: 11px;
       color: #374151;
     }
@@ -604,6 +611,7 @@ build_bivariate_legend <- function(
     #", unique_id, " .mapgl-bivariate-x-title {
       grid-column: 2;
       text-align: center;
+      white-space: nowrap;
       font-size: 11px;
       color: #374151;
     }"

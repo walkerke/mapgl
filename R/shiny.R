@@ -696,7 +696,7 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
       source <- geojsonsf::sf_geojson(sf::st_transform(
         source,
         crs = 4326
-      ))
+      ), simplify = FALSE)
     }
 
     if (

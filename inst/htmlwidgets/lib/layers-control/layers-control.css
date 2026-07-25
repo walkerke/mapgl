@@ -1,26 +1,31 @@
+/* Layers control — rendered as a native IControl inside the map's control
+   stack. Chrome (radius, shadow, white background) comes from the engine's
+   ctrl-group classes on the same element; this file styles the contents.
+
+   Per-control custom colors from add_layers_control() arrive as CSS
+   variables set inline on the root:
+     --lc-bg          background_color
+     --lc-text        inactive_text_color
+     --lc-active-bg   active_color
+     --lc-active-text active_text_color
+     --lc-hover-bg    hover_color */
+
 .layers-control {
-    background: #fff;
-    position: absolute;
-    z-index: 1;
-    border-radius: 4px;
+    background: var(--lc-bg, #fff);
     width: 120px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    font-family: "Open Sans", sans-serif;
-    margin: 0px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     transition: all 0.2s ease-in-out;
 }
 
 .layers-control a {
-    font-size: 13px;
-    color: #404040;
+    font-size: 12px;
+    color: var(--lc-text, #999);
     display: block;
     margin: 0;
-    padding: 10px;
+    padding: 8px 10px;
     text-decoration: none;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    text-align: center;
+    text-align: left;
     transition: all 0.15s ease-in-out;
     font-weight: normal;
 }
@@ -30,36 +35,42 @@
 }
 
 .layers-control a:hover {
-    background-color: #f8f8f8;
-    color: #1a1a1a;
+    background-color: var(--lc-hover-bg, rgba(0, 0, 0, 0.05));
+    color: var(--lc-text, #666);
 }
 
 .layers-control a.active {
-    background-color: #4a90e2;
-    color: #ffffff;
+    background-color: var(--lc-active-bg, transparent);
+    color: var(--lc-active-text, #333);
     font-weight: 500;
 }
 
 .layers-control a.active:hover {
-    background: #3b7ed2;
+    background-color: var(
+        --lc-hover-bg,
+        var(--lc-active-bg, rgba(0, 0, 0, 0.05))
+    );
 }
 
 .layers-control .toggle-button {
     display: none;
-    background: #4a90e2;
-    color: #ffffff;
+    width: 100%;
+    height: auto;
+    background: var(--lc-active-bg, #fff);
+    color: var(--lc-active-text, #333);
+    border: none;
+    font: inherit;
+    font-size: 12px;
     text-align: center;
     cursor: pointer;
     padding: 8px 0;
-    border-radius: 4px 4px 0 0;
     font-weight: 500;
     letter-spacing: 0.3px;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05) inset;
     transition: all 0.15s ease-in-out;
 }
 
 .layers-control .toggle-button:hover {
-    background: #3b7ed2;
+    background: var(--lc-hover-bg, var(--lc-active-bg, rgba(0, 0, 0, 0.05)));
 }
 
 .layers-control .layers-list {
@@ -68,7 +79,10 @@
 
 .layers-control.collapsible .toggle-button {
     display: block;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.layers-control.collapsible.open .toggle-button {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .layers-control.collapsible .layers-list {
@@ -86,38 +100,28 @@
     max-height: 500px; /* Large enough value to accommodate all content */
 }
 
-/* Compact icon styling */
+/* Compact icon styling: collapsed control is a native-sized icon button */
 .layers-control.collapsible.icon-only {
     width: auto;
-    min-width: 36px;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transform: translateZ(
-        0
-    ); /* Force hardware acceleration for smoother animations */
+    min-width: 29px;
 }
 
 .layers-control.collapsible.icon-only .toggle-button {
-    border-radius: 4px;
-    padding: 8px;
-    width: 36px;
-    height: 36px;
+    padding: 0;
+    width: 29px;
+    height: 29px;
     box-sizing: border-box;
     margin: 0;
-    border-bottom: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: none;
 }
 
 .layers-control.collapsible.icon-only.open {
     width: 120px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
 }
 
 .layers-control.collapsible.icon-only.open .toggle-button {
-    border-radius: 4px 4px 0 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     width: 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
