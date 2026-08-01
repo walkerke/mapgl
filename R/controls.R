@@ -186,6 +186,16 @@ add_navigation_control <- function(
 #' @param margin_right Optional right margin in pixels. Default is NULL.
 #' @param margin_bottom Optional bottom margin in pixels. Default is NULL.
 #' @param margin_left Optional left margin in pixels. Default is NULL.
+#' @param mode How many entries can be visible at once. In `"multiple"` mode
+#'        (the default), entries toggle independently. In `"single"` mode,
+#'        activating an entry turns the others off — useful for flipping
+#'        through alternative analytical layers or raster imagery where only
+#'        one should show at a time. Clicking the active entry does nothing.
+#'        When the control is created in `"single"` mode with several entries
+#'        visible, the first visible entry stays on and the rest are turned
+#'        off. To combine both behaviors on one map, add two controls: one
+#'        `"single"`-mode control for the alternatives and one
+#'        `"multiple"`-mode control for independent overlays.
 #'
 #' @return The modified map object with the layers control added.
 #' @export
@@ -262,8 +272,11 @@ add_layers_control <- function(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  mode = c("multiple", "single")
 ) {
+  mode <- match.arg(mode)
+
   control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
 
   # Process layers parameter
@@ -348,6 +361,7 @@ add_layers_control <- function(
             layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
+            mode = mode,
             custom_colors = custom_colors,
             margin_top = margin_top,
             margin_right = margin_right,
@@ -376,6 +390,7 @@ add_layers_control <- function(
             layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
+            mode = mode,
             custom_colors = custom_colors,
             margin_top = margin_top,
             margin_right = margin_right,
@@ -393,6 +408,7 @@ add_layers_control <- function(
       layers_config = layers_config,
       collapsible = collapsible,
       use_icon = use_icon,
+      mode = mode,
       custom_colors = custom_colors,
       margin_top = margin_top,
       margin_right = margin_right,

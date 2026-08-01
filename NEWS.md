@@ -8,6 +8,8 @@
     * When a proxy call omits `layers`, the control now lists the map's non-basemap style layers instead of rendering empty. Note this covers regular GL layers only (flowmap layers are managed outside the style), and the basemap filter reflects the initially loaded style.
     * After `set_style()`, the control now reflects each layer's restored visibility instead of resetting every entry to active.
 
+* `add_layers_control()` gains a `mode` argument. The default `"multiple"` keeps the current independent toggles; `mode = "single"` shows one entry at a time — activating an entry turns the others (and their linked legends) off, which suits flipping through alternative analytical layers or raster imagery. To mix both behaviors on one map, add a `"single"`-mode control alongside a `"multiple"`-mode control; they stack cleanly in the same corner.
+
 * Fixed a bug where `before_id` was silently ignored in `add_raster_layer()` and `add_heatmap_layer()`, and `filter` was silently ignored in `add_heatmap_layer()`, due to positional argument mismatches in the internal `add_layer()` call.
 
 * `add_control()` now works on maps rendered inside `compare()`; previously custom controls were dropped at initial render (they only worked via compare proxies).

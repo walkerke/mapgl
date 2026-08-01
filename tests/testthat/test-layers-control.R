@@ -48,6 +48,42 @@ test_that("compare bindings do not resurrect a cleared layers control on set_sty
   }
 })
 
+test_that("mode is validated and carried in payloads", {
+  base_map <- maplibre() |>
+    add_fill_layer(id = "l1", source = "src")
+
+  expect_equal(add_layers_control(base_map)$x$layers_control$mode, "multiple")
+  expect_equal(
+    add_layers_control(base_map, mode = "single")$x$layers_control$mode,
+    "single"
+  )
+  expect_error(add_layers_control(base_map, mode = "radio"), "'arg'")
+
+  messages <- list()
+  session <- list(
+    sendCustomMessage = function(type, message) {
+      messages[[length(messages) + 1]] <<- message
+    }
+  )
+  proxy <- structure(
+    list(id = "map", session = session),
+    class = "maplibre_proxy"
+  )
+  add_layers_control(proxy, mode = "single")
+  expect_equal(messages[[1]]$message$mode, "single")
+
+  # single-mode behavior lives in the shared control module
+  js <- paste(
+    readLines(system.file(
+      "htmlwidgets/lib/layers-control/layers-control.js",
+      package = "mapgl"
+    )),
+    collapse = "\n"
+  )
+  expect_match(js, '_config.mode === "single"', fixed = TRUE)
+  expect_match(js, "_setEntryState", fixed = TRUE)
+})
+
 test_that("initial payload shape is preserved across the layers input forms", {
   base_map <- maplibre() |>
     add_fill_layer(id = "l1", source = "src") |>

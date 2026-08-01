@@ -19,6 +19,7 @@
 
   function MapglLayersControl(config) {
     this._config = config || {};
+    this._single = this._config.mode === "single";
     this._map = null;
     this._container = null;
     this._links = [];
@@ -108,6 +109,22 @@
       layersList.appendChild(self._buildLink(entry));
     });
 
+    // Single mode shows at most one entry: the first visible entry wins and
+    // any later visible entries are switched off
+    if (this._single) {
+      var firstActive = false;
+      this._links.forEach(function (entryState) {
+        if (entryState.el.className !== "active") {
+          return;
+        }
+        if (firstActive) {
+          self._setEntryState(entryState, false);
+        } else {
+          firstActive = true;
+        }
+      });
+    }
+
     return container;
   };
 
@@ -189,6 +206,9 @@
     link.setAttribute("data-layer-ids", JSON.stringify(entry.ids));
     link.setAttribute("data-layer-type", entry.type);
 
+    var entryState = { el: link, ids: entry.ids };
+    this._links.push(entryState);
+
     var active = this._getVisibility(entry.ids[0]) !== "none";
     link.className = active ? "active" : "";
     if (!active) {
@@ -200,16 +220,35 @@
     link.onclick = function (e) {
       e.preventDefault();
       e.stopPropagation();
-      var show = self._getVisibility(entry.ids[0]) === "none";
-      entry.ids.forEach(function (id) {
-        self._setVisibility(id, show ? "visible" : "none");
-        self._setLegendDisplay(id, show);
-      });
-      link.className = show ? "active" : "";
+      if (self._single) {
+        if (self._getVisibility(entryState.ids[0]) !== "none") {
+          return; // the active entry stays on in single mode
+        }
+        self._links.forEach(function (other) {
+          if (other !== entryState) {
+            self._setEntryState(other, false);
+          }
+        });
+        self._setEntryState(entryState, true);
+        return;
+      }
+      self._setEntryState(
+        entryState,
+        self._getVisibility(entryState.ids[0]) === "none",
+      );
     };
 
-    this._links.push({ el: link, ids: entry.ids });
     return link;
+  };
+
+  // Show or hide all of an entry's layers, its linked legends, and its link
+  MapglLayersControl.prototype._setEntryState = function (entry, show) {
+    var self = this;
+    entry.ids.forEach(function (id) {
+      self._setVisibility(id, show ? "visible" : "none");
+      self._setLegendDisplay(id, show);
+    });
+    entry.el.className = show ? "active" : "";
   };
 
   MapglLayersControl.prototype._getVisibility = function (layerId) {

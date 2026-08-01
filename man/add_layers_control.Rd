@@ -18,7 +18,8 @@ add_layers_control(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  mode = c("multiple", "single")
 )
 }
 \arguments{
@@ -56,6 +57,17 @@ control spacing.}
 \item{margin_bottom}{Optional bottom margin in pixels. Default is NULL.}
 
 \item{margin_left}{Optional left margin in pixels. Default is NULL.}
+
+\item{mode}{How many entries can be visible at once. In \code{"multiple"} mode
+(the default), entries toggle independently. In \code{"single"} mode,
+activating an entry turns the others off — useful for flipping
+through alternative analytical layers or raster imagery where only
+one should show at a time. Clicking the active entry does nothing.
+When the control is created in \code{"single"} mode with several entries
+visible, the first visible entry stays on and the rest are turned
+off. To combine both behaviors on one map, add two controls: one
+\code{"single"}-mode control for the alternatives and one
+\code{"multiple"}-mode control for independent overlays.}
 }
 \value{
 The modified map object with the layers control added.
