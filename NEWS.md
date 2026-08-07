@@ -30,6 +30,8 @@
 
 * New `add_h3t_source()` adds a tiled H3 (h3t) source for MapLibre maps, fetching only the H3 cells in the current viewport from a `{z}/{x}/{y}` tile endpoint via the `h3tiles://` protocol — a scalable alternative to `add_h3j_source()` for large datasets. Works with multiple sources per map and on both sides of `compare()`. Bundled `h3j-h3t` library updated to 0.9.7 (#199, thanks to @bbest).
 
+* Fixed H3 hexagons that cross the antimeridian (±180°) rendering as a jagged tear/gap for `add_h3t_source()`, `add_h3j_source()`, and `setH3JData()`. The bundled `h3j-h3t` cell-to-polygon builder now applies Nick Rabinowitz's [`fixTransmeridian`](https://observablehq.com/@nrabinowitz/mapbox-utils#fixTransmeridian) to each cell boundary — a ring with any arc spanning > 180° of longitude has its negative-longitude vertices shifted by +360° so it stays continuous instead of wrapping the globe. For the **tiled** `add_h3t_source()`, where a crossing cell is fetched into more than one `{z}/{x}/{y}` tile, each cell is additionally normalized (by ±360°) onto the side of the antimeridian that the tile being rendered is on, so its two halves are drawn in the correct tiles and meet seamlessly (this pairs with an antimeridian-aware tile filter on the h3t server that returns a crossing cell to both edge tiles).
+
 * Update MapLibre GL JS to v5.24.0 and Mapbox GL JS to v3.24.0.
 
 * Fixed `add_legend()` silently ignoring the `target` argument for MapLibre compare widgets: the compare dispatch checked for class `"maplibre_compare"` while the widget class is `"maplibregl_compare"`, so legends were attached as regular map legends instead of compare-level legends.
