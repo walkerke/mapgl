@@ -27,6 +27,9 @@ add_draw_control(
   download_filename = "drawn-features",
   show_measurements = FALSE,
   measurement_units = "both",
+  provider = c("mapbox-gl-draw", "terra-draw"),
+  modes = NULL,
+  options = NULL,
   ...
 )
 }
@@ -79,7 +82,30 @@ Use \code{\link[=draw_attribute]{draw_attribute()}} to define fields.}
 
 \item{measurement_units}{Units for measurements. Either "metric", "imperial", or "both". Default is "both".}
 
-\item{...}{Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.}
+\item{provider}{The drawing engine to use: \code{"mapbox-gl-draw"} (the default,
+current behavior) or \code{"terra-draw"} to use the
+\href{https://github.com/JamesLMilner/terra-draw}{Terra Draw} library.
+Terra Draw works identically on Mapbox and MapLibre maps and offers
+additional drawing modes plus a richer select/edit mode.}
+
+\item{modes}{For \code{provider = "terra-draw"}, a character vector of drawing
+modes to expose as toolbar buttons. Valid modes are \code{"point"},
+\code{"linestring"}, \code{"polygon"}, \code{"rectangle"}, \code{"circle"}, \code{"freehand"},
+\code{"freehand-linestring"}, \code{"angled-rectangle"}, \code{"sector"}, \code{"sensor"},
+and \code{"select"}. When \code{NULL} (the default), the mode set is derived from
+the legacy \code{freehand}, \code{rectangle}, and \code{radius} arguments plus
+\code{"point"}, \code{"linestring"}, \code{"polygon"}, and \code{"select"}. For
+\code{provider = "mapbox-gl-draw"}, a supplied \code{modes} value is forwarded to
+the MapboxDraw constructor unchanged (equivalent to passing it via
+\code{...}).}
+
+\item{options}{For \code{provider = "terra-draw"}, an object created by
+\code{\link[=terradraw_options]{terradraw_options()}} with advanced Terra Draw settings (snapping,
+select-mode editing flags, per-mode overrides).}
+
+\item{...}{Additional named arguments for the default
+\code{"mapbox-gl-draw"} provider. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
+Not supported with \code{provider = "terra-draw"}; use \code{options} there instead.}
 }
 \value{
 The modified map object with the draw control added.
@@ -88,6 +114,37 @@ The modified map object with the draw control added.
 Add a draw control to a map
 }
 \details{
+\subsection{The terra-draw provider}{
+
+With \code{provider = "terra-draw"}, mapgl renders its own toolbar (Terra Draw is
+a headless library) with one button per requested mode, a trash button, and
+an optional download button. Behavioral notes:
+\itemize{
+\item The trash button deletes the currently selected feature and does nothing
+when no feature is selected; use \code{\link[=clear_drawn_features]{clear_drawn_features()}} to remove
+everything.
+\item When the mode set includes \code{"select"}, finishing a shape returns to the
+select tool with the new feature selected (set
+\code{terradraw_options(keep_mode_active = TRUE)} to keep drawing instead).
+\item Colors are coerced to 6-digit hex (Terra Draw requires hex), so R color
+names work but alpha channels are ignored; use \code{fill_opacity} for
+transparency.
+\item Features loaded via \code{source} or \code{\link[=add_features_to_draw]{add_features_to_draw()}} are adapted to
+Terra Draw's constraints: Multi* geometries are split into single-part
+features, coordinates are rounded to 9 decimal places (Terra Draw's
+precision limit, about 0.1 mm), and polygon interior rings (holes) are
+removed.
+\item Changing the map style preserves drawn features, but discards an
+unfinished drawing and clears the current selection and undo history.
+\item \code{bezier}, \code{bezier_polygon}, and \code{simplify_freehand} are specific to
+mapbox-gl-draw and error under terra-draw. \code{attributes} and
+\code{show_measurements} work with both providers on standalone widgets (as
+with the default provider, neither is available in compare views).
+}
+}
+
+\subsection{Bezier modes (mapbox-gl-draw provider only)}{
+
 Bezier drawing modes are supported when the draw control is added to the
 original map widget or later through a regular Shiny map proxy. Compare
 widgets and compare proxies are not yet supported for Bezier modes.
@@ -110,6 +167,7 @@ small attribute editor. Click Save to write values to the feature properties;
 works for newly drawn features and features loaded into the draw control with
 \code{source} or \code{add_features_to_draw()}. Compare widgets are not yet supported
 for attribute editing.
+}
 }
 \examples{
 \dontrun{
@@ -180,6 +238,14 @@ mapboxgl() |>
         rectangle = TRUE,
         radius = TRUE,
         bezier = TRUE
+    )
+
+# Use the Terra Draw engine (works on Mapbox and MapLibre maps)
+maplibre() |>
+    add_draw_control(
+        provider = "terra-draw",
+        modes = c("point", "polygon", "rectangle", "circle", "select"),
+        options = terradraw_options(snap_to_coordinates = TRUE)
     )
 }
 }

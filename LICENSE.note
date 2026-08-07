@@ -77,6 +77,17 @@ Below are the licenses of the individual bundled components:
 | undici-types | 7.16.0 | MIT | git+https://github.com/nodejs/undici.git |
 | wordwrapjs | 5.1.1 | MIT | https://github.com/75lb/wordwrapjs |
 
+## Terra Draw
+
+Prebuilt UMD bundles shipped pristine at `inst/htmlwidgets/lib/terra-draw-control/`
+(downloaded by `data-raw/get-maplibre.R`):
+
+| Package | Version | License | Source |
+| --- | --- | --- | --- |
+| terra-draw | 1.32.2 | MIT | https://github.com/JamesLMilner/terra-draw |
+| terra-draw-maplibre-gl-adapter | 1.4.1 | MIT | https://github.com/JamesLMilner/terra-draw |
+| terra-draw-mapbox-gl-adapter | 1.4.0 | MIT | https://github.com/JamesLMilner/terra-draw |
+
 ## Bundled data
 
 The `bixi_locations` and `bixi_flows` datasets are derived from BIXI Montréal

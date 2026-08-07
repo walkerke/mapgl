@@ -1410,11 +1410,17 @@ HTMLWidgets.widget({
 
                   // Identify user-added sources (those not in the original style)
                   // We'll assume any source that's not "composite", "mapbox", or starts with "mapbox-" is user-added
+                  // Terra Draw's adapter owns its own sources/layers and
+                  // re-registers them itself after a style change
                   for (const sourceId in currentStyle.sources) {
                     if (
                       sourceId !== "composite" &&
                       sourceId !== "mapbox" &&
-                      !sourceId.startsWith("mapbox-")
+                      !sourceId.startsWith("mapbox-") &&
+                      !(
+                        typeof MapglTerraDrawControl !== "undefined" &&
+                        MapglTerraDrawControl.isTerraDrawId(sourceId)
+                      )
                     ) {
                       userSourceIds.push(sourceId);
                       const source = currentStyle.sources[sourceId];
@@ -1805,6 +1811,30 @@ HTMLWidgets.widget({
                   map.controls = [];
                 }
                 map.controls.push({ type: "coordinates", control: coordinatesControlObj });
+              } else if (
+                message.type === "add_draw_control" &&
+                message.provider === "terra-draw"
+              ) {
+                if (map._mapgl_draw) {
+                  console.warn(
+                    "mapgl: a draw control already exists on this map; ignoring add_draw_control",
+                  );
+                } else {
+                  const terraDrawCtl = new MapglTerraDrawControl(
+                    Object.assign({}, message, {
+                      gl: "mapbox",
+                      sync: { inputId: data.id },
+                      getSourceData: function (sourceId) {
+                        const source = map.getSource(sourceId);
+                        return source && source._data ? source._data : null;
+                      },
+                    }),
+                  );
+                  map.addControl(terraDrawCtl, message.position);
+                  if (!map.controls) map.controls = [];
+                  map.controls.push({ type: "draw", control: terraDrawCtl });
+                  map._mapgl_draw = terraDrawCtl;
+                }
               } else if (message.type === "add_draw_control") {
                 let drawOptions = message.options || {};
 
@@ -1863,7 +1893,7 @@ HTMLWidgets.widget({
 
                 // Add initial features if provided
                 if (message.source) {
-                  addSourceFeaturesToDraw(draw, message.source, map);
+                  addSourceFeaturesToDraw(drawControl, message.source, map);
                 }
 
                 // Add event listeners
@@ -1985,17 +2015,21 @@ HTMLWidgets.widget({
                   );
                 }
               } else if (message.type === "clear_drawn_features") {
-                if (draw) {
-                  if (map._mapgl_draw) map._mapgl_draw.deleteAll();
+                if (map._mapgl_draw) {
+                  map._mapgl_draw.deleteAll();
                   // Update the drawn features
                   updateDrawnFeatures();
                 }
               } else if (message.type === "add_features_to_draw") {
-                if (draw) {
+                if (map._mapgl_draw) {
                   if (message.data.clear_existing) {
-                    if (map._mapgl_draw) map._mapgl_draw.deleteAll();
+                    map._mapgl_draw.deleteAll();
                   }
-                  addSourceFeaturesToDraw(draw, message.data.source, map);
+                  addSourceFeaturesToDraw(
+                    map._mapgl_draw,
+                    message.data.source,
+                    map,
+                  );
                   // Update the drawn features
                   updateDrawnFeatures();
                 } else {
@@ -2427,24 +2461,34 @@ HTMLWidgets.widget({
 
           // Send clicked point coordinates to Shiny
           map.on("click", function (e) {
-            // Check if this map's draw control is active and in a drawing mode
+            // Check if this map's draw control is active and in a drawing
+            // mode (provider-neutral: terra controls expose isDrawing())
             let isDrawing = false;
-            if (map._mapgl_draw && map._mapgl_draw.getMode) {
-              const mode = map._mapgl_draw.getMode();
-              isDrawing =
-                mode === "draw_point" ||
-                mode === "draw_line_string" ||
-                mode === "draw_polygon";
+            if (map._mapgl_draw) {
+              if (typeof map._mapgl_draw.isDrawing === "function") {
+                isDrawing = map._mapgl_draw.isDrawing();
+              } else if (map._mapgl_draw.getMode) {
+                const mode = map._mapgl_draw.getMode();
+                isDrawing =
+                  mode !== "simple_select" &&
+                  mode !== "direct_select" &&
+                  mode !== "static";
+              }
             }
 
             // Only process feature clicks if not actively drawing
             if (!isDrawing) {
               const features = map.queryRenderedFeatures(e.point);
-              // Filter out draw layers
+              // Filter out draw layers (mapbox-gl-draw and terra-draw)
               const nonDrawFeatures = features.filter(
                 (feature) =>
                   !feature.layer.id.includes("gl-draw") &&
-                  !feature.source.includes("gl-draw"),
+                  !feature.source.includes("gl-draw") &&
+                  !(
+                    typeof MapglTerraDrawControl !== "undefined" &&
+                    (MapglTerraDrawControl.isTerraDrawId(feature.layer.id) ||
+                      MapglTerraDrawControl.isTerraDrawId(feature.source))
+                  ),
               );
 
               if (nonDrawFeatures.length > 0) {
@@ -3268,7 +3312,34 @@ HTMLWidgets.widget({
 
           // Add draw control if enabled
           if (mapData.draw_control) {
-            if (mapData.draw_control && mapData.draw_control.enabled) {
+            if (
+              mapData.draw_control.enabled &&
+              mapData.draw_control.provider === "terra-draw"
+            ) {
+              // Guard: applyMapModifications re-runs after a style change,
+              // and the terra control survives style changes on its own
+              if (!map._mapgl_draw) {
+                const terraDrawCtl = new MapglTerraDrawControl(
+                  Object.assign({}, mapData.draw_control, {
+                    gl: "mapbox",
+                    sync: {
+                      inputId: el.id,
+                      syncUrl: mapData.sync_url,
+                      mapglId: mapData.mapgl_id,
+                    },
+                    getSourceData: function (sourceId) {
+                      const source = map.getSource(sourceId);
+                      return source && source._data ? source._data : null;
+                    },
+                    featuresQueue: mapData.draw_features_queue,
+                  }),
+                );
+                map.addControl(terraDrawCtl, mapData.draw_control.position);
+                if (!map.controls) map.controls = [];
+                map.controls.push({ type: "draw", control: terraDrawCtl });
+                map._mapgl_draw = terraDrawCtl;
+              }
+            } else if (mapData.draw_control && mapData.draw_control.enabled) {
               let drawOptions = mapData.draw_control.options || {};
 
               // Generate styles if styling parameters provided

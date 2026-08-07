@@ -40,5 +40,6 @@ Suggests:
   mapboxapi,
   testthat (>= 3.0.0),
   usethis,
-  leaflet
+  leaflet,
+  withr
 Config/testthat/edition: 3

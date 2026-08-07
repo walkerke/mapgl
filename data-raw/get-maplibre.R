@@ -64,3 +64,17 @@ download.file(
   "https://unpkg.com/@turf/turf@7.3.0/turf.min.js",
   destfile = "inst/htmlwidgets/lib/turf/turf.min.js"
 )
+
+# Terra Draw (alternative draw engine; core must load before the adapters):
+download.file(
+  "https://unpkg.com/terra-draw@1.32.2/dist/terra-draw.umd.js",
+  destfile = "inst/htmlwidgets/lib/terra-draw-control/terra-draw.umd.js"
+)
+download.file(
+  "https://unpkg.com/terra-draw-maplibre-gl-adapter@1.4.1/dist/terra-draw-maplibre-gl-adapter.umd.js",
+  destfile = "inst/htmlwidgets/lib/terra-draw-control/terra-draw-maplibre-gl-adapter.umd.js"
+)
+download.file(
+  "https://unpkg.com/terra-draw-mapbox-gl-adapter@1.4.0/dist/terra-draw-mapbox-gl-adapter.umd.js",
+  destfile = "inst/htmlwidgets/lib/terra-draw-control/terra-draw-mapbox-gl-adapter.umd.js"
+)

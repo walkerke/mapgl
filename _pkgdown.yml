@@ -94,6 +94,7 @@ reference:
       - add_layers_control
       - add_draw_control
       - draw_attribute
+      - terradraw_options
       - add_geocoder_control
       - add_reset_control
       - add_geolocate_control
