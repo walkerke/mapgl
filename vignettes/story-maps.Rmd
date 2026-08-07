@@ -169,7 +169,7 @@ ui <- fluidPage(
         title = "MULTIFAMILY INVESTMENT OPPORTUNITY",
         content = list(
           p("New Class A Apartments in Austin, Texas"),
-          img(src = "apartment.png", width = "300px")
+          img(src = "https://www.austinkayaktours.com/wp-content/uploads/sites/4074/2020/04/Austin-Skyline-Tour-image-1.jpg?w=700&h=700&zoom=2", width = "300px")
         ),
         position = "center"
       ),
