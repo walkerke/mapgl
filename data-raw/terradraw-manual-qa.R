@@ -38,6 +38,10 @@ maplibre() |>
 maplibre() |>
   add_draw_control(provider = "terra-draw")
 
+# Equivalent convenience wrapper — identical control:
+maplibre() |>
+  add_terradraw_control()
+
 # ---------------------------------------------------------------------------
 # 3. EVERY MODE + DOWNLOAD
 # ---------------------------------------------------------------------------

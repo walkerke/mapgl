@@ -755,7 +755,9 @@ add_coordinates_control <- function(
 #'
 #' With `provider = "terra-draw"`, mapgl renders its own toolbar (Terra Draw is
 #' a headless library) with one button per requested mode, a trash button, and
-#' an optional download button. Behavioral notes:
+#' an optional download button. [add_terradraw_control()] is an equivalent
+#' convenience wrapper whose signature contains only the arguments that apply
+#' to this provider. Behavioral notes:
 #'
 #' * The trash button deletes the currently selected feature and does nothing
 #'   when no feature is selected; use [clear_drawn_features()] to remove
@@ -1123,6 +1125,85 @@ add_draw_control <- function(
   }
 
   map
+}
+
+#' Add a Terra Draw control to a map
+#'
+#' A convenience wrapper around [add_draw_control()] with
+#' `provider = "terra-draw"`, exposing only the arguments that apply to the
+#' Terra Draw engine. The two forms are equivalent; see [add_draw_control()]
+#' for full details of the terra-draw provider's behavior, and
+#' [terradraw_options()] for advanced configuration.
+#'
+#' @inheritParams add_draw_control
+#' @param modes A character vector of drawing modes to expose as toolbar
+#'   buttons: any of `"point"`, `"linestring"`, `"polygon"`, `"rectangle"`,
+#'   `"circle"`, `"freehand"`, `"freehand-linestring"`, `"angled-rectangle"`,
+#'   `"sector"`, `"sensor"`, and `"select"`. When `NULL` (the default), the
+#'   control shows `"point"`, `"linestring"`, `"polygon"`, and `"select"`.
+#' @param options An object created by [terradraw_options()] with advanced
+#'   Terra Draw settings (snapping, select-mode editing flags, per-mode
+#'   overrides).
+#'
+#' @return The modified map object with the draw control added.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' maplibre() |>
+#'     add_terradraw_control()
+#'
+#' maplibre() |>
+#'     add_terradraw_control(
+#'         modes = c("polygon", "rectangle", "circle", "freehand", "select"),
+#'         options = terradraw_options(snap_to_coordinates = TRUE),
+#'         download_button = TRUE
+#'     )
+#' }
+add_terradraw_control <- function(
+  map,
+  position = "top-left",
+  modes = NULL,
+  options = NULL,
+  source = NULL,
+  attributes = NULL,
+  point_color = "#3bb2d0",
+  line_color = "#3bb2d0",
+  fill_color = "#3bb2d0",
+  fill_opacity = 0.1,
+  active_color = "#fbb03b",
+  vertex_radius = 5,
+  line_width = 2,
+  download_button = FALSE,
+  download_filename = "drawn-features",
+  show_measurements = FALSE,
+  measurement_units = "both",
+  orientation = "vertical"
+) {
+  add_draw_control(
+    map,
+    position = position,
+    provider = "terra-draw",
+    modes = modes,
+    options = options,
+    source = source,
+    attributes = attributes,
+    point_color = point_color,
+    line_color = line_color,
+    fill_color = fill_color,
+    fill_opacity = fill_opacity,
+    active_color = active_color,
+    vertex_radius = vertex_radius,
+    line_width = line_width,
+    download_button = download_button,
+    download_filename = download_filename,
+    show_measurements = show_measurements,
+    measurement_units = measurement_units,
+    orientation = orientation
+  )
 }
 
 #' Define an editable draw attribute

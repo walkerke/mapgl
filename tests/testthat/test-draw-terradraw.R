@@ -619,3 +619,57 @@ test_that("terra-draw control works end-to-end in a headless browser", {
   expect_true(teardown$domRemoved)
   expect_true(teardown$widgetCleared)
 })
+
+test_that("add_terradraw_control() is equivalent to provider = 'terra-draw'", {
+  a <- add_terradraw_control(
+    maplibre(),
+    modes = c("polygon", "circle", "select"),
+    options = terradraw_options(snap_to_lines = TRUE),
+    fill_color = "orchid",
+    download_button = TRUE
+  )
+  b <- add_draw_control(
+    maplibre(),
+    provider = "terra-draw",
+    modes = c("polygon", "circle", "select"),
+    options = terradraw_options(snap_to_lines = TRUE),
+    fill_color = "orchid",
+    download_button = TRUE
+  )
+  expect_identical(a$x$draw_control, b$x$draw_control)
+
+  expect_identical(
+    add_terradraw_control(maplibre())$x$draw_control,
+    add_draw_control(maplibre(), provider = "terra-draw")$x$draw_control
+  )
+
+  # validation flows through the shared implementation
+  expect_error(
+    add_terradraw_control(maplibre(), modes = "hexagon"),
+    "Invalid Terra Draw mode"
+  )
+  expect_error(
+    add_terradraw_control(
+      maplibre(),
+      attributes = list(mode = draw_attribute("text"))
+    ),
+    "reserved"
+  )
+
+  # proxy delegation sends the same message shape
+  messages <- list()
+  session <- list(
+    sendCustomMessage = function(type, message) {
+      messages[[length(messages) + 1]] <<- list(type = type, message = message)
+    }
+  )
+  proxy <- structure(
+    list(id = "map", session = session),
+    class = "maplibre_proxy"
+  )
+  add_terradraw_control(proxy, modes = c("polygon", "select"))
+  msg <- messages[[1]]$message$message
+  expect_equal(msg$type, "add_draw_control")
+  expect_equal(msg$provider, "terra-draw")
+  expect_equal(msg$modes, c("polygon", "select"))
+})

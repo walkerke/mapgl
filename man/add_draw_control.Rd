@@ -118,7 +118,9 @@ Add a draw control to a map
 
 With \code{provider = "terra-draw"}, mapgl renders its own toolbar (Terra Draw is
 a headless library) with one button per requested mode, a trash button, and
-an optional download button. Behavioral notes:
+an optional download button. \code{\link[=add_terradraw_control]{add_terradraw_control()}} is an equivalent
+convenience wrapper whose signature contains only the arguments that apply
+to this provider. Behavioral notes:
 \itemize{
 \item The trash button deletes the currently selected feature and does nothing
 when no feature is selected; use \code{\link[=clear_drawn_features]{clear_drawn_features()}} to remove

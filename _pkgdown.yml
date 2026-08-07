@@ -93,6 +93,7 @@ reference:
       - add_scale_control
       - add_layers_control
       - add_draw_control
+      - add_terradraw_control
       - draw_attribute
       - terradraw_options
       - add_geocoder_control
