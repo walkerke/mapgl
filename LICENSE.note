@@ -88,6 +88,9 @@ Prebuilt UMD bundles shipped pristine at `inst/htmlwidgets/lib/terra-draw-contro
 | terra-draw-maplibre-gl-adapter | 1.4.1 | MIT | https://github.com/JamesLMilner/terra-draw |
 | terra-draw-mapbox-gl-adapter | 1.4.0 | MIT | https://github.com/JamesLMilner/terra-draw |
 
+Several toolbar icon glyphs in `terra-draw-control.js` are adapted from
+Feather Icons (MIT, https://github.com/feathericons/feather).
+
 ## Bundled data
 
 The `bixi_locations` and `bixi_flows` datasets are derived from BIXI Montréal

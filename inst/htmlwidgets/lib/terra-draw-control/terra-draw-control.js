@@ -102,6 +102,10 @@
     select: "Select and edit features",
   };
 
+  // Icon glyphs follow the Feather Icons visual language (24px viewBox, 2px
+  // currentColor stroke). sensor, select, trash, and download are adapted
+  // from Feather (MIT, https://feathericons.com); the remaining glyphs are
+  // mapgl-drawn in the same style (Feather has no GIS shapes).
   var SVG_OPEN =
     '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
 
@@ -124,20 +128,19 @@
       SVG_OPEN +
       '<polygon points="7.2 3.5 20.5 9.7 16.8 20.5 3.5 14.3"></polygon></svg>',
     sector:
-      SVG_OPEN +
-      '<path d="M12 12 12 3.5 A8.5 8.5 0 0 1 19.6 16z"></path></svg>',
+      SVG_OPEN + '<path d="M6 20V8a12 12 0 0 1 12 12z"></path></svg>',
     sensor:
       SVG_OPEN +
-      '<path d="M12 13 8 5.5"></path><path d="M12 13 19 8.5"></path><path d="M8 5.5 A9 9 0 0 1 19 8.5"></path><path d="M9.8 9.4 A5 5 0 0 1 15.7 11"></path><circle cx="12" cy="13" r="1.4" fill="currentColor" stroke="none"></circle></svg>',
+      '<path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg>',
     select:
       SVG_OPEN +
-      '<path d="M6 3.5 18.5 12l-5.5 1.2L15.5 19l-2.8 1.4-2.6-5.8L6 18z" fill="currentColor" stroke="none"></path></svg>',
+      '<path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>',
     trash:
       SVG_OPEN +
-      '<path d="M4 7h16"></path><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path><path d="M6.5 7 7.4 19a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L17.5 7"></path><path d="M10 11v5"></path><path d="M14 11v5"></path></svg>',
+      '<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
     download:
       SVG_OPEN +
-      '<path d="M12 4v11"></path><path d="m7 11 5 5 5-5"></path><path d="M5 20h14"></path></svg>',
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
   };
 
   function isTerraDrawId(id) {
