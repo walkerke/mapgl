@@ -46,9 +46,10 @@ dependencies:
     script:
       - "terra-draw-maplibre-gl-adapter.umd.js"
   - name: mapgl-terra-draw-control
-    version: "1.0.0"
+    version: "1.1.0"
     src: "htmlwidgets/lib/terra-draw-control"
     script:
+      - "terra-draw-curve-mode.js"
       - "terra-draw-control.js"
     stylesheet:
       - "terra-draw-control.css"

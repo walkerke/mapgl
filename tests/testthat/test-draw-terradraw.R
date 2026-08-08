@@ -30,6 +30,15 @@ test_that("terra-draw dependencies ship correctly in all four widget yamls", {
     )
     expect_false(other %in% dep_names)
 
+    # The curve-mode script must load before the control that registers it
+    control_dep <- deps[[control_idx]]
+    expect_equal(control_dep$version, "1.1.0", info = widget_name)
+    curve_pos <- which(control_dep$script == "terra-draw-curve-mode.js")
+    control_pos <- which(control_dep$script == "terra-draw-control.js")
+    expect_length(curve_pos, 1)
+    expect_length(control_pos, 1)
+    expect_true(curve_pos < control_pos, info = widget_name)
+
     # Every referenced file exists on disk (src is package-relative here)
     for (idx in c(core_idx, adapter_idx, control_idx)) {
       dep <- deps[[idx]]
@@ -124,6 +133,22 @@ test_that("terra-draw provider arguments are validated", {
       attributes = list(selectionPointFeatureId = draw_attribute("text"))
     ),
     "reserved"
+  )
+  # curve metadata property names are reserved too
+  expect_error(
+    add_draw_control(
+      m,
+      provider = "terra-draw",
+      attributes = list(curveNodes = draw_attribute("text"))
+    ),
+    "reserved"
+  )
+  # curve modes are legal toolbar modes
+  expect_silent(
+    add_draw_control(m, provider = "terra-draw", modes = c("curve", "select"))
+  )
+  expect_silent(
+    add_terradraw_control(m, modes = c("curve", "curve-linestring", "select"))
   )
 })
 
@@ -255,7 +280,8 @@ test_that("shipped JS passes a syntax check", {
     "htmlwidgets/maplibregl.js",
     "htmlwidgets/mapboxgl_compare.js",
     "htmlwidgets/maplibregl_compare.js",
-    "htmlwidgets/lib/terra-draw-control/terra-draw-control.js"
+    "htmlwidgets/lib/terra-draw-control/terra-draw-control.js",
+    "htmlwidgets/lib/terra-draw-control/terra-draw-curve-mode.js"
   )
   for (path in js_files) {
     file <- system.file(path, package = "mapgl")
@@ -281,6 +307,31 @@ test_that("bindings contain the terra-draw integration invariants", {
   control <- read_js("htmlwidgets/lib/terra-draw-control/terra-draw-control.js")
   expect_match(control, "window.MapglTerraDrawControl", fixed = TRUE)
   expect_match(control, 'PREFIX_ID = "mapgl-terradraw"', fixed = TRUE)
+  # curve mode integration: guidance sanitation, dual-namespace class lookup,
+  # metadata resync, move-only select flags, and the pan lifecycle
+  expect_match(control, '"curveGuidance"', fixed = TRUE)
+  expect_match(control, "MapglTerraDrawModes", fixed = TRUE)
+  expect_match(control, "_resyncCurveNodes", fixed = TRUE)
+  expect_match(control, "_updatePanLock", fixed = TRUE)
+  expect_match(control, "CURVE_MODES.indexOf(name)", fixed = TRUE)
+  # resync must run before the public feature is read in the finish handler
+  expect_true(
+    grepl(
+      'action === "dragFeature"[\\s\\S]{0,200}_resyncCurveNodes\\(id\\);[\\s\\S]{0,80}_publicFeature\\(id\\)',
+      control,
+      perl = TRUE
+    )
+  )
+
+  curve_js <- read_js(
+    "htmlwidgets/lib/terra-draw-control/terra-draw-curve-mode.js"
+  )
+  expect_match(curve_js, "window.MapglTerraDrawModes", fixed = TRUE)
+  expect_match(curve_js, "TerraDrawExtend.TerraDrawBaseDrawMode", fixed = TRUE)
+  expect_match(curve_js, '"curve-linestring"', fixed = TRUE)
+  expect_match(curve_js, "curveNodes", fixed = TRUE)
+  expect_match(curve_js, "ringSelfIntersects", fixed = TRUE)
+  expect_match(curve_js, "mapglGetContainer", fixed = TRUE)
   # MapboxDraw-compatible facade methods used by the shared handlers
   for (method in c(
     "getAll",
@@ -672,4 +723,593 @@ test_that("add_terradraw_control() is equivalent to provider = 'terra-draw'", {
   expect_equal(msg$type, "add_draw_control")
   expect_equal(msg$provider, "terra-draw")
   expect_equal(msg$modes, c("polygon", "select"))
+})
+
+test_that("curve modes ride the payload and options escape hatch", {
+  m <- add_draw_control(
+    maplibre(),
+    provider = "terra-draw",
+    modes = c("curve", "curve-linestring", "select")
+  )
+  expect_equal(
+    m$x$draw_control$modes,
+    c("curve", "curve-linestring", "select")
+  )
+
+  o <- terradraw_options(modes = list(curve = list(pointerDistance = 30)))
+  expect_equal(o$modes$curve$pointerDistance, 30)
+})
+
+test_that("curve features coerce to sf with the curveNodes column", {
+  fixture <- list(
+    type = "FeatureCollection",
+    features = list(
+      list(
+        type = "Feature",
+        id = "f7c5a9b2-3d4e-4a1b-9c8d-2e5f6a7b8c9d",
+        geometry = list(
+          type = "Polygon",
+          coordinates = list(list(
+            c(-97.2, 32.6),
+            c(-97.1, 32.6),
+            c(-97.15, 32.7),
+            c(-97.2, 32.6)
+          ))
+        ),
+        properties = list(
+          mode = "curve",
+          curveNodes = '[{"coords":[-97.2,32.6],"handle":null,"handle2":null},{"coords":[-97.1,32.6],"handle":[-97.05,32.65],"handle2":null},{"coords":[-97.15,32.7],"handle":null,"handle2":null}]'
+        )
+      )
+    )
+  )
+  sf_obj <- mapgl:::.mapgl_coerce_drawn_features(fixture)
+  expect_s3_class(sf_obj, "sf")
+  expect_true("curveNodes" %in% names(sf_obj))
+  expect_type(sf_obj$curveNodes, "character")
+  nodes <- jsonlite::fromJSON(sf_obj$curveNodes[1], simplifyVector = FALSE)
+  expect_length(nodes, 3)
+})
+
+test_that("curve densifier matches the bezier plugin port exactly", {
+  skip_if(Sys.which("node") == "", "node is not available")
+
+  script <- sprintf(
+    '
+    const vm = require("vm");
+    const fs = require("fs");
+    const ctx = vm.createContext({ console });
+    vm.runInContext("var window = this; var self = this;", ctx);
+    vm.runInContext(fs.readFileSync(%s, "utf8"), ctx);
+    vm.runInContext(fs.readFileSync(%s, "utf8"), ctx);
+    const M = vm.runInContext("window.MapglTerraDrawModes", ctx);
+    const corner = (x, y) => ({ coords: [x, y], handle: null, handle2: null });
+    const handled = (x, y, hx, hy) => ({ coords: [x, y], handle: [hx, hy], handle2: null });
+    const out = {};
+    // straight: only the start anchor
+    out.straight = M._segmentVertices(corner(0, 0), corner(10, 0));
+    // two-sided: 19 vertices, cubic through both control points
+    out.twoSided = M._segmentVertices(handled(0, 0, 0, 5), handled(10, 0, 10, 5));
+    // one-sided: missing control point synthesized at the halfway point
+    out.oneSided = M._segmentVertices(handled(0, 0, 2, 3), corner(10, 0));
+    // open line includes its final anchor
+    out.open = M._densify([corner(0, 0), corner(10, 0)], false);
+    // closed ring terminates with an exact copy of the first vertex
+    const ring = M._densify(
+      [corner(0, 0), handled(10, 0, 12, 4), corner(5, 8)],
+      true
+    );
+    out.ringLen = ring.length;
+    out.ringClosed = JSON.stringify(ring[0]) === JSON.stringify(ring[ring.length - 1]);
+    out.bowtie = M._ringSelfIntersects([[0,0],[10,10],[10,0],[0,10],[0,0]]);
+    out.square = M._ringSelfIntersects([[0,0],[10,0],[10,10],[0,10],[0,0]]);
+    // translation moves every coordinate by the same delta
+    const nodes = [handled(1, 1, 2, 2)];
+    M.translateCurveNodes(nodes, 5, -1);
+    out.translated = nodes[0];
+    console.log(JSON.stringify(out));
+    ',
+    shQuote(system.file(
+      "htmlwidgets/lib/terra-draw-control/terra-draw.umd.js",
+      package = "mapgl"
+    )),
+    shQuote(system.file(
+      "htmlwidgets/lib/terra-draw-control/terra-draw-curve-mode.js",
+      package = "mapgl"
+    ))
+  )
+  raw <- system2("node", c("-e", shQuote(script)), stdout = TRUE)
+  out <- jsonlite::fromJSON(raw[length(raw)], simplifyVector = FALSE)
+
+  # straight segments contribute only their start anchor
+  expect_equal(out$straight, list(list(0, 0)))
+  # curved segments: 19 vertices starting at the anchor
+  expect_length(out$twoSided, 19)
+  expect_equal(out$twoSided[[1]], list(0, 0))
+  # hand-computed cubic at t = 0.5 for p0=(0,0), c1=(0,5), c2=(10,-5), p1=(10,0):
+  # x = 5, y = 0 (the S-curve midpoint) — check the nearest sample bracket
+  mid_lo <- unlist(out$twoSided[[10]]) # t = 9/19
+  expect_lt(abs(mid_lo[1] - 4.6), 0.2)
+  expect_length(out$oneSided, 19)
+  expect_equal(out$open, list(list(0, 0), list(10, 0)))
+  expect_equal(out$ringLen, 40)
+  expect_true(out$ringClosed)
+  expect_true(out$bowtie)
+  expect_false(out$square)
+  expect_equal(out$translated$coords, list(6, 0))
+  expect_equal(out$translated$handle, list(7, 1))
+})
+
+test_that("curve mode draws a mixed straight/curved polygon end-to-end", {
+  skip_on_cran()
+  skip_if_not_installed("chromote")
+
+  blank_style <- list(
+    version = 8,
+    sources = structure(list(), names = character(0)),
+    layers = list(
+      list(
+        id = "bg",
+        type = "background",
+        paint = list(`background-color` = "#dddddd")
+      )
+    )
+  )
+
+  m <- maplibre(style = blank_style, center = c(-97.1, 32.7), zoom = 10) |>
+    add_terradraw_control(modes = c("curve", "select"))
+
+  dir <- tempfile("mapgl-curve-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  html_file <- file.path(dir, "map.html")
+  htmlwidgets::saveWidget(m, html_file, selfcontained = FALSE)
+
+  b <- tryCatch(chromote::ChromoteSession$new(), error = function(e) NULL)
+  if (is.null(b)) skip("chromote could not start a browser")
+  on.exit(b$close(), add = TRUE)
+
+  js_value <- function(expr) {
+    out <- b$Runtime$evaluate(
+      paste0("JSON.stringify((function() {", expr, "})())"),
+      returnByValue = TRUE
+    )
+    value <- out$result$value
+    if (is.null(value) || identical(value, "null")) {
+      return(NULL)
+    }
+    jsonlite::fromJSON(value, simplifyVector = TRUE)
+  }
+
+  wait_for <- function(expr, timeout = 30) {
+    deadline <- Sys.time() + timeout
+    repeat {
+      result <- tryCatch(js_value(expr), error = function(e) NULL)
+      if (isTRUE(result)) {
+        return(invisible(TRUE))
+      }
+      if (Sys.time() > deadline) {
+        return(FALSE)
+      }
+      Sys.sleep(0.25)
+    }
+  }
+
+  mouse <- function(type, x, y, buttons = 0) {
+    b$Input$dispatchMouseEvent(
+      type = type,
+      x = x,
+      y = y,
+      button = if (type == "mouseMoved") "none" else "left",
+      buttons = buttons,
+      clickCount = if (type == "mouseMoved") 0 else 1
+    )
+    Sys.sleep(0.06)
+  }
+
+  click_at <- function(x, y) {
+    mouse("mousePressed", x, y, buttons = 1)
+    mouse("mouseReleased", x, y, buttons = 0)
+    Sys.sleep(0.1)
+  }
+
+  drag <- function(x1, y1, x2, y2, steps = 6) {
+    mouse("mousePressed", x1, y1, buttons = 1)
+    for (i in seq_len(steps)) {
+      mouse(
+        "mouseMoved",
+        x1 + (x2 - x1) * i / steps,
+        y1 + (y2 - y1) * i / steps,
+        buttons = 1
+      )
+    }
+    mouse("mouseReleased", x2, y2, buttons = 0)
+    Sys.sleep(0.1)
+  }
+
+  key <- function(key_name, code, vk) {
+    b$Input$dispatchKeyEvent(
+      type = "keyDown",
+      key = key_name,
+      code = code,
+      windowsVirtualKeyCode = vk
+    )
+    b$Input$dispatchKeyEvent(
+      type = "keyUp",
+      key = key_name,
+      code = code,
+      windowsVirtualKeyCode = vk
+    )
+    Sys.sleep(0.1)
+  }
+
+  b$Page$navigate(paste0("file://", html_file))
+
+  if (
+    !wait_for(
+      "var c = document.createElement('canvas');
+       return !!(c.getContext('webgl2') || c.getContext('webgl'));",
+      timeout = 10
+    )
+  ) {
+    skip("Headless browser does not support WebGL")
+  }
+  ready <- wait_for(
+    "var w = window.HTMLWidgets && HTMLWidgets.find('.maplibregl');
+     return !!(w && w.drawControl && w.drawControl.getTerraDraw &&
+       w.drawControl.getTerraDraw() &&
+       document.querySelector('.mapgl-terradraw-mode-curve'));"
+  )
+  if (!ready) skip("Map failed to initialize in the headless browser")
+
+  rect <- js_value(
+    "var r = document.querySelector('.maplibregl-canvas').getBoundingClientRect();
+     return { left: r.left, top: r.top, w: r.width, h: r.height };"
+  )
+  cx <- rect$left + rect$w / 2
+  cy <- rect$top + rect$h / 2
+  A <- c(cx - 80, cy + 60)
+  B <- c(cx + 80, cy + 60)
+  C <- c(cx, cy - 80)
+  # drag NORTH so the handle bows the adjacent curves outward — an eastward
+  # handle makes the closing curve cross the B->C segment, which the
+  # self-intersection guard correctly refuses (covered separately below)
+  C2 <- c(cx, cy - 140)
+
+  # instrument BEFORE drawing: create counter + expected map coordinates for
+  # the pointer-down origin contract
+  js_value(sprintf(
+    "var w = HTMLWidgets.find('.maplibregl');
+     window._t = { creates: 0 };
+     w.getMap().on('draw.create', function() { window._t.creates++; });
+     var m = w.getMap();
+     window._t.expPress = m.unproject([%f, %f]);
+     window._t.expRelease = m.unproject([%f, %f]);
+     return true;",
+    C[1] - rect$left,
+    C[2] - rect$top,
+    C2[1] - rect$left,
+    C2[2] - rect$top
+  ))
+
+  # activate the curve tool: mode set + pan locked
+  js_value(
+    "document.querySelector('.mapgl-terradraw-mode-curve').click(); return true;"
+  )
+  state <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     return { mode: w.drawControl.getMode(),
+              pan: w.getMap().dragPan.isEnabled() };"
+  )
+  expect_equal(state$mode, "curve")
+  expect_false(state$pan)
+
+  # corner A, corner B, curved anchor C (click-drag pulls out the handle),
+  # close by clicking the first node
+  click_at(A[1], A[2])
+  click_at(B[1], B[2])
+  drag(C[1], C[2], C2[1], C2[2])
+  mouse("mouseMoved", A[1], A[2])
+  click_at(A[1], A[2])
+
+  finished <- wait_for(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var withNodes = w.drawControl.getAll().features.filter(function(f) {
+       return typeof f.properties.curveNodes === 'string';
+     });
+     return withNodes.length === 1;"
+  )
+  expect_true(finished)
+
+  result <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var ctl = w.drawControl;
+     var f = ctl.getAll().features.filter(function(x) {
+       return typeof x.properties.curveNodes === 'string';
+     })[0];
+     var ring = f.geometry.coordinates[0];
+     var nodes = JSON.parse(f.properties.curveNodes);
+     var snapshot = ctl.getTerraDraw().getSnapshot();
+     return {
+       type: f.geometry.type,
+       mode: f.properties.mode,
+       ringLen: ring.length,
+       closed: JSON.stringify(ring[0]) === JSON.stringify(ring[ring.length - 1]),
+       nodes: nodes,
+       guidanceLeft: snapshot.filter(function(x) {
+         return x.properties && x.properties.curveGuidance;
+       }).length,
+       creates: window._t.creates,
+       synced: (w.drawFeatures && w.drawFeatures.features.length) || 0,
+       modeNow: ctl.getMode(),
+       panNow: w.getMap().dragPan.isEnabled(),
+       expPress: [window._t.expPress.lng, window._t.expPress.lat],
+       expRelease: [window._t.expRelease.lng, window._t.expRelease.lat]
+     };"
+  )
+  expect_equal(result$type, "Polygon")
+  expect_equal(result$mode, "curve")
+  # two curved-adjacent segments densified at 19 steps each
+  expect_gte(result$ringLen, 21)
+  expect_true(result$closed)
+  expect_equal(nrow(result$nodes), 3)
+  # pointer-down origin contract: the dragged anchor sits at the PRESS
+  # coordinate (not the ~8px-late threshold event) and its handle at the
+  # release coordinate
+  node_c <- result$nodes[3, ]
+  expect_lt(abs(node_c$coords[[1]][1] - result$expPress[1]), 1e-6)
+  expect_lt(abs(node_c$coords[[1]][2] - result$expPress[2]), 1e-6)
+  expect_lt(abs(node_c$handle[[1]][1] - result$expRelease[1]), 1e-6)
+  expect_lt(abs(node_c$handle[[1]][2] - result$expRelease[2]), 1e-6)
+  expect_equal(result$guidanceLeft, 0)
+  expect_equal(result$creates, 1)
+  expect_equal(result$synced, 1)
+  # finish returned to select with pan restored
+  expect_equal(result$modeNow, "select")
+  expect_true(result$panNow)
+
+  # select-mode drag: geometry AND every control-net coordinate translate by
+  # the same delta (the finished feature is auto-selected)
+  before <- result$nodes
+  centroid <- c(cx, cy + 13)
+  drag(centroid[1], centroid[2], centroid[1] + 50, centroid[2] + 20, steps = 8)
+  moved <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var f = w.drawControl.getAll().features.filter(function(x) {
+       return typeof x.properties.curveNodes === 'string';
+     })[0];
+     return { ring0: f.geometry.coordinates[0][0],
+              nodes: JSON.parse(f.properties.curveNodes) };"
+  )
+  d_lng <- moved$ring0[1] - before$coords[[1]][1]
+  d_lat <- moved$ring0[2] - before$coords[[1]][2]
+  expect_gt(abs(d_lng), 1e-8) # the drag actually moved the feature
+  for (i in seq_len(3)) {
+    expect_lt(
+      abs(moved$nodes$coords[[i]][1] - (before$coords[[i]][1] + d_lng)),
+      1e-6
+    )
+    expect_lt(
+      abs(moved$nodes$coords[[i]][2] - (before$coords[[i]][2] + d_lat)),
+      1e-6
+    )
+  }
+  expect_lt(
+    abs(moved$nodes$handle[[3]][1] - (before$handle[[3]][1] + d_lng)),
+    1e-6
+  )
+
+  # Backspace + Enter-below-minimum + Escape lifecycle
+  js_value(
+    "document.querySelector('.mapgl-terradraw-mode-curve').click(); return true;"
+  )
+  click_at(A[1], A[2])
+  click_at(B[1], B[2])
+  counts <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     return w.drawControl.getTerraDraw().getSnapshot().filter(function(x) {
+       return x.properties && x.properties.curveGuidanceType === 'node';
+     }).length;"
+  )
+  expect_equal(counts, 2)
+  key("Enter", "Enter", 13) # below the 3-node minimum: refused
+  expect_equal(js_value("return window._t.creates;"), 1)
+  key("Backspace", "Backspace", 8)
+  counts <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     return w.drawControl.getTerraDraw().getSnapshot().filter(function(x) {
+       return x.properties && x.properties.curveGuidanceType === 'node';
+     }).length;"
+  )
+  expect_equal(counts, 1)
+  key("Escape", "Escape", 27)
+  residue <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var snap = w.drawControl.getTerraDraw().getSnapshot();
+     return { guidance: snap.filter(function(x) {
+                return x.properties && x.properties.curveGuidance;
+              }).length,
+              inProgress: snap.filter(function(x) {
+                return x.properties && x.properties.currentlyDrawing;
+              }).length };"
+  )
+  expect_equal(residue$guidance, 0)
+  expect_equal(residue$inProgress, 0)
+
+  # self-intersecting close attempt is refused (bow-tie click sequence)
+  P1 <- c(cx - 50, cy - 50)
+  P2 <- c(cx + 50, cy + 50)
+  P3 <- c(cx + 50, cy - 50)
+  P4 <- c(cx - 50, cy + 50)
+  click_at(P1[1], P1[2])
+  click_at(P2[1], P2[2])
+  click_at(P3[1], P3[2])
+  click_at(P4[1], P4[2])
+  click_at(P1[1], P1[2]) # close attempt over the bow-tie: must be refused
+  refused <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var snap = w.drawControl.getTerraDraw().getSnapshot();
+     return { creates: window._t.creates,
+              inProgress: snap.filter(function(x) {
+                return x.properties && x.properties.currentlyDrawing;
+              }).length };"
+  )
+  expect_equal(refused$creates, 1)
+  expect_equal(refused$inProgress, 1)
+  key("Escape", "Escape", 27)
+
+  # style survival: the finished curve keeps geometry + metadata
+  js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     w.getMap().setStyle({
+       version: 8, sources: {},
+       layers: [{ id: 'bg2', type: 'background',
+                  paint: { 'background-color': '#eeeeee' } }]
+     });
+     return true;"
+  )
+  survived <- wait_for(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var withNodes = w.drawControl.getAll().features.filter(function(f) {
+       return f.properties.mode === 'curve' &&
+         typeof f.properties.curveNodes === 'string';
+     });
+     return withNodes.length === 1;"
+  )
+  expect_true(survived)
+})
+
+test_that("buttonless controls round-trip curve features intact", {
+  skip_on_cran()
+  skip_if_not_installed("chromote")
+
+  blank_style <- list(
+    version = 8,
+    sources = structure(list(), names = character(0)),
+    layers = list(
+      list(
+        id = "bg",
+        type = "background",
+        paint = list(`background-color` = "#dddddd")
+      )
+    )
+  )
+
+  # the toolbar does NOT request the curve modes — they must still be
+  # registered so re-added curve features keep their identity
+  m <- maplibre(style = blank_style, center = c(-97.1, 32.7), zoom = 10) |>
+    add_terradraw_control(modes = c("polygon", "select"))
+
+  dir <- tempfile("mapgl-curve-rt-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  html_file <- file.path(dir, "map.html")
+  htmlwidgets::saveWidget(m, html_file, selfcontained = FALSE)
+
+  b <- tryCatch(chromote::ChromoteSession$new(), error = function(e) NULL)
+  if (is.null(b)) skip("chromote could not start a browser")
+  on.exit(b$close(), add = TRUE)
+
+  js_value <- function(expr) {
+    out <- b$Runtime$evaluate(
+      paste0("JSON.stringify((function() {", expr, "})())"),
+      returnByValue = TRUE
+    )
+    value <- out$result$value
+    if (is.null(value) || identical(value, "null")) {
+      return(NULL)
+    }
+    jsonlite::fromJSON(value, simplifyVector = TRUE)
+  }
+  wait_for <- function(expr, timeout = 30) {
+    deadline <- Sys.time() + timeout
+    repeat {
+      result <- tryCatch(js_value(expr), error = function(e) NULL)
+      if (isTRUE(result)) {
+        return(invisible(TRUE))
+      }
+      if (Sys.time() > deadline) {
+        return(FALSE)
+      }
+      Sys.sleep(0.25)
+    }
+  }
+
+  b$Page$navigate(paste0("file://", html_file))
+  if (
+    !wait_for(
+      "var c = document.createElement('canvas');
+       return !!(c.getContext('webgl2') || c.getContext('webgl'));",
+      timeout = 10
+    )
+  ) {
+    skip("Headless browser does not support WebGL")
+  }
+  ready <- wait_for(
+    "var w = window.HTMLWidgets && HTMLWidgets.find('.maplibregl');
+     return !!(w && w.drawControl && w.drawControl.getTerraDraw &&
+       w.drawControl.getTerraDraw());"
+  )
+  if (!ready) skip("Map failed to initialize in the headless browser")
+
+  added <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var M = window.MapglTerraDrawModes;
+     var nodes = [
+       { coords: [-97.2, 32.6], handle: null, handle2: null },
+       { coords: [-97.1, 32.6], handle: [-97.05, 32.65], handle2: null },
+       { coords: [-97.15, 32.7], handle: null, handle2: null }
+     ];
+     var ring = M._densify(nodes, true).map(function(c) {
+       return [Math.round(c[0] * 1e9) / 1e9, Math.round(c[1] * 1e9) / 1e9];
+     });
+     ring[ring.length - 1] = ring[0].slice();
+     w.drawControl.add({
+       type: 'Feature',
+       properties: { mode: 'curve', curveNodes: JSON.stringify(nodes) },
+       geometry: { type: 'Polygon', coordinates: [ring] }
+     });
+     var f = w.drawControl.getAll().features[0];
+     return f ? { mode: f.properties.mode,
+                  hasNodes: typeof f.properties.curveNodes === 'string' }
+              : null;"
+  )
+  # curve identity preserved even though the toolbar never requested curve
+  expect_equal(added$mode, "curve")
+  expect_true(added$hasNodes)
+
+  js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     w.getMap().setStyle({
+       version: 8, sources: {},
+       layers: [{ id: 'bg2', type: 'background',
+                  paint: { 'background-color': '#eeeeee' } }]
+     });
+     return true;"
+  )
+  survived <- wait_for(
+    "var w = HTMLWidgets.find('.maplibregl');
+     var f = w.drawControl.getAll().features[0];
+     return !!(f && f.properties.mode === 'curve' &&
+       typeof f.properties.curveNodes === 'string');"
+  )
+  expect_true(survived)
+
+  # a malformed control net demotes cleanly instead of shipping inert
+  demoted <- js_value(
+    "var w = HTMLWidgets.find('.maplibregl');
+     w.drawControl.add({
+       type: 'Feature',
+       properties: { mode: 'curve', curveNodes: 'not json' },
+       geometry: { type: 'Polygon', coordinates: [[
+         [-97.4, 32.6], [-97.3, 32.6], [-97.35, 32.7], [-97.4, 32.6]
+       ]] }
+     });
+     var feats = w.drawControl.getAll().features;
+     var demotedFeature = feats.filter(function(f) {
+       return f.properties.mode === 'polygon';
+     });
+     return demotedFeature.length;"
+  )
+  expect_equal(demoted, 1)
 })

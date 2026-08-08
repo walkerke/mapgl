@@ -26,11 +26,13 @@ terradraw_options(
 \item{drag_features}{Logical, whether selected features can be moved by
 dragging. Default is \code{TRUE}.}
 
-\item{rotate_features}{Logical, whether selected features can be rotated.
-Default is \code{FALSE}.}
+\item{rotate_features}{Logical, whether selected features can be rotated by
+holding Control+R while dragging the feature in select mode. This uses the
+Control key on macOS as well as Windows and Linux. Default is \code{FALSE}.}
 
-\item{scale_features}{Logical, whether selected features can be scaled.
-Default is \code{FALSE}.}
+\item{scale_features}{Logical, whether selected features can be scaled by
+holding Control+S while dragging the feature in select mode. This uses the
+Control key on macOS as well as Windows and Linux. Default is \code{FALSE}.}
 
 \item{drag_vertices}{Logical, whether individual vertices of a selected
 feature can be dragged. Default is \code{TRUE}.}
@@ -87,6 +89,14 @@ This helper builds the \code{options} argument for
 \code{\link[=add_draw_control]{add_draw_control()}} with \code{provider = "terra-draw"}. All arguments are
 optional; the defaults give a fully editable select mode without snapping.
 }
+\details{
+Rotation and scaling use keyboard-modified feature dragging rather than
+visible handles. First select a feature and ensure the map has keyboard
+focus. Hold Control+R while dragging to rotate, or Control+S while dragging
+to scale. Release the pointer to finish the transformation. The \code{resize}
+option is separate and provides visible selection points that can be dragged
+to resize a feature.
+}
 \examples{
 \dontrun{
 library(mapgl)
@@ -96,8 +106,11 @@ maplibre() |>
         provider = "terra-draw",
         options = terradraw_options(
             snap_to_coordinates = TRUE,
-            rotate_features = TRUE
+            rotate_features = TRUE,
+            scale_features = TRUE
         )
     )
+# In select mode, select a feature and hold Control+R or Control+S while
+# dragging it to rotate or scale, respectively.
 }
 }

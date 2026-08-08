@@ -92,12 +92,12 @@ additional drawing modes plus a richer select/edit mode.}
 modes to expose as toolbar buttons. Valid modes are \code{"point"},
 \code{"linestring"}, \code{"polygon"}, \code{"rectangle"}, \code{"circle"}, \code{"freehand"},
 \code{"freehand-linestring"}, \code{"angled-rectangle"}, \code{"sector"}, \code{"sensor"},
-and \code{"select"}. When \code{NULL} (the default), the mode set is derived from
-the legacy \code{freehand}, \code{rectangle}, and \code{radius} arguments plus
-\code{"point"}, \code{"linestring"}, \code{"polygon"}, and \code{"select"}. For
-\code{provider = "mapbox-gl-draw"}, a supplied \code{modes} value is forwarded to
-the MapboxDraw constructor unchanged (equivalent to passing it via
-\code{...}).}
+\code{"curve"}, \code{"curve-linestring"}, and \code{"select"}. When \code{NULL} (the
+default), the mode set is derived from the legacy \code{freehand},
+\code{rectangle}, and \code{radius} arguments plus \code{"point"}, \code{"linestring"},
+\code{"polygon"}, and \code{"select"}. For \code{provider = "mapbox-gl-draw"}, a
+supplied \code{modes} value is forwarded to the MapboxDraw constructor
+unchanged (equivalent to passing it via \code{...}).}
 
 \item{options}{For \code{provider = "terra-draw"}, an object created by
 \code{\link[=terradraw_options]{terradraw_options()}} with advanced Terra Draw settings (snapping,
@@ -138,6 +138,21 @@ precision limit, about 0.1 mm), and polygon interior rings (holes) are
 removed.
 \item Changing the map style preserves drawn features, but discards an
 unfinished drawing and clears the current selection and undo history.
+\item The \code{"curve"} and \code{"curve-linestring"} modes draw shapes that mix
+straight and curved (cubic Bezier) edges, pen-tool style: click places a
+corner point; click-and-drag places an anchor and pulls out symmetric
+curve handles (drag distance sets the curvature); moving the mouse
+previews the pending segment; click the first point (the last point for
+lines) or press Enter to finish; Escape cancels; Backspace removes the
+last point. The stored feature uses the rendered curved coordinates, so
+measurements, the download button, and \code{\link[=get_drawn_features]{get_drawn_features()}} work
+unchanged, and the curve's control points are preserved in a
+\code{curveNodes} JSON-string property. In select mode curve features can be
+moved as a whole (their control points move with them) but vertex
+editing, rotate, and scale are disabled for them, and self-crossing
+curve outlines cannot be finished as polygons. While a curve tool is
+active, left-drag places curved anchors, so map panning is suspended
+until you switch tools.
 \item \code{bezier}, \code{bezier_polygon}, and \code{simplify_freehand} are specific to
 mapbox-gl-draw and error under terra-draw. \code{attributes} and
 \code{show_measurements} work with both providers on standalone widgets (as

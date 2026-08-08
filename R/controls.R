@@ -735,12 +735,12 @@ add_coordinates_control <- function(
 #'   modes to expose as toolbar buttons. Valid modes are `"point"`,
 #'   `"linestring"`, `"polygon"`, `"rectangle"`, `"circle"`, `"freehand"`,
 #'   `"freehand-linestring"`, `"angled-rectangle"`, `"sector"`, `"sensor"`,
-#'   and `"select"`. When `NULL` (the default), the mode set is derived from
-#'   the legacy `freehand`, `rectangle`, and `radius` arguments plus
-#'   `"point"`, `"linestring"`, `"polygon"`, and `"select"`. For
-#'   `provider = "mapbox-gl-draw"`, a supplied `modes` value is forwarded to
-#'   the MapboxDraw constructor unchanged (equivalent to passing it via
-#'   `...`).
+#'   `"curve"`, `"curve-linestring"`, and `"select"`. When `NULL` (the
+#'   default), the mode set is derived from the legacy `freehand`,
+#'   `rectangle`, and `radius` arguments plus `"point"`, `"linestring"`,
+#'   `"polygon"`, and `"select"`. For `provider = "mapbox-gl-draw"`, a
+#'   supplied `modes` value is forwarded to the MapboxDraw constructor
+#'   unchanged (equivalent to passing it via `...`).
 #' @param options For `provider = "terra-draw"`, an object created by
 #'   [terradraw_options()] with advanced Terra Draw settings (snapping,
 #'   select-mode editing flags, per-mode overrides).
@@ -775,6 +775,21 @@ add_coordinates_control <- function(
 #'   removed.
 #' * Changing the map style preserves drawn features, but discards an
 #'   unfinished drawing and clears the current selection and undo history.
+#' * The `"curve"` and `"curve-linestring"` modes draw shapes that mix
+#'   straight and curved (cubic Bezier) edges, pen-tool style: click places a
+#'   corner point; click-and-drag places an anchor and pulls out symmetric
+#'   curve handles (drag distance sets the curvature); moving the mouse
+#'   previews the pending segment; click the first point (the last point for
+#'   lines) or press Enter to finish; Escape cancels; Backspace removes the
+#'   last point. The stored feature uses the rendered curved coordinates, so
+#'   measurements, the download button, and [get_drawn_features()] work
+#'   unchanged, and the curve's control points are preserved in a
+#'   `curveNodes` JSON-string property. In select mode curve features can be
+#'   moved as a whole (their control points move with them) but vertex
+#'   editing, rotate, and scale are disabled for them, and self-crossing
+#'   curve outlines cannot be finished as polygons. While a curve tool is
+#'   active, left-drag places curved anchors, so map panning is suspended
+#'   until you switch tools.
 #' * `bezier`, `bezier_polygon`, and `simplify_freehand` are specific to
 #'   mapbox-gl-draw and error under terra-draw. `attributes` and
 #'   `show_measurements` work with both providers on standalone widgets (as
@@ -1139,8 +1154,9 @@ add_draw_control <- function(
 #' @param modes A character vector of drawing modes to expose as toolbar
 #'   buttons: any of `"point"`, `"linestring"`, `"polygon"`, `"rectangle"`,
 #'   `"circle"`, `"freehand"`, `"freehand-linestring"`, `"angled-rectangle"`,
-#'   `"sector"`, `"sensor"`, and `"select"`. When `NULL` (the default), the
-#'   control shows `"point"`, `"linestring"`, `"polygon"`, and `"select"`.
+#'   `"sector"`, `"sensor"`, `"curve"`, `"curve-linestring"`, and
+#'   `"select"`. When `NULL` (the default), the control shows `"point"`,
+#'   `"linestring"`, `"polygon"`, and `"select"`.
 #' @param options An object created by [terradraw_options()] with advanced
 #'   Terra Draw settings (snapping, select-mode editing flags, per-mode
 #'   overrides).
@@ -1393,6 +1409,8 @@ draw_attribute <- function(
   "angled-rectangle",
   "sector",
   "sensor",
+  "curve",
+  "curve-linestring",
   "select"
 )
 
@@ -1414,7 +1432,10 @@ draw_attribute <- function(
   "provisionalCoordinateCount",
   "committedCoordinateCount",
   "marker",
-  "radiusKilometers"
+  "radiusKilometers",
+  "curveNodes",
+  "curveGuidance",
+  "curveGuidanceType"
 )
 
 # Validate the terra-draw provider call in add_draw_control() and return the
@@ -1525,10 +1546,12 @@ draw_attribute <- function(
 #'
 #' @param drag_features Logical, whether selected features can be moved by
 #'   dragging. Default is `TRUE`.
-#' @param rotate_features Logical, whether selected features can be rotated.
-#'   Default is `FALSE`.
-#' @param scale_features Logical, whether selected features can be scaled.
-#'   Default is `FALSE`.
+#' @param rotate_features Logical, whether selected features can be rotated by
+#'   holding Control+R while dragging the feature in select mode. This uses the
+#'   Control key on macOS as well as Windows and Linux. Default is `FALSE`.
+#' @param scale_features Logical, whether selected features can be scaled by
+#'   holding Control+S while dragging the feature in select mode. This uses the
+#'   Control key on macOS as well as Windows and Linux. Default is `FALSE`.
 #' @param drag_vertices Logical, whether individual vertices of a selected
 #'   feature can be dragged. Default is `TRUE`.
 #' @param delete_vertices Logical, whether individual vertices of a selected
@@ -1564,6 +1587,14 @@ draw_attribute <- function(
 #'   These are merged over what mapgl generates, with `styles` entries merged
 #'   key by key. `modeName` overrides are not allowed.
 #'
+#' @details
+#' Rotation and scaling use keyboard-modified feature dragging rather than
+#' visible handles. First select a feature and ensure the map has keyboard
+#' focus. Hold Control+R while dragging to rotate, or Control+S while dragging
+#' to scale. Release the pointer to finish the transformation. The `resize`
+#' option is separate and provides visible selection points that can be dragged
+#' to resize a feature.
+#'
 #' @return A list of class `"mapgl_terradraw_options"` for use as the
 #'   `options` argument of [add_draw_control()].
 #'
@@ -1578,9 +1609,12 @@ draw_attribute <- function(
 #'         provider = "terra-draw",
 #'         options = terradraw_options(
 #'             snap_to_coordinates = TRUE,
-#'             rotate_features = TRUE
+#'             rotate_features = TRUE,
+#'             scale_features = TRUE
 #'         )
 #'     )
+#' # In select mode, select a feature and hold Control+R or Control+S while
+#' # dragging it to rotate or scale, respectively.
 #' }
 terradraw_options <- function(
   drag_features = TRUE,

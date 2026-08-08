@@ -25,13 +25,15 @@
 
   var PREFIX_ID = "mapgl-terradraw";
 
-  // Properties terra-draw stamps on guidance features (never user data)
+  // Properties terra-draw stamps on guidance features (never user data);
+  // curveGuidance marks the mapgl curve modes' handle/node helpers
   var GUIDANCE_PROPS = [
     "midPoint",
     "selectionPoint",
     "coordinatePoint",
     "snappingPoint",
     "closingPoint",
+    "curveGuidance",
   ];
 
   // Transient/reserved state stripped from anything R-facing
@@ -63,6 +65,8 @@
     return coords.map(roundGeometryCoordinates);
   }
 
+  // Class names resolved from window.terraDraw, or from
+  // window.MapglTerraDrawModes for mapgl-authored custom modes
   var MODE_CLASSES = {
     point: "TerraDrawPointMode",
     linestring: "TerraDrawLineStringMode",
@@ -74,8 +78,20 @@
     "angled-rectangle": "TerraDrawAngledRectangleMode",
     sector: "TerraDrawSectorMode",
     sensor: "TerraDrawSensorMode",
+    curve: "TerraDrawCurveMode",
+    "curve-linestring": "TerraDrawCurveLineStringMode",
     select: "TerraDrawSelectMode",
   };
+
+  var CURVE_MODES = ["curve", "curve-linestring"];
+
+  function resolveModeClass(name) {
+    var className = MODE_CLASSES[name];
+    return (
+      window.terraDraw[className] ||
+      (window.MapglTerraDrawModes || {})[className]
+    );
+  }
 
   // Modes whose features are polygon-shaped (share the fill styling family)
   var POLYGON_FAMILY = [
@@ -86,6 +102,7 @@
     "angled-rectangle",
     "sector",
     "sensor",
+    "curve",
   ];
 
   var MODE_TITLES = {
@@ -99,6 +116,8 @@
     "angled-rectangle": "Draw angled rectangle",
     sector: "Draw sector",
     sensor: "Draw sensor",
+    curve: "Draw curved polygon",
+    "curve-linestring": "Draw curved line",
     select: "Select and edit features",
   };
 
@@ -132,6 +151,12 @@
     sensor:
       SVG_OPEN +
       '<path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg>',
+    curve:
+      SVG_OPEN +
+      '<path d="M6 20 6 10 12 4 C 19 6.5 19.5 14 13 20 Z"></path><path d="M12 4 17.5 2.2"></path><circle cx="12" cy="4" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="17.5" cy="2.2" r="1.3" fill="currentColor" stroke="none"></circle></svg>',
+    "curve-linestring":
+      SVG_OPEN +
+      '<path d="M4 18 C 8 7, 13 21, 20 7"></path><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="20" cy="7" r="1.5" fill="currentColor" stroke="none"></circle></svg>',
     select:
       SVG_OPEN +
       '<path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>',
@@ -201,6 +226,7 @@
     this._styleLoadHandler = null;
     this._editor = null;
     this._measurementBox = null;
+    this._panLocked = false;
   }
 
   MapglTerraDrawControl.isTerraDrawId = isTerraDrawId;
@@ -216,12 +242,34 @@
     });
   };
 
+  // The authoritative effective-mode list: requested modes plus the
+  // always-registered buttonless base modes (so addFeatures always finds an
+  // owning mode — including "curve"/"curve-linestring", whose features would
+  // otherwise be silently demoted to plain polygons/linestrings on an R
+  // round trip), filtered to classes that actually resolved (a missing
+  // class is a packaging bug; it is reported once and excluded everywhere:
+  // construction, select flags, and toolbar state all consume this list).
   MapglTerraDrawControl.prototype._registeredModeNames = function () {
     var names = this._modes.slice();
-    ["point", "linestring", "polygon", "select"].forEach(function (m) {
+    [
+      "point",
+      "linestring",
+      "polygon",
+      "curve",
+      "curve-linestring",
+      "select",
+    ].forEach(function (m) {
       if (names.indexOf(m) === -1) names.push(m);
     });
-    return names;
+    return names.filter(function (name) {
+      if (resolveModeClass(name)) return true;
+      console.error(
+        "mapgl terra-draw: mode class for \"" +
+          name +
+          "\" is not loaded; the mode is disabled",
+      );
+      return false;
+    });
   };
 
   MapglTerraDrawControl.prototype._hasButtonMode = function (name) {
@@ -305,6 +353,12 @@
         // if the style was already torn down
       }
       this._draw = null;
+    }
+    if (this._panLocked && map && map.dragPan) {
+      try {
+        map.dragPan.enable();
+      } catch (e) {}
+      this._panLocked = false;
     }
     if (map) {
       if (map._mapglTerraDrawControls) {
@@ -431,6 +485,7 @@
       console.warn("mapgl terra-draw: could not activate mode " + mode, e);
     }
     this._refreshButtonStates();
+    this._updatePanLock();
   };
 
   // Provider-neutral hook for the bindings' feature-click suppression
@@ -462,7 +517,8 @@
 
     var self = this;
     var modes = this._registeredModeNames().map(function (name) {
-      return new window.terraDraw[MODE_CLASSES[name]](self._modeConfig(name));
+      var ModeClass = resolveModeClass(name);
+      return new ModeClass(self._modeConfig(name));
     });
 
     this._draw = new window.terraDraw.TerraDraw({
@@ -489,7 +545,11 @@
       styles.pointWidth = styling.vertex_radius;
       styles.pointOutlineColor = "#FFFFFF";
       styles.pointOutlineWidth = 2;
-    } else if (name === "linestring" || name === "freehand-linestring") {
+    } else if (
+      name === "linestring" ||
+      name === "freehand-linestring" ||
+      name === "curve-linestring"
+    ) {
       styles.lineStringColor = styling.line_color;
       styles.lineStringWidth = styling.line_width;
     } else if (POLYGON_FAMILY.indexOf(name) !== -1) {
@@ -509,10 +569,26 @@
       styles.selectionPointOutlineColor = "#FFFFFF";
       styles.midPointColor = styling.active_color;
     }
+    if (CURVE_MODES.indexOf(name) !== -1) {
+      // node anchors tinted like the active/selection chrome; handle
+      // styling defaults live in the mode and are overridable via the raw
+      // terradraw_options(modes=) escape hatch
+      styles.nodeColor = styling.active_color;
+    }
     Object.keys(styles).forEach(function (key) {
       if (styles[key] == null) delete styles[key];
     });
     if (Object.keys(styles).length) options.styles = styles;
+
+    if (CURVE_MODES.indexOf(name) !== -1) {
+      // pointer-down bridge: the adapter reports onDragStart with the
+      // threshold-crossing event, so the mode captures the true press
+      // position itself from the map container
+      var mapRef = this._map;
+      options.mapglGetContainer = function () {
+        return mapRef ? mapRef.getContainer() : null;
+      };
+    }
 
     // terradraw_options() behavior arguments
     var snapping = null;
@@ -558,6 +634,13 @@
     var self = this;
     this._registeredModeNames().forEach(function (name) {
       if (name === "select") return;
+      if (CURVE_MODES.indexOf(name) !== -1) {
+        // Move-only: vertex drags would desync the densified geometry from
+        // the curveNodes control net, and rotate/scale are non-translations
+        // the metadata resync cannot repair
+        flags[name] = { feature: { draggable: val(td.drag_features, true) } };
+        return;
+      }
       var feature = {
         draggable: val(td.drag_features, true),
       };
@@ -621,6 +704,11 @@
 
     draw.on("finish", function (id, context) {
       var action = context && context.action;
+      if (action === "dragFeature") {
+        // re-sync BEFORE the public feature is read or draw.update fires so
+        // listeners and R always see geometry and metadata in agreement
+        self._resyncCurveNodes(id);
+      }
       var feature = self._publicFeature(id);
       if (action === "draw") {
         self._fireSynthetic("draw.create", feature ? [feature] : []);
@@ -664,6 +752,63 @@
     } catch (e) {
       return false;
     }
+  };
+
+  // Whole-feature drags translate a curve's geometry; translate its
+  // curveNodes control net by the same delta so the metadata stays true.
+  // The ring/line starts at node 0's anchor by construction.
+  MapglTerraDrawControl.prototype._resyncCurveNodes = function (id) {
+    if (!this._draw || !window.MapglTerraDrawModes) return;
+    var feature;
+    try {
+      feature = this._draw.getSnapshotFeature(id);
+    } catch (e) {
+      return;
+    }
+    if (!feature || typeof (feature.properties || {}).curveNodes !== "string") {
+      return;
+    }
+    var nodes;
+    try {
+      nodes = JSON.parse(feature.properties.curveNodes);
+    } catch (e) {
+      return;
+    }
+    if (!Array.isArray(nodes) || !nodes.length || !nodes[0].coords) return;
+    var anchor =
+      feature.geometry.type === "Polygon"
+        ? feature.geometry.coordinates[0][0]
+        : feature.geometry.coordinates[0];
+    var dLng = anchor[0] - nodes[0].coords[0];
+    var dLat = anchor[1] - nodes[0].coords[1];
+    if (dLng === 0 && dLat === 0) return;
+    window.MapglTerraDrawModes.translateCurveNodes(nodes, dLng, dLat);
+    try {
+      this._draw.updateFeatureProperties(id, {
+        curveNodes: JSON.stringify(nodes),
+      });
+    } catch (e) {
+      console.warn("mapgl terra-draw: could not re-sync curve metadata", e);
+    }
+  };
+
+  // Pen-tool curve modes claim left-drag for handle placement, so map
+  // panning is disabled for the whole time a curve tool is active and
+  // restored on every exit path (mode change, finish, rebuild, removal)
+  MapglTerraDrawControl.prototype._updatePanLock = function () {
+    var map = this._map;
+    if (!map || !map.dragPan) return;
+    var mode = this._draw ? this._draw.getMode() : null;
+    var lock = mode === "curve" || mode === "curve-linestring";
+    try {
+      if (lock && !this._panLocked) {
+        map.dragPan.disable();
+        this._panLocked = true;
+      } else if (!lock && this._panLocked) {
+        map.dragPan.enable();
+        this._panLocked = false;
+      }
+    } catch (e) {}
   };
 
   // Synthetic MapboxDraw-style map events so engine-agnostic consumers (the

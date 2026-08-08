@@ -95,8 +95,9 @@ maplibre() |>
 # VERIFY:
 # * drawing a second polygon snaps its vertices to the first's coordinates
 #   and edges
-# * in select mode, rotating and scaling a selected polygon works (drag the
-#   dedicated handles)
+# * in select mode, select a polygon and hold Control+R while dragging it to
+#   rotate; hold Control+S while dragging it to scale (use Control on macOS too)
+# * rotation and scaling do not show dedicated handles; resize below does
 
 maplibre() |>
   add_draw_control(
@@ -390,3 +391,42 @@ if (interactive()) {
     }
   )
 }
+
+# ---------------------------------------------------------------------------
+# 14. CURVE MODES (pen-tool drawing)
+# ---------------------------------------------------------------------------
+# VERIFY (the basketball key test):
+# * activate the curved-polygon tool; map panning is DISABLED while it is
+#   active (try dragging the basemap) and restored when you switch tools
+# * click 4 corners of the lane rectangle, then CLICK-AND-DRAG at the free
+#   throw line to pull out curve handles (a dashed handle line + gray dots
+#   preview while dragging; drag distance sets the curvature)
+# * mouse move shows a live rubber-band preview; hovering the first point
+#   switches the cursor to a pointer (close affordance); click it to finish
+# * after finishing: back on the select tool with the key selected; move it
+#   and confirm the curve shape is preserved exactly
+# * Backspace removes the last point mid-draw; Enter finishes (needs >= 3
+#   points); Escape cancels and leaves nothing behind
+# * try to close a bow-tie (self-crossing outline): finishing is refused
+#   with a console warning until you fix the shape
+# * curve-linestring: trace a river with mixed straight and curved sections;
+#   Enter or clicking the LAST point finishes
+# * get_drawn_features() below: curve features carry a curveNodes JSON
+#   column alongside the densified geometry; measurements/download work
+
+m_curve <- maplibre() |>
+  add_terradraw_control(
+    modes = c("curve", "curve-linestring", "select"),
+    show_measurements = TRUE,
+    download_button = TRUE
+  )
+m_curve
+
+get_drawn_features(m_curve)
+
+# Style switch after drawing curves — curves survive with metadata intact
+# (test in the Shiny app of scenario 11 by adding "curve" to its modes)
+
+# Mapbox-engine curve smoke (needs token): draw + close + move one curve
+mapboxgl() |>
+  add_terradraw_control(modes = c("curve", "select"))

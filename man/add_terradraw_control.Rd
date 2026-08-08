@@ -34,8 +34,9 @@ One of "top-right", "top-left", "bottom-right", or "bottom-left".}
 \item{modes}{A character vector of drawing modes to expose as toolbar
 buttons: any of \code{"point"}, \code{"linestring"}, \code{"polygon"}, \code{"rectangle"},
 \code{"circle"}, \code{"freehand"}, \code{"freehand-linestring"}, \code{"angled-rectangle"},
-\code{"sector"}, \code{"sensor"}, and \code{"select"}. When \code{NULL} (the default), the
-control shows \code{"point"}, \code{"linestring"}, \code{"polygon"}, and \code{"select"}.}
+\code{"sector"}, \code{"sensor"}, \code{"curve"}, \code{"curve-linestring"}, and
+\code{"select"}. When \code{NULL} (the default), the control shows \code{"point"},
+\code{"linestring"}, \code{"polygon"}, and \code{"select"}.}
 
 \item{options}{An object created by \code{\link[=terradraw_options]{terradraw_options()}} with advanced
 Terra Draw settings (snapping, select-mode editing flags, per-mode
