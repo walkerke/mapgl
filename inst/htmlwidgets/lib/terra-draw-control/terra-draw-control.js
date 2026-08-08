@@ -153,10 +153,10 @@
       '<path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg>',
     curve:
       SVG_OPEN +
-      '<path d="M6 20 6 10 12 4 C 19 6.5 19.5 14 13 20 Z"></path><path d="M12 4 17.5 2.2"></path><circle cx="12" cy="4" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="17.5" cy="2.2" r="1.3" fill="currentColor" stroke="none"></circle></svg>',
+      '<path d="M4 20 V12 C 4 3, 20 3, 20 12 V20 Z"></path></svg>',
     "curve-linestring":
       SVG_OPEN +
-      '<path d="M4 18 C 8 7, 13 21, 20 7"></path><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="20" cy="7" r="1.5" fill="currentColor" stroke="none"></circle></svg>',
+      '<path d="M4 19 C 8 7, 16 7, 20 19"></path><path d="M7 9.7 L17 9.7"></path><circle cx="7" cy="9.7" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="17" cy="9.7" r="1.4" fill="currentColor" stroke="none"></circle></svg>',
     select:
       SVG_OPEN +
       '<path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>',
