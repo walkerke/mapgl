@@ -19,7 +19,9 @@ add_bivariate_legend(
   target = "compare",
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 }
 \arguments{
@@ -54,6 +56,11 @@ so titles and axis labels stay on one line.}
 \item{collapsible}{Logical, whether the legend can collapse.}
 
 \item{collapsed}{Logical, whether the legend starts collapsed.}
+
+\item{min_zoom}{The minimum zoom level at which the legend is displayed.}
+
+\item{max_zoom}{The maximum zoom level at which the legend is displayed. The
+legend is hidden when the map zoom is at or above this value.}
 }
 \value{
 The updated map object.

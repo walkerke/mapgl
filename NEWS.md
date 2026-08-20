@@ -1,5 +1,13 @@
 # mapgl (development version)
 
+* Legends gain optional `min_zoom` and `max_zoom` arguments to show or hide a legend on zoom, with the same semantics as the layer arguments of the same names.
+
+* Legends sharing a corner position now stack automatically instead of overlapping, and reflow as legends are shown or hidden. Legends with explicit `margin_*` values or that have been dragged are left alone.
+
+* Adding a legend with the default `add = FALSE` to a map that already has one now messages that the existing legend is being replaced.
+
+* `add_legend(draggable = TRUE)` now works in `compare()`.
+
 * `add_draw_control()` gains a `provider` argument that can be set to `"terra-draw"` to use the [Terra Draw](https://github.com/JamesLMilner/terra-draw) drawing engine as an alternative to mapbox-gl-draw (which remains the default; existing code is unaffected). Terra Draw works identically on Mapbox and MapLibre maps, standalone and in `compare()`, and is fully integrated with the existing drawing workflow: `get_drawn_features()`, `add_features_to_draw()`, `clear_drawn_features()`, `clear_controls("draw")`, attribute editing via `attributes`, live measurements via `show_measurements`, the download button, and the styling arguments all work unchanged. (As with the default provider, attribute editing and measurements are available on standalone widgets only, not in `compare()`.) Details:
     * A new `modes` argument selects the toolbar tools: `"point"`, `"linestring"`, `"polygon"`, `"rectangle"`, `"circle"`, `"freehand"`, `"freehand-linestring"`, `"angled-rectangle"`, `"sector"`, `"sensor"`, `"curve"`, `"curve-linestring"`, and `"select"` — Terra Draw's select mode supports dragging features, dragging/deleting vertices, midpoint insertion, and optional rotate/scale/resize and snapping.
     * The `"curve"` and `"curve-linestring"` modes are mapgl-authored pen-tool drawing modes for shapes mixing straight and curved (cubic Bezier) edges — e.g. a basketball key or a river trace. Click places a corner; click-and-drag places an anchor and pulls out curve handles; click the first point or press Enter to finish, Escape to cancel, Backspace to remove the last point. Output is the rendered curved geometry (so measurements, downloads, and `get_drawn_features()` work unchanged) with the control points preserved in a `curveNodes` JSON-string column; finished curves can be moved (control points follow) but not vertex-edited, and map panning is suspended while a curve tool is active.

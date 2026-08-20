@@ -200,8 +200,27 @@
 #'   `"uniform"` (default; every row uses the largest symbol's height) or
 #'   `"proportional"` (each row's height tracks its own symbol size, so vertical
 #'   spacing scales with symbol size - useful for graduated-symbol legends).
+#' @param min_zoom The minimum zoom level at which the legend is displayed. The
+#'   legend is hidden when the map zoom is below this value.
+#' @param max_zoom The maximum zoom level at which the legend is displayed. The
+#'   legend is hidden when the map zoom is at or above this value.
 #'
 #' @details
+#' \strong{Zoom-based visibility.} \code{min_zoom} and \code{max_zoom} show or
+#' hide the legend as the user zooms, with the same semantics as the layer
+#' arguments of the same names: the legend is visible when
+#' \code{zoom >= min_zoom} and \code{zoom < max_zoom}. Pass the same values you
+#' gave a layer's \code{min_zoom}/\code{max_zoom} and the legend will track that
+#' layer's rendering - for example, a county legend that gives way to a parcel
+#' legend as the user zooms in.
+#'
+#' \strong{Automatic legend stacking.} When multiple legends share the same
+#' corner position, they are automatically stacked so they do not overlap, and
+#' they reflow when a legend is shown or hidden (by zoom, by a layers control,
+#' or by collapsing). Legends with any explicit \code{margin_*} value, and
+#' legends the user has dragged, are left exactly where they were placed and
+#' are ignored by the stacking (they may overlap a stacked group).
+#'
 #' \strong{Collapsible legends.} When \code{collapsible = TRUE}, a 26x26px toggle
 #' button is rendered in the legend's top-right corner. Collapsed, only the
 #' title heading and the toggle button remain visible; every other direct
@@ -252,7 +271,9 @@ add_legend <- function(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
@@ -337,7 +358,9 @@ if (is.null(values) || is.null(colors)) {
         color_property,
         na_color,
         collapsible = collapsible,
-        collapsed = collapsed
+        collapsed = collapsed,
+        min_zoom = min_zoom,
+        max_zoom = max_zoom
       )
     } else {
       add_categorical_legend(
@@ -365,9 +388,51 @@ if (is.null(values) || is.null(colors)) {
         draggable,
         collapsible = collapsible,
         collapsed = collapsed,
-        patch_spacing = patch_spacing
+        patch_spacing = patch_spacing,
+        min_zoom = min_zoom,
+        max_zoom = max_zoom
       )
     }
+  }
+}
+
+# Build the data-min-zoom / data-max-zoom attribute string for a legend div
+.legend_zoom_attrs <- function(min_zoom, max_zoom) {
+  paste0(
+    if (!is.null(min_zoom)) paste0(' data-min-zoom="', min_zoom, '"') else "",
+    if (!is.null(max_zoom)) paste0(' data-max-zoom="', max_zoom, '"') else ""
+  )
+}
+
+# In a static builder pipeline, add = FALSE silently discards legends added
+# earlier in the same pipeline - almost never intended, so say so. Proxy
+# calls never reach this (replace-by-default is the standard update idiom
+# there).
+.inform_legend_replacement <- function(has_existing) {
+  if (isTRUE(has_existing)) {
+    rlang::inform(c(
+      "Replacing existing legend(s).",
+      i = "Use `add = TRUE` to display multiple legends on the same map."
+    ))
+  }
+}
+
+# Legends with any explicit margin are excluded from automatic stacking in JS
+.legend_manual_position_attr <- function(
+  margin_top,
+  margin_right,
+  margin_bottom,
+  margin_left
+) {
+  if (
+    !is.null(margin_top) ||
+      !is.null(margin_right) ||
+      !is.null(margin_bottom) ||
+      !is.null(margin_left)
+  ) {
+    ' data-manual-position="true"'
+  } else {
+    ""
   }
 }
 
@@ -390,6 +455,9 @@ if (is.null(values) || is.null(colors)) {
 #' @param draggable Logical, whether the legend can be dragged.
 #' @param collapsible Logical, whether the legend can collapse.
 #' @param collapsed Logical, whether the legend starts collapsed.
+#' @param min_zoom The minimum zoom level at which the legend is displayed.
+#' @param max_zoom The maximum zoom level at which the legend is displayed. The
+#'   legend is hidden when the map zoom is at or above this value.
 #'
 #' @return The updated map object.
 #' @export
@@ -408,7 +476,9 @@ add_bivariate_legend <- function(
   target = "compare",
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
   if (!inherits(scale, "mapgl_bivariate_scale")) {
     rlang::abort("scale must be a mapgl_bivariate_scale object from bivariate_scale().")
@@ -433,7 +503,9 @@ add_bivariate_legend <- function(
     style = style,
     draggable = draggable,
     collapsible = collapsible,
-    collapsed = collapsed
+    collapsed = collapsed,
+    min_zoom = min_zoom,
+    max_zoom = max_zoom
   )
 
   if (inherits(map, "mapboxgl_compare") || inherits(map, "maplibregl_compare")) {
@@ -447,6 +519,7 @@ add_bivariate_legend <- function(
       add = add
     )
     if (!add && target == "compare") {
+      .inform_legend_replacement(length(map$x$compare_legends) > 0)
       map$x$compare_legends <- list(legend_info)
     } else {
       map$x$compare_legends <- append(map$x$compare_legends, list(legend_info))
@@ -473,6 +546,7 @@ add_bivariate_legend <- function(
   }
 
   if (!add) {
+    .inform_legend_replacement(!is.null(map$x$legend_html))
     map$x$legend_html <- legend_data$html
     map$x$legend_css <- legend_data$css
   } else {
@@ -494,7 +568,9 @@ build_bivariate_legend <- function(
   style = NULL,
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
   width_style <- if (!is.null(width)) {
     paste0("width: ", width, ";")
@@ -503,6 +579,7 @@ build_bivariate_legend <- function(
   }
   layer_attr <- if (!is.null(layer_id)) paste0(' data-layer-id="', paste(layer_id, collapse = " "), '"') else ""
   draggable_attr <- if (draggable) ' data-draggable="true"' else ""
+  zoom_attr <- .legend_zoom_attrs(min_zoom, max_zoom)
   collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
   collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
   collapse_btn_html <- if (collapsible) {
@@ -539,6 +616,7 @@ build_bivariate_legend <- function(
     '"',
     layer_attr,
     draggable_attr,
+    zoom_attr,
     collapsible_attr,
     ">",
     '<h2 class="mapgl-legend-title">',
@@ -692,7 +770,9 @@ add_categorical_legend <- function(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -1012,6 +1092,14 @@ add_categorical_legend <- function(
   # Add draggable attribute if draggable is TRUE
   draggable_attr <- if (draggable) ' data-draggable="true"' else ""
 
+  zoom_attr <- .legend_zoom_attrs(min_zoom, max_zoom)
+  manual_position_attr <- .legend_manual_position_attr(
+    margin_top,
+    margin_right,
+    margin_bottom,
+    margin_left
+  )
+
   # Collapsible pieces
   collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
   collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
@@ -1040,6 +1128,8 @@ add_categorical_legend <- function(
     layer_attr,
     interactive_attr,
     draggable_attr,
+    zoom_attr,
+    manual_position_attr,
     collapsible_attr,
     ">",
     '<h2 class="mapgl-legend-title">',
@@ -1250,6 +1340,7 @@ add_categorical_legend <- function(
     map
   } else {
     if (!add) {
+      .inform_legend_replacement(!is.null(map$x$legend_html))
       map$x$legend_html <- legend_html
       map$x$legend_css <- legend_css
     } else {
@@ -1299,7 +1390,9 @@ add_continuous_legend <- function(
   color_property = NULL,
   na_color = NULL,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
@@ -1440,6 +1533,13 @@ add_continuous_legend <- function(
 
   # Add draggable attribute if draggable is TRUE
   draggable_attr <- if (draggable) ' data-draggable="true"' else ""
+  zoom_attr <- .legend_zoom_attrs(min_zoom, max_zoom)
+  manual_position_attr <- .legend_manual_position_attr(
+    margin_top,
+    margin_right,
+    margin_bottom,
+    margin_left
+  )
   ramp_picker_attr <- if (ramp_picker) ' data-ramp-picker="true"' else ""
   ramp_picker_html <- if (ramp_picker) build_ramp_picker_html(color_ramps, selected_ramp, ramp_labels) else ""
   gradient_picker_attr <- if (ramp_picker) ' role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Change color ramp"' else ""
@@ -1472,6 +1572,8 @@ add_continuous_legend <- function(
     layer_attr,
     interactive_attr,
     draggable_attr,
+    zoom_attr,
+    manual_position_attr,
     ramp_picker_attr,
     collapsible_attr,
     ">",
@@ -1772,6 +1874,7 @@ add_continuous_legend <- function(
     map
   } else {
     if (!add) {
+      .inform_legend_replacement(!is.null(map$x$legend_html))
       map$x$legend_html <- legend_html
       map$x$legend_css <- legend_css
     } else {

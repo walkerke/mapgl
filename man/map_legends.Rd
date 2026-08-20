@@ -45,7 +45,9 @@ add_legend(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 
 add_categorical_legend(
@@ -73,7 +75,9 @@ add_categorical_legend(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 
 add_continuous_legend(
@@ -103,7 +107,9 @@ add_continuous_legend(
   color_property = NULL,
   na_color = NULL,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 
 \method{add_legend}{mapboxgl_compare}(
@@ -141,7 +147,9 @@ add_continuous_legend(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 
 \method{add_legend}{maplibre_compare}(
@@ -179,7 +187,9 @@ add_continuous_legend(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 
 \method{add_legend}{maplibregl_compare}(
@@ -217,7 +227,9 @@ add_continuous_legend(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 }
 \arguments{
@@ -293,6 +305,12 @@ add_continuous_legend(
 \code{"uniform"} (default; every row uses the largest symbol's height) or
 \code{"proportional"} (each row's height tracks its own symbol size, so vertical
 spacing scales with symbol size - useful for graduated-symbol legends).}
+
+\item{min_zoom}{The minimum zoom level at which the legend is displayed. The
+legend is hidden when the map zoom is below this value.}
+
+\item{max_zoom}{The maximum zoom level at which the legend is displayed. The
+legend is hidden when the map zoom is at or above this value.}
 }
 \value{
 The updated map object with the legend added.
@@ -302,6 +320,21 @@ These functions add categorical and continuous legends to maps. Use \code{legend
 to customize appearance and \code{clear_legend()} to remove legends.
 }
 \details{
+\strong{Zoom-based visibility.} \code{min_zoom} and \code{max_zoom} show or
+hide the legend as the user zooms, with the same semantics as the layer
+arguments of the same names: the legend is visible when
+\code{zoom >= min_zoom} and \code{zoom < max_zoom}. Pass the same values you
+gave a layer's \code{min_zoom}/\code{max_zoom} and the legend will track that
+layer's rendering - for example, a county legend that gives way to a parcel
+legend as the user zooms in.
+
+\strong{Automatic legend stacking.} When multiple legends share the same
+corner position, they are automatically stacked so they do not overlap, and
+they reflow when a legend is shown or hidden (by zoom, by a layers control,
+or by collapsing). Legends with any explicit \code{margin_*} value, and
+legends the user has dragged, are left exactly where they were placed and
+are ignored by the stacking (they may overlap a stacked group).
+
 \strong{Collapsible legends.} When \code{collapsible = TRUE}, a 26x26px toggle
 button is rendered in the legend's top-right corner. Collapsed, only the
 title heading and the toggle button remain visible; every other direct

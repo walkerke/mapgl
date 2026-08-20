@@ -1,7 +1,7 @@
 Package: mapgl
 Title: Interactive Maps with 'Mapbox GL JS' and 'MapLibre GL JS'
 Version: 0.5.1.9000
-Date: 2026-08-07
+Date: 2026-08-20
 Authors@R: c(
     person(given = "Kyle", family = "Walker", email = "kyle@walker-data.com", role = c("aut", "cre")),
     person(given = "Egor", family = "Kotov", email = "kotov.egor@gmail.com", role = "ctb"))
@@ -16,7 +16,6 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Depends:
   R (>= 4.1.0)
 Imports:
@@ -43,3 +42,4 @@ Suggests:
   leaflet,
   withr
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

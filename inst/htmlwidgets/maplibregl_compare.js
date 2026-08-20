@@ -832,6 +832,18 @@ HTMLWidgets.widget({
 
             loadedCount++;
             if (loadedCount === compareMaps.length) {
+              // Legend managers (zoom visibility + stacking) must install
+              // regardless of whether compare-level legends exist: per-side
+              // and proxy-added legends need them too. One manager per map
+              // container, plus one on the outer compare element for
+              // target = "compare" legends (sides are view-synced, so the
+              // first map is the zoom source).
+              if (typeof initializeLegendManager === "function") {
+                compareMaps.forEach(function (m) {
+                  initializeLegendManager(m);
+                });
+                initializeLegendManager(compareMaps[0], el);
+              }
               addCompareLegends();
             }
           });

@@ -3100,6 +3100,13 @@ HTMLWidgets.widget({
             initializeDraggableLegends(el);
           }
 
+          // Zoom-based legend visibility + automatic legend stacking.
+          // Installed unconditionally: proxy calls may add legends later,
+          // and the manager picks them up via its MutationObserver.
+          if (typeof initializeLegendManager === "function") {
+            initializeLegendManager(map);
+          }
+
           // Add fullscreen control if enabled
           if (x.fullscreen_control && x.fullscreen_control.enabled) {
             const position = x.fullscreen_control.position || "top-right";
