@@ -145,6 +145,7 @@ reference:
       - get_column
       - concat
       - number_format
+      - conditional_expressions
       - tooltip_style
       - popup_style
       - cluster_options

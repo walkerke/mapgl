@@ -117,3 +117,8 @@ dependencies:
     src: "htmlwidgets/styles"
     stylesheet:
       - "slider-control.css"
+  - name: mapgl-expressions
+    version: "1.0.0"
+    src: "htmlwidgets/lib/mapgl-expressions"
+    script:
+      - "mapgl-expressions.js"

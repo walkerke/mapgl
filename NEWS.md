@@ -1,5 +1,9 @@
 # mapgl (development version)
 
+* Popups and tooltips support conditional logic evaluated per feature at render time, with new builders `if_else_expr()`, `case_expr()`, `coalesce_expr()`, `has_column()`, `is_blank()`, and `html_escape_expr()` that compose with `concat()`, `get_column()`, and `number_format()`. Useful for remote sources like PMTiles where popup columns can't be precomputed. See `?conditional_expressions`.
+
+* The popup/tooltip expression evaluator supports a broad set of GL-style conditional, comparison, boolean, lookup, math, ramp, and string operators, so `match_expr()` and `step_expr()` output also works as popup/tooltip content. Unknown or failing operators render as an empty string with a console warning.
+
 * Legends gain optional `min_zoom` and `max_zoom` arguments to show or hide a legend on zoom, with the same semantics as the layer arguments of the same names.
 
 * Legends sharing a corner position now stack automatically instead of overlapping, and reflow as legends are shown or hidden. Legends with explicit `margin_*` values or that have been dragged are left alone.

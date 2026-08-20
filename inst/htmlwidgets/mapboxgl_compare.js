@@ -1,4 +1,18 @@
 function evaluateExpression(expression, properties) {
+  // Full evaluator (conditionals, math, ramps, ...) lives in the shared
+  // mapgl-expressions dependency; the switch below is only a minimal
+  // legacy fallback if that dependency failed to load.
+  if (window._mapglEvaluateExpression) {
+    return window._mapglEvaluateExpression(expression, properties);
+  }
+  if (!window._mapglExprMissingWarned && window.console) {
+    window._mapglExprMissingWarned = true;
+    console.warn(
+      "[mapgl] shared expression evaluator not loaded; conditional " +
+        "popup/tooltip operators are unavailable.",
+    );
+  }
+
   if (!Array.isArray(expression)) {
     return expression;
   }
@@ -55,8 +69,9 @@ function evaluateExpression(expression, properties) {
 
       return new Intl.NumberFormat(locale, formatOptions).format(value);
     default:
-      // For literals and other simple values
-      return expression;
+      // Unknown operator in the fallback path: render nothing rather than
+      // leaking the raw array into the popup
+      return "";
   }
 }
 
