@@ -41,7 +41,7 @@
 #' )
 #' }
 maplibre <- function(
-  style = carto_style("voyager"),
+  style = openfreemap_style("bright"),
   center = c(0, 0),
   zoom = 0,
   bearing = 0,
