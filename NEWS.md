@@ -1,5 +1,7 @@
 # mapgl (development version)
 
+* Update Mapbox GL JS to v3.31.0-rc.1, which brings a much smaller memory footprint for large GeoJSON sources.
+
 * Popups and tooltips support conditional logic evaluated per feature at render time, with new builders `if_else_expr()`, `case_expr()`, `coalesce_expr()`, `has_column()`, `is_blank()`, and `html_escape_expr()` that compose with `concat()`, `get_column()`, and `number_format()`. Useful for remote sources like PMTiles where popup columns can't be precomputed. See `?conditional_expressions`.
 
 * The popup/tooltip expression evaluator supports a broad set of GL-style conditional, comparison, boolean, lookup, math, ramp, and string operators, so `match_expr()` and `step_expr()` output also works as popup/tooltip content. Unknown or failing operators render as an empty string with a console warning.
