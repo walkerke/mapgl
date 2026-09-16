@@ -489,8 +489,8 @@ mapbox_style <- function(style_name) {
 maptiler_style <- function(style_name, variant = NULL, api_key = NULL) {
   if (is.null(api_key)) {
     if (Sys.getenv("MAPTILER_API_KEY") == "") {
-      rlang::abort(
-        "A MapTiler API key is required. Get one at https://www.maptiler.com, then supply it here or set it in your .Renviron file with 'MAPTILER_API_KEY'='YOUR_KEY_HERE'."
+      cli::cli_abort(
+        "A MapTiler API key is required. Get one at {.url https://www.maptiler.com}, then supply it here or set it in your .Renviron file with 'MAPTILER_API_KEY'='YOUR_KEY_HERE'."
       )
     } else {
       api_key <- Sys.getenv("MAPTILER_API_KEY")
