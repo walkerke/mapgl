@@ -19,27 +19,28 @@ Roxygen: list(markdown = TRUE)
 Depends:
   R (>= 4.1.0)
 Imports:
-  htmlwidgets,
-  geojsonsf,
-  sf,
-  rlang,
-  htmltools,
-  grDevices,
   base64enc,
-  terra,
   classInt,
-  shiny,
-  viridisLite,
-  png,
+  cli,
+  geojsonsf,
+  grDevices,
+  htmltools,
+  htmlwidgets,
+  httpuv,
   jsonlite,
-  httpuv
+  png,
+  rlang,
+  sf,
+  shiny,
+  terra,
+  viridisLite
 Suggests:
   chromote,
   knitr,
+  leaflet,
   mapboxapi,
   testthat (>= 3.0.0),
   usethis,
-  leaflet,
   withr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
