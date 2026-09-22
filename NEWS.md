@@ -1,5 +1,13 @@
 # mapgl (development version)
 
+* Clusters can be drawn as donut charts showing each cluster's category mix with `cluster_options(donut_column = )`, for live GeoJSON clustering and pre-clustered vector tiles.
+
+* `add_layer()` gains a `metadata` argument.
+
+* Abbreviated cluster count labels now switch to millions (e.g. "1.7M" instead of "1735k").
+
+* Clustered layers now render in `compare()` views, and cluster circle paint options (`circle_opacity`, strokes, blur) now reach maps updated through a Shiny proxy.
+
 * Update Mapbox GL JS to v3.31.0, which brings a much smaller memory footprint for large GeoJSON sources.
 
 * Raster PMTiles sources on Mapbox maps now use Mapbox GL JS's native PMTiles support. The custom `pmtile-source` plugin, which stopped loading on Mapbox GL JS v3.29+, has been removed.

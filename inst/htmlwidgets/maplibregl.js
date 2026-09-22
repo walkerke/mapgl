@@ -1964,6 +1964,11 @@ HTMLWidgets.widget({
         map.controls = [];
         map._initialStyleLoaded = false;
 
+        // Draw donut cluster images on demand
+        if (window._mapglClusterDonut) {
+          window._mapglClusterDonut.attach(map);
+        }
+
         map.on("style.load", async function () {
           // Store basemap layer IDs before user layers are added
           if (!map._basemapLayerIds) {
@@ -2217,6 +2222,10 @@ HTMLWidgets.widget({
 
               if (layer.filter) {
                 layerConfig["filter"] = layer.filter;
+              }
+
+              if (layer.metadata) {
+                layerConfig["metadata"] = layer.metadata;
               }
 
               if (layer.before_id) {

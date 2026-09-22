@@ -18,6 +18,7 @@
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
+#' @param metadata An optional named list stored as the layer's `metadata` style property. It is not rendered, but is available to JavaScript through `map.getLayer(id).metadata`.
 #'
 #' @return The modified map object with the new layer added.
 #' @export
@@ -71,7 +72,8 @@ add_layer <- function(
   before_id = NULL,
   filter = NULL,
   tooltip_style = NULL,
-  popup_style = NULL
+  popup_style = NULL,
+  metadata = NULL
 ) {
   if (length(paint) == 0) {
     paint <- NULL
@@ -128,6 +130,10 @@ add_layer <- function(
     ))
   )
 
+  if (!is.null(metadata)) {
+    map$x$layers[[length(map$x$layers)]]$metadata <- metadata
+  }
+
   map <- mapgl_record_layer_order(map, id)
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {
@@ -163,6 +169,10 @@ add_layer <- function(
 
     if (!is.null(max_zoom)) {
       layer$maxzoom <- max_zoom
+    }
+
+    if (!is.null(metadata)) {
+      layer$metadata <- metadata
     }
 
     if (
@@ -804,19 +814,72 @@ add_fill_extrusion_layer <- function(
 #' Prepare cluster options for circle layers
 #'
 #' This function creates a list of options for clustering circle layers.
+#' Clusters are drawn as circles colored by point count, or, when
+#' `donut_column` is set, as donut charts showing the mix of categories
+#' inside each cluster.
 #'
 #' @param max_zoom The maximum zoom level at which to cluster points.
-#' @param cluster_radius The radius of each cluster when clustering points.
-#' @param color_stops A vector of colors for the circle color step expression.
-#' @param radius_stops A vector of radii for the circle radius step expression.
+#' @param cluster_radius The radius of each cluster when clustering points, in pixels. Defaults to 50 for circle clusters and to 1.5 times the largest of `radius_stops` (60 by default) for donut clusters, which keeps neighboring donuts from piling on top of each other.
+#' @param color_stops A vector of colors for the circle color step expression. Ignored for donut clusters.
+#' @param radius_stops A vector of radii for the circle radius step expression. Also sizes donut clusters.
 #' @param count_stops A vector of point counts for both color and radius step expressions.
-#' @param circle_blur Amount to blur the circle.
-#' @param circle_opacity The opacity of the circle.
-#' @param circle_stroke_color The color of the circle's stroke.
+#' @param circle_blur Amount to blur the circle. Ignored for donut clusters.
+#' @param circle_opacity The opacity of the circle. For donut clusters, the opacity of the whole donut.
+#' @param circle_stroke_color The color of the circle's stroke. For donut clusters, the color of the donut's outer edge (default `"white"`).
 #' @param circle_stroke_opacity The opacity of the circle's stroke.
-#' @param circle_stroke_width The width of the circle's stroke.
+#' @param circle_stroke_width The width of the circle's stroke. For donut clusters, the width of the donut's outer edge in pixels (default `1`).
 #' @param text_color The color to use for labels on the cluster circles.
-#' @param count_format The formatting of the text labels on the cluster circles to represent the counts. `"abbreviated"` (the default) will use shortened notation, e.g. "11k". `"grouped"` will show comma-separated numbers, e.g. "11,000".  `"raw"` shows the raw value.
+#' @param count_format The formatting of the text labels on the cluster circles to represent the counts. `"abbreviated"` (the default) will use shortened notation, e.g. "11k" or "1.7M". `"grouped"` will show comma-separated numbers, e.g. "11,000".  `"raw"` shows the raw value.
+#' @param donut_column The name of a categorical column. When set, clusters are drawn as donut charts showing the share of each category within the cluster.
+#' @param donut_values,donut_colors The categories to show and their colors, one color per entry of `donut_values`. Pass a list to group several values under one color, e.g. `list(c("Oil", "Gas"), "Dry Hole")`. When `NULL` (the default), both are taken from the layer's `circle_color` if it is a [match_expr()] on `donut_column`; its `default` color becomes an "other" slice for unlisted values. Required for [add_symbol_layer()].
+#' @param donut_weight An optional numeric column to sum instead of counting points, e.g. population. The cluster label then shows the weighted total. Missing weights count as zero.
+#' @param donut_width The thickness of the donut ring as a fraction of its radius, between 0 and 1.
+#' @param donut_fill The color of the donut's center, behind the count label. Use `NA` for a transparent center.
+#' @param donut_resolution The step, in percent, to which category shares are rounded (an integer from 1 to 10). Categories whose share rounds to zero are not drawn.
+#'
+#' @details
+#' **Donut clusters.** Setting `donut_column` computes per-category totals
+#' for every cluster and draws each cluster as a donut chart in the category
+#' colors. Colors are usually taken from the unclustered layer's
+#' `circle_color` so that clusters and points match:
+#'
+#' ```
+#' add_circle_layer(
+#'   id = "people",
+#'   source = dots,
+#'   circle_color = match_expr(
+#'     "race",
+#'     values = c("White", "Black", "Hispanic", "Asian"),
+#'     stops = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a")
+#'   ),
+#'   cluster_options = cluster_options(donut_column = "race")
+#' )
+#' ```
+#'
+#' Build a matching legend by passing the same values and colors to
+#' [add_categorical_legend()]. Colors taken from `match_expr()` have already
+#' had any alpha channel removed; pass `donut_colors` to keep transparency.
+#' The ring shares are among the categories drawn: without an "other"
+#' slice, points with unlisted or missing categories are left out of the
+#' ring (but still count toward `point_count`, and toward the weighted
+#' label total when `donut_weight` is set).
+#'
+#' Computing category totals makes clustering about two to three times
+#' slower than plain clustering with ten categories. Each distinct mix of
+#' rounded shares is drawn as its own small image and kept for the life of
+#' the map, so a long session panning across many zoom levels accumulates
+#' images (tens of MB over a wide sweep of a large dataset). A coarser
+#' `donut_resolution` produces fewer distinct images.
+#'
+#' **Pre-clustered vector tiles.** For tiles that are already clustered
+#' (e.g. by freestiler), donut clusters read these properties from each
+#' cluster feature: `point_count`, one `"<donut_column>:<value>"` total per
+#' category (a count, or the sum of `donut_weight`), `"<donut_column>:_other"`
+#' for the other slice when there is one, and `"<donut_column>:_total"`, the
+#' weight summed over all points, when `donut_weight` is set. Numeric
+#' categories must be whole numbers and are written without exponents, e.g.
+#' `"code:100000"`. Missing properties count as zero. `_other` and `_total`
+#' are reserved and can't be used as category values.
 #'
 #' @return A list of cluster options.
 #' @export
@@ -833,9 +896,16 @@ add_fill_extrusion_layer <- function(
 #'     circle_stroke_color = "#ffffff",
 #'     circle_stroke_width = 2
 #' )
+#'
+#' # Donut clusters with explicit categories and colors
+#' cluster_options(
+#'     donut_column = "type",
+#'     donut_values = c("Oil", "Gas", "Dry Hole"),
+#'     donut_colors = c("#1B5E20", "#fc8d59", "#cd5c5c")
+#' )
 cluster_options <- function(
   max_zoom = 14,
-  cluster_radius = 50,
+  cluster_radius = NULL,
   color_stops = c("#51bbd6", "#f1f075", "#f28cb1"),
   radius_stops = c(20, 30, 40),
   count_stops = c(0, 100, 750),
@@ -845,10 +915,20 @@ cluster_options <- function(
   circle_stroke_opacity = NULL,
   circle_stroke_width = NULL,
   text_color = "black",
-  count_format = c("abbreviated", "grouped", "raw")
+  count_format = c("abbreviated", "grouped", "raw"),
+  donut_column = NULL,
+  donut_values = NULL,
+  donut_colors = NULL,
+  donut_weight = NULL,
+  donut_width = 0.35,
+  donut_fill = "white",
+  donut_resolution = 2
 ) {
   count_format <- match.arg(count_format)
-  list(
+  if (is.null(cluster_radius)) {
+    cluster_radius <- if (is.null(donut_column)) 50 else 1.5 * max(radius_stops)
+  }
+  options <- list(
     max_zoom = max_zoom,
     cluster_radius = cluster_radius,
     color_stops = color_stops,
@@ -862,19 +942,29 @@ cluster_options <- function(
     text_color = text_color,
     count_format = count_format
   )
+
+  if (!is.null(donut_column)) {
+    options$donut <- .validate_donut_options(
+      column = donut_column,
+      values = donut_values,
+      colors = donut_colors,
+      weight = donut_weight,
+      width = donut_width,
+      fill = donut_fill,
+      resolution = donut_resolution,
+      stroke_color = circle_stroke_color,
+      stroke_opacity = circle_stroke_opacity,
+      stroke_width = circle_stroke_width
+    )
+  } else if (!is.null(donut_values) || !is.null(donut_colors) || !is.null(donut_weight)) {
+    rlang::abort(
+      "`donut_values`, `donut_colors`, and `donut_weight` require `donut_column`."
+    )
+  }
+
+  options
 }
 
-# Build a Mapbox/MapLibre expression that abbreviates a numeric count
-# property the same way native `point_count_abbreviated` does, with a
-# millions extension tacked on:
-#   <1000:        "42"
-#   1000-9999:    "1.2k"
-#   10000-999999: "12k"
-#   >=1000000:    "1.2M"
-# Used by the precomputed cluster path because GL's `number-format`
-# expression supports only locale/currency/min-/max-fraction-digits —
-# the Intl.NumberFormat `notation = "compact"` option is silently
-# ignored, so we can't rely on `number_format()` for this.
 # Warn when a Mapbox GL JS map is rendering a pre-clustered vector
 # tile source via cluster_options(). Mapbox GL JS v3.21.0's native
 # TileProvider PMTiles path currently renders features from multiple
@@ -906,51 +996,794 @@ cluster_options <- function(
   )
 }
 
-# Resolve the count-label expression for a given format + backend.
-# is_native=TRUE uses the native `point_count_abbreviated` property
-# when available; precomputed tiles get the case-expression fallback.
-.cluster_count_label <- function(count_format, is_native) {
+# Resolve the count-label expression for a cluster count format.
+# `value` overrides the counted quantity (e.g. a weighted donut total).
+.cluster_count_label <- function(count_format, value = NULL) {
+  value <- value %||% list("get", "point_count")
   switch(
     count_format,
-    abbreviated = if (is_native) {
-      get_column("point_count_abbreviated")
-    } else {
-      .cluster_count_label_expr("point_count")
-    },
-    grouped = number_format(column = "point_count"),
-    raw = list("to-string", list("get", "point_count"))
+    abbreviated = .cluster_count_label_expr(value),
+    grouped = number_format(column = value),
+    raw = list("to-string", value)
   )
 }
 
+# Build a Mapbox/MapLibre expression that abbreviates a count the same
+# way Supercluster's native `point_count_abbreviated` does, extended to
+# millions (the native property stops at "k", so 1.7M reads "1735k"):
+#   <1000:            "42"
+#   1000-9999:        "1.2k"
+#   10000-999499:     "12k"
+#   999500-9949999:   "1.7M"
+#   >=9950000:        "17M"
+# Below 1000, non-integer values (weighted donut totals) keep one decimal.
+# Rounding matches Supercluster (nearest, halves up), and the M cutoffs
+# sit where the k form would round up to "1000k". GL's `number-format`
+# ignores Intl's `notation = "compact"`, so this can't use number_format().
+# `column` is a property name or an expression.
 .cluster_count_label_expr <- function(column = "point_count") {
-  col <- list("get", column)
+  col <- if (is.character(column) && length(column) == 1) {
+    list("get", column)
+  } else {
+    column
+  }
+  scaled <- function(divisor, decimals) {
+    if (decimals) {
+      list("/", list("round", list("/", col, divisor / 10)), 10)
+    } else {
+      list("round", list("/", col, divisor))
+    }
+  }
   list(
     "case",
-    list(">=", col, 1000000),
-    list(
-      "concat",
-      list(
-        "to-string",
-        list("/", list("floor", list("/", col, 100000)), 10)
-      ),
-      "M"
-    ),
+    list(">=", col, 9950000),
+    list("concat", list("to-string", scaled(1e6, FALSE)), "M"),
+    list(">=", col, 999500),
+    list("concat", list("to-string", scaled(1e6, TRUE)), "M"),
     list(">=", col, 10000),
-    list(
-      "concat",
-      list("to-string", list("floor", list("/", col, 1000))),
-      "k"
-    ),
+    list("concat", list("to-string", scaled(1000, FALSE)), "k"),
     list(">=", col, 1000),
-    list(
-      "concat",
-      list(
-        "to-string",
-        list("/", list("floor", list("/", col, 100)), 10)
-      ),
-      "k"
+    list("concat", list("to-string", scaled(1000, TRUE)), "k"),
+    # One decimal for weighted totals; whole counts are unchanged
+    list("to-string", list("/", list("round", list("*", col, 10)), 10))
+  )
+}
+
+# ---- Donut clusters ---------------------------------------------------------
+#
+# Donut clusters aggregate per-category totals on each cluster (GL
+# `clusterProperties` for native clusters, or precomputed properties on
+# pre-clustered tiles) and draw each cluster as a symbol whose icon-image
+# is built from the rounded category shares, e.g.
+# "mapgl-donut|<fingerprint>|<radius>|40,30,0,30|<layer id>". The
+# `styleimagemissing` handler in lib/mapgl-cluster-donut/cluster-donut.js
+# draws that image on demand, reading colors from the layer's metadata.
+
+# Validate the donut arguments of cluster_options() early so errors
+# surface where they were written. Returns the stored donut options.
+.validate_donut_options <- function(
+  column,
+  values,
+  colors,
+  weight,
+  width,
+  fill,
+  resolution,
+  stroke_color,
+  stroke_opacity,
+  stroke_width
+) {
+  is_name <- function(x) {
+    is.character(x) && length(x) == 1 && !is.na(x) && nzchar(x)
+  }
+  if (!is_name(column)) {
+    rlang::abort("`donut_column` must be a single column name.")
+  }
+  if (!is.null(weight) && !is_name(weight)) {
+    rlang::abort("`donut_weight` must be a single column name.")
+  }
+  if (identical(weight, column)) {
+    rlang::abort("`donut_weight` must be a different column from `donut_column`.")
+  }
+  if (xor(is.null(values), is.null(colors))) {
+    rlang::abort("Supply both `donut_values` and `donut_colors`, or neither.")
+  }
+  if (!is.null(values)) {
+    if (length(colors) != length(values)) {
+      rlang::abort("`donut_colors` must be the same length as `donut_values`.")
+    }
+    .donut_normalize_values(
+      .donut_expand_groups(values, colors)$values,
+      "donut_values"
+    )
+    .mapgl_donut_colors(colors, "donut_colors")
+  }
+  if (
+    !is.numeric(width) ||
+      length(width) != 1 ||
+      is.na(width) ||
+      width <= 0 ||
+      width >= 1
+  ) {
+    rlang::abort("`donut_width` must be a number between 0 and 1.")
+  }
+  if (
+    !is.numeric(resolution) ||
+      length(resolution) != 1 ||
+      is.na(resolution) ||
+      resolution != round(resolution) ||
+      resolution < 1 ||
+      resolution > 10
+  ) {
+    rlang::abort("`donut_resolution` must be a whole number from 1 to 10.")
+  }
+  if (length(fill) != 1 || (!is.na(fill) && !is.character(fill))) {
+    rlang::abort("`donut_fill` must be a single color or `NA`.")
+  }
+  if (!is.na(fill)) {
+    .mapgl_donut_colors(fill, "donut_fill")
+  }
+
+  # The outer edge is drawn on a canvas, so these can't be expressions
+  scalar_args <- list(
+    circle_stroke_color = stroke_color,
+    circle_stroke_opacity = stroke_opacity,
+    circle_stroke_width = stroke_width
+  )
+  for (arg in names(scalar_args)) {
+    value <- scalar_args[[arg]]
+    if (!is.null(value) && (is.list(value) || length(value) != 1)) {
+      rlang::abort(paste0(
+        "`",
+        arg,
+        "` must be a single value for donut clusters; expressions aren't supported."
+      ))
+    }
+  }
+  if (!is.null(stroke_color)) {
+    .mapgl_donut_colors(stroke_color, "circle_stroke_color")
+  }
+  if (
+    !is.null(stroke_opacity) &&
+      (!is.numeric(stroke_opacity) || stroke_opacity < 0 || stroke_opacity > 1)
+  ) {
+    rlang::abort("`circle_stroke_opacity` must be a number between 0 and 1.")
+  }
+  if (
+    !is.null(stroke_width) && (!is.numeric(stroke_width) || stroke_width < 0)
+  ) {
+    rlang::abort("`circle_stroke_width` must be a non-negative number.")
+  }
+
+  list(
+    column = column,
+    values = values,
+    colors = colors,
+    weight = weight,
+    width = width,
+    fill = fill,
+    resolution = resolution
+  )
+}
+
+# Normalize category values into match labels (character or numeric) and
+# the key strings used in `<column>:<key>` property names. Accepts an
+# atomic vector, a factor, or a list of scalars (from match_expr()).
+.donut_normalize_values <- function(values, arg) {
+  if (is.factor(values)) {
+    values <- as.character(values)
+  }
+  if (is.list(values)) {
+    types <- vapply(
+      values,
+      function(value) {
+        if (is.character(value) || is.factor(value)) {
+          "character"
+        } else if (is.numeric(value)) {
+          "numeric"
+        } else {
+          "other"
+        }
+      },
+      character(1)
+    )
+    if (any(types == "other") || length(unique(types)) > 1) {
+      rlang::abort(paste0(
+        "`",
+        arg,
+        "` must be all character or all numeric category values."
+      ))
+    }
+    values <- if (types[[1]] == "character") {
+      unlist(lapply(values, as.character))
+    } else {
+      unlist(values)
+    }
+  }
+  if (length(values) == 0) {
+    rlang::abort(paste0("`", arg, "` must contain at least one category."))
+  }
+  if (anyNA(values)) {
+    rlang::abort(paste0("`", arg, "` can't contain missing values."))
+  }
+
+  if (is.character(values)) {
+    if (any(values %in% c("_other", "_total"))) {
+      rlang::abort(
+        "`_other` and `_total` are reserved and can't be used as category values."
+      )
+    }
+    keys <- values
+  } else if (is.numeric(values)) {
+    if (
+      any(!is.finite(values)) ||
+        any(values != round(values)) ||
+        any(abs(values) > 9007199254740991)
+    ) {
+      rlang::abort(paste0(
+        "Numeric `",
+        arg,
+        "` must be whole numbers between -(2^53 - 1) and 2^53 - 1."
+      ))
+    }
+    values <- as.numeric(values)
+    keys <- sprintf("%.0f", values)
+  } else {
+    rlang::abort(paste0(
+      "`",
+      arg,
+      "` must be character, factor, or numeric category values."
+    ))
+  }
+
+  if (anyDuplicated(keys)) {
+    rlang::abort(paste0("`", arg, "` can't contain duplicate categories."))
+  }
+
+  list(labels = values, keys = keys)
+}
+
+# Read categories, colors, and the default color from a match_expr() on
+# `column`. Grouped labels (`values = list(c("A", "B"), "C")`) expand into
+# one category per value sharing the pair's color. Returns NULL when
+# `expr` isn't a simple color match on `column`.
+.donut_from_match <- function(expr, column) {
+  if (!is.list(expr) || length(expr) < 4 || !identical(expr[[1]], "match")) {
+    return(NULL)
+  }
+  input <- expr[[2]]
+  if (
+    !is.list(input) ||
+      length(input) != 2 ||
+      !identical(input[[1]], "get") ||
+      !identical(input[[2]], column)
+  ) {
+    return(NULL)
+  }
+
+  n <- length(expr)
+  has_default <- n %% 2 == 1
+  last_label <- if (has_default) n - 2 else n - 1
+
+  values <- list()
+  colors <- character()
+  for (i in seq(3, last_label, by = 2)) {
+    label <- expr[[i]]
+    color <- expr[[i + 1]]
+    if (!is.character(color) || length(color) != 1) {
+      return(NULL)
+    }
+    if (is.list(label)) {
+      label <- unlist(label)
+    }
+    for (value in as.list(label)) {
+      values <- c(values, list(value))
+      colors <- c(colors, color)
+    }
+  }
+
+  default <- if (has_default) expr[[n]] else NULL
+  if (!is.null(default) && (!is.character(default) || length(default) != 1)) {
+    return(NULL)
+  }
+
+  list(values = values, colors = colors, default = default)
+}
+
+# Expand grouped categories (`list(c("A", "B"), "C")`) into one value per
+# category, each keeping its group's color, as match_expr() labels do.
+.donut_expand_groups <- function(values, colors) {
+  if (!is.list(values)) {
+    return(list(values = values, colors = colors))
+  }
+  sizes <- lengths(values)
+  list(
+    values = unlist(lapply(values, as.list), recursive = FALSE),
+    colors = rep(colors, times = sizes)
+  )
+}
+
+# Normalize colors for canvas drawing: 6-digit hex plus a separate alpha
+# in [0, 1]. Accepts R color names, #RGB/#RGBA/#RRGGBB/#RRGGBBAA, and CSS
+# rgb()/rgba(). Unlike .mapgl_col2hex(), alpha is kept.
+.mapgl_donut_colors <- function(colors, arg) {
+  if (!is.character(colors) || length(colors) == 0 || anyNA(colors)) {
+    rlang::abort(paste0(
+      "`",
+      arg,
+      "` must be a character vector of colors without missing values."
+    ))
+  }
+  rgba <- vapply(
+    colors,
+    function(color) {
+      parsed <- mapgl_parse_rgb_css_color(color)
+      if (!is.null(parsed)) {
+        return(c(parsed[1:3], parsed[[4]] * 255))
+      }
+      color <- trimws(color)
+      if (grepl("^#[0-9A-Fa-f]{3,4}$", color)) {
+        digits <- strsplit(substring(color, 2), "")[[1]]
+        color <- paste0("#", paste(rep(digits, each = 2), collapse = ""))
+      }
+      out <- tryCatch(
+        as.numeric(grDevices::col2rgb(color, alpha = TRUE)),
+        error = function(e) NULL
+      )
+      if (is.null(out)) {
+        rlang::abort(paste0(
+          "Invalid color `",
+          color,
+          "` in `",
+          arg,
+          "`. Use an R color name, hex value, or CSS rgb()/rgba() string."
+        ))
+      }
+      out
+    },
+    numeric(4),
+    USE.NAMES = FALSE
+  )
+  rgba <- matrix(rgba, nrow = 4)
+  list(
+    hex = sprintf(
+      "#%02X%02X%02X",
+      as.integer(round(rgba[1, ])),
+      as.integer(round(rgba[2, ])),
+      as.integer(round(rgba[3, ]))
     ),
-    list("to-string", col)
+    alpha = round(rgba[4, ] / 255, 3)
+  )
+}
+
+# Check the donut columns against sf data before serializing, so type
+# mismatches fail in R instead of silently producing empty rings.
+.check_donut_columns <- function(source, column, weight, categories) {
+  if (inherits(source, "sfc") || !column %in% names(source)) {
+    rlang::abort(paste0(
+      "`donut_column` \"",
+      column,
+      "\" isn't a column in `source`."
+    ))
+  }
+  x <- source[[column]]
+  if (is.character(categories$labels)) {
+    if (!is.character(x) && !is.factor(x)) {
+      rlang::abort(paste0(
+        "`donut_column` \"",
+        column,
+        "\" must be a character or factor column to match character categories."
+      ))
+    }
+  } else if (!is.numeric(x)) {
+    rlang::abort(paste0(
+      "`donut_column` \"",
+      column,
+      "\" must be a numeric column to match numeric categories."
+    ))
+  }
+
+  if (!is.null(weight)) {
+    if (!weight %in% names(source)) {
+      rlang::abort(paste0(
+        "`donut_weight` \"",
+        weight,
+        "\" isn't a column in `source`."
+      ))
+    }
+    w <- source[[weight]]
+    if (!is.numeric(w)) {
+      rlang::abort(paste0("`donut_weight` \"", weight, "\" must be numeric."))
+    }
+    w <- w[!is.na(w)]
+    if (any(!is.finite(w)) || any(w < 0)) {
+      rlang::abort(paste0(
+        "`donut_weight` \"",
+        weight,
+        "\" must contain finite, non-negative values."
+      ))
+    }
+  }
+
+  invisible(TRUE)
+}
+
+# Build everything a donut cluster layer needs: the clusterProperties for
+# native clusters, the icon-image expression, the weighted label value,
+# and the canvas spec stored in layer metadata.
+.cluster_donut_spec <- function(
+  cluster_options,
+  circle_color,
+  source,
+  layer_id
+) {
+  donut <- cluster_options$donut
+  column <- donut$column
+
+  if (
+    inherits(source, c("sf", "sfc")) &&
+      (inherits(source, "sfc") || !column %in% names(source))
+  ) {
+    rlang::abort(paste0(
+      "`donut_column` \"",
+      column,
+      "\" isn't a column in `source`."
+    ))
+  }
+
+  if (!is.null(donut$values)) {
+    grouped <- .donut_expand_groups(donut$values, donut$colors)
+    categories <- .donut_normalize_values(grouped$values, "donut_values")
+    colors <- grouped$colors
+    other_color <- NULL
+  } else {
+    parsed <- .donut_from_match(circle_color, column)
+    if (is.null(parsed)) {
+      rlang::abort(c(
+        "Donut clusters need category colors.",
+        i = paste0(
+          "Pass `donut_values` and `donut_colors` to `cluster_options()`, ",
+          "or use a `match_expr()` on \"",
+          column,
+          "\" as the layer's `circle_color`."
+        )
+      ))
+    }
+    categories <- .donut_normalize_values(parsed$values, "circle_color")
+    colors <- parsed$colors
+    other_color <- parsed$default
+  }
+
+  if (inherits(source, c("sf", "sfc"))) {
+    .check_donut_columns(source, column, donut$weight, categories)
+  }
+
+  slice_colors <- .mapgl_donut_colors(c(colors, other_color), "donut_colors")
+  fill <- if (is.na(donut$fill)) {
+    NULL
+  } else {
+    .mapgl_donut_colors(donut$fill, "donut_fill")
+  }
+  stroke <- .mapgl_donut_colors(
+    cluster_options$circle_stroke_color %||% "white",
+    "circle_stroke_color"
+  )
+
+  # Data-only canvas spec; its hash names the images, so any change to
+  # colors or ring styling produces new images rather than stale ones.
+  spec <- list(
+    colors = as.list(slice_colors$hex),
+    alphas = as.list(slice_colors$alpha),
+    width = donut$width,
+    fill = fill$hex,
+    fill_alpha = fill$alpha,
+    stroke = stroke$hex,
+    stroke_alpha = stroke$alpha * (cluster_options$circle_stroke_opacity %||% 1),
+    stroke_width = cluster_options$circle_stroke_width %||% 1
+  )
+  fingerprint <- substr(rlang::hash(spec), 1, 10)
+  spec$fp <- fingerprint
+
+  labels <- categories$labels
+  keys <- paste0(column, ":", categories$keys)
+  other_key <- paste0(column, ":_other")
+  slice_keys <- if (is.null(other_color)) keys else c(keys, other_key)
+
+  weight_expr <- if (is.null(donut$weight)) {
+    1
+  } else {
+    list("coalesce", list("get", donut$weight), 0)
+  }
+  category <- list("get", column)
+
+  cluster_properties <- lapply(seq_along(labels), function(i) {
+    list("+", list("case", list("==", category, labels[[i]]), weight_expr, 0))
+  })
+  names(cluster_properties) <- keys
+  if (!is.null(other_color)) {
+    # Bare label array: `literal` isn't allowed in match label position
+    cluster_properties[[other_key]] <- list(
+      "+",
+      list("match", category, as.list(labels), 0, weight_expr)
+    )
+  }
+
+  label_value <- NULL
+  if (!is.null(donut$weight)) {
+    total_key <- paste0(column, ":_total")
+    cluster_properties[[total_key]] <- list("+", weight_expr)
+    label_value <- list("coalesce", list("get", total_key), 0)
+  }
+
+  slice_values <- lapply(slice_keys, function(key) {
+    list("coalesce", list("get", key), 0)
+  })
+  total <- if (length(slice_values) == 1) {
+    slice_values[[1]]
+  } else {
+    c(list("+"), slice_values)
+  }
+  # The total is bound once with `let` and read back per slice with `var`
+  total_var <- list("var", "mapgl_total")
+  units <- lapply(slice_values, function(value) {
+    list(
+      "case",
+      list(">", total_var, 0),
+      list(
+        "round",
+        list(
+          "/",
+          list("*", 100, value),
+          list("*", total_var, donut$resolution)
+        )
+      ),
+      0
+    )
+  })
+
+  # Images are drawn at their display radius; drawing everything at the
+  # largest radius and scaling with icon-size saves few images (each
+  # cluster's mix is usually unique) but costs more bytes per image
+  radius <- step_expr(
+    column = "point_count",
+    base = cluster_options$radius_stops[1],
+    stops = cluster_options$radius_stops[-1],
+    values = cluster_options$count_stops[-1]
+  )
+
+  unit_parts <- list()
+  for (i in seq_along(units)) {
+    if (i > 1) {
+      unit_parts <- c(unit_parts, list(","))
+    }
+    unit_parts <- c(unit_parts, list(list("to-string", units[[i]])))
+  }
+  icon_image <- list(
+    "let",
+    "mapgl_total",
+    total,
+    c(
+      list(
+        "concat",
+        paste0("mapgl-donut|", fingerprint, "|"),
+        list("to-string", radius),
+        "|"
+      ),
+      unit_parts,
+      list(paste0("|", layer_id))
+    )
+  )
+
+  list(
+    spec = spec,
+    cluster_properties = cluster_properties,
+    icon_image = icon_image,
+    label_value = label_value
+  )
+}
+
+# Add the three layers behind the `cluster_options` shortcut of
+# add_circle_layer() and add_symbol_layer(): `<id>-clusters` (circles or
+# donuts), `<id>-cluster-count`, and the unclustered `<id>` layer. Paint
+# and layout are complete before each add_layer() call so proxy messages
+# carry every property.
+.add_cluster_layers <- function(
+  map,
+  id,
+  source,
+  source_layer,
+  cluster_options,
+  point_type,
+  paint,
+  layout,
+  visibility,
+  circle_color = NULL,
+  popup = NULL,
+  tooltip = NULL,
+  tooltip_style = NULL,
+  popup_style = NULL,
+  hover_options = NULL,
+  slot = NULL,
+  min_zoom = NULL,
+  max_zoom = NULL,
+  before_id = NULL
+) {
+  clusters_id <- paste0(id, "-clusters")
+  is_donut <- !is.null(cluster_options$donut)
+  donut <- NULL
+
+  # Dispatch on source shape. sf/sfc takes precedence so existing
+  # calls that incidentally pass `source_layer` alongside sf data
+  # (silently ignored today) don't regress.
+  if (inherits(source, c("sf", "sfc"))) {
+    # Native live clustering: inject a clustered GeoJSON source.
+    if (is_donut) {
+      donut <- .cluster_donut_spec(
+        cluster_options,
+        circle_color,
+        source,
+        clusters_id
+      )
+      map <- add_source(
+        map,
+        id = id,
+        data = source,
+        cluster = TRUE,
+        clusterMaxZoom = cluster_options$max_zoom,
+        clusterRadius = cluster_options$cluster_radius,
+        clusterProperties = donut$cluster_properties
+      )
+    } else {
+      map <- add_source(
+        map,
+        id = id,
+        data = source,
+        cluster = TRUE,
+        clusterMaxZoom = cluster_options$max_zoom,
+        clusterRadius = cluster_options$cluster_radius
+      )
+    }
+    cluster_source <- id
+    cluster_source_layer <- NULL
+  } else if (
+    is.character(source) &&
+      length(source) == 1 &&
+      !is.null(source_layer)
+  ) {
+    # Pre-clustered vector tiles (e.g. PMTiles from the freestiler
+    # package, or tippecanoe-clustered tiles). Use the source as-is.
+    if (is_donut) {
+      donut <- .cluster_donut_spec(
+        cluster_options,
+        circle_color,
+        NULL,
+        clusters_id
+      )
+    }
+    cluster_source <- source
+    cluster_source_layer <- source_layer
+    .warn_mapbox_pmtiles_cluster(map)
+  } else {
+    rlang::abort(c(
+      "`cluster_options` requires one of the following shapes:",
+      i = "`source` = an sf/sfc object (live clustering is applied automatically), or",
+      i = "`source` = an existing source id (string) + `source_layer` = the source-layer name, for pre-clustered vector tiles.",
+      i = "To cluster against a pre-registered clustered GeoJSON source referenced by id, build the three cluster layers manually with `add_layer()`."
+    ))
+  }
+
+  count_label_expr <- .cluster_count_label(
+    cluster_options$count_format %||% "abbreviated",
+    value = donut$label_value
+  )
+
+  if (is_donut) {
+    cluster_paint <- list()
+    if (!is.null(cluster_options$circle_opacity)) {
+      cluster_paint[["icon-opacity"]] <- cluster_options$circle_opacity
+    }
+    cluster_layout <- list(
+      "icon-image" = donut$icon_image,
+      "icon-allow-overlap" = TRUE,
+      "icon-ignore-placement" = TRUE
+    )
+    if (!is.null(visibility)) {
+      cluster_layout$visibility <- visibility
+    }
+    map <- add_layer(
+      map,
+      id = clusters_id,
+      type = "symbol",
+      source = cluster_source,
+      source_layer = cluster_source_layer,
+      filter = c("has", "point_count"),
+      paint = cluster_paint,
+      layout = cluster_layout,
+      slot = slot,
+      min_zoom = min_zoom,
+      max_zoom = max_zoom,
+      before_id = before_id,
+      metadata = list("mapgl:donut" = donut$spec)
+    )
+  } else {
+    cluster_paint <- list(
+      "circle-color" = step_expr(
+        column = "point_count",
+        base = cluster_options$color_stops[1],
+        stops = cluster_options$color_stops[-1],
+        values = cluster_options$count_stops[-1]
+      ),
+      "circle-radius" = step_expr(
+        column = "point_count",
+        base = cluster_options$radius_stops[1],
+        stops = cluster_options$radius_stops[-1],
+        values = cluster_options$count_stops[-1]
+      )
+    )
+    optional_paint <- list(
+      "circle-blur" = cluster_options$circle_blur,
+      "circle-opacity" = cluster_options$circle_opacity,
+      "circle-stroke-color" = cluster_options$circle_stroke_color,
+      "circle-stroke-opacity" = cluster_options$circle_stroke_opacity,
+      "circle-stroke-width" = cluster_options$circle_stroke_width
+    )
+    for (prop in names(optional_paint)) {
+      if (!is.null(optional_paint[[prop]])) {
+        cluster_paint[[prop]] <- optional_paint[[prop]]
+      }
+    }
+    map <- add_layer(
+      map,
+      id = clusters_id,
+      type = "circle",
+      source = cluster_source,
+      source_layer = cluster_source_layer,
+      filter = c("has", "point_count"),
+      paint = cluster_paint,
+      layout = list(visibility = visibility),
+      slot = slot,
+      min_zoom = min_zoom,
+      max_zoom = max_zoom,
+      before_id = before_id
+    )
+  }
+
+  # Add cluster count labels
+  map <- add_symbol_layer(
+    map,
+    id = paste0(id, "-cluster-count"),
+    source = cluster_source,
+    source_layer = cluster_source_layer,
+    filter = c("has", "point_count"),
+    text_field = count_label_expr,
+    text_size = 12,
+    text_color = cluster_options$text_color,
+    visibility = visibility,
+    slot = slot,
+    min_zoom = min_zoom,
+    max_zoom = max_zoom,
+    before_id = before_id
+  )
+
+  # Add unclustered points
+  add_layer(
+    map,
+    id = id,
+    type = point_type,
+    source = cluster_source,
+    source_layer = cluster_source_layer,
+    filter = list("!", c("has", "point_count")),
+    paint = paint,
+    layout = layout,
+    popup = popup,
+    tooltip = tooltip,
+    tooltip_style = tooltip_style,
+    popup_style = popup_style,
+    hover_options = hover_options,
+    slot = slot,
+    min_zoom = min_zoom,
+    max_zoom = max_zoom,
+    before_id = before_id
   )
 }
 
@@ -983,7 +1816,7 @@ cluster_options <- function(
 #' @param hover_options A named list of options for highlighting features in the layer on hover.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
-#' @param cluster_options A list of options for clustering circles, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via [number_format()].
+#' @param cluster_options A list of options for clustering circles, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side from `point_count`. Set `donut_column` in `cluster_options()` to draw clusters as donut charts of category shares; see [cluster_options()] for the properties pre-clustered tiles need.
 #'
 #'   **Updating a clustered layer in Shiny:** the shortcut creates three layers (`"id"`, `"id-clusters"`, `"id-cluster-count"`) on top of one source. For reactive data updates the recommended pattern is [set_source()], which replaces the source's data and lets Mapbox/MapLibre re-cluster automatically without tearing down the layers: `mapboxgl_proxy("map") |> set_source(layer_id = "circles", source = filtered())`. If you need to remove a clustered layer entirely (e.g. before switching backends), pass the full trio to [clear_layer()]: `clear_layer(proxy, c("circles", "circles-clusters", "circles-cluster-count"))`.
 #'
@@ -1119,112 +1952,17 @@ add_circle_layer <- function(
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
   if (!is.null(cluster_options)) {
-    # Dispatch on source shape. sf/sfc takes precedence so existing
-    # calls that incidentally pass `source_layer` alongside sf data
-    # (silently ignored today) don't regress.
-    if (inherits(source, c("sf", "sfc"))) {
-      # Native live clustering: inject a clustered GeoJSON source.
-      map <- add_source(
-        map,
-        id = id,
-        data = source,
-        cluster = TRUE,
-        clusterMaxZoom = cluster_options$max_zoom,
-        clusterRadius = cluster_options$cluster_radius
-      )
-      cluster_source <- id
-      cluster_source_layer <- NULL
-      is_native_cluster <- TRUE
-    } else if (
-      is.character(source) &&
-        length(source) == 1 &&
-        !is.null(source_layer)
-    ) {
-      # Pre-clustered vector tiles (e.g. PMTiles from the freestiler
-      # package, or tippecanoe-clustered tiles). Use the source as-is.
-      cluster_source <- source
-      cluster_source_layer <- source_layer
-      is_native_cluster <- FALSE
-      .warn_mapbox_pmtiles_cluster(map)
-    } else {
-      rlang::abort(c(
-        "`cluster_options` requires one of the following shapes:",
-        i = "`source` = an sf/sfc object (live clustering is applied automatically), or",
-        i = "`source` = an existing source id (string) + `source_layer` = the source-layer name, for pre-clustered vector tiles.",
-        i = "To cluster against a pre-registered clustered GeoJSON source referenced by id, build the three cluster layers manually with `add_layer()`."
-      ))
-    }
-
-    count_label_expr <- .cluster_count_label(
-      cluster_options$count_format %||% "abbreviated",
-      is_native_cluster
-    )
-
-    # Add clustered circles layer
-    map <- add_layer(
-      map,
-      id = paste0(id, "-clusters"),
-      type = "circle",
-      source = cluster_source,
-      source_layer = cluster_source_layer,
-      filter = c("has", "point_count"),
-      paint = list(
-        "circle-color" = step_expr(
-          column = "point_count",
-          base = cluster_options$color_stops[1],
-          stops = cluster_options$color_stops[-1],
-          values = cluster_options$count_stops[-1]
-        ),
-        "circle-radius" = step_expr(
-          column = "point_count",
-          base = cluster_options$radius_stops[1],
-          stops = cluster_options$radius_stops[-1],
-          values = cluster_options$count_stops[-1]
-        )
-      ),
-      layout = list(visibility = visibility)
-    )
-
-    # Add optional paint properties if they are not NULL
-    optional_paint <- list(
-      "circle-blur" = cluster_options$circle_blur,
-      "circle-opacity" = cluster_options$circle_opacity,
-      "circle-stroke-color" = cluster_options$circle_stroke_color,
-      "circle-stroke-opacity" = cluster_options$circle_stroke_opacity,
-      "circle-stroke-width" = cluster_options$circle_stroke_width
-    )
-
-    for (prop in names(optional_paint)) {
-      if (!is.null(optional_paint[[prop]])) {
-        map$x$layers[[length(map$x$layers)]]$paint[[
-          prop
-        ]] <- optional_paint[[prop]]
-      }
-    }
-
-    # Add cluster count labels
-    map <- add_symbol_layer(
-      map,
-      id = paste0(id, "-cluster-count"),
-      source = cluster_source,
-      source_layer = cluster_source_layer,
-      filter = c("has", "point_count"),
-      text_field = count_label_expr,
-      text_size = 12,
-      text_color = cluster_options$text_color,
-      visibility = visibility
-    )
-
-    # Add unclustered points
-    map <- add_layer(
+    map <- .add_cluster_layers(
       map,
       id = id,
-      type = "circle",
-      source = cluster_source,
-      source_layer = cluster_source_layer,
-      filter = list("!", c("has", "point_count")),
+      source = source,
+      source_layer = source_layer,
+      cluster_options = cluster_options,
+      point_type = "circle",
       paint = paint,
       layout = layout,
+      visibility = visibility,
+      circle_color = circle_color,
       popup = popup,
       tooltip = tooltip,
       tooltip_style = tooltip_style,
@@ -1471,7 +2209,7 @@ add_raster_layer <- function(
 #' @param hover_options A named list of options for highlighting features in the layer on hover. Not all elements of SVG icons can be styled.
 #' @param before_id The name of the layer that this layer appears "before", allowing you to insert layers below other layers in your basemap (e.g. labels).
 #' @param filter An optional filter expression to subset features in the layer.
-#' @param cluster_options A list of options for clustering symbols, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side via [number_format()].
+#' @param cluster_options A list of options for clustering symbols, created by the `cluster_options()` function. Two input shapes are supported: pass an `sf`/`sfc` object as `source` for native live clustering (a GeoJSON source is injected automatically), or pass the id of an already-registered vector source (e.g. from `add_pmtiles_source()`) along with `source_layer` to use pre-clustered vector tiles such as those produced by the freestiler package. In the latter case the cluster-count label is abbreviated client-side from `point_count`. Set `donut_column` in `cluster_options()` to draw clusters as donut charts of category shares; see [cluster_options()] for the properties pre-clustered tiles need.
 #'
 #'   **Updating a clustered layer in Shiny:** the shortcut creates three layers (`"id"`, `"id-clusters"`, `"id-cluster-count"`) on top of one source. For reactive data updates the recommended pattern is [set_source()], which replaces the source's data and lets Mapbox/MapLibre re-cluster automatically without tearing down the layers: `mapboxgl_proxy("map") |> set_source(layer_id = "pts", source = filtered())`. If you need to remove a clustered layer entirely (e.g. before switching backends), pass the full trio to [clear_layer()]: `clear_layer(proxy, c("pts", "pts-clusters", "pts-cluster-count"))`.
 #'
@@ -1714,107 +2452,16 @@ add_symbol_layer <- function(
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
   if (!is.null(cluster_options)) {
-    # Dispatch on source shape. See add_circle_layer() for notes.
-    if (inherits(source, c("sf", "sfc"))) {
-      map <- add_source(
-        map,
-        id = id,
-        data = source,
-        cluster = TRUE,
-        clusterMaxZoom = cluster_options$max_zoom,
-        clusterRadius = cluster_options$cluster_radius
-      )
-      cluster_source <- id
-      cluster_source_layer <- NULL
-      is_native_cluster <- TRUE
-    } else if (
-      is.character(source) &&
-        length(source) == 1 &&
-        !is.null(source_layer)
-    ) {
-      cluster_source <- source
-      cluster_source_layer <- source_layer
-      is_native_cluster <- FALSE
-      .warn_mapbox_pmtiles_cluster(map)
-    } else {
-      rlang::abort(c(
-        "`cluster_options` requires one of the following shapes:",
-        i = "`source` = an sf/sfc object (live clustering is applied automatically), or",
-        i = "`source` = an existing source id (string) + `source_layer` = the source-layer name, for pre-clustered vector tiles.",
-        i = "To cluster against a pre-registered clustered GeoJSON source referenced by id, build the three cluster layers manually with `add_layer()`."
-      ))
-    }
-
-    count_label_expr <- .cluster_count_label(
-      cluster_options$count_format %||% "abbreviated",
-      is_native_cluster
-    )
-
-    # Add clustered symbols layer
-    map <- add_layer(
-      map,
-      id = paste0(id, "-clusters"),
-      type = "circle",
-      source = cluster_source,
-      source_layer = cluster_source_layer,
-      filter = c("has", "point_count"),
-      paint = list(
-        "circle-color" = step_expr(
-          column = "point_count",
-          base = cluster_options$color_stops[1],
-          stops = cluster_options$color_stops[-1],
-          values = cluster_options$count_stops[-1]
-        ),
-        "circle-radius" = step_expr(
-          column = "point_count",
-          base = cluster_options$radius_stops[1],
-          stops = cluster_options$radius_stops[-1],
-          values = cluster_options$count_stops[-1]
-        )
-      ),
-      layout = list(visibility = visibility)
-    )
-
-    # Add optional paint properties if they are not NULL
-    optional_paint <- list(
-      "circle-blur" = cluster_options$circle_blur,
-      "circle-opacity" = cluster_options$circle_opacity,
-      "circle-stroke-color" = cluster_options$circle_stroke_color,
-      "circle-stroke-opacity" = cluster_options$circle_stroke_opacity,
-      "circle-stroke-width" = cluster_options$circle_stroke_width
-    )
-
-    for (prop in names(optional_paint)) {
-      if (!is.null(optional_paint[[prop]])) {
-        map$x$layers[[length(map$x$layers)]]$paint[[
-          prop
-        ]] <- optional_paint[[prop]]
-      }
-    }
-
-    # Add cluster count labels
-    map <- add_symbol_layer(
-      map,
-      id = paste0(id, "-cluster-count"),
-      source = cluster_source,
-      source_layer = cluster_source_layer,
-      filter = c("has", "point_count"),
-      text_field = count_label_expr,
-      text_size = 12,
-      text_color = cluster_options$text_color,
-      visibility = visibility
-    )
-
-    # Add unclustered symbols
-    map <- add_layer(
+    map <- .add_cluster_layers(
       map,
       id = id,
-      type = "symbol",
-      source = cluster_source,
-      source_layer = cluster_source_layer,
-      filter = list("!", c("has", "point_count")),
+      source = source,
+      source_layer = source_layer,
+      cluster_options = cluster_options,
+      point_type = "symbol",
       paint = paint,
       layout = layout,
+      visibility = visibility,
       popup = popup,
       tooltip = tooltip,
       tooltip_style = tooltip_style,

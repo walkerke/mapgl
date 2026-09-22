@@ -21,7 +21,8 @@ add_layer(
   before_id = NULL,
   filter = NULL,
   tooltip_style = NULL,
-  popup_style = NULL
+  popup_style = NULL,
+  metadata = NULL
 )
 }
 \arguments{
@@ -56,6 +57,8 @@ add_layer(
 \item{filter}{An optional filter expression to subset features in the layer.}
 
 \item{tooltip_style, popup_style}{Optional appearance for the tooltip/popup: a preset string (\code{"light"} or \code{"dark"}) or a \code{\link[=tooltip_style]{tooltip_style()}} object. When omitted, the native (unstyled) appearance is kept.}
+
+\item{metadata}{An optional named list stored as the layer's \code{metadata} style property. It is not rendered, but is available to JavaScript through \verb{map.getLayer(id).metadata}.}
 }
 \value{
 The modified map object with the new layer added.
