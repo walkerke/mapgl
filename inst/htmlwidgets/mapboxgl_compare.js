@@ -611,22 +611,6 @@ HTMLWidgets.widget({
           return;
         }
 
-        // Register PMTiles source type if available
-        if (
-          typeof MapboxPmTilesSource !== "undefined" &&
-          typeof pmtiles !== "undefined"
-        ) {
-          try {
-            mapboxgl.Style.setSourceType(
-              PMTILES_SOURCE_TYPE,
-              MapboxPmTilesSource,
-            );
-            console.log("PMTiles support enabled for Mapbox GL JS Compare");
-          } catch (e) {
-            console.warn("Failed to register PMTiles source type:", e);
-          }
-        }
-
         // Set position relative on container to properly contain absolutely positioned maps
         el.style.position = "relative";
 
@@ -1038,7 +1022,7 @@ HTMLWidgets.widget({
                   });
                   map.addSource(message.source.id, sourceConfig);
                 } else {
-                  // Handle custom source types (like pmtile-source)
+                  // Handle custom source types
                   const sourceConfig = { type: message.source.type };
 
                   // Copy all properties except id

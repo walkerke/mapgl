@@ -66,16 +66,6 @@ dependencies:
     src: "htmlwidgets/lib/mapbox-gl-globe-minimap"
     script:
       - "bundle.js"
-  - name: pmtiles
-    version: 4.4.0
-    src: "htmlwidgets/lib/pmtiles"
-    script:
-      - "pmtiles.js"
-  - name: mapbox-pmtiles
-    version: 1.1.0
-    src: "htmlwidgets/lib/mapbox-pmtiles"
-    script:
-      - "pmtiles-source-optimized-v2.js"
   - name: turf
     version: "7.3.0"
     src: "htmlwidgets/lib/turf"

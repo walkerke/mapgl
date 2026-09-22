@@ -742,7 +742,7 @@ add_video_source <- function(map, id, urls, coordinates) {
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
 #' @param url A URL pointing to the PMTiles archive.
-#' @param source_type The source type for MapLibre maps. Either "vector" (default) or "raster".
+#' @param source_type The source type. Either "vector" (default) or "raster".
 #' @param maxzoom Only used when source_type is "raster". The maximum zoom level for the PMTiles source. Defaults to 22.
 #' @param tilesize Only used when source_type is "raster". The size of the tiles in the PMTiles source. Defaults to 256.
 #' @param promote_id An optional property name to use as the feature ID. This is required for hover effects on vector sources.
@@ -796,16 +796,17 @@ add_pmtiles_source <- function(
     inherits(map, "mapboxgl_compare_proxy")
 
   if (is_mapbox) {
-    # Mapbox GL JS v3.21.0+ has native PMTiles support for vector tiles
+    # Mapbox GL JS detects .pmtiles URLs natively via its TileProvider API
+    # (vector since v3.21.0, raster since v3.23.0)
     if (source_type == "raster") {
-      # Raster PMTiles still require the custom source type
       source <- list(
         id = id,
-        type = "pmtile-source",
-        url = url
+        type = "raster",
+        url = url,
+        tileSize = tilesize,
+        maxzoom = maxzoom
       )
     } else {
-      # Vector PMTiles use native TileProvider API (auto-detects .pmtiles URLs)
       source <- list(
         id = id,
         type = "vector",
