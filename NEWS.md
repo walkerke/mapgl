@@ -1,6 +1,6 @@
 # mapgl (development version)
 
-* Update Mapbox GL JS to v3.31.0-rc.1, which brings a much smaller memory footprint for large GeoJSON sources.
+* Update Mapbox GL JS to v3.31.0, which brings a much smaller memory footprint for large GeoJSON sources.
 
 * Raster PMTiles sources on Mapbox maps now use Mapbox GL JS's native PMTiles support. The custom `pmtile-source` plugin, which stopped loading on Mapbox GL JS v3.29+, has been removed.
 

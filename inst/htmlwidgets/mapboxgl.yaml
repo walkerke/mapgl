@@ -2,7 +2,7 @@ dependencies:
   - name: mapbox-gl-js
     version: "3.31.0"
     src:
-      href: "https://api.mapbox.com/mapbox-gl-js/v3.31.0-rc.1"
+      href: "https://api.mapbox.com/mapbox-gl-js/v3.31.0"
     script:
       - "mapbox-gl.js"
     stylesheet:
