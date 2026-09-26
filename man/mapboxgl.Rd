@@ -39,6 +39,7 @@ mapboxgl(
 \item{bounds}{The bounding box to fit the map to. Accepts one of the following:
 \itemize{
 \item \code{sf} object;
+\item \code{duckspatial_df} object;
 \item output of \code{st_bbox()};
 \item unnamed numeric vector of the form \code{c(xmin, ymin, xmax, ymax)}.
 }}

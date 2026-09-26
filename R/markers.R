@@ -1,7 +1,7 @@
 #' Add markers to a Mapbox GL or Maplibre GL map
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
-#' @param data A length-2 numeric vector of coordinates, a list of length-2 numeric vectors, or an `sf` POINT object.
+#' @param data A length-2 numeric vector of coordinates, a list of length-2 numeric vectors, an `sf` POINT object, or a `duckspatial_df` POINT object.
 #' @param color The color of the marker (default is "red").
 #' @param rotation The rotation of the marker (default is 0).
 #' @param popup A column name for popups (if data is an `sf` object) or a string for a single popup (if data is a numeric vector or list of vectors).
@@ -114,6 +114,27 @@ add_markers <- function(map, data, color = "red", rotation = 0, popup = NULL, ma
         options = options
       )
     })
+  } else if (inherits(data, "duckspatial_df")) {
+    check_duckspatial()
+    if (duckspatial::ddbs_geometry_type(data, FALSE)[1] == "POINT") {
+      lng <- duckspatial::ddbs_x(data, mode = "sf")
+      lat <- duckspatial::ddbs_y(data, mode = "sf")
+      properties <- duckspatial::ddbs_drop_geometry(data) |> dplyr::collect()
+      if (!is.null(marker_id) && !marker_id %in% colnames(properties)) {
+        stop("When providing an sf object, marker_id must be a column name in the object.")
+      }
+      markers <- lapply(seq_len(length(lng)), function(i) {
+        list(
+          id = if (!is.null(marker_id)) properties[[marker_id]][i] else paste0("marker_", i),
+          lng = lng[i],
+          lat = lat[i],
+          color = color,
+          rotation = rotation,
+          popup = if (!is.null(popup)) as.character(properties[i, popup]) else NULL,
+          options = options
+        )
+      })
+    }
   } else {
     stop("Data must be either a length-2 numeric vector, a list of length-2 numeric vectors, or an sf POINT object.")
   }

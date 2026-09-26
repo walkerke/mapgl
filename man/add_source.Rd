@@ -11,7 +11,7 @@ add_source(map, id, data, ...)
 
 \item{id}{A unique ID for the source.}
 
-\item{data}{An sf object or a URL pointing to a remote GeoJSON file.}
+\item{data}{An sf object, a \code{duckspatial_df} object, or a URL pointing to a remote GeoJSON file.}
 
 \item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }

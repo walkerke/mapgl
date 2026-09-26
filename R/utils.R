@@ -605,6 +605,36 @@ mapgl_invoke_method <- function(map, type, ...) {
   return(map)
 }
 
+# Ensures a duckspatial_df is in EPSG:4326, transforming if needed.
+# Stops if the object has no CRS set.
+ddbs_ensure_wgs84 <- function(x, arg = deparse(substitute(x))) {
+  crs <- duckspatial::ddbs_crs(x)
+  if (is.na(crs)) {
+    stop(sprintf("`%s` doesn't have a CRS set.", arg))
+  }
+  if (!crs$input %in% c("EPSG:4326", "WGS 84", "4326")) {
+    x <- duckspatial::ddbs_transform(x, "EPSG:4326")
+  }
+  x
+}
+
+# Checks if duckspatial is installed when needed, and triggers its installation
+check_duckspatial <- function(
+  min_version = "1.2.0", 
+  call = rlang::caller_env()
+) {
+
+  rlang::check_installed(
+    "duckspatial",
+    version = min_version,
+    call    = call
+  )
+
+  invisible(TRUE)
+
+}
+
+
 # Shared htmlDependency for the layers control (JS IControl + stylesheet),
 # used by mapboxgl(), maplibre(), and both compare widgets
 layers_control_dependency <- function() {

@@ -9,7 +9,7 @@ fit_bounds(map, bbox, animate = FALSE, ...)
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} function or a proxy object.}
 
-\item{bbox}{A bounding box specified as a numeric vector of length 4 (minLng, minLat, maxLng, maxLat), or an sf object from which a bounding box will be calculated.}
+\item{bbox}{A bounding box specified as a numeric vector of length 4 (minLng, minLat, maxLng, maxLat), an sf object, or a \code{duckspatial_df} object, from which a bounding box will be calculated.}
 
 \item{animate}{A logical value indicating whether to animate the transition to the new bounds. Defaults to FALSE.}
 

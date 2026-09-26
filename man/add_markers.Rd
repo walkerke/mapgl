@@ -18,7 +18,7 @@ add_markers(
 \arguments{
 \item{map}{A map object created by the \code{mapboxgl} or \code{maplibre} functions.}
 
-\item{data}{A length-2 numeric vector of coordinates, a list of length-2 numeric vectors, or an \code{sf} POINT object.}
+\item{data}{A length-2 numeric vector of coordinates, a list of length-2 numeric vectors, an \code{sf} POINT object, or a \code{duckspatial_df} POINT object.}
 
 \item{color}{The color of the marker (default is "red").}
 

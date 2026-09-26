@@ -40,6 +40,8 @@
 
 * Fixed a bug where passing a geometry-only `sf` object (no non-geometry columns) as a layer source caused a serialization error. `geojsonsf::sf_geojson()` simplifies property-less sf objects into a vector of individual geometry strings rather than a FeatureCollection, which `htmlwidgets` cannot serialize. All internal calls now use `simplify = FALSE` to consistently return a FeatureCollection (#212).
 
+* `duckspatial_df` objects from the `duckspatial` package are now accepted wherever `sf` objects are: `add_source()`, `add_layer()` and all specific layer functions, `fit_bounds()`, the `bounds` argument of `maplibre()` and `mapboxgl()`, `set_source()`, and `add_markers()`. CRS is validated and reprojected to EPSG:4326 automatically (#213).
+
 # mapgl 0.5.0
 
 * Tooltips and popups now accept `{brace}` templates package-wide. Any layer's `tooltip`/`popup` (and `set_tooltip()`/`set_popup()`) can take a glue-style template such as `"{name}: {population}"`, in addition to the existing column name and `concat()`/`number_format()` expression forms; substituted values are HTML-escaped.

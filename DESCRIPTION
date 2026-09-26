@@ -19,22 +19,23 @@ Roxygen: list(markdown = TRUE)
 Depends:
   R (>= 4.1.0)
 Imports:
-  htmlwidgets,
-  geojsonsf,
-  sf,
-  rlang,
-  htmltools,
-  grDevices,
-  base64enc,
-  terra,
-  classInt,
-  shiny,
-  viridisLite,
-  png,
-  jsonlite,
-  httpuv
+    htmlwidgets,
+    geojsonsf,
+    sf,
+    rlang,
+    htmltools,
+    grDevices,
+    base64enc,
+    terra,
+    classInt,
+    shiny,
+    viridisLite,
+    png,
+    jsonlite,
+    httpuv
 Suggests:
   chromote,
+  duckspatial (>= 1.2.0),
   knitr,
   mapboxapi,
   testthat (>= 3.0.0),

@@ -1,7 +1,7 @@
 #' Fit the map to a bounding box
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function or a proxy object.
-#' @param bbox A bounding box specified as a numeric vector of length 4 (minLng, minLat, maxLng, maxLat), or an sf object from which a bounding box will be calculated.
+#' @param bbox A bounding box specified as a numeric vector of length 4 (minLng, minLat, maxLng, maxLat), an sf object, or a `duckspatial_df` object, from which a bounding box will be calculated.
 #' @param animate A logical value indicating whether to animate the transition to the new bounds. Defaults to FALSE.
 #' @param ... Additional named arguments for fitting the bounds.
 #'
@@ -14,6 +14,10 @@ fit_bounds <- function(map, bbox, animate = FALSE, ...) {
 
   if (inherits(bbox, "sf")) {
     bbox <- as.vector(sf::st_bbox(sf::st_transform(bbox, 4326)))
+  } else if (inherits(bbox, "duckspatial_df")) {
+    check_duckspatial()
+    bbox <- ddbs_ensure_wgs84(bbox, "bbox")
+    bbox <- as.vector(duckspatial::ddbs_bbox(bbox))
   }
 
   if (inherits(map, "mapboxgl_proxy") || inherits(map, "maplibre_proxy")) {

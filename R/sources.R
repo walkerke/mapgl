@@ -2,7 +2,7 @@
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
-#' @param data An sf object or a URL pointing to a remote GeoJSON file.
+#' @param data An sf object, a `duckspatial_df` object, or a URL pointing to a remote GeoJSON file.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
@@ -17,10 +17,14 @@ add_source <- function(map, id, data, ...) {
       data <- sf::st_transform(data, crs = 4326)
     }
     geojson <- geojsonsf::sf_geojson(data, simplify = FALSE)
+  } else if (inherits(data, "duckspatial_df")) {
+    check_duckspatial()
+    data <- ddbs_ensure_wgs84(data, "data")
+    geojson <- duckspatial::ddbs_as_geojson(data)
   } else if (is.character(data) && grepl("^http", data)) {
     geojson <- data
   } else {
-    stop("Data must be an sf object or a URL to a remote GeoJSON file.")
+    stop("Data must be an sf object, a duckspatial_df, or a URL to a remote GeoJSON file.")
   }
 
   source <- list(

@@ -41,7 +41,7 @@ add_circle_layer(
 
 \item{id}{A unique ID for the layer.}
 
-\item{source}{The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies \code{type} and \code{url} for a remote source.}
+\item{source}{The ID of the source, alternatively an sf object or a \code{duckspatial_df} object (both converted to a GeoJSON source), or a named list that specifies \code{type} and \code{url} for a remote source.}
 
 \item{source_layer}{The source layer (for vector sources).}
 

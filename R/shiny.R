@@ -668,7 +668,7 @@ set_popup <- function(map, layer_id = NULL, popup, layer = NULL, style = NULL) {
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or a proxy object.
 #' @param layer_id The ID of the layer to update.
-#' @param source An sf object (which will be converted to a GeoJSON source).
+#' @param source An sf object or a `duckspatial_df` object (both converted to a GeoJSON source).
 #' @param layer Deprecated. Use `layer_id` instead.
 #'
 #' @return The updated map object.
@@ -697,6 +697,9 @@ set_source <- function(map, layer_id = NULL, source, layer = NULL) {
         source,
         crs = 4326
       ), simplify = FALSE)
+    } else if (inherits(source, "duckspatial_df")) {
+      check_duckspatial()
+      source <- duckspatial::ddbs_as_geojson(ddbs_ensure_wgs84(source, "source"))
     }
 
     if (

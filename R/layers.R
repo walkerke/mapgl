@@ -5,7 +5,7 @@
 #' @param map A map object created by the `mapboxgl()` or `maplibre()` functions.
 #' @param id A unique ID for the layer.
 #' @param type The type of the layer (e.g., "fill", "line", "circle").
-#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source The ID of the source, alternatively an sf object or a `duckspatial_df` object (both converted to a GeoJSON source), or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param paint A list of paint properties for the layer.
 #' @param layout A list of layout properties for the layer.
@@ -97,6 +97,15 @@ add_layer <- function(
       source <- sf::st_transform(source, crs = 4326)
     }
     geojson <- geojsonsf::sf_geojson(source, simplify = FALSE)
+    source <- list(
+      type = "geojson",
+      data = geojson,
+      generateId = TRUE
+    )
+  } else if (inherits(source, "duckspatial_df")) {
+    check_duckspatial()
+    source <- ddbs_ensure_wgs84(source, "source")
+    geojson <- duckspatial::ddbs_as_geojson(source)
     source <- list(
       type = "geojson",
       data = geojson,
@@ -206,7 +215,7 @@ add_layer <- function(
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
-#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source The ID of the source, alternatively an sf object or a `duckspatial_df` object (both converted to a GeoJSON source), or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param fill_antialias Whether or not the fill should be antialiased.
 #' @param fill_color The color of the filled part of this layer.
@@ -335,9 +344,9 @@ add_fill_layer <- function(
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
-#' @param source The ID of the source, alternatively an sf object (which will be
-#'   converted to a GeoJSON source) or a named list that specifies `type` and
-#'   `url` for a remote source.
+#' @param source The ID of the source, alternatively an sf object or a
+#'   `duckspatial_df` object (both converted to a GeoJSON source), or a named
+#'   list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param line_blur Amount to blur the line, in pixels.
 #' @param line_cap The display of line endings. One of "butt", "round", "square".
@@ -518,7 +527,7 @@ add_line_layer <- function(
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
-#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source The ID of the source, alternatively an sf object or a `duckspatial_df` object (both converted to a GeoJSON source), or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param heatmap_color The color of the heatmap points.
 #' @param heatmap_intensity The intensity of the heatmap points.
@@ -623,7 +632,7 @@ add_heatmap_layer <- function(
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
-#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source The ID of the source, alternatively an sf object or a `duckspatial_df` object (both converted to a GeoJSON source), or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param fill_extrusion_ambient_occlusion_intensity Controls the intensity of ambient occlusion shading. Value between 0 and 1; around 0.3 provides the most plausible results for buildings.
 #' @param fill_extrusion_ambient_occlusion_radius Shades area near ground and concave angles between walls. Default 3.0 corresponds to one floor height.
@@ -958,7 +967,7 @@ cluster_options <- function(
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
-#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source The ID of the source, alternatively an sf object or a `duckspatial_df` object (both converted to a GeoJSON source), or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param circle_blur Amount to blur the circle.
 #' @param circle_color The color of the circle.
@@ -1122,7 +1131,8 @@ add_circle_layer <- function(
     # Dispatch on source shape. sf/sfc takes precedence so existing
     # calls that incidentally pass `source_layer` alongside sf data
     # (silently ignored today) don't regress.
-    if (inherits(source, c("sf", "sfc"))) {
+    if (inherits(source, c("sf", "sfc", "duckspatial_df"))) {
+      if (inherits(source, "duckspatial_df")) check_duckspatial()
       # Native live clustering: inject a clustered GeoJSON source.
       map <- add_source(
         map,
@@ -1387,7 +1397,7 @@ add_raster_layer <- function(
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` functions.
 #' @param id A unique ID for the layer.
-#' @param source The ID of the source, alternatively an sf object (which will be converted to a GeoJSON source) or a named list that specifies `type` and `url` for a remote source.
+#' @param source The ID of the source, alternatively an sf object or a `duckspatial_df` object (both converted to a GeoJSON source), or a named list that specifies `type` and `url` for a remote source.
 #' @param source_layer The source layer (for vector sources).
 #' @param icon_allow_overlap If TRUE, the icon will be visible even if it collides with other previously drawn symbols.
 #' @param icon_anchor Part of the icon placed closest to the anchor.
@@ -1715,7 +1725,8 @@ add_symbol_layer <- function(
 
   if (!is.null(cluster_options)) {
     # Dispatch on source shape. See add_circle_layer() for notes.
-    if (inherits(source, c("sf", "sfc"))) {
+    if (inherits(source, c("sf", "sfc", "duckspatial_df"))) {
+      if (inherits(source, "duckspatial_df")) check_duckspatial()
       map <- add_source(
         map,
         id = id,
