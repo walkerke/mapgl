@@ -631,6 +631,10 @@ check_duckspatial <- function(
   )
 
   invisible(TRUE)
+
+}
+
+
 # Shared htmlDependency for the layers control (JS IControl + stylesheet),
 # used by mapboxgl(), maplibre(), and both compare widgets
 layers_control_dependency <- function() {
