@@ -15,6 +15,7 @@ fit_bounds <- function(map, bbox, animate = FALSE, ...) {
   if (inherits(bbox, "sf")) {
     bbox <- as.vector(sf::st_bbox(sf::st_transform(bbox, 4326)))
   } else if (inherits(bbox, "duckspatial_df")) {
+    check_duckspatial()
     bbox <- ddbs_ensure_wgs84(bbox, "bbox")
     bbox <- as.vector(duckspatial::ddbs_bbox(bbox))
   }

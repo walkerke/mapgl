@@ -114,25 +114,27 @@ add_markers <- function(map, data, color = "red", rotation = 0, popup = NULL, ma
         options = options
       )
     })
-  } else if (inherits(data, "duckspatial_df") && 
-    duckspatial::ddbs_geometry_type(data, FALSE)[1] == "POINT") {
-    lng <- duckspatial::ddbs_x(data, mode = "sf")
-    lat <- duckspatial::ddbs_y(data, mode = "sf")
-    properties <- duckspatial::ddbs_drop_geometry(data) |> dplyr::collect()
-    if (!is.null(marker_id) && !marker_id %in% colnames(properties)) {
-      stop("When providing an sf object, marker_id must be a column name in the object.")
+  } else if (inherits(data, "duckspatial_df")) {
+    check_duckspatial()
+    if (duckspatial::ddbs_geometry_type(data, FALSE)[1] == "POINT") {
+      lng <- duckspatial::ddbs_x(data, mode = "sf")
+      lat <- duckspatial::ddbs_y(data, mode = "sf")
+      properties <- duckspatial::ddbs_drop_geometry(data) |> dplyr::collect()
+      if (!is.null(marker_id) && !marker_id %in% colnames(properties)) {
+        stop("When providing an sf object, marker_id must be a column name in the object.")
+      }
+      markers <- lapply(seq_len(length(lng)), function(i) {
+        list(
+          id = if (!is.null(marker_id)) properties[[marker_id]][i] else paste0("marker_", i),
+          lng = lng[i],
+          lat = lat[i],
+          color = color,
+          rotation = rotation,
+          popup = if (!is.null(popup)) as.character(properties[i, popup]) else NULL,
+          options = options
+        )
+      })
     }
-    markers <- lapply(seq_len(length(lng)), function(i) {
-      list(
-        id = if (!is.null(marker_id)) properties[[marker_id]][i] else paste0("marker_", i),
-        lng = lng[i],
-        lat = lat[i],
-        color = color,
-        rotation = rotation,
-        popup = if (!is.null(popup)) as.character(properties[i, popup]) else NULL,
-        options = options
-      )
-    })
   } else {
     stop("Data must be either a length-2 numeric vector, a list of length-2 numeric vectors, or an sf POINT object.")
   }

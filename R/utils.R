@@ -618,3 +618,17 @@ ddbs_ensure_wgs84 <- function(x, arg = deparse(substitute(x))) {
   x
 }
 
+# Checks if duckspatial is installed when needed, and triggers its installation
+check_duckspatial <- function(
+  min_version = "1.2.0", 
+  call = rlang::caller_env()
+) {
+
+  rlang::check_installed(
+    "duckspatial",
+    version = min_version,
+    call    = call
+  )
+
+  invisible(TRUE)
+}

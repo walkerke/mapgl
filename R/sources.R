@@ -18,6 +18,7 @@ add_source <- function(map, id, data, ...) {
     }
     geojson <- geojsonsf::sf_geojson(data, simplify = FALSE)
   } else if (inherits(data, "duckspatial_df")) {
+    check_duckspatial()
     data <- ddbs_ensure_wgs84(data, "data")
     geojson <- duckspatial::ddbs_as_geojson(data)
   } else if (is.character(data) && grepl("^http", data)) {

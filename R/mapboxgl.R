@@ -81,6 +81,7 @@ mapboxgl <- function(
         if (inherits(bounds, "sf")) {
             bounds <- as.vector(sf::st_bbox(sf::st_transform(bounds, 4326)))
         } else if (inherits(bounds, "duckspatial_df")) {
+            check_duckspatial()
             bounds <- ddbs_ensure_wgs84(bounds, "bounds")
             bounds <- as.vector(duckspatial::ddbs_bbox(bounds))
         } else if (inherits(bounds, "bbox")) {

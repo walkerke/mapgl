@@ -103,6 +103,7 @@ add_layer <- function(
       generateId = TRUE
     )
   } else if (inherits(source, "duckspatial_df")) {
+    check_duckspatial()
     source <- ddbs_ensure_wgs84(source, "source")
     geojson <- duckspatial::ddbs_as_geojson(source)
     source <- list(
@@ -1131,6 +1132,7 @@ add_circle_layer <- function(
     # calls that incidentally pass `source_layer` alongside sf data
     # (silently ignored today) don't regress.
     if (inherits(source, c("sf", "sfc", "duckspatial_df"))) {
+      if (inherits(source, "duckspatial_df")) check_duckspatial()
       # Native live clustering: inject a clustered GeoJSON source.
       map <- add_source(
         map,
@@ -1724,6 +1726,7 @@ add_symbol_layer <- function(
   if (!is.null(cluster_options)) {
     # Dispatch on source shape. See add_circle_layer() for notes.
     if (inherits(source, c("sf", "sfc", "duckspatial_df"))) {
+      if (inherits(source, "duckspatial_df")) check_duckspatial()
       map <- add_source(
         map,
         id = id,

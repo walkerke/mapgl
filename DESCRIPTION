@@ -32,10 +32,10 @@ Imports:
     viridisLite,
     png,
     jsonlite,
-    httpuv,
-    duckspatial
+    httpuv
 Suggests:
   chromote,
+  duckspatial (>= 1.2.0),
   knitr,
   mapboxapi,
   testthat (>= 3.0.0),
