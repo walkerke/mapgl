@@ -157,6 +157,14 @@ add_navigation_control <- function(
 
 #' Add a layers control to the map
 #'
+#' The layers control is a native map control: it stacks alongside other
+#' controls (navigation, fullscreen, etc.) in its corner rather than
+#' overlapping them, following the order in which controls are added to the
+#' map. Its default appearance matches the other map controls (white
+#' background, dark monochrome items). To restore the blue active style from
+#' earlier versions of mapgl, set `active_color = "#4a90e2"` and
+#' `active_text_color = "#ffffff"`.
+#'
 #' @param map A map object.
 #' @param position The position of the control on the map (one of "top-left", "top-right", "bottom-left", "bottom-right").
 #' @param layers Either a character vector of layer IDs to include in the control,
@@ -171,10 +179,23 @@ add_navigation_control <- function(
 #' @param hover_color The background color for layer items when hovered.
 #' @param active_text_color The text color for active layer items.
 #' @param inactive_text_color The text color for inactive layer items.
-#' @param margin_top Custom top margin in pixels, allowing for fine control over control positioning to avoid overlaps. Default is NULL (uses standard positioning).
-#' @param margin_right Custom right margin in pixels. Default is NULL.
-#' @param margin_bottom Custom bottom margin in pixels. Default is NULL.
-#' @param margin_left Custom left margin in pixels. Default is NULL.
+#' @param margin_top Optional top margin in pixels, applied to the control
+#'        within the native control stack. Rarely needed now that the control
+#'        no longer overlaps other controls; NULL (the default) uses standard
+#'        control spacing.
+#' @param margin_right Optional right margin in pixels. Default is NULL.
+#' @param margin_bottom Optional bottom margin in pixels. Default is NULL.
+#' @param margin_left Optional left margin in pixels. Default is NULL.
+#' @param mode How many entries can be visible at once. In `"multiple"` mode
+#'        (the default), entries toggle independently. In `"single"` mode,
+#'        activating an entry turns the others off — useful for flipping
+#'        through alternative analytical layers or raster imagery where only
+#'        one should show at a time. Clicking the active entry does nothing.
+#'        When the control is created in `"single"` mode with several entries
+#'        visible, the first visible entry stays on and the rest are turned
+#'        off. To combine both behaviors on one map, add two controls: one
+#'        `"single"`-mode control for the alternatives and one
+#'        `"multiple"`-mode control for independent overlays.
 #'
 #' @return The modified map object with the layers control added.
 #' @export
@@ -251,8 +272,11 @@ add_layers_control <- function(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  mode = c("multiple", "single")
 ) {
+  mode <- match.arg(mode)
+
   control_id <- paste0("layers-control-", as.hexmode(sample(1:1000000, 1)))
 
   # Process layers parameter
@@ -337,6 +361,7 @@ add_layers_control <- function(
             layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
+            mode = mode,
             custom_colors = custom_colors,
             margin_top = margin_top,
             margin_right = margin_right,
@@ -365,6 +390,7 @@ add_layers_control <- function(
             layers_config = layers_config,
             collapsible = collapsible,
             use_icon = use_icon,
+            mode = mode,
             custom_colors = custom_colors,
             margin_top = margin_top,
             margin_right = margin_right,
@@ -382,6 +408,7 @@ add_layers_control <- function(
       layers_config = layers_config,
       collapsible = collapsible,
       use_icon = use_icon,
+      mode = mode,
       custom_colors = custom_colors,
       margin_top = margin_top,
       margin_right = margin_right,
@@ -699,11 +726,77 @@ add_coordinates_control <- function(
 #' @param download_filename Base filename for downloaded GeoJSON (without extension). Default is "drawn-features".
 #' @param show_measurements Logical, whether to show live measurements while drawing. Default is FALSE.
 #' @param measurement_units Units for measurements. Either "metric", "imperial", or "both". Default is "both".
-#' @param ... Additional named arguments. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
+#' @param provider The drawing engine to use: `"mapbox-gl-draw"` (the default,
+#'   current behavior) or `"terra-draw"` to use the
+#'   \href{https://github.com/JamesLMilner/terra-draw}{Terra Draw} library.
+#'   Terra Draw works identically on Mapbox and MapLibre maps and offers
+#'   additional drawing modes plus a richer select/edit mode.
+#' @param modes For `provider = "terra-draw"`, a character vector of drawing
+#'   modes to expose as toolbar buttons. Valid modes are `"point"`,
+#'   `"linestring"`, `"polygon"`, `"rectangle"`, `"circle"`, `"freehand"`,
+#'   `"freehand-linestring"`, `"angled-rectangle"`, `"sector"`, `"sensor"`,
+#'   `"curve"`, `"curve-linestring"`, and `"select"`. When `NULL` (the
+#'   default), the mode set is derived from the legacy `freehand`,
+#'   `rectangle`, and `radius` arguments plus `"point"`, `"linestring"`,
+#'   `"polygon"`, and `"select"`. For `provider = "mapbox-gl-draw"`, a
+#'   supplied `modes` value is forwarded to the MapboxDraw constructor
+#'   unchanged (equivalent to passing it via `...`).
+#' @param options For `provider = "terra-draw"`, an object created by
+#'   [terradraw_options()] with advanced Terra Draw settings (snapping,
+#'   select-mode editing flags, per-mode overrides).
+#' @param ... Additional named arguments for the default
+#'   `"mapbox-gl-draw"` provider. See \url{https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options} for a list of options.
+#'   Not supported with `provider = "terra-draw"`; use `options` there instead.
 #'
 #' @return The modified map object with the draw control added.
 #'
 #' @details
+#' ## The terra-draw provider
+#'
+#' With `provider = "terra-draw"`, mapgl renders its own toolbar (Terra Draw is
+#' a headless library) with one button per requested mode, a trash button, and
+#' an optional download button. [add_terradraw_control()] is an equivalent
+#' convenience wrapper whose signature contains only the arguments that apply
+#' to this provider. Behavioral notes:
+#'
+#' * The trash button deletes the currently selected feature and does nothing
+#'   when no feature is selected; use [clear_drawn_features()] to remove
+#'   everything.
+#' * When the mode set includes `"select"`, finishing a shape returns to the
+#'   select tool with the new feature selected (set
+#'   `terradraw_options(keep_mode_active = TRUE)` to keep drawing instead).
+#' * Colors are coerced to 6-digit hex (Terra Draw requires hex), so R color
+#'   names work but alpha channels are ignored; use `fill_opacity` for
+#'   transparency.
+#' * Features loaded via `source` or [add_features_to_draw()] are adapted to
+#'   Terra Draw's constraints: Multi* geometries are split into single-part
+#'   features, coordinates are rounded to 9 decimal places (Terra Draw's
+#'   precision limit, about 0.1 mm), and polygon interior rings (holes) are
+#'   removed.
+#' * Changing the map style preserves drawn features, but discards an
+#'   unfinished drawing and clears the current selection and undo history.
+#' * The `"curve"` and `"curve-linestring"` modes draw shapes that mix
+#'   straight and curved (cubic Bezier) edges, pen-tool style: click places a
+#'   corner point; click-and-drag places an anchor and pulls out symmetric
+#'   curve handles (drag distance sets the curvature); moving the mouse
+#'   previews the pending segment; click the first point (the last point for
+#'   lines) or press Enter to finish; Escape cancels; Backspace removes the
+#'   last point. The stored feature uses the rendered curved coordinates, so
+#'   measurements, the download button, and [get_drawn_features()] work
+#'   unchanged, and the curve's control points are preserved in a
+#'   `curveNodes` JSON-string property. In select mode curve features can be
+#'   moved as a whole (their control points move with them) but vertex
+#'   editing, rotate, and scale are disabled for them, and self-crossing
+#'   curve outlines cannot be finished as polygons. While a curve tool is
+#'   active, left-drag places curved anchors, so map panning is suspended
+#'   until you switch tools.
+#' * `bezier`, `bezier_polygon`, and `simplify_freehand` are specific to
+#'   mapbox-gl-draw and error under terra-draw. `attributes` and
+#'   `show_measurements` work with both providers on standalone widgets (as
+#'   with the default provider, neither is available in compare views).
+#'
+#' ## Bezier modes (mapbox-gl-draw provider only)
+#'
 #' Bezier drawing modes are supported when the draw control is added to the
 #' original map widget or later through a regular Shiny map proxy. Compare
 #' widgets and compare proxies are not yet supported for Bezier modes.
@@ -799,6 +892,14 @@ add_coordinates_control <- function(
 #'         radius = TRUE,
 #'         bezier = TRUE
 #'     )
+#'
+#' # Use the Terra Draw engine (works on Mapbox and MapLibre maps)
+#' maplibre() |>
+#'     add_draw_control(
+#'         provider = "terra-draw",
+#'         modes = c("point", "polygon", "rectangle", "circle", "select"),
+#'         options = terradraw_options(snap_to_coordinates = TRUE)
+#'     )
 #' }
 add_draw_control <- function(
   map,
@@ -823,33 +924,71 @@ add_draw_control <- function(
   download_filename = "drawn-features",
   show_measurements = FALSE,
   measurement_units = "both",
+  provider = c("mapbox-gl-draw", "terra-draw"),
+  modes = NULL,
+  options = NULL,
   ...
 ) {
-  # if (inherits(map, "maplibregl") || inherits(map, "maplibre_proxy")) {
-  #   rlang::abort("The draw control is not yet supported for MapLibre maps.")
-  # }
-
-  options <- list(...)
+  provider <- match.arg(provider)
+  mapbox_options <- list(...)
   attributes <- .mapgl_normalize_draw_attributes(attributes)
+
+  if (provider == "terra-draw") {
+    modes <- .mapgl_validate_terradraw_call(
+      modes = modes,
+      options = options,
+      mapbox_options = mapbox_options,
+      attributes = attributes,
+      freehand = freehand,
+      simplify_freehand = simplify_freehand,
+      rectangle = rectangle,
+      radius = radius,
+      bezier = bezier,
+      bezier_polygon = bezier_polygon
+    )
+    mapbox_options <- list()
+    # Terra Draw requires 6-digit hex colors; R color names are converted
+    # here so the payload is engine-ready (mapbox payloads stay untouched)
+    point_color <- .mapgl_col2hex(point_color)
+    line_color <- .mapgl_col2hex(line_color)
+    fill_color <- .mapgl_col2hex(fill_color)
+    active_color <- .mapgl_col2hex(active_color)
+  } else {
+    if (!is.null(options)) {
+      rlang::abort(
+        "`options` is only supported with `provider = \"terra-draw\"`. Pass mapbox-gl-draw options through `...` instead."
+      )
+    }
+    if (!is.null(modes)) {
+      # `modes` is a valid MapboxDraw constructor option that users could
+      # already pass through `...`; keep that contract intact
+      mapbox_options$modes <- modes
+      modes <- NULL
+    }
+  }
 
   is_proxy <- inherits(map, "mapboxgl_proxy") ||
     inherits(map, "maplibre_proxy")
 
-  if ((inherits(map, "mapboxgl_compare") ||
-    inherits(map, "maplibregl_compare") ||
-    inherits(map, "mapboxgl_compare_proxy") ||
-    inherits(map, "maplibre_compare_proxy")) &&
-    (bezier || bezier_polygon)) {
+  if (
+    (inherits(map, "mapboxgl_compare") ||
+      inherits(map, "maplibregl_compare") ||
+      inherits(map, "mapboxgl_compare_proxy") ||
+      inherits(map, "maplibre_compare_proxy")) &&
+      (bezier || bezier_polygon)
+  ) {
     rlang::abort(
       "Bezier drawing modes are not yet supported for compare widgets or compare widget proxies."
     )
   }
 
-  if ((inherits(map, "mapboxgl_compare") ||
-    inherits(map, "maplibregl_compare") ||
-    inherits(map, "mapboxgl_compare_proxy") ||
-    inherits(map, "maplibre_compare_proxy")) &&
-    !is.null(attributes)) {
+  if (
+    (inherits(map, "mapboxgl_compare") ||
+      inherits(map, "maplibregl_compare") ||
+      inherits(map, "mapboxgl_compare_proxy") ||
+      inherits(map, "maplibre_compare_proxy")) &&
+      !is.null(attributes)
+  ) {
     rlang::abort(
       "Draw attribute editing is not yet supported for compare widgets or compare widget proxies."
     )
@@ -858,9 +997,11 @@ add_draw_control <- function(
   if (!is_proxy) {
     map$x$mapgl_id <- map$x$mapgl_id %||% .mapgl_new_id()
 
-    if (!shiny::isRunning() &&
-      is.null(shiny::getDefaultReactiveDomain()) &&
-      interactive()) {
+    if (
+      !shiny::isRunning() &&
+        is.null(shiny::getDefaultReactiveDomain()) &&
+        interactive()
+    ) {
       map$x$sync_url <- .mapgl_draw_sync_url(map$x$mapgl_id)
     }
   }
@@ -878,6 +1019,9 @@ add_draw_control <- function(
 
   map$x$draw_control <- list(
     enabled = TRUE,
+    provider = provider,
+    modes = modes,
+    terradraw = .mapgl_serialize_terradraw_options(options),
     position = position,
     freehand = freehand,
     simplify_freehand = simplify_freehand,
@@ -886,7 +1030,7 @@ add_draw_control <- function(
     bezier = bezier,
     bezier_polygon = bezier_polygon,
     orientation = orientation,
-    options = options,
+    options = mapbox_options,
     source = draw_source,
     attributes = attributes,
     download_button = download_button,
@@ -918,8 +1062,11 @@ add_draw_control <- function(
           id = map$id,
           message = list(
             type = "add_draw_control",
+            provider = provider,
+            modes = modes,
+            terradraw = .mapgl_serialize_terradraw_options(options),
             position = position,
-            options = options,
+            options = mapbox_options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
             rectangle = rectangle,
@@ -959,8 +1106,11 @@ add_draw_control <- function(
           id = map$id,
           message = list(
             type = "add_draw_control",
+            provider = provider,
+            modes = modes,
+            terradraw = .mapgl_serialize_terradraw_options(options),
             position = position,
-            options = options,
+            options = mapbox_options,
             freehand = freehand,
             simplify_freehand = simplify_freehand,
             rectangle = rectangle,
@@ -990,6 +1140,86 @@ add_draw_control <- function(
   }
 
   map
+}
+
+#' Add a Terra Draw control to a map
+#'
+#' A convenience wrapper around [add_draw_control()] with
+#' `provider = "terra-draw"`, exposing only the arguments that apply to the
+#' Terra Draw engine. The two forms are equivalent; see [add_draw_control()]
+#' for full details of the terra-draw provider's behavior, and
+#' [terradraw_options()] for advanced configuration.
+#'
+#' @inheritParams add_draw_control
+#' @param modes A character vector of drawing modes to expose as toolbar
+#'   buttons: any of `"point"`, `"linestring"`, `"polygon"`, `"rectangle"`,
+#'   `"circle"`, `"freehand"`, `"freehand-linestring"`, `"angled-rectangle"`,
+#'   `"sector"`, `"sensor"`, `"curve"`, `"curve-linestring"`, and
+#'   `"select"`. When `NULL` (the default), the control shows `"point"`,
+#'   `"linestring"`, `"polygon"`, and `"select"`.
+#' @param options An object created by [terradraw_options()] with advanced
+#'   Terra Draw settings (snapping, select-mode editing flags, per-mode
+#'   overrides).
+#'
+#' @return The modified map object with the draw control added.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' maplibre() |>
+#'     add_terradraw_control()
+#'
+#' maplibre() |>
+#'     add_terradraw_control(
+#'         modes = c("polygon", "rectangle", "circle", "freehand", "select"),
+#'         options = terradraw_options(snap_to_coordinates = TRUE),
+#'         download_button = TRUE
+#'     )
+#' }
+add_terradraw_control <- function(
+  map,
+  position = "top-left",
+  modes = NULL,
+  options = NULL,
+  source = NULL,
+  attributes = NULL,
+  point_color = "#3bb2d0",
+  line_color = "#3bb2d0",
+  fill_color = "#3bb2d0",
+  fill_opacity = 0.1,
+  active_color = "#fbb03b",
+  vertex_radius = 5,
+  line_width = 2,
+  download_button = FALSE,
+  download_filename = "drawn-features",
+  show_measurements = FALSE,
+  measurement_units = "both",
+  orientation = "vertical"
+) {
+  add_draw_control(
+    map,
+    position = position,
+    provider = "terra-draw",
+    modes = modes,
+    options = options,
+    source = source,
+    attributes = attributes,
+    point_color = point_color,
+    line_color = line_color,
+    fill_color = fill_color,
+    fill_opacity = fill_opacity,
+    active_color = active_color,
+    vertex_radius = vertex_radius,
+    line_width = line_width,
+    download_button = download_button,
+    download_filename = download_filename,
+    show_measurements = show_measurements,
+    measurement_units = measurement_units,
+    orientation = orientation
+  )
 }
 
 #' Define an editable draw attribute
@@ -1064,8 +1294,12 @@ draw_attribute <- function(
     return(NULL)
   }
 
-  if (!is.list(attributes) || length(attributes) == 0 || is.null(names(attributes)) ||
-    any(!nzchar(names(attributes)))) {
+  if (
+    !is.list(attributes) ||
+      length(attributes) == 0 ||
+      is.null(names(attributes)) ||
+      any(!nzchar(names(attributes)))
+  ) {
     rlang::abort("`attributes` must be a named list of field definitions.")
   }
 
@@ -1093,11 +1327,15 @@ draw_attribute <- function(
     }
 
     if (!is.character(type) || length(type) != 1) {
-      rlang::abort(sprintf("Attribute `%s` must have a single `type` value.", field_name))
+      rlang::abort(sprintf(
+        "Attribute `%s` must have a single `type` value.",
+        field_name
+      ))
     }
 
     type <- tolower(type)
-    type <- switch(type,
+    type <- switch(
+      type,
       numeric = "number",
       logical = "checkbox",
       bool = "checkbox",
@@ -1116,13 +1354,19 @@ draw_attribute <- function(
     choices <- spec$choices %||% NULL
     if (type == "select") {
       if (is.null(choices) || length(choices) == 0) {
-        rlang::abort(sprintf("Select attribute `%s` must define `choices`.", field_name))
+        rlang::abort(sprintf(
+          "Select attribute `%s` must define `choices`.",
+          field_name
+        ))
       }
       choice_names <- names(choices)
       choices <- lapply(seq_along(choices), function(i) {
         value <- choices[[i]]
         if (length(value) != 1 || is.list(value)) {
-          rlang::abort(sprintf("Choices for attribute `%s` must be scalar values.", field_name))
+          rlang::abort(sprintf(
+            "Choices for attribute `%s` must be scalar values.",
+            field_name
+          ))
         }
         label <- if (!is.null(choice_names) && nzchar(choice_names[[i]])) {
           choice_names[[i]]
@@ -1152,6 +1396,339 @@ draw_attribute <- function(
   })
 }
 
+# Valid Terra Draw toolbar modes (marker is excluded until its icon can be
+# vendored or configured; Terra Draw's default marker image is remote)
+.mapgl_terradraw_modes <- c(
+  "point",
+  "linestring",
+  "polygon",
+  "rectangle",
+  "circle",
+  "freehand",
+  "freehand-linestring",
+  "angled-rectangle",
+  "sector",
+  "sensor",
+  "curve",
+  "curve-linestring",
+  "select"
+)
+
+# Property names Terra Draw reserves on drawn features; user attributes must
+# not collide with them (updateFeatureProperties rejects reserved names)
+.mapgl_terradraw_reserved_props <- c(
+  "mode",
+  "selected",
+  "currentlyDrawing",
+  "edited",
+  "midPoint",
+  "selectionPoint",
+  "selectionPointFeatureId",
+  "coordinatePoint",
+  "snappingPoint",
+  "closingPoint",
+  "coordinatePointFeatureId",
+  "coordinatePointIds",
+  "provisionalCoordinateCount",
+  "committedCoordinateCount",
+  "marker",
+  "radiusKilometers",
+  "curveNodes",
+  "curveGuidance",
+  "curveGuidanceType"
+)
+
+# Validate the terra-draw provider call in add_draw_control() and return the
+# resolved mode vector
+.mapgl_validate_terradraw_call <- function(
+  modes,
+  options,
+  mapbox_options,
+  attributes,
+  freehand,
+  simplify_freehand,
+  rectangle,
+  radius,
+  bezier,
+  bezier_polygon
+) {
+  if (bezier || bezier_polygon) {
+    rlang::abort(
+      "Bezier drawing modes are not supported with `provider = \"terra-draw\"`."
+    )
+  }
+  if (simplify_freehand) {
+    rlang::abort(
+      "`simplify_freehand` is not supported with `provider = \"terra-draw\"`."
+    )
+  }
+  if (length(mapbox_options) > 0) {
+    rlang::abort(
+      c(
+        "Additional arguments in `...` are mapbox-gl-draw options and are not supported with `provider = \"terra-draw\"`.",
+        i = "Use `options = terradraw_options(...)` instead."
+      )
+    )
+  }
+  if (!is.null(options) && !inherits(options, "mapgl_terradraw_options")) {
+    rlang::abort(
+      "`options` must be created with `terradraw_options()` when `provider = \"terra-draw\"`."
+    )
+  }
+  if (!is.null(attributes)) {
+    reserved <- intersect(
+      vapply(attributes, function(field) field$name, character(1)),
+      .mapgl_terradraw_reserved_props
+    )
+    if (length(reserved) > 0) {
+      rlang::abort(
+        paste0(
+          "Attribute name(s) reserved by Terra Draw: ",
+          paste0("`", reserved, "`", collapse = ", "),
+          ". Please rename these attributes."
+        )
+      )
+    }
+  }
+
+  if (is.null(modes)) {
+    return(c(
+      "point",
+      "linestring",
+      "polygon",
+      if (rectangle) "rectangle",
+      if (radius) "circle",
+      if (freehand) "freehand",
+      "select"
+    ))
+  }
+
+  if (freehand || rectangle || radius) {
+    rlang::abort(
+      "Supply either `modes` or the legacy `freehand`/`rectangle`/`radius` arguments, not both."
+    )
+  }
+  if (!is.character(modes) || length(modes) == 0) {
+    rlang::abort(
+      "`modes` must be a character vector of Terra Draw mode names."
+    )
+  }
+  invalid <- setdiff(modes, .mapgl_terradraw_modes)
+  if (length(invalid) > 0) {
+    rlang::abort(
+      paste0(
+        "Invalid Terra Draw mode(s): ",
+        paste0("`", invalid, "`", collapse = ", "),
+        ". Valid modes are: ",
+        paste0("`", .mapgl_terradraw_modes, "`", collapse = ", "),
+        "."
+      )
+    )
+  }
+  unique(modes)
+}
+
+# Drop NULL entries so the payload serializes cleanly; the class attribute is
+# irrelevant to the JS side
+.mapgl_serialize_terradraw_options <- function(options) {
+  if (is.null(options)) {
+    return(NULL)
+  }
+  out <- unclass(options)
+  out[!vapply(out, is.null, logical(1))]
+}
+
+#' Configure the Terra Draw provider for the draw control
+#'
+#' This helper builds the `options` argument for
+#' [add_draw_control()] with `provider = "terra-draw"`. All arguments are
+#' optional; the defaults give a fully editable select mode without snapping.
+#'
+#' @param drag_features Logical, whether selected features can be moved by
+#'   dragging. Default is `TRUE`.
+#' @param rotate_features Logical, whether selected features can be rotated by
+#'   holding Control+R while dragging the feature in select mode. This uses the
+#'   Control key on macOS as well as Windows and Linux. Default is `FALSE`.
+#' @param scale_features Logical, whether selected features can be scaled by
+#'   holding Control+S while dragging the feature in select mode. This uses the
+#'   Control key on macOS as well as Windows and Linux. Default is `FALSE`.
+#' @param drag_vertices Logical, whether individual vertices of a selected
+#'   feature can be dragged. Default is `TRUE`.
+#' @param delete_vertices Logical, whether individual vertices of a selected
+#'   feature can be deleted. Default is `TRUE`.
+#' @param midpoints Logical, whether midpoints are shown between vertices so
+#'   new vertices can be inserted. Default is `TRUE`. Ignored (treated as
+#'   `FALSE`) when `resize` is set, as Terra Draw does not support both.
+#' @param resize How selected features may be resized by dragging their
+#'   selection points: one of `"center"`, `"opposite"`, `"center-fixed"`, or
+#'   `"opposite-fixed"`. Default `NULL` disables resizing.
+#' @param snap_to_coordinates Logical, whether drawing and editing snap to
+#'   existing feature coordinates. Default is `FALSE`.
+#' @param snap_to_lines Logical, whether drawing and editing snap to existing
+#'   feature lines. Default is `FALSE`.
+#' @param editable_while_drawing Logical, whether features can be edited
+#'   (vertices dragged) while still being drawn, for the point, linestring,
+#'   and polygon modes. Default is `FALSE`.
+#' @param show_coordinate_points Logical, whether coordinate points are
+#'   displayed on linestring and polygon features while drawing. Default is
+#'   `FALSE`.
+#' @param drag_interaction How rectangle and circle drawing works: one of
+#'   `"click-move"` (click, move, click), `"click-drag"`, or
+#'   `"click-move-or-drag"`. Default `NULL` uses the Terra Draw default.
+#' @param pointer_distance Pointer tolerance in pixels for drawing
+#'   interactions. Default `NULL` uses the Terra Draw default.
+#' @param keep_mode_active Logical. By default (`FALSE`) the toolbar returns
+#'   to the select tool after a shape is finished, matching the
+#'   mapbox-gl-draw workflow; set to `TRUE` to stay in the active drawing
+#'   mode instead.
+#' @param modes Advanced escape hatch: a named list keyed by mode name whose
+#'   entries are raw Terra Draw mode constructor options (in Terra Draw's own
+#'   camelCase naming, e.g. `list(polygon = list(pointerDistance = 30))`).
+#'   These are merged over what mapgl generates, with `styles` entries merged
+#'   key by key. `modeName` overrides are not allowed.
+#'
+#' @details
+#' Rotation and scaling use keyboard-modified feature dragging rather than
+#' visible handles. First select a feature and ensure the map has keyboard
+#' focus. Hold Control+R while dragging to rotate, or Control+S while dragging
+#' to scale. Release the pointer to finish the transformation. The `resize`
+#' option is separate and provides visible selection points that can be dragged
+#' to resize a feature.
+#'
+#' @return A list of class `"mapgl_terradraw_options"` for use as the
+#'   `options` argument of [add_draw_control()].
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mapgl)
+#'
+#' maplibre() |>
+#'     add_draw_control(
+#'         provider = "terra-draw",
+#'         options = terradraw_options(
+#'             snap_to_coordinates = TRUE,
+#'             rotate_features = TRUE,
+#'             scale_features = TRUE
+#'         )
+#'     )
+#' # In select mode, select a feature and hold Control+R or Control+S while
+#' # dragging it to rotate or scale, respectively.
+#' }
+terradraw_options <- function(
+  drag_features = TRUE,
+  rotate_features = FALSE,
+  scale_features = FALSE,
+  drag_vertices = TRUE,
+  delete_vertices = TRUE,
+  midpoints = TRUE,
+  resize = NULL,
+  snap_to_coordinates = FALSE,
+  snap_to_lines = FALSE,
+  editable_while_drawing = FALSE,
+  show_coordinate_points = FALSE,
+  drag_interaction = NULL,
+  pointer_distance = NULL,
+  keep_mode_active = FALSE,
+  modes = NULL
+) {
+  check_flag <- function(value, name) {
+    if (!is.logical(value) || length(value) != 1 || is.na(value)) {
+      rlang::abort(paste0("`", name, "` must be TRUE or FALSE."))
+    }
+  }
+  check_flag(drag_features, "drag_features")
+  check_flag(rotate_features, "rotate_features")
+  check_flag(scale_features, "scale_features")
+  check_flag(drag_vertices, "drag_vertices")
+  check_flag(delete_vertices, "delete_vertices")
+  check_flag(midpoints, "midpoints")
+  check_flag(snap_to_coordinates, "snap_to_coordinates")
+  check_flag(snap_to_lines, "snap_to_lines")
+  check_flag(editable_while_drawing, "editable_while_drawing")
+  check_flag(show_coordinate_points, "show_coordinate_points")
+  check_flag(keep_mode_active, "keep_mode_active")
+
+  if (!is.null(resize)) {
+    resize <- match.arg(
+      resize,
+      c("center", "opposite", "center-fixed", "opposite-fixed")
+    )
+  }
+  if (!is.null(drag_interaction)) {
+    drag_interaction <- match.arg(
+      drag_interaction,
+      c("click-move", "click-drag", "click-move-or-drag")
+    )
+  }
+  if (!is.null(pointer_distance)) {
+    if (
+      !is.numeric(pointer_distance) ||
+        length(pointer_distance) != 1 ||
+        is.na(pointer_distance) ||
+        pointer_distance <= 0
+    ) {
+      rlang::abort("`pointer_distance` must be a single positive number.")
+    }
+  }
+  if (!is.null(modes)) {
+    if (
+      !is.list(modes) ||
+        is.null(names(modes)) ||
+        any(names(modes) == "")
+    ) {
+      rlang::abort(
+        "`modes` must be a named list keyed by Terra Draw mode name."
+      )
+    }
+    invalid <- setdiff(names(modes), .mapgl_terradraw_modes)
+    if (length(invalid) > 0) {
+      rlang::abort(
+        paste0(
+          "Unknown Terra Draw mode(s) in `modes`: ",
+          paste0("`", invalid, "`", collapse = ", "),
+          "."
+        )
+      )
+    }
+    for (mode_name in names(modes)) {
+      entry <- modes[[mode_name]]
+      if (!is.list(entry)) {
+        rlang::abort(
+          paste0("`modes$", mode_name, "` must be a list of mode options.")
+        )
+      }
+      if ("modeName" %in% names(entry)) {
+        rlang::abort(
+          "Overriding `modeName` is not allowed; it would break the toolbar's mode tracking."
+        )
+      }
+    }
+  }
+
+  structure(
+    list(
+      drag_features = drag_features,
+      rotate_features = rotate_features,
+      scale_features = scale_features,
+      drag_vertices = drag_vertices,
+      delete_vertices = delete_vertices,
+      midpoints = midpoints,
+      resize = resize,
+      snap_to_coordinates = snap_to_coordinates,
+      snap_to_lines = snap_to_lines,
+      editable_while_drawing = editable_while_drawing,
+      show_coordinate_points = show_coordinate_points,
+      drag_interaction = drag_interaction,
+      pointer_distance = pointer_distance,
+      keep_mode_active = keep_mode_active,
+      modes = modes
+    ),
+    class = "mapgl_terradraw_options"
+  )
+}
+
 #' Get drawn features from the map
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function, or
@@ -1166,6 +1743,10 @@ draw_attribute <- function(
 #' In non-Shiny sessions, retrieval requires a map that was built by piping the
 #' original widget object through `add_draw_control()`. Non-Shiny proxy updates
 #' and compare widgets are not yet supported.
+#'
+#' With `add_draw_control(provider = "terra-draw")`, features include a `mode`
+#' column recording which drawing tool created each feature (e.g. `"polygon"`,
+#' `"circle"`, `"freehand"`).
 #'
 #' @export
 #'
@@ -2036,15 +2617,15 @@ add_control <- function(
 #'   add_screenshot_control(include_legend = FALSE)
 #' }
 add_screenshot_control <- function(
-    map,
-    position = "top-right",
-    filename = "map-screenshot",
-    include_legend = TRUE,
-    hide_controls = TRUE,
-    include_scale_bar = TRUE,
-    basemap_color = NULL,
-    image_scale = 1,
-    button_title = "Capture screenshot"
+  map,
+  position = "top-right",
+  filename = "map-screenshot",
+  include_legend = TRUE,
+  hide_controls = TRUE,
+  include_scale_bar = TRUE,
+  basemap_color = NULL,
+  image_scale = 1,
+  button_title = "Capture screenshot"
 ) {
   screenshot_control <- list(
     position = position,

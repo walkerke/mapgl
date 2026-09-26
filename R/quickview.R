@@ -709,7 +709,7 @@ maplibre_view <- function(
   column = NULL,
   n = NULL,
   palette = viridisLite::viridis,
-  style = carto_style("positron"),
+  style = openfreemap_style("positron"),
   layer_id = "quickview",
   legend = TRUE,
   legend_position = "top-left",

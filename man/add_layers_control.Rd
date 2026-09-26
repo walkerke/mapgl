@@ -18,7 +18,8 @@ add_layers_control(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  mode = c("multiple", "single")
 )
 }
 \arguments{
@@ -46,19 +47,39 @@ color used for inactive layer items.}
 
 \item{inactive_text_color}{The text color for inactive layer items.}
 
-\item{margin_top}{Custom top margin in pixels, allowing for fine control over control positioning to avoid overlaps. Default is NULL (uses standard positioning).}
+\item{margin_top}{Optional top margin in pixels, applied to the control
+within the native control stack. Rarely needed now that the control
+no longer overlaps other controls; NULL (the default) uses standard
+control spacing.}
 
-\item{margin_right}{Custom right margin in pixels. Default is NULL.}
+\item{margin_right}{Optional right margin in pixels. Default is NULL.}
 
-\item{margin_bottom}{Custom bottom margin in pixels. Default is NULL.}
+\item{margin_bottom}{Optional bottom margin in pixels. Default is NULL.}
 
-\item{margin_left}{Custom left margin in pixels. Default is NULL.}
+\item{margin_left}{Optional left margin in pixels. Default is NULL.}
+
+\item{mode}{How many entries can be visible at once. In \code{"multiple"} mode
+(the default), entries toggle independently. In \code{"single"} mode,
+activating an entry turns the others off — useful for flipping
+through alternative analytical layers or raster imagery where only
+one should show at a time. Clicking the active entry does nothing.
+When the control is created in \code{"single"} mode with several entries
+visible, the first visible entry stays on and the rest are turned
+off. To combine both behaviors on one map, add two controls: one
+\code{"single"}-mode control for the alternatives and one
+\code{"multiple"}-mode control for independent overlays.}
 }
 \value{
 The modified map object with the layers control added.
 }
 \description{
-Add a layers control to the map
+The layers control is a native map control: it stacks alongside other
+controls (navigation, fullscreen, etc.) in its corner rather than
+overlapping them, following the order in which controls are added to the
+map. Its default appearance matches the other map controls (white
+background, dark monochrome items). To restore the blue active style from
+earlier versions of mapgl, set \code{active_color = "#4a90e2"} and
+\code{active_text_color = "#ffffff"}.
 }
 \examples{
 \dontrun{

@@ -760,9 +760,28 @@ test_that("compare widgets include and initialize flowmap support", {
       collapse = "\n"
     )
     expect_match(js, "MapGLFlowmapPlugin\\.init", fixed = FALSE)
-    expect_match(js, "MapGLFlowmapPlugin\\.getVisibility", fixed = FALSE)
-    expect_match(js, "MapGLFlowmapPlugin\\.setVisibility", fixed = FALSE)
   }
+
+  # Flowmap-aware visibility toggling for the layers control lives in the
+  # shared control module, which ships with the compare widgets via the
+  # layers-control dependency
+  layers_control_js <- paste(
+    readLines(system.file(
+      "htmlwidgets/lib/layers-control/layers-control.js",
+      package = "mapgl"
+    )),
+    collapse = "\n"
+  )
+  expect_match(
+    layers_control_js,
+    "MapGLFlowmapPlugin\\.getVisibility",
+    fixed = FALSE
+  )
+  expect_match(
+    layers_control_js,
+    "MapGLFlowmapPlugin\\.setVisibility",
+    fixed = FALSE
+  )
 })
 
 test_that("flowmap plugin prepends Flowmap.gl to native attribution", {

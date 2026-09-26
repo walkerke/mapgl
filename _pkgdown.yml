@@ -93,7 +93,9 @@ reference:
       - add_scale_control
       - add_layers_control
       - add_draw_control
+      - add_terradraw_control
       - draw_attribute
+      - terradraw_options
       - add_geocoder_control
       - add_reset_control
       - add_geolocate_control
@@ -143,6 +145,7 @@ reference:
       - get_column
       - concat
       - number_format
+      - conditional_expressions
       - tooltip_style
       - popup_style
       - cluster_options

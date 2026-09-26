@@ -273,12 +273,12 @@ mapgl_normalize_slider_style <- function(x, arg = "slider_style") {
 #'
 #' @section Positioning and collisions:
 #' The slider is implemented as a native control and stacks beside
-#' other native controls (navigation, scale, geolocate, fullscreen) via
-#' Mapbox/MapLibre's built-in positioning. Overlays such as
-#' [add_legend()] and [add_layers_control()] are absolutely-positioned
-#' and do not participate in that flow — placing a slider in the same
-#' corner as a legend will overlap it. Choose a different corner or
-#' adjust the overlay's margins.
+#' other native controls (navigation, scale, geolocate, fullscreen,
+#' [add_layers_control()]) via Mapbox/MapLibre's built-in positioning.
+#' Overlays such as [add_legend()] are absolutely-positioned and do not
+#' participate in that flow — placing a slider in the same corner as a
+#' legend will overlap it. Choose a different corner or adjust the
+#' overlay's margins.
 #'
 #' @param map A map object created by [mapboxgl()] or [maplibre()], or a
 #'   proxy object from [mapboxgl_proxy()] / [maplibre_proxy()].

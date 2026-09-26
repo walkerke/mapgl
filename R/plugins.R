@@ -322,12 +322,7 @@ compare.mapboxgl <- function(
         x$sync_cols <- ncol
     }
 
-    control_css <- htmltools::htmlDependency(
-        name = "layers-control",
-        version = "1.0.0",
-        src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
-        stylesheet = "layers-control.css"
-    )
+    control_css <- layers_control_dependency()
 
     dependencies <- c(
         list(control_css),
@@ -406,12 +401,7 @@ compare.maplibre <- function(
         x$sync_cols <- ncol
     }
 
-    control_css <- htmltools::htmlDependency(
-        name = "layers-control",
-        version = "1.0.0",
-        src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
-        stylesheet = "layers-control.css"
-    )
+    control_css <- layers_control_dependency()
 
     dependencies <- c(
         list(control_css),

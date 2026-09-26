@@ -19,7 +19,9 @@ add_bivariate_legend(
   target = "compare",
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 }
 \arguments{
@@ -36,7 +38,8 @@ object, or a proxy object.}
 
 \item{position}{The legend position.}
 
-\item{width}{Legend width.}
+\item{width}{Legend width. Defaults to \code{"fit-content"} (capped at 340px)
+so titles and axis labels stay on one line.}
 
 \item{style}{Optional styling options from \code{legend_style()} or a list.}
 
@@ -53,6 +56,11 @@ object, or a proxy object.}
 \item{collapsible}{Logical, whether the legend can collapse.}
 
 \item{collapsed}{Logical, whether the legend starts collapsed.}
+
+\item{min_zoom}{The minimum zoom level at which the legend is displayed.}
+
+\item{max_zoom}{The maximum zoom level at which the legend is displayed. The
+legend is hidden when the map zoom is at or above this value.}
 }
 \value{
 The updated map object.

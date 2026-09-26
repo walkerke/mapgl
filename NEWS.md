@@ -1,8 +1,46 @@
 # mapgl (development version)
 
-* `duckspatial_df` objects from the `duckspatial` package are now accepted wherever `sf` objects are: `add_source()`, `add_layer()` and all specific layer functions, `fit_bounds()`, the `bounds` argument of `maplibre()` and `mapboxgl()`, `set_source()`, and `add_markers()`. CRS is validated and reprojected to EPSG:4326 automatically (#213).
+* Update Mapbox GL JS to v3.31.0-rc.1, which brings a much smaller memory footprint for large GeoJSON sources.
+
+* Popups and tooltips support conditional logic evaluated per feature at render time, with new builders `if_else_expr()`, `case_expr()`, `coalesce_expr()`, `has_column()`, `is_blank()`, and `html_escape_expr()` that compose with `concat()`, `get_column()`, and `number_format()`. Useful for remote sources like PMTiles where popup columns can't be precomputed. See `?conditional_expressions`.
+
+* The popup/tooltip expression evaluator supports a broad set of GL-style conditional, comparison, boolean, lookup, math, ramp, and string operators, so `match_expr()` and `step_expr()` output also works as popup/tooltip content. Unknown or failing operators render as an empty string with a console warning.
+
+* Legends gain optional `min_zoom` and `max_zoom` arguments to show or hide a legend on zoom, with the same semantics as the layer arguments of the same names.
+
+* Legends sharing a corner position now stack automatically instead of overlapping, and reflow as legends are shown or hidden. Legends with explicit `margin_*` values or that have been dragged are left alone.
+
+* Adding a legend with the default `add = FALSE` to a map that already has one now messages that the existing legend is being replaced.
+
+* `add_legend(draggable = TRUE)` now works in `compare()`.
+
+* `add_draw_control()` gains a `provider` argument that can be set to `"terra-draw"` to use the [Terra Draw](https://github.com/JamesLMilner/terra-draw) drawing engine as an alternative to mapbox-gl-draw (which remains the default; existing code is unaffected). Terra Draw works identically on Mapbox and MapLibre maps, standalone and in `compare()`, and is fully integrated with the existing drawing workflow: `get_drawn_features()`, `add_features_to_draw()`, `clear_drawn_features()`, `clear_controls("draw")`, attribute editing via `attributes`, live measurements via `show_measurements`, the download button, and the styling arguments all work unchanged. (As with the default provider, attribute editing and measurements are available on standalone widgets only, not in `compare()`.) Details:
+    * A new `modes` argument selects the toolbar tools: `"point"`, `"linestring"`, `"polygon"`, `"rectangle"`, `"circle"`, `"freehand"`, `"freehand-linestring"`, `"angled-rectangle"`, `"sector"`, `"sensor"`, `"curve"`, `"curve-linestring"`, and `"select"` — Terra Draw's select mode supports dragging features, dragging/deleting vertices, midpoint insertion, and optional rotate/scale/resize and snapping.
+    * The `"curve"` and `"curve-linestring"` modes are mapgl-authored pen-tool drawing modes for shapes mixing straight and curved (cubic Bezier) edges — e.g. a basketball key or a river trace. Click places a corner; click-and-drag places an anchor and pulls out curve handles; click the first point or press Enter to finish, Escape to cancel, Backspace to remove the last point. Output is the rendered curved geometry (so measurements, downloads, and `get_drawn_features()` work unchanged) with the control points preserved in a `curveNodes` JSON-string column; finished curves can be moved (control points follow) but not vertex-edited, and map panning is suspended while a curve tool is active.
+    * A new `terradraw_options()` helper configures advanced behavior (select-mode editing flags, snapping, drawing interaction style, per-mode overrides) via the new `options` argument.
+    * `add_terradraw_control()` is an equivalent convenience wrapper for `add_draw_control(provider = "terra-draw")` whose signature contains only the arguments that apply to the Terra Draw engine.
+    * Drawn features returned by `get_drawn_features()` include a `mode` column recording which tool created each feature; circles additionally carry a `radiusKilometers` property.
+    * The trash button deletes the current selection only (use `clear_drawn_features()` to remove everything); when the mode set includes `"select"`, finishing a shape returns to the select tool with the new feature selected — set `terradraw_options(keep_mode_active = TRUE)` to stay in the drawing mode instead.
+    * Features loaded from a `source` or `add_features_to_draw()` are adapted to Terra Draw's constraints: Multi* geometries are split into single-part features, coordinates are rounded to Terra Draw's 9-decimal-place precision limit (~0.1 mm), and polygon holes are removed. Colors are coerced to the 6-digit hex form Terra Draw requires.
+    * Changing the map style preserves drawn features; an unfinished drawing is discarded and the selection and undo history reset.
+
+* The layers control from `add_layers_control()` is now a first-class map control: it is added through the GL `addControl()` API and stacks with the other controls in its corner (in call order) instead of floating over them, so it no longer collides with navigation, fullscreen, and similar controls. Related changes:
+    * **Visual change:** the default appearance now matches the native controls — white background, monochrome items (active layers in dark text, inactive in gray), and a 29x29 collapsed icon button. All styling arguments work as before; to restore the previous blue active style, use `active_color = "#4a90e2"` and `active_text_color = "#ffffff"`.
+    * The `margin_*` arguments are no longer applied by default (the native stack handles spacing) but are still honored when explicitly set.
+    * In `compare()`, each side's layers control now lives in that side's own control stack (previously both sides rendered into the same overlay space and overlapped), custom colors are now honored, layer-linked legends now show/hide with their layers, and `clear_controls("layers")` now works (previously it errored or did nothing).
+    * A layers control added through a MapLibre compare proxy now toggles layers only on the side targeted by `map_side` (previously it toggled every side at once).
+    * When a proxy call omits `layers`, the control now lists the map's non-basemap style layers instead of rendering empty. Note this covers regular GL layers only (flowmap layers are managed outside the style), and the basemap filter reflects the initially loaded style.
+    * After `set_style()`, the control now reflects each layer's restored visibility instead of resetting every entry to active.
+
+* `add_layers_control()` gains a `mode` argument. The default `"multiple"` keeps the current independent toggles; `mode = "single"` shows one entry at a time — activating an entry turns the others (and their linked legends) off, which suits flipping through alternative analytical layers or raster imagery. To mix both behaviors on one map, add a `"single"`-mode control alongside a `"multiple"`-mode control; they stack cleanly in the same corner.
+
+* Fixed a bug where `before_id` was silently ignored in `add_raster_layer()` and `add_heatmap_layer()`, and `filter` was silently ignored in `add_heatmap_layer()`, due to positional argument mismatches in the internal `add_layer()` call.
+
+* `add_control()` now works on maps rendered inside `compare()`; previously custom controls were dropped at initial render (they only worked via compare proxies).
 
 * Fixed a bug where passing a geometry-only `sf` object (no non-geometry columns) as a layer source caused a serialization error. `geojsonsf::sf_geojson()` simplifies property-less sf objects into a vector of individual geometry strings rather than a FeatureCollection, which `htmlwidgets` cannot serialize. All internal calls now use `simplify = FALSE` to consistently return a FeatureCollection (#212).
+
+* `duckspatial_df` objects from the `duckspatial` package are now accepted wherever `sf` objects are: `add_source()`, `add_layer()` and all specific layer functions, `fit_bounds()`, the `bounds` argument of `maplibre()` and `mapboxgl()`, `set_source()`, and `add_markers()`. CRS is validated and reprojected to EPSG:4326 automatically (#213).
 
 # mapgl 0.5.0
 
@@ -15,7 +53,7 @@
 * New `add_slider_control()` adds an interactive slider that filters and/or animates one or more layers by a numeric feature property. It composes with a layer's initial `filter`, later `set_filter()` calls, and interactive legends (intersecting via `["all", ...]`) rather than replacing them. Modes are `"sequential"` (one value), `"cumulative"` (everything through a value), and `"window"` (a selected range that can also drive flowmap time ranges; `window_behavior` chooses a `"resizable"` two-edge range or a `"fixed"`-width band you pan). Two presentations: the default `"compact"` slider, or `presentation = "timeline"` — a prominent, brushable histogram (drag the selected window across the bars, drag its edges to resize) modeled on Egor Kotov's FlowMapBlue time control (#205). Supports paint-property animation, an optional play button, and an optional density histogram (`histogram`/`histogram_data`/`counts`, drawn with d3 loaded on demand). New `slider_style()` presets and overrides control the container, play button, track, thumb, and histogram appearance, and `draggable = TRUE` lets the user reposition the panel anywhere on the map (as with `add_legend()`). Companions `update_slider_control()` (for Shiny proxies) and `as_time_property()` (coerce `Date`/`POSIXct` to a numeric filter property) round out the feature.
 
 * `add_categorical_legend()` and `add_legend()` gain a `patch_spacing` argument (`"uniform"`/`"proportional"`). With `"proportional"`, each legend row's height tracks its own symbol size, giving proportional vertical spacing for graduated-symbol legends; the default `"uniform"` preserves existing behavior (#206, thanks to @mtennekes).
-* 
+
 * New `add_h3t_source()` adds a tiled H3 (h3t) source for MapLibre maps, fetching only the H3 cells in the current viewport from a `{z}/{x}/{y}` tile endpoint via the `h3tiles://` protocol — a scalable alternative to `add_h3j_source()` for large datasets. Works with multiple sources per map and on both sides of `compare()`. Bundled `h3j-h3t` library updated to 0.9.7 (#199, thanks to @bbest).
 
 * Update MapLibre GL JS to v5.24.0 and Mapbox GL JS to v3.24.0.

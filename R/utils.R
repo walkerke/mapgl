@@ -631,4 +631,44 @@ check_duckspatial <- function(
   )
 
   invisible(TRUE)
+# Shared htmlDependency for the layers control (JS IControl + stylesheet),
+# used by mapboxgl(), maplibre(), and both compare widgets
+layers_control_dependency <- function() {
+  htmltools::htmlDependency(
+    name = "layers-control",
+    version = "2.0.0",
+    src = c(
+      file = system.file("htmlwidgets/lib/layers-control", package = "mapgl")
+    ),
+    script = "layers-control.js",
+    stylesheet = "layers-control.css"
+  )
+}
+
+# Coerce an R color (name, hex, #RRGGBBAA) to the 6-digit hex form Terra Draw
+# requires; alpha channels are dropped (fill_opacity handles transparency)
+.mapgl_col2hex <- function(color) {
+  if (is.null(color)) {
+    return(NULL)
+  }
+  if (
+    is.character(color) &&
+      length(color) == 1 &&
+      grepl("^#[0-9A-Fa-f]{6}$", color)
+  ) {
+    return(toupper(color))
+  }
+  rgb <- tryCatch(
+    grDevices::col2rgb(color),
+    error = function(e) {
+      rlang::abort(
+        paste0(
+          "Invalid color `",
+          color,
+          "` for the terra-draw provider. Use an R color name or hex value."
+        )
+      )
+    }
+  )
+  sprintf("#%02X%02X%02X", rgb[1, 1], rgb[2, 1], rgb[3, 1])
 }

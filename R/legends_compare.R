@@ -35,7 +35,9 @@ add_legend.mapboxgl_compare <- function(
   draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
 
   # Warn if interactive features are requested (not yet supported for compare maps)
@@ -91,7 +93,9 @@ add_legend.mapboxgl_compare <- function(
       selected_ramp = selected_ramp,
       ramp_picker = ramp_picker,
       ramp_labels = ramp_labels,
-      collapsible = collapsible, collapsed = collapsed
+      draggable = draggable,
+      collapsible = collapsible, collapsed = collapsed,
+      min_zoom = min_zoom, max_zoom = max_zoom
     )
 
     if (ramp_picker) {
@@ -127,8 +131,10 @@ add_legend.mapboxgl_compare <- function(
       patch_shape, position, unique_id, sizes, width,
       layer_id, margin_top, margin_right, margin_bottom,
       margin_left, style,
+      draggable = draggable,
       collapsible = collapsible, collapsed = collapsed,
-      patch_spacing = patch_spacing
+      patch_spacing = patch_spacing,
+      min_zoom = min_zoom, max_zoom = max_zoom
     )
   }
   
@@ -143,6 +149,7 @@ add_legend.mapboxgl_compare <- function(
   
   if (!add && target == "compare") {
     # Replace all compare-level legends
+    .inform_legend_replacement(length(map$x$compare_legends) > 0)
     map$x$compare_legends <- list(legend_info)
   } else {
     # Add to existing legends
@@ -178,8 +185,11 @@ build_continuous_legend <- function(
   selected_ramp = NULL,
   ramp_picker = !is.null(color_ramps),
   ramp_labels = TRUE,
+  draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
   if (is.null(unique_id)) {
     unique_id <- paste0("legend-", as.hexmode(sample(1:1000000, 1)))
@@ -219,6 +229,15 @@ build_continuous_legend <- function(
     ""
   }
 
+  draggable_attr <- if (draggable) ' data-draggable="true"' else ""
+  zoom_attr <- .legend_zoom_attrs(min_zoom, max_zoom)
+  manual_position_attr <- .legend_manual_position_attr(
+    margin_top,
+    margin_right,
+    margin_bottom,
+    margin_left
+  )
+
   # Collapsible pieces
   ramp_picker_attr <- if (ramp_picker) ' data-ramp-picker="true"' else ""
   ramp_picker_html <- if (ramp_picker) build_ramp_picker_html(color_ramps, selected_ramp, ramp_labels) else ""
@@ -248,6 +267,9 @@ build_continuous_legend <- function(
     collapsed_class,
     '"',
     layer_attr,
+    draggable_attr,
+    zoom_attr,
+    manual_position_attr,
     ramp_picker_attr,
     collapsible_attr,
     ">",
@@ -505,9 +527,12 @@ build_categorical_legend <- function(
   margin_bottom = NULL,
   margin_left = NULL,
   style = NULL,
+  draggable = FALSE,
   collapsible = FALSE,
   collapsed = FALSE,
-  patch_spacing = c("uniform", "proportional")
+  patch_spacing = c("uniform", "proportional"),
+  min_zoom = NULL,
+  max_zoom = NULL
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -810,6 +835,15 @@ build_categorical_legend <- function(
     ""
   }
 
+  draggable_attr <- if (draggable) ' data-draggable="true"' else ""
+  zoom_attr <- .legend_zoom_attrs(min_zoom, max_zoom)
+  manual_position_attr <- .legend_manual_position_attr(
+    margin_top,
+    margin_right,
+    margin_bottom,
+    margin_left
+  )
+
   # Collapsible pieces
   collapsible_attr <- if (collapsible) ' data-collapsible="true"' else ""
   collapsed_class <- if (collapsible && collapsed) " mapgl-legend-collapsed" else ""
@@ -836,6 +870,9 @@ build_categorical_legend <- function(
     collapsed_class,
     '"',
     layer_attr,
+    draggable_attr,
+    zoom_attr,
+    manual_position_attr,
     collapsible_attr,
     ">",
     '<h2 class="mapgl-legend-title">',

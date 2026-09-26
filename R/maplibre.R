@@ -42,7 +42,7 @@
 #' )
 #' }
 maplibre <- function(
-  style = carto_style("voyager"),
+  style = openfreemap_style("bright"),
   center = c(0, 0),
   zoom = 0,
   bearing = 0,
@@ -86,12 +86,7 @@ maplibre <- function(
     additional_params$bounds <- bounds
   }
 
-  control_css <- htmltools::htmlDependency(
-    name = "layers-control",
-    version = "1.0.0",
-    src = c(file = system.file("htmlwidgets/styles", package = "mapgl")),
-    stylesheet = "layers-control.css"
-  )
+  control_css <- layers_control_dependency()
 
   x <- list(
     style = style,

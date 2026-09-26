@@ -621,8 +621,8 @@ add_heatmap_layer <- function(
     slot,
     min_zoom,
     max_zoom,
-    before_id,
-    filter
+    before_id = before_id,
+    filter = filter
   )
 
   return(map)
@@ -1386,7 +1386,7 @@ add_raster_layer <- function(
     slot,
     min_zoom,
     max_zoom,
-    before_id
+    before_id = before_id
   )
 
   return(map)

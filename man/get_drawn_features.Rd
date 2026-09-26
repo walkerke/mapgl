@@ -23,6 +23,10 @@ Get drawn features from the map
 In non-Shiny sessions, retrieval requires a map that was built by piping the
 original widget object through \code{add_draw_control()}. Non-Shiny proxy updates
 and compare widgets are not yet supported.
+
+With \code{add_draw_control(provider = "terra-draw")}, features include a \code{mode}
+column recording which drawing tool created each feature (e.g. \code{"polygon"},
+\code{"circle"}, \code{"freehand"}).
 }
 \examples{
 \dontrun{
