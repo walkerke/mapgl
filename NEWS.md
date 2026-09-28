@@ -1,5 +1,9 @@
 # mapgl (development version)
 
+* Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.
+
+* Interactive categorical legends preserve hexagon and custom SVG patch shapes when toggling categories or resetting filters.
+
 * Clusters can be drawn as donut charts showing each cluster's category mix with `cluster_options(donut_column = )`, for live GeoJSON clustering and pre-clustered vector tiles.
 
 * `add_layer()` gains a `metadata` argument.

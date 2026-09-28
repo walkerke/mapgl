@@ -1754,7 +1754,10 @@ cluster_options <- function(
     )
   }
 
-  # Add cluster count labels
+  # Donut icons always render and do not reserve collision space. Their
+  # separate count layer must use the same rules: otherwise a basemap label
+  # can suppress just the number, leaving a visible but empty donut.
+  # Keep ordinary circle-cluster label placement unchanged.
   map <- add_symbol_layer(
     map,
     id = paste0(id, "-cluster-count"),
@@ -1764,6 +1767,8 @@ cluster_options <- function(
     text_field = count_label_expr,
     text_size = 12,
     text_color = cluster_options$text_color,
+    text_allow_overlap = if (is_donut) TRUE else NULL,
+    text_ignore_placement = if (is_donut) TRUE else NULL,
     visibility = visibility,
     slot = slot,
     min_zoom = min_zoom,

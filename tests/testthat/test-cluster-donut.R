@@ -125,6 +125,53 @@ test_that("the fingerprint changes with the palette and styling", {
   )
 })
 
+test_that("donut counts and icons share placement rules for both source paths", {
+  # Mapbox's existing native-PMTiles warning is unrelated to placement rules.
+  local_mocked_bindings(
+    .warn_mapbox_pmtiles_cluster = function(map) invisible(NULL),
+    .package = "mapgl"
+  )
+  for (constructor in list(maplibre, mapboxgl)) {
+    for (precomputed in c(FALSE, TRUE)) {
+      m <- constructor() |>
+        add_circle_layer(
+          "p",
+          source = if (precomputed) "tiles" else donut_points(),
+          source_layer = if (precomputed) "points" else NULL,
+          circle_color = race_colors(),
+          before_id = "labels",
+          cluster_options = cluster_options(donut_column = "race")
+        )
+      icon <- find_layer(m, "p-clusters")
+      count <- find_layer(m, "p-cluster-count")
+      expect_identical(count$layout[["text-allow-overlap"]],
+                       icon$layout[["icon-allow-overlap"]])
+      expect_identical(count$layout[["text-ignore-placement"]],
+                       icon$layout[["icon-ignore-placement"]])
+      expect_true(count$layout[["text-allow-overlap"]])
+      expect_true(count$layout[["text-ignore-placement"]])
+      expect_identical(count$filter, icon$filter)
+      expect_identical(count$before_id, icon$before_id)
+      expect_equal(count$layout[["text-size"]], 12)
+    }
+  }
+})
+
+test_that("ordinary cluster count labels retain their collision defaults", {
+  for (precomputed in c(FALSE, TRUE)) {
+    m <- maplibre() |>
+      add_circle_layer(
+        "p",
+        source = if (precomputed) "tiles" else donut_points(),
+        source_layer = if (precomputed) "points" else NULL,
+        cluster_options = cluster_options()
+      )
+    count <- find_layer(m, "p-cluster-count")
+    expect_null(count$layout[["text-allow-overlap"]])
+    expect_null(count$layout[["text-ignore-placement"]])
+  }
+})
+
 test_that("cluster expressions serialize as GL arrays", {
   m <- maplibre() |>
     add_circle_layer(
@@ -477,6 +524,8 @@ test_that("proxy messages carry cluster properties, paint, and metadata", {
   expect_equal(clusters$paint[["icon-opacity"]], 0.7)
   expect_false(is.null(clusters$layout[["icon-image"]]))
   expect_false(is.null(clusters$metadata[["mapgl:donut"]]$fp))
+  expect_true(messages[[3]]$layer$layout[["text-allow-overlap"]])
+  expect_true(messages[[3]]$layer$layout[["text-ignore-placement"]])
 
   # circle clusters now send their optional paint with the layer
   messages <- list()
