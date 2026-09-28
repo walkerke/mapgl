@@ -4,7 +4,7 @@
 
 * `add_layer()` gains a `metadata` argument.
 
-* Abbreviated cluster count labels now switch to millions (e.g. "1.7M" instead of "1735k").
+* Abbreviated cluster count labels now switch to millions and billions (e.g. "1.7M" or "1.5B" instead of "1735k" or "1500M").
 
 * Clustered layers now render in `compare()` views, and cluster circle paint options (`circle_opacity`, strokes, blur) now reach maps updated through a Shiny proxy.
 

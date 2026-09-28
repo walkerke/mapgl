@@ -49,7 +49,7 @@ cluster_options(
 
 \item{text_color}{The color to use for labels on the cluster circles.}
 
-\item{count_format}{The formatting of the text labels on the cluster circles to represent the counts. \code{"abbreviated"} (the default) will use shortened notation, e.g. "11k" or "1.7M". \code{"grouped"} will show comma-separated numbers, e.g. "11,000".  \code{"raw"} shows the raw value.}
+\item{count_format}{The formatting of the text labels on the cluster circles to represent the counts. \code{"abbreviated"} (the default) will use shortened notation, e.g. "11k", "1.7M", or "1.5B". \code{"grouped"} will show comma-separated numbers, e.g. "11,000".  \code{"raw"} shows the raw value.}
 
 \item{donut_column}{The name of a categorical column. When set, clusters are drawn as donut charts showing the share of each category within the cluster.}
 

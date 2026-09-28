@@ -561,3 +561,24 @@ test_that("explicit grouped donut_values expand their colors", {
     "same length"
   )
 })
+
+
+test_that("cluster labels round across million and billion boundaries", {
+  node <- Sys.which("node")
+  skip_if(node == "", "node is not available")
+  lib <- system.file("htmlwidgets/lib/mapgl-expressions/mapgl-expressions.js",
+    package = "mapgl")
+  script <- tempfile(fileext = ".js")
+  on.exit(unlink(script), add = TRUE)
+  counts <- c(42, 1200, 999499, 999500, 999499999, 999500000,
+    1470295708, 9949999999, 9950000000)
+  writeLines(c(
+    paste0("require(", jsonlite::toJSON(lib, auto_unbox = TRUE), ");"),
+    paste0("const expr = ", jsonlite::toJSON(.cluster_count_label_expr(), auto_unbox = TRUE), ";"),
+    paste0("const counts = ", jsonlite::toJSON(counts, digits = NA), ";"),
+    "console.log(JSON.stringify(counts.map(point_count =>",
+    "  globalThis._mapglEvaluateExpression(expr, {point_count}))));"
+  ), script)
+  labels <- jsonlite::fromJSON(system2(node, shQuote(script), stdout = TRUE))
+  expect_equal(labels, c("42", "1.2k", "999k", "1M", "999M", "1B", "1.5B", "9.9B", "10B"))
+})

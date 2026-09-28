@@ -829,7 +829,7 @@ add_fill_extrusion_layer <- function(
 #' @param circle_stroke_opacity The opacity of the circle's stroke.
 #' @param circle_stroke_width The width of the circle's stroke. For donut clusters, the width of the donut's outer edge in pixels (default `1`).
 #' @param text_color The color to use for labels on the cluster circles.
-#' @param count_format The formatting of the text labels on the cluster circles to represent the counts. `"abbreviated"` (the default) will use shortened notation, e.g. "11k" or "1.7M". `"grouped"` will show comma-separated numbers, e.g. "11,000".  `"raw"` shows the raw value.
+#' @param count_format The formatting of the text labels on the cluster circles to represent the counts. `"abbreviated"` (the default) will use shortened notation, e.g. "11k", "1.7M", or "1.5B". `"grouped"` will show comma-separated numbers, e.g. "11,000".  `"raw"` shows the raw value.
 #' @param donut_column The name of a categorical column. When set, clusters are drawn as donut charts showing the share of each category within the cluster.
 #' @param donut_values,donut_colors The categories to show and their colors, one color per entry of `donut_values`. Pass a list to group several values under one color, e.g. `list(c("Oil", "Gas"), "Dry Hole")`. When `NULL` (the default), both are taken from the layer's `circle_color` if it is a [match_expr()] on `donut_column`; its `default` color becomes an "other" slice for unlisted values. Required for [add_symbol_layer()].
 #' @param donut_weight An optional numeric column to sum instead of counting points, e.g. population. The cluster label then shows the weighted total. Missing weights count as zero.
@@ -1010,15 +1010,17 @@ cluster_options <- function(
 
 # Build a Mapbox/MapLibre expression that abbreviates a count the same
 # way Supercluster's native `point_count_abbreviated` does, extended to
-# millions (the native property stops at "k", so 1.7M reads "1735k"):
+# millions and billions (the native property stops at "k"):
 #   <1000:            "42"
 #   1000-9999:        "1.2k"
 #   10000-999499:     "12k"
 #   999500-9949999:   "1.7M"
-#   >=9950000:        "17M"
+#   9950000-999499999: "17M"
+#   999500000-9949999999: "1.5B"
+#   >=9950000000:     "17B"
 # Below 1000, non-integer values (weighted donut totals) keep one decimal.
-# Rounding matches Supercluster (nearest, halves up), and the M cutoffs
-# sit where the k form would round up to "1000k". GL's `number-format`
+# Rounding matches Supercluster (nearest, halves up). Unit cutoffs prevent
+# labels from rounding up to "1000k" or "1000M". GL's `number-format`
 # ignores Intl's `notation = "compact"`, so this can't use number_format().
 # `column` is a property name or an expression.
 .cluster_count_label_expr <- function(column = "point_count") {
@@ -1036,6 +1038,10 @@ cluster_options <- function(
   }
   list(
     "case",
+    list(">=", col, 9950000000),
+    list("concat", list("to-string", scaled(1e9, FALSE)), "B"),
+    list(">=", col, 999500000),
+    list("concat", list("to-string", scaled(1e9, TRUE)), "B"),
     list(">=", col, 9950000),
     list("concat", list("to-string", scaled(1e6, FALSE)), "M"),
     list(">=", col, 999500),
