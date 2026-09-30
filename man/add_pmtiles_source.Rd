@@ -22,7 +22,7 @@ add_pmtiles_source(
 
 \item{url}{A URL pointing to the PMTiles archive.}
 
-\item{source_type}{The source type for MapLibre maps. Either "vector" (default) or "raster".}
+\item{source_type}{The source type. Either "vector" (default) or "raster".}
 
 \item{maxzoom}{Only used when source_type is "raster". The maximum zoom level for the PMTiles source. Defaults to 22.}
 

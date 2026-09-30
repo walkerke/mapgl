@@ -611,22 +611,6 @@ HTMLWidgets.widget({
           return;
         }
 
-        // Register PMTiles source type if available
-        if (
-          typeof MapboxPmTilesSource !== "undefined" &&
-          typeof pmtiles !== "undefined"
-        ) {
-          try {
-            mapboxgl.Style.setSourceType(
-              PMTILES_SOURCE_TYPE,
-              MapboxPmTilesSource,
-            );
-            console.log("PMTiles support enabled for Mapbox GL JS Compare");
-          } catch (e) {
-            console.warn("Failed to register PMTiles source type:", e);
-          }
-        }
-
         // Set position relative on container to properly contain absolutely positioned maps
         el.style.position = "relative";
 
@@ -689,6 +673,13 @@ HTMLWidgets.widget({
 
         beforeMap = compareMaps[0];
         afterMap = compareMaps[1];
+
+        // Draw donut cluster images on demand
+        if (window._mapglClusterDonut) {
+          compareMaps.forEach(function (compareMap) {
+            window._mapglClusterDonut.attach(compareMap);
+          });
+        }
 
         // Resolve a side name ("before", "after", or "mapN") to its map.
         // An out-of-range "mapN" returns undefined so callers no-op rather
@@ -1038,7 +1029,7 @@ HTMLWidgets.widget({
                   });
                   map.addSource(message.source.id, sourceConfig);
                 } else {
-                  // Handle custom source types (like pmtile-source)
+                  // Handle custom source types
                   const sourceConfig = { type: message.source.type };
 
                   // Copy all properties except id
@@ -2709,11 +2700,21 @@ HTMLWidgets.widget({
                 map.addSource(source.id, sourceConfig);
               } else if (source.type === "geojson") {
                 const geojsonData = source.data;
-                map.addSource(source.id, {
+                const sourceOptions = {
                   type: "geojson",
                   data: geojsonData,
                   generateId: true,
-                });
+                };
+
+                // Pass through extra options (cluster, clusterRadius,
+                // clusterMaxZoom, clusterProperties, ...) like the main widget
+                for (const [key, value] of Object.entries(source)) {
+                  if (!["id", "type", "data", "generateId"].includes(key)) {
+                    sourceOptions[key] = value;
+                  }
+                }
+
+                map.addSource(source.id, sourceOptions);
               } else if (source.type === "raster") {
                 if (source.url) {
                   map.addSource(source.id, {
@@ -2789,6 +2790,14 @@ HTMLWidgets.widget({
                 }
                 if (layer.maxzoom) {
                   layerConfig["maxzoom"] = layer.maxzoom;
+                }
+
+                if (layer.filter) {
+                  layerConfig["filter"] = layer.filter;
+                }
+
+                if (layer.metadata) {
+                  layerConfig["metadata"] = layer.metadata;
                 }
 
                 if (layer.before_id) {

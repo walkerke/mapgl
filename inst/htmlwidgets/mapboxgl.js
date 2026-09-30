@@ -1909,22 +1909,6 @@ HTMLWidgets.widget({
           map = null;
         }
 
-        // Register PMTiles source type if available
-        if (
-          typeof MapboxPmTilesSource !== "undefined" &&
-          typeof pmtiles !== "undefined"
-        ) {
-          try {
-            mapboxgl.Style.setSourceType(
-              PMTILES_SOURCE_TYPE,
-              MapboxPmTilesSource,
-            );
-            console.log("PMTiles support enabled for Mapbox GL JS");
-          } catch (e) {
-            console.warn("Failed to register PMTiles source type:", e);
-          }
-        }
-
         mapboxgl.accessToken = x.access_token;
 
         map = new mapboxgl.Map({
@@ -1941,6 +1925,11 @@ HTMLWidgets.widget({
 
         map.controls = [];
         map._initialStyleLoaded = false;
+
+        // Draw donut cluster images on demand
+        if (window._mapglClusterDonut) {
+          window._mapglClusterDonut.attach(map);
+        }
 
         map.on("style.load", function () {
           // Store basemap layer IDs before user layers are added
@@ -2131,7 +2120,7 @@ HTMLWidgets.widget({
                   coordinates: source.coordinates,
                 });
               } else {
-                // Handle custom source types (like pmtile-source)
+                // Handle custom source types
                 const sourceOptions = { type: source.type };
 
                 // Copy all properties except id
@@ -2186,6 +2175,10 @@ HTMLWidgets.widget({
 
                 if (layer.filter) {
                   layerConfig["filter"] = layer.filter;
+                }
+
+                if (layer.metadata) {
+                  layerConfig["metadata"] = layer.metadata;
                 }
 
                 if (layer.before_id) {
@@ -3469,7 +3462,7 @@ if (HTMLWidgets.shinyMode) {
           });
           map.addSource(message.source.id, sourceConfig);
         } else {
-          // Handle custom source types (like pmtile-source)
+          // Handle custom source types
           const sourceConfig = { type: message.source.type };
 
           // Copy all properties except id
