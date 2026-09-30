@@ -1,7 +1,5 @@
 # mapgl (development version)
 
-* `match_expr()` now matches `Date` and `POSIXct` values, so date columns color correctly in `maplibre_view()` and `mapboxgl_view()` (#216).
-
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.
 
 * Interactive categorical legends preserve hexagon and custom SVG patch shapes when toggling categories or resetting filters.
@@ -55,6 +53,8 @@
 * `add_control()` now works on maps rendered inside `compare()`; previously custom controls were dropped at initial render (they only worked via compare proxies).
 
 * Fixed a bug where passing a geometry-only `sf` object (no non-geometry columns) as a layer source caused a serialization error. `geojsonsf::sf_geojson()` simplifies property-less sf objects into a vector of individual geometry strings rather than a FeatureCollection, which `htmlwidgets` cannot serialize. All internal calls now use `simplify = FALSE` to consistently return a FeatureCollection (#212).
+
+* Various bug fixes and performance improvements (#131, #150, #215, #216).
 
 # mapgl 0.5.0
 

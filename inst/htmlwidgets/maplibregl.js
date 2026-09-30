@@ -620,6 +620,27 @@ function _mapglComposeAndApplyFilter(map, layerId) {
 window._mapglEnsureLayerState = _mapglEnsureLayerState;
 window._mapglComposeFilter = _mapglComposeAndApplyFilter;
 
+// A map created in a hidden container (an inactive tab, a Quarto dashboard
+// page, a closed conditionalPanel) has zero size, so its initial bounds are
+// fitted to a 0x0 viewport. Refit once the container gets a real size.
+// Camera changes made while hidden clear map._mapglInitialFit, so they win.
+function _mapglRefitWhenShown(map, container) {
+  if (typeof ResizeObserver === "undefined") return;
+  if (container.clientWidth > 0 && container.clientHeight > 0) return;
+  const observer = new ResizeObserver(function () {
+    if (container.clientWidth === 0 || container.clientHeight === 0) return;
+    observer.disconnect();
+    const fit = map._mapglInitialFit;
+    if (!fit) return;
+    map.resize();
+    map.fitBounds(fit.bounds, Object.assign({}, fit.options, { animate: false }));
+  });
+  observer.observe(container);
+  map.once("remove", function () {
+    observer.disconnect();
+  });
+}
+
 // Measurement functionality
 function createMeasurementBox(map) {
   const box = document.createElement("div");
@@ -1967,6 +1988,12 @@ HTMLWidgets.widget({
         map.controls = [];
         map._initialStyleLoaded = false;
 
+        const _params = x.additional_params || {};
+        map._mapglInitialFit = _params.bounds
+          ? { bounds: _params.bounds, options: _params.fitBoundsOptions }
+          : null;
+        _mapglRefitWhenShown(map, el);
+
         // Draw donut cluster images on demand
         if (window._mapglClusterDonut) {
           window._mapglClusterDonut.attach(map);
@@ -2468,6 +2495,10 @@ HTMLWidgets.widget({
 
           if (x.fitBounds) {
             map.fitBounds(x.fitBounds.bounds, x.fitBounds.options);
+            map._mapglInitialFit = x.fitBounds;
+          }
+          if (x.flyTo || x.easeTo || x.setCenter || x.setZoom || x.jumpTo) {
+            map._mapglInitialFit = null;
           }
           if (x.flyTo) {
             map.flyTo(x.flyTo);
@@ -3890,16 +3921,22 @@ if (HTMLWidgets.shinyMode) {
           // Note: legends are not tied to specific layers, so we don't clear them here
         }
       } else if (message.type === "fit_bounds") {
+        map._mapglInitialFit = null;
         map.fitBounds(message.bounds, message.options);
       } else if (message.type === "fly_to") {
+        map._mapglInitialFit = null;
         map.flyTo(message.options);
       } else if (message.type === "ease_to") {
+        map._mapglInitialFit = null;
         map.easeTo(message.options);
       } else if (message.type === "set_center") {
+        map._mapglInitialFit = null;
         map.setCenter(message.center);
       } else if (message.type === "set_zoom") {
+        map._mapglInitialFit = null;
         map.setZoom(message.zoom);
       } else if (message.type === "jump_to") {
+        map._mapglInitialFit = null;
         map.jumpTo(message.options);
       } else if (message.type === "set_layout_property") {
         map.setLayoutProperty(message.layer, message.name, message.value);

@@ -1,3 +1,24 @@
+// A map created in a hidden container (an inactive tab, a Quarto dashboard
+// page, a closed conditionalPanel) has zero size, so its initial bounds are
+// fitted to a 0x0 viewport. Refit once the container gets a real size.
+// Camera changes made while hidden clear map._mapglInitialFit, so they win.
+function _mapglRefitWhenShown(map, container) {
+  if (typeof ResizeObserver === "undefined") return;
+  if (container.clientWidth > 0 && container.clientHeight > 0) return;
+  const observer = new ResizeObserver(function () {
+    if (container.clientWidth === 0 || container.clientHeight === 0) return;
+    observer.disconnect();
+    const fit = map._mapglInitialFit;
+    if (!fit) return;
+    map.resize();
+    map.fitBounds(fit.bounds, Object.assign({}, fit.options, { animate: false }));
+  });
+  observer.observe(container);
+  map.once("remove", function () {
+    observer.disconnect();
+  });
+}
+
 function evaluateExpression(expression, properties) {
   // Full evaluator (conditionals, math, ramps, ...) lives in the shared
   // mapgl-expressions dependency; the switch below is only a minimal
@@ -658,7 +679,7 @@ HTMLWidgets.widget({
         }
 
         compareMaps = compareMapsData.map(function (mapData, index) {
-          return new mapboxgl.Map({
+          const syncedMap = new mapboxgl.Map({
             container: containerIds[index],
             style: mapData.style,
             center: mapData.center,
@@ -669,6 +690,14 @@ HTMLWidgets.widget({
             accessToken: mapData.access_token,
             ...mapData.additional_params,
           });
+
+          const _params = mapData.additional_params || {};
+          syncedMap._mapglInitialFit = _params.bounds
+            ? { bounds: _params.bounds, options: _params.fitBoundsOptions }
+            : null;
+          _mapglRefitWhenShown(syncedMap, syncedMap.getContainer());
+
+          return syncedMap;
         });
 
         beforeMap = compareMaps[0];
@@ -1290,16 +1319,34 @@ HTMLWidgets.widget({
                   // Note: legends are not tied to specific layers, so we don't clear them here
                 }
               } else if (message.type === "fit_bounds") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.fitBounds(message.bounds, message.options);
               } else if (message.type === "fly_to") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.flyTo(message.options);
               } else if (message.type === "ease_to") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.easeTo(message.options);
               } else if (message.type === "set_center") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.setCenter(message.center);
               } else if (message.type === "set_zoom") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.setZoom(message.zoom);
               } else if (message.type === "jump_to") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.jumpTo(message.options);
               } else if (message.type === "set_layout_property") {
                 map.setLayoutProperty(
@@ -2976,6 +3023,16 @@ HTMLWidgets.widget({
 
           if (mapData.fitBounds) {
             map.fitBounds(mapData.fitBounds.bounds, mapData.fitBounds.options);
+            map._mapglInitialFit = mapData.fitBounds;
+          }
+          if (
+            mapData.flyTo ||
+            mapData.easeTo ||
+            mapData.setCenter ||
+            mapData.setZoom ||
+            mapData.jumpTo
+          ) {
+            map._mapglInitialFit = null;
           }
           if (mapData.flyTo) {
             map.flyTo(mapData.flyTo);
