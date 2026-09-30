@@ -649,6 +649,34 @@ function _mapglRefitWhenShown(map, container) {
   });
 }
 
+// Set a layout or paint property and record it in the shared layer state
+// so it can be replayed after a style change. Used by init-time
+// set_layout_property()/set_paint_property() and the proxy handler.
+function _mapglSetLayoutProperty(map, layerId, name, value) {
+  map.setLayoutProperty(layerId, name, value);
+  const state = _mapglEnsureLayerState(map);
+  if (!state.layoutProperties[layerId]) state.layoutProperties[layerId] = {};
+  state.layoutProperties[layerId][name] = value;
+}
+
+function _mapglSetPaintProperty(map, layerId, name, value) {
+  // Keep the hover branch of a property built with hover options
+  const hover = ["boolean", ["feature-state", "hover"], false];
+  const current = map.getPaintProperty(layerId, name);
+  if (
+    Array.isArray(current) &&
+    current[0] === "case" &&
+    JSON.stringify(current[1]) === JSON.stringify(hover)
+  ) {
+    map.setPaintProperty(layerId, name, ["case", current[1], current[2], value]);
+  } else {
+    map.setPaintProperty(layerId, name, value);
+  }
+  const state = _mapglEnsureLayerState(map);
+  if (!state.paintProperties[layerId]) state.paintProperties[layerId] = {};
+  state.paintProperties[layerId][name] = value;
+}
+
 // Measurement functionality
 function createMeasurementBox(map) {
   const box = document.createElement("div");
@@ -2393,6 +2421,20 @@ HTMLWidgets.widget({
             });
           }
 
+          // Apply set_layout_property() / set_paint_property() calls
+          [
+            [x.setLayoutProperty, _mapglSetLayoutProperty],
+            [x.setPaintProperty, _mapglSetPaintProperty],
+          ].forEach(function ([calls, setProperty]) {
+            (calls || []).forEach(function (call) {
+              if (!map.getLayer(call.layer)) {
+                console.warn(`mapgl: layer "${call.layer}" not found.`);
+                return;
+              }
+              setProperty(map, call.layer, call.name, call.value);
+            });
+          });
+
           // Apply moveLayer operations if provided
           if (x.moveLayer) {
             x.moveLayer.forEach(function (moveOp) {
@@ -3808,13 +3850,12 @@ if (HTMLWidgets.shinyMode) {
         map._mapglInitialFit = null;
         map.jumpTo(message.options);
       } else if (message.type === "set_layout_property") {
-        map.setLayoutProperty(message.layer, message.name, message.value);
-        // Track layout property state for layer restoration
-        if (!layerState.layoutProperties[message.layer]) {
-          layerState.layoutProperties[message.layer] = {};
-        }
-        layerState.layoutProperties[message.layer][message.name] =
-          message.value;
+        _mapglSetLayoutProperty(
+          map,
+          message.layer,
+          message.name,
+          message.value,
+        );
       } else if (message.type === "set_flowmap_filter") {
         if (window.MapGLFlowmapPlugin) {
           window.MapGLFlowmapPlugin.setFilter(map, message.id, message.filter);
@@ -3828,42 +3869,7 @@ if (HTMLWidgets.shinyMode) {
           );
         }
       } else if (message.type === "set_paint_property") {
-        const layerId = message.layer;
-        const propertyName = message.name;
-        const newValue = message.value;
-
-        // Check if the layer has hover options
-        const layerStyle = map
-          .getStyle()
-          .layers.find((layer) => layer.id === layerId);
-        const currentPaintProperty = map.getPaintProperty(
-          layerId,
-          propertyName,
-        );
-
-        if (
-          currentPaintProperty &&
-          Array.isArray(currentPaintProperty) &&
-          currentPaintProperty[0] === "case"
-        ) {
-          // This property has hover options, so we need to preserve them
-          const hoverValue = currentPaintProperty[2];
-          const newPaintProperty = [
-            "case",
-            ["boolean", ["feature-state", "hover"], false],
-            hoverValue,
-            newValue,
-          ];
-          map.setPaintProperty(layerId, propertyName, newPaintProperty);
-        } else {
-          // No hover options, just set the new value directly
-          map.setPaintProperty(layerId, propertyName, newValue);
-        }
-        // Track paint property state for layer restoration
-        if (!layerState.paintProperties[layerId]) {
-          layerState.paintProperties[layerId] = {};
-        }
-        layerState.paintProperties[layerId][propertyName] = newValue;
+        _mapglSetPaintProperty(map, message.layer, message.name, message.value);
       } else if (message.type === "query_rendered_features") {
         // Query rendered features
         let queryOptions = {};

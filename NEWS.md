@@ -54,7 +54,7 @@
 
 * Fixed a bug where passing a geometry-only `sf` object (no non-geometry columns) as a layer source caused a serialization error. `geojsonsf::sf_geojson()` simplifies property-less sf objects into a vector of individual geometry strings rather than a FeatureCollection, which `htmlwidgets` cannot serialize. All internal calls now use `simplify = FALSE` to consistently return a FeatureCollection (#212).
 
-* Various bug fixes and performance improvements (#30, #131, #150, #215, #216, #219).
+* Various bug fixes and performance improvements (#30, #131, #150, #215, #216, #217, #219).
 
 # mapgl 0.5.0
 

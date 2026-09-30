@@ -19,6 +19,46 @@ function _mapglRefitWhenShown(map, container) {
   });
 }
 
+// Layer state for a compare-side map, in the shape the compare proxy uses.
+function _mapglCompareLayerState(map) {
+  if (!window._mapglLayerState) window._mapglLayerState = {};
+  const mapId = map.getContainer().id;
+  const s =
+    window._mapglLayerState[mapId] || (window._mapglLayerState[mapId] = {});
+  ["filters", "paintProperties", "layoutProperties", "tooltips", "popups", "legends"]
+    .forEach(function (key) {
+      if (!s[key]) s[key] = {};
+    });
+  return s;
+}
+
+// Set a layout or paint property and record it for replay after a style
+// change. Used by init-time set_*_property() and the compare proxy.
+function _mapglCompareSetLayoutProperty(map, layerId, name, value) {
+  map.setLayoutProperty(layerId, name, value);
+  const state = _mapglCompareLayerState(map);
+  if (!state.layoutProperties[layerId]) state.layoutProperties[layerId] = {};
+  state.layoutProperties[layerId][name] = value;
+}
+
+function _mapglCompareSetPaintProperty(map, layerId, name, value) {
+  // Keep the hover branch of a property built with hover options
+  const hover = ["boolean", ["feature-state", "hover"], false];
+  const current = map.getPaintProperty(layerId, name);
+  if (
+    Array.isArray(current) &&
+    current[0] === "case" &&
+    JSON.stringify(current[1]) === JSON.stringify(hover)
+  ) {
+    map.setPaintProperty(layerId, name, ["case", current[1], current[2], value]);
+  } else {
+    map.setPaintProperty(layerId, name, value);
+  }
+  const state = _mapglCompareLayerState(map);
+  if (!state.paintProperties[layerId]) state.paintProperties[layerId] = {};
+  state.paintProperties[layerId][name] = value;
+}
+
 function evaluateExpression(expression, properties) {
   // Full evaluator (conditionals, math, ramps, ...) lives in the shared
   // mapgl-expressions dependency; the switch below is only a minimal
@@ -1405,17 +1445,12 @@ HTMLWidgets.widget({
                 });
                 map.jumpTo(message.options);
               } else if (message.type === "set_layout_property") {
-                map.setLayoutProperty(
+                _mapglCompareSetLayoutProperty(
+                  map,
                   message.layer,
                   message.name,
                   message.value,
                 );
-                // Track layout property state for layer restoration
-                if (!layerState.layoutProperties[message.layer]) {
-                  layerState.layoutProperties[message.layer] = {};
-                }
-                layerState.layoutProperties[message.layer][message.name] =
-                  message.value;
               } else if (message.type === "set_flowmap_filter") {
                 if (window.MapGLFlowmapPlugin) {
                   window.MapGLFlowmapPlugin.setFilter(
@@ -1433,42 +1468,12 @@ HTMLWidgets.widget({
                   );
                 }
               } else if (message.type === "set_paint_property") {
-                const layerId = message.layer;
-                const propertyName = message.name;
-                const newValue = message.value;
-
-                // Check if the layer has hover options
-                const layerStyle = map
-                  .getStyle()
-                  .layers.find((layer) => layer.id === layerId);
-                const currentPaintProperty = map.getPaintProperty(
-                  layerId,
-                  propertyName,
+                _mapglCompareSetPaintProperty(
+                  map,
+                  message.layer,
+                  message.name,
+                  message.value,
                 );
-
-                if (
-                  currentPaintProperty &&
-                  Array.isArray(currentPaintProperty) &&
-                  currentPaintProperty[0] === "case"
-                ) {
-                  // This property has hover options, so we need to preserve them
-                  const hoverValue = currentPaintProperty[2];
-                  const newPaintProperty = [
-                    "case",
-                    ["boolean", ["feature-state", "hover"], false],
-                    hoverValue,
-                    newValue,
-                  ];
-                  map.setPaintProperty(layerId, propertyName, newPaintProperty);
-                } else {
-                  // No hover options, just set the new value directly
-                  map.setPaintProperty(layerId, propertyName, newValue);
-                }
-                // Track paint property state for layer restoration
-                if (!layerState.paintProperties[layerId]) {
-                  layerState.paintProperties[layerId] = {};
-                }
-                layerState.paintProperties[layerId][propertyName] = newValue;
               } else if (message.type === "add_legend") {
                 if (!message.add) {
                   const existingLegends = document.querySelectorAll(
@@ -3906,6 +3911,29 @@ HTMLWidgets.widget({
           if (mapData.setZoom) {
             map.setZoom(mapData.setZoom);
           }
+
+          // Apply set_filter() / set_layout_property() / set_paint_property()
+          const _setFilter = function (map, layerId, filter) {
+            map.setFilter(layerId, filter);
+            _mapglCompareLayerState(map).filters[layerId] = filter;
+          };
+          [
+            [mapData.setFilter, _setFilter, "filter"],
+            [mapData.setLayoutProperty, _mapglCompareSetLayoutProperty],
+            [mapData.setPaintProperty, _mapglCompareSetPaintProperty],
+          ].forEach(function ([calls, apply, valueKey]) {
+            (calls || []).forEach(function (call) {
+              if (!map.getLayer(call.layer)) {
+                console.warn(`mapgl: layer "${call.layer}" not found.`);
+                return;
+              }
+              if (valueKey) {
+                apply(map, call.layer, call[valueKey]);
+              } else {
+                apply(map, call.layer, call.name, call.value);
+              }
+            });
+          });
 
           // Apply moveLayer operations if provided
           if (mapData.moveLayer) {
