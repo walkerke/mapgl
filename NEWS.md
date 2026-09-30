@@ -1,5 +1,7 @@
 # mapgl (development version)
 
+* `match_expr()` now matches `Date` and `POSIXct` values, so date columns color correctly in `maplibre_view()` and `mapboxgl_view()` (#216).
+
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.
 
 * Interactive categorical legends preserve hexagon and custom SVG patch shapes when toggling categories or resetting filters.

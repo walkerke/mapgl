@@ -308,6 +308,13 @@ match_expr <- function(
     rlang::abort("You must specify a column or property, but not both.")
   }
 
+  # c() below strips the Date/POSIXct class, which would serialize dates as
+  # numbers. geojsonsf writes them to GeoJSON with as.character(), so match
+  # on the same strings.
+  if (inherits(values, c("Date", "POSIXt"))) {
+    values <- as.character(values)
+  }
+
   expr <- list("match", to_map)
   for (i in seq_along(values)) {
     # Get stop value - use [[ for lists, [ for vectors
