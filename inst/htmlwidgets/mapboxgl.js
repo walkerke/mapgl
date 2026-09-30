@@ -604,14 +604,16 @@ function _mapglEnsureLayerState(map) {
 }
 
 // Compose active filter slots for a layer and apply the result.
-// Slots: base (layer-initial), user (proxy set_filter), legend
-// (interactive legend), slider (slider). Writes the composed
-// expression back to state.filters so the style-reload replay path
-// continues to work.
+// Slots: base (layer-initial), user (set_filter), legend
+// (interactive legend), slider (slider). A user filter replaces the
+// base filter rather than composing with it, and a user filter of
+// null clears it. Writes the composed expression back to state.filters
+// so the style-reload replay path continues to work.
 function _mapglComposeAndApplyFilter(map, layerId) {
   const state = _mapglEnsureLayerState(map);
   const stack = state.filterStack[layerId] || {};
-  const active = [stack.base, stack.user, stack.legend, stack.slider].filter(
+  const primary = "user" in stack ? stack.user : stack.base;
+  const active = [primary, stack.legend, stack.slider].filter(
     (f) => f != null,
   );
   const composed =
@@ -2356,8 +2358,11 @@ HTMLWidgets.widget({
 
           // Apply setFilter if provided
           if (x.setFilter) {
+            const _s = _mapglEnsureLayerState(map);
             x.setFilter.forEach(function (filter) {
-              map.setFilter(filter.layer, filter.filter);
+              _s.filterStack[filter.layer] = _s.filterStack[filter.layer] || {};
+              _s.filterStack[filter.layer].user = filter.filter || null;
+              _mapglComposeAndApplyFilter(map, filter.layer);
             });
           }
 
@@ -3321,8 +3326,8 @@ if (HTMLWidgets.shinyMode) {
         });
       }
       if (message.type === "set_filter") {
-        // Route through the filter registry so `user` composes with any
-        // base/legend/slider slots rather than overwriting them.
+        // Route through the filter registry so `user` replaces the base
+        // filter and composes with legend/slider slots.
         layerState.filterStack[message.layer] =
           layerState.filterStack[message.layer] || {};
         layerState.filterStack[message.layer].user = message.filter || null;

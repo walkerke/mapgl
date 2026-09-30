@@ -600,10 +600,13 @@ function _mapglEnsureLayerState(map) {
   return s;
 }
 
+// A user (set_filter) filter replaces the base (layer-initial) filter,
+// and a user filter of null clears it. Legend and slider filters compose.
 function _mapglComposeAndApplyFilter(map, layerId) {
   const state = _mapglEnsureLayerState(map);
   const stack = state.filterStack[layerId] || {};
-  const active = [stack.base, stack.user, stack.legend, stack.slider].filter(
+  const primary = "user" in stack ? stack.user : stack.base;
+  const active = [primary, stack.legend, stack.slider].filter(
     (f) => f != null,
   );
   const composed =
@@ -2429,8 +2432,11 @@ HTMLWidgets.widget({
 
           // Apply setFilter if provided
           if (x.setFilter) {
+            const _s = _mapglEnsureLayerState(map);
             x.setFilter.forEach(function (filter) {
-              map.setFilter(filter.layer, filter.filter);
+              _s.filterStack[filter.layer] = _s.filterStack[filter.layer] || {};
+              _s.filterStack[filter.layer].user = filter.filter || null;
+              _mapglComposeAndApplyFilter(map, filter.layer);
             });
           }
 
@@ -3479,8 +3485,8 @@ if (HTMLWidgets.shinyMode) {
         });
       }
       if (message.type === "set_filter") {
-        // Route through the filter registry so `user` composes with
-        // base/legend/slider slots.
+        // Route through the filter registry so `user` replaces the base
+        // filter and composes with legend/slider slots.
         layerState.filterStack[message.layer] =
           layerState.filterStack[message.layer] || {};
         layerState.filterStack[message.layer].user = message.filter || null;
