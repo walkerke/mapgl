@@ -297,6 +297,25 @@ match_expr <- function(
     rlang::abort("`values` and `stops` must have the same length.")
   }
 
+  # Factors would serialize as integer codes; GeoJSON has their labels.
+  if (is.factor(values)) {
+    values <- as.character(values)
+  }
+
+  # A missing value serializes as a null branch label, which makes the whole
+  # expression invalid and the layer fail to render.
+  missing <- is.na(values)
+  if (any(missing)) {
+    if (all(missing)) {
+      rlang::abort("`values` must contain at least one non-missing value.")
+    }
+    values <- values[!missing]
+    stops <- stops[!missing]
+    rlang::inform(
+      "Dropped `NA` from `values`; features with missing values use `default`."
+    )
+  }
+
   stops <- trim_hex_colors(stops)
   default <- trim_hex_colors(default)
 
