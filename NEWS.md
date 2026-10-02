@@ -1,4 +1,4 @@
-# mapgl (development version)
+# mapgl 0.5.2
 
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.
 
@@ -48,13 +48,7 @@
 
 * `add_layers_control()` gains a `mode` argument. The default `"multiple"` keeps the current independent toggles; `mode = "single"` shows one entry at a time — activating an entry turns the others (and their linked legends) off, which suits flipping through alternative analytical layers or raster imagery. To mix both behaviors on one map, add a `"single"`-mode control alongside a `"multiple"`-mode control; they stack cleanly in the same corner.
 
-* Fixed a bug where `before_id` was silently ignored in `add_raster_layer()` and `add_heatmap_layer()`, and `filter` was silently ignored in `add_heatmap_layer()`, due to positional argument mismatches in the internal `add_layer()` call.
-
-* `add_control()` now works on maps rendered inside `compare()`; previously custom controls were dropped at initial render (they only worked via compare proxies).
-
-* Fixed a bug where passing a geometry-only `sf` object (no non-geometry columns) as a layer source caused a serialization error. `geojsonsf::sf_geojson()` simplifies property-less sf objects into a vector of individual geometry strings rather than a FeatureCollection, which `htmlwidgets` cannot serialize. All internal calls now use `simplify = FALSE` to consistently return a FeatureCollection (#212).
-
-* Various bug fixes and performance improvements (#30, #131, #150, #215, #216, #217, #219).
+* Various bug fixes and performance improvements (#30, #131, #150, #212, #215, #216, #217, #219).
 
 # mapgl 0.5.0
 
