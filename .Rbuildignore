@@ -27,3 +27,4 @@ CLAUDE.md
 ^flowmap-screenshot\.png$
 ^\.dockerignore$
 ^CRAN-SUBMISSION$
+^cran-comments\.md$
