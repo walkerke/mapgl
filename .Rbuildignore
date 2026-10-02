@@ -26,3 +26,4 @@ CLAUDE.md
 ^tooltip-demo\.R$
 ^flowmap-screenshot\.png$
 ^\.dockerignore$
+^CRAN-SUBMISSION$
