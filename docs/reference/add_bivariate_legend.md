@@ -20,7 +20,9 @@ add_bivariate_legend(
   target = "compare",
   draggable = FALSE,
   collapsible = FALSE,
-  collapsed = FALSE
+  collapsed = FALSE,
+  min_zoom = NULL,
+  max_zoom = NULL
 )
 ```
 
@@ -56,7 +58,8 @@ add_bivariate_legend(
 
 - width:
 
-  Legend width.
+  Legend width. Defaults to `"fit-content"` (capped at 340px) so titles
+  and axis labels stay on one line.
 
 - style:
 
@@ -93,6 +96,15 @@ add_bivariate_legend(
 - collapsed:
 
   Logical, whether the legend starts collapsed.
+
+- min_zoom:
+
+  The minimum zoom level at which the legend is displayed.
+
+- max_zoom:
+
+  The maximum zoom level at which the legend is displayed. The legend is
+  hidden when the map zoom is at or above this value.
 
 ## Value
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,9 @@
 <span>  target <span class="op">=</span> <span class="st">"compare"</span>,</span>
 <span>  draggable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  collapsible <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  collapsed <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  collapsed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  min_zoom <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  max_zoom <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -97,7 +99,8 @@ object, or a proxy object.</p></dd>
 
 
 <dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
-<dd><p>Legend width.</p></dd>
+<dd><p>Legend width. Defaults to <code>"fit-content"</code> (capped at 340px)
+so titles and axis labels stay on one line.</p></dd>
 
 
 <dt id="arg-style">style<a class="anchor" aria-label="anchor" href="#arg-style"></a></dt>
@@ -131,6 +134,15 @@ object, or a proxy object.</p></dd>
 <dt id="arg-collapsed">collapsed<a class="anchor" aria-label="anchor" href="#arg-collapsed"></a></dt>
 <dd><p>Logical, whether the legend starts collapsed.</p></dd>
 
+
+<dt id="arg-min-zoom">min_zoom<a class="anchor" aria-label="anchor" href="#arg-min-zoom"></a></dt>
+<dd><p>The minimum zoom level at which the legend is displayed.</p></dd>
+
+
+<dt id="arg-max-zoom">max_zoom<a class="anchor" aria-label="anchor" href="#arg-max-zoom"></a></dt>
+<dd><p>The maximum zoom level at which the legend is displayed. The
+legend is hidden when the map zoom is at or above this value.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -146,7 +158,7 @@ object, or a proxy object.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

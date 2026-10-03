@@ -30,6 +30,10 @@ the original widget object through
 [`add_draw_control()`](https://walker-data.com/mapgl/reference/add_draw_control.md).
 Non-Shiny proxy updates and compare widgets are not yet supported.
 
+With `add_draw_control(provider = "terra-draw")`, features include a
+`mode` column recording which drawing tool created each feature (e.g.
+`"polygon"`, `"circle"`, `"freehand"`).
+
 ## Examples
 
 ``` r

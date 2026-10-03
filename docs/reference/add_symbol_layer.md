@@ -453,8 +453,12 @@ add_symbol_layer(
   [`add_pmtiles_source()`](https://walker-data.com/mapgl/reference/add_pmtiles_source.md))
   along with `source_layer` to use pre-clustered vector tiles such as
   those produced by the freestiler package. In the latter case the
-  cluster-count label is abbreviated client-side via
-  [`number_format()`](https://walker-data.com/mapgl/reference/number_format.md).
+  cluster-count label is abbreviated client-side from `point_count`. Set
+  `donut_column` in
+  [`cluster_options()`](https://walker-data.com/mapgl/reference/cluster_options.md)
+  to draw clusters as donut charts of category shares; see
+  [`cluster_options()`](https://walker-data.com/mapgl/reference/cluster_options.md)
+  for the properties pre-clustered tiles need.
 
   **Updating a clustered layer in Shiny:** the shortcut creates three
   layers (`"id"`, `"id-clusters"`, `"id-cluster-count"`) on top of one

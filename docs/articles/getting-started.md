@@ -21,7 +21,8 @@ package and have installed your Mapbox access token,
 [`mapboxgl()`](https://walker-data.com/mapgl/reference/mapboxgl.md) will
 pick up your token for you. If you are new to my R packages, you’ll want
 to get a token from your Mapbox account, run
-`usethis::edit_r_environ()`, and set the environment variable
+[`usethis::edit_r_environ()`](https://usethis.r-lib.org/reference/edit.html),
+and set the environment variable
 `MAPBOX_PUBLIC_TOKEN="your_token_here"`. It’s important for you to know
 that Mapbox GL JS is a commercial product that charges you for map
 views; however, it does have a generous free tier.

@@ -25,7 +25,8 @@ add_layer(
   before_id = NULL,
   filter = NULL,
   tooltip_style = NULL,
-  popup_style = NULL
+  popup_style = NULL,
+  metadata = NULL
 )
 ```
 
@@ -107,6 +108,12 @@ add_layer(
   or `"dark"`) or a
   [`tooltip_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
   object. When omitted, the native (unstyled) appearance is kept.
+
+- metadata:
+
+  An optional named list stored as the layer's `metadata` style
+  property. It is not rendered, but is available to JavaScript through
+  `map.getLayer(id).metadata`.
 
 ## Value
 

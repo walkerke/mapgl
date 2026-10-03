@@ -1,5 +1,201 @@
 # Changelog
 
+## mapgl 0.5.2
+
+- Donut count labels use the same overlap and collision-placement rules
+  as their icons, preventing collision-hidden numbers inside visible
+  donuts for native and precomputed clusters. Ordinary circle-cluster
+  labels are unchanged.
+
+- Interactive categorical legends preserve hexagon and custom SVG patch
+  shapes when toggling categories or resetting filters.
+
+- Clusters can be drawn as donut charts showing each cluster’s category
+  mix with `cluster_options(donut_column = )`, for live GeoJSON
+  clustering and pre-clustered vector tiles.
+
+- [`add_layer()`](https://walker-data.com/mapgl/reference/add_layer.md)
+  gains a `metadata` argument.
+
+- Abbreviated cluster count labels now switch to millions and billions
+  (e.g. “1.7M” or “1.5B” instead of “1735k” or “1500M”).
+
+- Clustered layers now render in
+  [`compare()`](https://walker-data.com/mapgl/reference/compare.md)
+  views, and cluster circle paint options (`circle_opacity`, strokes,
+  blur) now reach maps updated through a Shiny proxy.
+
+- Update Mapbox GL JS to v3.31.0, which brings a much smaller memory
+  footprint for large GeoJSON sources.
+
+- Raster PMTiles sources on Mapbox maps now use Mapbox GL JS’s native
+  PMTiles support. The custom `pmtile-source` plugin, which stopped
+  loading on Mapbox GL JS v3.29+, has been removed.
+
+- Popups and tooltips support conditional logic evaluated per feature at
+  render time, with new builders
+  [`if_else_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+  [`case_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+  [`coalesce_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+  [`has_column()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+  [`is_blank()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+  and
+  [`html_escape_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+  that compose with
+  [`concat()`](https://walker-data.com/mapgl/reference/concat.md),
+  [`get_column()`](https://walker-data.com/mapgl/reference/get_column.md),
+  and
+  [`number_format()`](https://walker-data.com/mapgl/reference/number_format.md).
+  Useful for remote sources like PMTiles where popup columns can’t be
+  precomputed. See
+  [`?conditional_expressions`](https://walker-data.com/mapgl/reference/conditional_expressions.md).
+
+- The popup/tooltip expression evaluator supports a broad set of
+  GL-style conditional, comparison, boolean, lookup, math, ramp, and
+  string operators, so
+  [`match_expr()`](https://walker-data.com/mapgl/reference/match_expr.md)
+  and
+  [`step_expr()`](https://walker-data.com/mapgl/reference/step_expr.md)
+  output also works as popup/tooltip content. Unknown or failing
+  operators render as an empty string with a console warning.
+
+- Legends gain optional `min_zoom` and `max_zoom` arguments to show or
+  hide a legend on zoom, with the same semantics as the layer arguments
+  of the same names.
+
+- Legends sharing a corner position now stack automatically instead of
+  overlapping, and reflow as legends are shown or hidden. Legends with
+  explicit `margin_*` values or that have been dragged are left alone.
+
+- Adding a legend with the default `add = FALSE` to a map that already
+  has one now messages that the existing legend is being replaced.
+
+- `add_legend(draggable = TRUE)` now works in
+  [`compare()`](https://walker-data.com/mapgl/reference/compare.md).
+
+- [`add_draw_control()`](https://walker-data.com/mapgl/reference/add_draw_control.md)
+  gains a `provider` argument that can be set to `"terra-draw"` to use
+  the [Terra Draw](https://github.com/JamesLMilner/terra-draw) drawing
+  engine as an alternative to mapbox-gl-draw (which remains the default;
+  existing code is unaffected). Terra Draw works identically on Mapbox
+  and MapLibre maps, standalone and in
+  [`compare()`](https://walker-data.com/mapgl/reference/compare.md), and
+  is fully integrated with the existing drawing workflow:
+  [`get_drawn_features()`](https://walker-data.com/mapgl/reference/get_drawn_features.md),
+  [`add_features_to_draw()`](https://walker-data.com/mapgl/reference/add_features_to_draw.md),
+  [`clear_drawn_features()`](https://walker-data.com/mapgl/reference/clear_drawn_features.md),
+  `clear_controls("draw")`, attribute editing via `attributes`, live
+  measurements via `show_measurements`, the download button, and the
+  styling arguments all work unchanged. (As with the default provider,
+  attribute editing and measurements are available on standalone widgets
+  only, not in
+  [`compare()`](https://walker-data.com/mapgl/reference/compare.md).)
+  Details:
+
+  - A new `modes` argument selects the toolbar tools: `"point"`,
+    `"linestring"`, `"polygon"`, `"rectangle"`, `"circle"`,
+    `"freehand"`, `"freehand-linestring"`, `"angled-rectangle"`,
+    `"sector"`, `"sensor"`, `"curve"`, `"curve-linestring"`, and
+    `"select"` — Terra Draw’s select mode supports dragging features,
+    dragging/deleting vertices, midpoint insertion, and optional
+    rotate/scale/resize and snapping.
+  - The `"curve"` and `"curve-linestring"` modes are mapgl-authored
+    pen-tool drawing modes for shapes mixing straight and curved (cubic
+    Bezier) edges — e.g. a basketball key or a river trace. Click places
+    a corner; click-and-drag places an anchor and pulls out curve
+    handles; click the first point or press Enter to finish, Escape to
+    cancel, Backspace to remove the last point. Output is the rendered
+    curved geometry (so measurements, downloads, and
+    [`get_drawn_features()`](https://walker-data.com/mapgl/reference/get_drawn_features.md)
+    work unchanged) with the control points preserved in a `curveNodes`
+    JSON-string column; finished curves can be moved (control points
+    follow) but not vertex-edited, and map panning is suspended while a
+    curve tool is active.
+  - A new
+    [`terradraw_options()`](https://walker-data.com/mapgl/reference/terradraw_options.md)
+    helper configures advanced behavior (select-mode editing flags,
+    snapping, drawing interaction style, per-mode overrides) via the new
+    `options` argument.
+  - [`add_terradraw_control()`](https://walker-data.com/mapgl/reference/add_terradraw_control.md)
+    is an equivalent convenience wrapper for
+    `add_draw_control(provider = "terra-draw")` whose signature contains
+    only the arguments that apply to the Terra Draw engine.
+  - Drawn features returned by
+    [`get_drawn_features()`](https://walker-data.com/mapgl/reference/get_drawn_features.md)
+    include a `mode` column recording which tool created each feature;
+    circles additionally carry a `radiusKilometers` property.
+  - The trash button deletes the current selection only (use
+    [`clear_drawn_features()`](https://walker-data.com/mapgl/reference/clear_drawn_features.md)
+    to remove everything); when the mode set includes `"select"`,
+    finishing a shape returns to the select tool with the new feature
+    selected — set `terradraw_options(keep_mode_active = TRUE)` to stay
+    in the drawing mode instead.
+  - Features loaded from a `source` or
+    [`add_features_to_draw()`](https://walker-data.com/mapgl/reference/add_features_to_draw.md)
+    are adapted to Terra Draw’s constraints: Multi\* geometries are
+    split into single-part features, coordinates are rounded to Terra
+    Draw’s 9-decimal-place precision limit (~0.1 mm), and polygon holes
+    are removed. Colors are coerced to the 6-digit hex form Terra Draw
+    requires.
+  - Changing the map style preserves drawn features; an unfinished
+    drawing is discarded and the selection and undo history reset.
+
+- The layers control from
+  [`add_layers_control()`](https://walker-data.com/mapgl/reference/add_layers_control.md)
+  is now a first-class map control: it is added through the GL
+  `addControl()` API and stacks with the other controls in its corner
+  (in call order) instead of floating over them, so it no longer
+  collides with navigation, fullscreen, and similar controls. Related
+  changes:
+
+  - **Visual change:** the default appearance now matches the native
+    controls — white background, monochrome items (active layers in dark
+    text, inactive in gray), and a 29x29 collapsed icon button. All
+    styling arguments work as before; to restore the previous blue
+    active style, use `active_color = "#4a90e2"` and
+    `active_text_color = "#ffffff"`.
+  - The `margin_*` arguments are no longer applied by default (the
+    native stack handles spacing) but are still honored when explicitly
+    set.
+  - In
+    [`compare()`](https://walker-data.com/mapgl/reference/compare.md),
+    each side’s layers control now lives in that side’s own control
+    stack (previously both sides rendered into the same overlay space
+    and overlapped), custom colors are now honored, layer-linked legends
+    now show/hide with their layers, and `clear_controls("layers")` now
+    works (previously it errored or did nothing).
+  - A layers control added through a MapLibre compare proxy now toggles
+    layers only on the side targeted by `map_side` (previously it
+    toggled every side at once).
+  - When a proxy call omits `layers`, the control now lists the map’s
+    non-basemap style layers instead of rendering empty. Note this
+    covers regular GL layers only (flowmap layers are managed outside
+    the style), and the basemap filter reflects the initially loaded
+    style.
+  - After
+    [`set_style()`](https://walker-data.com/mapgl/reference/set_style.md),
+    the control now reflects each layer’s restored visibility instead of
+    resetting every entry to active.
+
+- [`add_layers_control()`](https://walker-data.com/mapgl/reference/add_layers_control.md)
+  gains a `mode` argument. The default `"multiple"` keeps the current
+  independent toggles; `mode = "single"` shows one entry at a time —
+  activating an entry turns the others (and their linked legends) off,
+  which suits flipping through alternative analytical layers or raster
+  imagery. To mix both behaviors on one map, add a `"single"`-mode
+  control alongside a `"multiple"`-mode control; they stack cleanly in
+  the same corner.
+
+- Various bug fixes and performance improvements
+  ([\#30](https://github.com/walkerke/mapgl/issues/30),
+  [\#131](https://github.com/walkerke/mapgl/issues/131),
+  [\#150](https://github.com/walkerke/mapgl/issues/150),
+  [\#212](https://github.com/walkerke/mapgl/issues/212),
+  [\#215](https://github.com/walkerke/mapgl/issues/215),
+  [\#216](https://github.com/walkerke/mapgl/issues/216),
+  [\#217](https://github.com/walkerke/mapgl/issues/217),
+  [\#219](https://github.com/walkerke/mapgl/issues/219)).
+
 ## mapgl 0.5.0
 
 CRAN release: 2026-06-20
@@ -87,8 +283,6 @@ CRAN release: 2026-06-20
   default `"uniform"` preserves existing behavior
   ([\#206](https://github.com/walkerke/mapgl/issues/206), thanks to
   [@mtennekes](https://github.com/mtennekes)).
-
-- 
 
 - New
   [`add_h3t_source()`](https://walker-data.com/mapgl/reference/add_h3t_source.md)

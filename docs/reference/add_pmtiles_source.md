@@ -33,8 +33,7 @@ add_pmtiles_source(
 
 - source_type:
 
-  The source type for MapLibre maps. Either "vector" (default) or
-  "raster".
+  The source type. Either "vector" (default) or "raster".
 
 - maxzoom:
 

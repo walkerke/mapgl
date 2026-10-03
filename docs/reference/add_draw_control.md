@@ -28,6 +28,9 @@ add_draw_control(
   download_filename = "drawn-features",
   show_measurements = FALSE,
   measurement_units = "both",
+  provider = c("mapbox-gl-draw", "terra-draw"),
+  modes = NULL,
+  options = NULL,
   ...
 )
 ```
@@ -135,17 +138,103 @@ add_draw_control(
   Units for measurements. Either "metric", "imperial", or "both".
   Default is "both".
 
+- provider:
+
+  The drawing engine to use: `"mapbox-gl-draw"` (the default, current
+  behavior) or `"terra-draw"` to use the [Terra
+  Draw](https://github.com/JamesLMilner/terra-draw) library. Terra Draw
+  works identically on Mapbox and MapLibre maps and offers additional
+  drawing modes plus a richer select/edit mode.
+
+- modes:
+
+  For `provider = "terra-draw"`, a character vector of drawing modes to
+  expose as toolbar buttons. Valid modes are `"point"`, `"linestring"`,
+  `"polygon"`, `"rectangle"`, `"circle"`, `"freehand"`,
+  `"freehand-linestring"`, `"angled-rectangle"`, `"sector"`, `"sensor"`,
+  `"curve"`, `"curve-linestring"`, and `"select"`. When `NULL` (the
+  default), the mode set is derived from the legacy `freehand`,
+  `rectangle`, and `radius` arguments plus `"point"`, `"linestring"`,
+  `"polygon"`, and `"select"`. For `provider = "mapbox-gl-draw"`, a
+  supplied `modes` value is forwarded to the MapboxDraw constructor
+  unchanged (equivalent to passing it via `...`).
+
+- options:
+
+  For `provider = "terra-draw"`, an object created by
+  [`terradraw_options()`](https://walker-data.com/mapgl/reference/terradraw_options.md)
+  with advanced Terra Draw settings (snapping, select-mode editing
+  flags, per-mode overrides).
+
 - ...:
 
-  Additional named arguments. See
+  Additional named arguments for the default `"mapbox-gl-draw"`
+  provider. See
   <https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options>
-  for a list of options.
+  for a list of options. Not supported with `provider = "terra-draw"`;
+  use `options` there instead.
 
 ## Value
 
 The modified map object with the draw control added.
 
 ## Details
+
+### The terra-draw provider
+
+With `provider = "terra-draw"`, mapgl renders its own toolbar (Terra
+Draw is a headless library) with one button per requested mode, a trash
+button, and an optional download button.
+[`add_terradraw_control()`](https://walker-data.com/mapgl/reference/add_terradraw_control.md)
+is an equivalent convenience wrapper whose signature contains only the
+arguments that apply to this provider. Behavioral notes:
+
+- The trash button deletes the currently selected feature and does
+  nothing when no feature is selected; use
+  [`clear_drawn_features()`](https://walker-data.com/mapgl/reference/clear_drawn_features.md)
+  to remove everything.
+
+- When the mode set includes `"select"`, finishing a shape returns to
+  the select tool with the new feature selected (set
+  `terradraw_options(keep_mode_active = TRUE)` to keep drawing instead).
+
+- Colors are coerced to 6-digit hex (Terra Draw requires hex), so R
+  color names work but alpha channels are ignored; use `fill_opacity`
+  for transparency.
+
+- Features loaded via `source` or
+  [`add_features_to_draw()`](https://walker-data.com/mapgl/reference/add_features_to_draw.md)
+  are adapted to Terra Draw's constraints: Multi\* geometries are split
+  into single-part features, coordinates are rounded to 9 decimal places
+  (Terra Draw's precision limit, about 0.1 mm), and polygon interior
+  rings (holes) are removed.
+
+- Changing the map style preserves drawn features, but discards an
+  unfinished drawing and clears the current selection and undo history.
+
+- The `"curve"` and `"curve-linestring"` modes draw shapes that mix
+  straight and curved (cubic Bezier) edges, pen-tool style: click places
+  a corner point; click-and-drag places an anchor and pulls out
+  symmetric curve handles (drag distance sets the curvature); moving the
+  mouse previews the pending segment; click the first point (the last
+  point for lines) or press Enter to finish; Escape cancels; Backspace
+  removes the last point. The stored feature uses the rendered curved
+  coordinates, so measurements, the download button, and
+  [`get_drawn_features()`](https://walker-data.com/mapgl/reference/get_drawn_features.md)
+  work unchanged, and the curve's control points are preserved in a
+  `curveNodes` JSON-string property. In select mode curve features can
+  be moved as a whole (their control points move with them) but vertex
+  editing, rotate, and scale are disabled for them, and self-crossing
+  curve outlines cannot be finished as polygons. While a curve tool is
+  active, left-drag places curved anchors, so map panning is suspended
+  until you switch tools.
+
+- `bezier`, `bezier_polygon`, and `simplify_freehand` are specific to
+  mapbox-gl-draw and error under terra-draw. `attributes` and
+  `show_measurements` work with both providers on standalone widgets (as
+  with the default provider, neither is available in compare views).
+
+### Bezier modes (mapbox-gl-draw provider only)
 
 Bezier drawing modes are supported when the draw control is added to the
 original map widget or later through a regular Shiny map proxy. Compare
@@ -243,6 +332,14 @@ mapboxgl() |>
         rectangle = TRUE,
         radius = TRUE,
         bezier = TRUE
+    )
+
+# Use the Terra Draw engine (works on Mapbox and MapLibre maps)
+maplibre() |>
+    add_draw_control(
+        provider = "terra-draw",
+        modes = c("point", "polygon", "rectangle", "circle", "select"),
+        options = terradraw_options(snap_to_coordinates = TRUE)
     )
 } # }
 ```

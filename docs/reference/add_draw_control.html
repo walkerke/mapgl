@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,6 +71,9 @@
 <span>  download_filename <span class="op">=</span> <span class="st">"drawn-features"</span>,</span>
 <span>  show_measurements <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  measurement_units <span class="op">=</span> <span class="st">"both"</span>,</span>
+<span>  provider <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mapbox-gl-draw"</span>, <span class="st">"terra-draw"</span><span class="op">)</span>,</span>
+<span>  modes <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  options <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -171,8 +174,37 @@ Use <code><a href="draw_attribute.html">draw_attribute()</a></code> to define fi
 <dd><p>Units for measurements. Either "metric", "imperial", or "both". Default is "both".</p></dd>
 
 
+<dt id="arg-provider">provider<a class="anchor" aria-label="anchor" href="#arg-provider"></a></dt>
+<dd><p>The drawing engine to use: <code>"mapbox-gl-draw"</code> (the default,
+current behavior) or <code>"terra-draw"</code> to use the
+<a href="https://github.com/JamesLMilner/terra-draw" class="external-link">Terra Draw</a> library.
+Terra Draw works identically on Mapbox and MapLibre maps and offers
+additional drawing modes plus a richer select/edit mode.</p></dd>
+
+
+<dt id="arg-modes">modes<a class="anchor" aria-label="anchor" href="#arg-modes"></a></dt>
+<dd><p>For <code>provider = "terra-draw"</code>, a character vector of drawing
+modes to expose as toolbar buttons. Valid modes are <code>"point"</code>,
+<code>"linestring"</code>, <code>"polygon"</code>, <code>"rectangle"</code>, <code>"circle"</code>, <code>"freehand"</code>,
+<code>"freehand-linestring"</code>, <code>"angled-rectangle"</code>, <code>"sector"</code>, <code>"sensor"</code>,
+<code>"curve"</code>, <code>"curve-linestring"</code>, and <code>"select"</code>. When <code>NULL</code> (the
+default), the mode set is derived from the legacy <code>freehand</code>,
+<code>rectangle</code>, and <code>radius</code> arguments plus <code>"point"</code>, <code>"linestring"</code>,
+<code>"polygon"</code>, and <code>"select"</code>. For <code>provider = "mapbox-gl-draw"</code>, a
+supplied <code>modes</code> value is forwarded to the MapboxDraw constructor
+unchanged (equivalent to passing it via <code>...</code>).</p></dd>
+
+
+<dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
+<dd><p>For <code>provider = "terra-draw"</code>, an object created by
+<code><a href="terradraw_options.html">terradraw_options()</a></code> with advanced Terra Draw settings (snapping,
+select-mode editing flags, per-mode overrides).</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional named arguments. See <a href="https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options" class="external-link">https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options</a> for a list of options.</p></dd>
+<dd><p>Additional named arguments for the default
+<code>"mapbox-gl-draw"</code> provider. See <a href="https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options" class="external-link">https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#options</a> for a list of options.
+Not supported with <code>provider = "terra-draw"</code>; use <code>options</code> there instead.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -181,7 +213,57 @@ Use <code><a href="draw_attribute.html">draw_attribute()</a></code> to define fi
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Bezier drawing modes are supported when the draw control is added to the
+
+<div class="section">
+<h3 id="the-terra-draw-provider">The terra-draw provider<a class="anchor" aria-label="anchor" href="#the-terra-draw-provider"></a></h3>
+
+
+<p>With <code>provider = "terra-draw"</code>, mapgl renders its own toolbar (Terra Draw is
+a headless library) with one button per requested mode, a trash button, and
+an optional download button. <code><a href="add_terradraw_control.html">add_terradraw_control()</a></code> is an equivalent
+convenience wrapper whose signature contains only the arguments that apply
+to this provider. Behavioral notes:</p><ul><li><p>The trash button deletes the currently selected feature and does nothing
+when no feature is selected; use <code><a href="clear_drawn_features.html">clear_drawn_features()</a></code> to remove
+everything.</p></li>
+<li><p>When the mode set includes <code>"select"</code>, finishing a shape returns to the
+select tool with the new feature selected (set
+<code>terradraw_options(keep_mode_active = TRUE)</code> to keep drawing instead).</p></li>
+<li><p>Colors are coerced to 6-digit hex (Terra Draw requires hex), so R color
+names work but alpha channels are ignored; use <code>fill_opacity</code> for
+transparency.</p></li>
+<li><p>Features loaded via <code>source</code> or <code><a href="add_features_to_draw.html">add_features_to_draw()</a></code> are adapted to
+Terra Draw's constraints: Multi* geometries are split into single-part
+features, coordinates are rounded to 9 decimal places (Terra Draw's
+precision limit, about 0.1 mm), and polygon interior rings (holes) are
+removed.</p></li>
+<li><p>Changing the map style preserves drawn features, but discards an
+unfinished drawing and clears the current selection and undo history.</p></li>
+<li><p>The <code>"curve"</code> and <code>"curve-linestring"</code> modes draw shapes that mix
+straight and curved (cubic Bezier) edges, pen-tool style: click places a
+corner point; click-and-drag places an anchor and pulls out symmetric
+curve handles (drag distance sets the curvature); moving the mouse
+previews the pending segment; click the first point (the last point for
+lines) or press Enter to finish; Escape cancels; Backspace removes the
+last point. The stored feature uses the rendered curved coordinates, so
+measurements, the download button, and <code><a href="get_drawn_features.html">get_drawn_features()</a></code> work
+unchanged, and the curve's control points are preserved in a
+<code>curveNodes</code> JSON-string property. In select mode curve features can be
+moved as a whole (their control points move with them) but vertex
+editing, rotate, and scale are disabled for them, and self-crossing
+curve outlines cannot be finished as polygons. While a curve tool is
+active, left-drag places curved anchors, so map panning is suspended
+until you switch tools.</p></li>
+<li><p><code>bezier</code>, <code>bezier_polygon</code>, and <code>simplify_freehand</code> are specific to
+mapbox-gl-draw and error under terra-draw. <code>attributes</code> and
+<code>show_measurements</code> work with both providers on standalone widgets (as
+with the default provider, neither is available in compare views).</p></li>
+</ul></div>
+
+<div class="section">
+<h3 id="bezier-modes-mapbox-gl-draw-provider-only-">Bezier modes (mapbox-gl-draw provider only)<a class="anchor" aria-label="anchor" href="#bezier-modes-mapbox-gl-draw-provider-only-"></a></h3>
+
+
+<p>Bezier drawing modes are supported when the draw control is added to the
 original map widget or later through a regular Shiny map proxy. Compare
 widgets and compare proxies are not yet supported for Bezier modes.</p>
 <p>To draw Bezier curves, click the Bezier button, then use <strong>Alt + left-drag</strong>
@@ -200,6 +282,8 @@ small attribute editor. Click Save to write values to the feature properties;
 works for newly drawn features and features loaded into the draw control with
 <code>source</code> or <code><a href="add_features_to_draw.html">add_features_to_draw()</a></code>. Compare widgets are not yet supported
 for attribute editing.</p>
+</div>
+
     </div>
 
     <div class="section level2">
@@ -273,6 +357,14 @@ for attribute editing.</p>
 <span class="r-in"><span>        radius <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>        bezier <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use the Terra Draw engine (works on Mapbox and MapLibre maps)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="maplibre.html">maplibre</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">add_draw_control</span><span class="op">(</span></span></span>
+<span class="r-in"><span>        provider <span class="op">=</span> <span class="st">"terra-draw"</span>,</span></span>
+<span class="r-in"><span>        modes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"point"</span>, <span class="st">"polygon"</span>, <span class="st">"rectangle"</span>, <span class="st">"circle"</span>, <span class="st">"select"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        options <span class="op">=</span> <span class="fu"><a href="terradraw_options.html">terradraw_options</a></span><span class="op">(</span>snap_to_coordinates <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -285,7 +377,7 @@ for attribute editing.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

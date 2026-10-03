@@ -284,6 +284,56 @@ fl_map |>
   )
 ```
 
+#### Expression-based popups with conditional logic
+
+Precomputing a popup column isn’t always possible — remote sources like
+PMTiles or vector tiles arrive with fixed attributes. Popup and tooltip
+content can instead be a GL-style *expression*, built with helpers like
+[`concat()`](https://walker-data.com/mapgl/reference/concat.md),
+[`get_column()`](https://walker-data.com/mapgl/reference/get_column.md),
+and
+[`number_format()`](https://walker-data.com/mapgl/reference/number_format.md),
+which is evaluated against each feature’s properties in the browser.
+Conditional builders —
+[`if_else_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+[`case_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+[`coalesce_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+[`has_column()`](https://walker-data.com/mapgl/reference/conditional_expressions.md),
+and
+[`is_blank()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+— let you handle missing or unreliable attributes on the fly:
+
+``` r
+
+fl_map |>
+  add_fill_layer(
+    id = "fl_tracts",
+    source = fl_age,
+    fill_color = interpolate(
+      column = "estimate",
+      values = c(20, 80),
+      stops = c("lightblue", "darkblue"),
+      na_color = "lightgrey"
+    ),
+    fill_opacity = 0.5,
+    popup = concat(
+      "<strong>GEOID: </strong>", get_column("GEOID"), "<br>",
+      if_else_expr(
+        is_blank("estimate"),
+        "Median age not available",
+        concat("<strong>Median age: </strong>", number_format("estimate", maximum_fraction_digits = 1))
+      )
+    )
+  )
+```
+
+Conditions can be any GL-style boolean expression
+(e.g. `list(">=", get_column("estimate"), 65)`), and only the branch
+selected for a feature is evaluated. Note that expression results are
+inserted as raw HTML — that’s what makes the `<strong>` tags work — so
+use them with trusted feature data, or wrap untrusted values in
+[`html_escape_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md).
+
 ### Bivariate styling
 
 Bivariate maps visualize two variables at once by assigning each feature

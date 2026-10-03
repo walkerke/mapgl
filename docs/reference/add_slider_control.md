@@ -275,11 +275,10 @@ days-since-epoch).
 ## Positioning and collisions
 
 The slider is implemented as a native control and stacks beside other
-native controls (navigation, scale, geolocate, fullscreen) via
-Mapbox/MapLibre's built-in positioning. Overlays such as
+native controls (navigation, scale, geolocate, fullscreen,
+[`add_layers_control()`](https://walker-data.com/mapgl/reference/add_layers_control.md))
+via Mapbox/MapLibre's built-in positioning. Overlays such as
 [`add_legend()`](https://walker-data.com/mapgl/reference/map_legends.md)
-and
-[`add_layers_control()`](https://walker-data.com/mapgl/reference/add_layers_control.md)
 are absolutely-positioned and do not participate in that flow — placing
 a slider in the same corner as a legend will overlap it. Choose a
 different corner or adjust the overlay's margins.

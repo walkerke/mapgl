@@ -1,4 +1,79 @@
+// A map created in a hidden container (an inactive tab, a Quarto dashboard
+// page, a closed conditionalPanel) has zero size, so its initial bounds are
+// fitted to a 0x0 viewport. Refit once the container gets a real size.
+// Camera changes made while hidden clear map._mapglInitialFit, so they win.
+function _mapglRefitWhenShown(map, container) {
+  if (typeof ResizeObserver === "undefined") return;
+  if (container.clientWidth > 0 && container.clientHeight > 0) return;
+  const observer = new ResizeObserver(function () {
+    if (container.clientWidth === 0 || container.clientHeight === 0) return;
+    observer.disconnect();
+    const fit = map._mapglInitialFit;
+    if (!fit) return;
+    map.resize();
+    map.fitBounds(fit.bounds, Object.assign({}, fit.options, { animate: false }));
+  });
+  observer.observe(container);
+  map.once("remove", function () {
+    observer.disconnect();
+  });
+}
+
+// Layer state for a compare-side map, in the shape the compare proxy uses.
+function _mapglCompareLayerState(map) {
+  if (!window._mapglLayerState) window._mapglLayerState = {};
+  const mapId = map.getContainer().id;
+  const s =
+    window._mapglLayerState[mapId] || (window._mapglLayerState[mapId] = {});
+  ["filters", "paintProperties", "layoutProperties", "tooltips", "popups", "legends"]
+    .forEach(function (key) {
+      if (!s[key]) s[key] = {};
+    });
+  return s;
+}
+
+// Set a layout or paint property and record it for replay after a style
+// change. Used by init-time set_*_property() and the compare proxy.
+function _mapglCompareSetLayoutProperty(map, layerId, name, value) {
+  map.setLayoutProperty(layerId, name, value);
+  const state = _mapglCompareLayerState(map);
+  if (!state.layoutProperties[layerId]) state.layoutProperties[layerId] = {};
+  state.layoutProperties[layerId][name] = value;
+}
+
+function _mapglCompareSetPaintProperty(map, layerId, name, value) {
+  // Keep the hover branch of a property built with hover options
+  const hover = ["boolean", ["feature-state", "hover"], false];
+  const current = map.getPaintProperty(layerId, name);
+  if (
+    Array.isArray(current) &&
+    current[0] === "case" &&
+    JSON.stringify(current[1]) === JSON.stringify(hover)
+  ) {
+    map.setPaintProperty(layerId, name, ["case", current[1], current[2], value]);
+  } else {
+    map.setPaintProperty(layerId, name, value);
+  }
+  const state = _mapglCompareLayerState(map);
+  if (!state.paintProperties[layerId]) state.paintProperties[layerId] = {};
+  state.paintProperties[layerId][name] = value;
+}
+
 function evaluateExpression(expression, properties) {
+  // Full evaluator (conditionals, math, ramps, ...) lives in the shared
+  // mapgl-expressions dependency; the switch below is only a minimal
+  // legacy fallback if that dependency failed to load.
+  if (window._mapglEvaluateExpression) {
+    return window._mapglEvaluateExpression(expression, properties);
+  }
+  if (!window._mapglExprMissingWarned && window.console) {
+    window._mapglExprMissingWarned = true;
+    console.warn(
+      "[mapgl] shared expression evaluator not loaded; conditional " +
+        "popup/tooltip operators are unavailable.",
+    );
+  }
+
   if (!Array.isArray(expression)) {
     return expression;
   }
@@ -55,8 +130,9 @@ function evaluateExpression(expression, properties) {
 
       return new Intl.NumberFormat(locale, formatOptions).format(value);
     default:
-      // For literals and other simple values
-      return expression;
+      // Unknown operator in the fallback path: render nothing rather than
+      // leaking the raw array into the popup
+      return "";
   }
 }
 
@@ -663,6 +739,12 @@ HTMLWidgets.widget({
           // Initialize controls array
           syncedMap.controls = [];
 
+          const _params = mapData.additional_params || {};
+          syncedMap._mapglInitialFit = _params.bounds
+            ? { bounds: _params.bounds, options: _params.fitBoundsOptions }
+            : null;
+          _mapglRefitWhenShown(syncedMap, syncedMap.getContainer());
+
           // Set projection on style load (MapLibre doesn't support projection in constructor)
           syncedMap.on("style.load", function () {
             if (!syncedMap._basemapLayerIds) {
@@ -681,6 +763,13 @@ HTMLWidgets.widget({
 
         beforeMap = compareMaps[0];
         afterMap = compareMaps[1];
+
+        // Draw donut cluster images on demand
+        if (window._mapglClusterDonut) {
+          compareMaps.forEach(function (compareMap) {
+            window._mapglClusterDonut.attach(compareMap);
+          });
+        }
 
         // Resolve a side name ("before", "after", or "mapN") to its map.
         // An out-of-range "mapN" returns undefined so callers no-op rather
@@ -832,6 +921,18 @@ HTMLWidgets.widget({
 
             loadedCount++;
             if (loadedCount === compareMaps.length) {
+              // Legend managers (zoom visibility + stacking) must install
+              // regardless of whether compare-level legends exist: per-side
+              // and proxy-added legends need them too. One manager per map
+              // container, plus one on the outer compare element for
+              // target = "compare" legends (sides are view-synced, so the
+              // first map is the zoom source).
+              if (typeof initializeLegendManager === "function") {
+                compareMaps.forEach(function (m) {
+                  initializeLegendManager(m);
+                });
+                initializeLegendManager(compareMaps[0], el);
+              }
               addCompareLegends();
             }
           });
@@ -1314,29 +1415,42 @@ HTMLWidgets.widget({
                   // Note: legends are not tied to specific layers, so we don't clear them here
                 }
               } else if (message.type === "fit_bounds") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.fitBounds(message.bounds, message.options);
               } else if (message.type === "fly_to") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.flyTo(message.options);
               } else if (message.type === "ease_to") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.easeTo(message.options);
               } else if (message.type === "set_center") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.setCenter(message.center);
               } else if (message.type === "set_zoom") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.setZoom(message.zoom);
               } else if (message.type === "jump_to") {
+                compareMaps.forEach(function (m) {
+                  m._mapglInitialFit = null;
+                });
                 map.jumpTo(message.options);
               } else if (message.type === "set_layout_property") {
-                map.setLayoutProperty(
+                _mapglCompareSetLayoutProperty(
+                  map,
                   message.layer,
                   message.name,
                   message.value,
                 );
-                // Track layout property state for layer restoration
-                if (!layerState.layoutProperties[message.layer]) {
-                  layerState.layoutProperties[message.layer] = {};
-                }
-                layerState.layoutProperties[message.layer][message.name] =
-                  message.value;
               } else if (message.type === "set_flowmap_filter") {
                 if (window.MapGLFlowmapPlugin) {
                   window.MapGLFlowmapPlugin.setFilter(
@@ -1354,42 +1468,12 @@ HTMLWidgets.widget({
                   );
                 }
               } else if (message.type === "set_paint_property") {
-                const layerId = message.layer;
-                const propertyName = message.name;
-                const newValue = message.value;
-
-                // Check if the layer has hover options
-                const layerStyle = map
-                  .getStyle()
-                  .layers.find((layer) => layer.id === layerId);
-                const currentPaintProperty = map.getPaintProperty(
-                  layerId,
-                  propertyName,
+                _mapglCompareSetPaintProperty(
+                  map,
+                  message.layer,
+                  message.name,
+                  message.value,
                 );
-
-                if (
-                  currentPaintProperty &&
-                  Array.isArray(currentPaintProperty) &&
-                  currentPaintProperty[0] === "case"
-                ) {
-                  // This property has hover options, so we need to preserve them
-                  const hoverValue = currentPaintProperty[2];
-                  const newPaintProperty = [
-                    "case",
-                    ["boolean", ["feature-state", "hover"], false],
-                    hoverValue,
-                    newValue,
-                  ];
-                  map.setPaintProperty(layerId, propertyName, newPaintProperty);
-                } else {
-                  // No hover options, just set the new value directly
-                  map.setPaintProperty(layerId, propertyName, newValue);
-                }
-                // Track paint property state for layer restoration
-                if (!layerState.paintProperties[layerId]) {
-                  layerState.paintProperties[layerId] = {};
-                }
-                layerState.paintProperties[layerId][propertyName] = newValue;
               } else if (message.type === "add_legend") {
                 if (!message.add) {
                   const existingLegends = document.querySelectorAll(
@@ -1548,6 +1632,16 @@ HTMLWidgets.widget({
                   // For each source, determine if it's a user-added source
                   for (const sourceId in currentStyle.sources) {
                     const source = currentStyle.sources[sourceId];
+
+                    // Terra Draw's adapter owns its own sources/layers and
+                    // re-registers them itself after a style change;
+                    // preserving them here would race the control's rebuild
+                    if (
+                      typeof MapglTerraDrawControl !== "undefined" &&
+                      MapglTerraDrawControl.isTerraDrawId(sourceId)
+                    ) {
+                      continue;
+                    }
 
                     // Strategy 1: All GeoJSON sources are likely user-added
                     if (source.type === "geojson") {
@@ -1951,6 +2045,11 @@ HTMLWidgets.widget({
                       }
                     }
 
+                    // Sync layers-control link states with restored visibility
+                    (map._mapglLayersControls || []).forEach((c) =>
+                      c.syncVisibilityStates(),
+                    );
+
                     // Remove this listener to avoid adding the same layers multiple times
                     map.off("style.load", onStyleLoad);
                   };
@@ -2154,9 +2253,17 @@ HTMLWidgets.widget({
 
                   // Re-apply map modifications
                   const mapIndex = compareMaps.indexOf(map);
-                  if (mapIndex >= 0) {
-                    applyMapModifications(map, compareMapsData[mapIndex]);
-                  }
+                  const modsDone =
+                    mapIndex >= 0
+                      ? Promise.resolve(
+                          applyMapModifications(map, compareMapsData[mapIndex]),
+                        )
+                      : Promise.resolve();
+                  modsDone.then(function () {
+                    (map._mapglLayersControls || []).forEach((c) =>
+                      c.syncVisibilityStates(),
+                    );
+                  });
                 });
               } else if (message.type === "add_navigation_control") {
                 const nav = new maplibregl.NavigationControl({
@@ -2232,6 +2339,30 @@ HTMLWidgets.widget({
                   map.controls = [];
                 }
                 map.controls.push({ type: "coordinates", control: coordinatesControlObj });
+              } else if (
+                message.type === "add_draw_control" &&
+                message.provider === "terra-draw"
+              ) {
+                if (map._mapgl_draw) {
+                  console.warn(
+                    "mapgl: a draw control already exists on this map; ignoring add_draw_control",
+                  );
+                } else {
+                  const terraDrawCtl = new MapglTerraDrawControl(
+                    Object.assign({}, message, {
+                      gl: "maplibre",
+                      sync: { inputId: data.id },
+                      getSourceData: function (sourceId) {
+                        const source = map.getSource(sourceId);
+                        return source && source._data ? source._data : null;
+                      },
+                    }),
+                  );
+                  map.addControl(terraDrawCtl, message.position);
+                  if (!map.controls) map.controls = [];
+                  map.controls.push({ type: "draw", control: terraDrawCtl });
+                  map._mapgl_draw = terraDrawCtl;
+                }
               } else if (message.type === "add_draw_control") {
                 let drawOptions = message.options || {};
                 if (message.freehand) {
@@ -2288,8 +2419,8 @@ HTMLWidgets.widget({
                   }
                 }
               } else if (message.type === "get_drawn_features") {
-                if (draw) {
-                  const features = draw ? draw.getAll() : null;
+                if (map._mapgl_draw) {
+                  const features = map._mapgl_draw.getAll();
                   Shiny.setInputValue(
                     data.id + "_drawn_features",
                     JSON.stringify(features),
@@ -2301,10 +2432,12 @@ HTMLWidgets.widget({
                   );
                 }
               } else if (message.type === "clear_drawn_features") {
-                if (draw) {
-                  draw.deleteAll();
+                if (map._mapgl_draw) {
+                  map._mapgl_draw.deleteAll();
                   // Update the drawn features
-                  window.updateDrawnFeatures();
+                  if (typeof window.updateDrawnFeatures === "function") {
+                    window.updateDrawnFeatures();
+                  }
                 }
               } else if (message.type === "add_markers") {
                 if (!window.maplibreglMarkers) {
@@ -2525,167 +2658,10 @@ HTMLWidgets.widget({
                   });
                 }
               } else if (message.type === "add_layers_control") {
-                const layersControl = document.createElement("div");
-                layersControl.id = message.control_id;
-                layersControl.className = message.collapsible
-                  ? "layers-control collapsible"
-                  : "layers-control";
-                layersControl.style.position = "absolute";
-
-                // Set the position correctly
-                const position = message.position || "top-left";
-                if (position === "top-left") {
-                  layersControl.style.top = (message.margin_top || 10) + "px";
-                  layersControl.style.left = (message.margin_left || 10) + "px";
-                } else if (position === "top-right") {
-                  layersControl.style.top = (message.margin_top || 10) + "px";
-                  layersControl.style.right =
-                    (message.margin_right || 10) + "px";
-                } else if (position === "bottom-left") {
-                  layersControl.style.bottom =
-                    (message.margin_bottom || 30) + "px";
-                  layersControl.style.left = (message.margin_left || 10) + "px";
-                } else if (position === "bottom-right") {
-                  layersControl.style.bottom =
-                    (message.margin_bottom || 40) + "px";
-                  layersControl.style.right =
-                    (message.margin_right || 10) + "px";
-                }
-
-                // Apply custom colors if provided
-                if (message.custom_colors) {
-                  const colors = message.custom_colors;
-
-                  // Create a style element for custom colors
-                  const styleEl = document.createElement("style");
-                  let css = "";
-
-                  if (colors.background) {
-                    css += `.layers-control { background-color: ${colors.background} !important; }`;
-                  }
-                  if (colors.text) {
-                    css += `.layers-control a { color: ${colors.text} !important; }`;
-                  }
-                  if (colors.activeBackground) {
-                    css += `.layers-control a.active { background-color: ${colors.activeBackground} !important; }`;
-                  }
-                  if (colors.activeText) {
-                    css += `.layers-control a.active { color: ${colors.activeText} !important; }`;
-                  }
-                  if (colors.hoverBackground) {
-                    css += `.layers-control a:hover { background-color: ${colors.hoverBackground} !important; }`;
-                  }
-                  if (colors.hoverText) {
-                    css += `.layers-control a:hover { color: ${colors.hoverText} !important; }`;
-                  }
-                  if (colors.toggleButtonBackground) {
-                    css += `.layers-control .toggle-button { background-color: ${colors.toggleButtonBackground}
-                  !important; }`;
-                  }
-                  if (colors.toggleButtonText) {
-                    css += `.layers-control .toggle-button { color: ${colors.toggleButtonText} !important; }`;
-                  }
-
-                  styleEl.innerHTML = css;
-                  document.head.appendChild(styleEl);
-                }
-
-                document.getElementById(data.id).appendChild(layersControl);
-
-                const layersList = document.createElement("div");
-                layersList.className = "layers-list";
-                layersControl.appendChild(layersList);
-
-                const allMaps = compareMaps;
-                let layersConfig = message.layers_config;
-
-                if (layersConfig && Array.isArray(layersConfig)) {
-                  // grouped layers format (from named list in R)
-                  layersConfig.forEach((config, index) => {
-                    const link = document.createElement("a");
-                    const layerIds = Array.isArray(config.ids)
-                      ? config.ids
-                      : [config.ids];
-                    link.id = layerIds.join("-");
-                    link.href = "#";
-                    link.textContent = config.label;
-                    link.setAttribute("data-layer-ids", JSON.stringify(layerIds));
-
-                    // check initial visibility from whichever map has the layer
-                    let initVis = "visible";
-                    for (const m of allMaps) {
-                      try {
-                        initVis = m.getLayoutProperty(layerIds[0], "visibility");
-                        break;
-                      } catch(err) {}
-                    }
-                    link.className = initVis === "none" ? "" : "active";
-
-                    link.onclick = function (e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const ids = JSON.parse(this.getAttribute("data-layer-ids"));
-                      let vis = "visible";
-                      for (const m of allMaps) {
-                        try { vis = m.getLayoutProperty(ids[0], "visibility"); break; } catch(err) {}
-                      }
-                      const newVis = vis === "visible" ? "none" : "visible";
-                      ids.forEach((layerId) => {
-                        allMaps.forEach((m) => {
-                          try { m.setLayoutProperty(layerId, "visibility", newVis); } catch(err) {}
-                        });
-                      });
-                      this.className = newVis === "visible" ? "active" : "";
-                    };
-
-                    layersList.appendChild(link);
-                  });
-                } else {
-                  // flat array fallback
-                  let layers =
-                    message.layers ||
-                    map.getStyle().layers.map((layer) => layer.id);
-
-                  layers.forEach((layerId, index) => {
-                    const link = document.createElement("a");
-                    link.id = layerId;
-                    link.href = "#";
-                    link.textContent = layerId;
-                    link.className = "active";
-
-                    link.onclick = function (e) {
-                      const clickedLayer = this.textContent;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const visibility = map.getLayoutProperty(clickedLayer, "visibility");
-                      const newVis = visibility === "visible" ? "none" : "visible";
-                      allMaps.forEach((m) => {
-                        try { m.setLayoutProperty(clickedLayer, "visibility", newVis); } catch(err) {}
-                      });
-                      this.className = newVis === "visible" ? "active" : "";
-                    };
-
-                    layersList.appendChild(link);
-                  });
-                }
-
-                // Handle collapsible behavior
-                if (message.collapsible) {
-                  const toggleButton = document.createElement("div");
-                  toggleButton.className = "toggle-button";
-
-                  if (message.use_icon) {
-                    layersControl.classList.add("icon-only");
-                    toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
-                  } else {
-                    toggleButton.textContent = "Layers";
-                  }
-
-                  toggleButton.onclick = function () {
-                    layersControl.classList.toggle("open");
-                  };
-                  layersControl.insertBefore(toggleButton, layersList);
-                }
+                const layersControl = new MapglLayersControl(message);
+                map.addControl(layersControl, message.position || "top-left");
+                if (!map.controls) map.controls = [];
+                map.controls.push({ type: "layers", control: layersControl });
               } else if (message.type === "add_globe_minimap") {
                 // Add the globe minimap control if supported
                 if (typeof MapboxGlobeMinimap !== "undefined") {
@@ -2906,13 +2882,19 @@ HTMLWidgets.widget({
                   updateDrawnFeatures();
                 }
               } else if (message.type === "add_features_to_draw") {
-                if (draw) {
+                if (map._mapgl_draw) {
                   if (message.data.clear_existing) {
-                    draw.deleteAll();
+                    map._mapgl_draw.deleteAll();
                   }
-                  addSourceFeaturesToDraw(draw, message.data.source, map);
+                  addSourceFeaturesToDraw(
+                    map._mapgl_draw,
+                    message.data.source,
+                    map,
+                  );
                   // Update the drawn features
-                  updateDrawnFeatures();
+                  if (typeof window.updateDrawnFeatures === "function") {
+                    window.updateDrawnFeatures();
+                  }
                 } else {
                   console.warn("Draw control not initialized");
                 }
@@ -3128,6 +3110,7 @@ HTMLWidgets.widget({
                 );
               } else if (message.type === "clear_controls") {
                 // Handle clear_controls for compare widgets
+                if (!map.controls) map.controls = [];
                 if (!message.controls || message.controls.length === 0) {
                   // Clear all controls
                   map.controls.forEach((controlObj) => {
@@ -3136,6 +3119,10 @@ HTMLWidgets.widget({
                     }
                   });
                   map.controls = [];
+                  // Defensive sweep for any untracked layers controls
+                  (map._mapglLayersControls || [])
+                    .slice()
+                    .forEach((c) => map.removeControl(c));
                 } else {
                   // Clear specific controls
                   const controlsToRemove = Array.isArray(message.controls)
@@ -3151,6 +3138,13 @@ HTMLWidgets.widget({
                     }
                     return true; // Keep in array
                   });
+
+                  if (controlsToRemove.includes("layers")) {
+                    // Defensive sweep for any untracked layers controls
+                    (map._mapglLayersControls || [])
+                      .slice()
+                      .forEach((c) => map.removeControl(c));
+                  }
                 }
               }
             },
@@ -3177,29 +3171,34 @@ HTMLWidgets.widget({
 
           // Send clicked point coordinates to Shiny
           map.on("click", function (e) {
-            // Check if this map's draw control is active and in a drawing mode
+            // Check if this map's draw control is active and in a drawing
+            // mode (provider-neutral: terra controls expose isDrawing())
             let isDrawing = false;
-            if (map._mapgl_draw && map._mapgl_draw.getMode) {
-              const mode = map._mapgl_draw.getMode();
-              isDrawing =
-                mode === "draw_point" ||
-                mode === "draw_line_string" ||
-                mode === "draw_polygon";
-              console.log(
-                `[${mapType}] Draw mode: ${mode}, isDrawing: ${isDrawing}`,
-              );
-            } else {
-              console.log(`[${mapType}] No draw control found`);
+            if (map._mapgl_draw) {
+              if (typeof map._mapgl_draw.isDrawing === "function") {
+                isDrawing = map._mapgl_draw.isDrawing();
+              } else if (map._mapgl_draw.getMode) {
+                const mode = map._mapgl_draw.getMode();
+                isDrawing =
+                  mode !== "simple_select" &&
+                  mode !== "direct_select" &&
+                  mode !== "static";
+              }
             }
 
             // Only process feature clicks if not actively drawing
             if (!isDrawing) {
               const features = map.queryRenderedFeatures(e.point);
-              // Filter out draw layers
+              // Filter out draw layers (mapbox-gl-draw and terra-draw)
               const nonDrawFeatures = features.filter(
                 (feature) =>
                   !feature.layer.id.includes("gl-draw") &&
-                  !feature.source.includes("gl-draw"),
+                  !feature.source.includes("gl-draw") &&
+                  !(
+                    typeof MapglTerraDrawControl !== "undefined" &&
+                    (MapglTerraDrawControl.isTerraDrawId(feature.layer.id) ||
+                      MapglTerraDrawControl.isTerraDrawId(feature.source))
+                  ),
               );
               console.log(
                 `[${mapType}] Features found: ${features.length}, non-draw: ${nonDrawFeatures.length}`,
@@ -3385,6 +3384,19 @@ HTMLWidgets.widget({
           }
 
           function evaluateExpression(expression, properties) {
+            // Delegate to the shared mapgl-expressions evaluator (this
+            // nested copy shadows the module-level one for this code path)
+            if (window._mapglEvaluateExpression) {
+              return window._mapglEvaluateExpression(expression, properties);
+            }
+            if (!window._mapglExprMissingWarned && window.console) {
+              window._mapglExprMissingWarned = true;
+              console.warn(
+                "[mapgl] shared expression evaluator not loaded; conditional " +
+                  "popup/tooltip operators are unavailable.",
+              );
+            }
+
             if (!Array.isArray(expression)) {
               return expression;
             }
@@ -3446,8 +3458,9 @@ HTMLWidgets.widget({
                   value,
                 );
               default:
-                // For literals and other simple values
-                return expression;
+                // Unknown operator in the fallback path: render nothing
+                // rather than leaking the raw array into the popup
+                return "";
             }
           }
 
@@ -3606,11 +3619,21 @@ HTMLWidgets.widget({
                 }
                 map.addSource(source.id, sourceConfig);
               } else if (source.type === "geojson") {
-                map.addSource(source.id, {
+                const sourceOptions = {
                   type: "geojson",
                   data: source.data,
                   generateId: source.generateId !== false,
-                });
+                };
+
+                // Pass through extra options (cluster, clusterRadius,
+                // clusterMaxZoom, clusterProperties, ...) like the main widget
+                for (const [key, value] of Object.entries(source)) {
+                  if (!["id", "type", "data", "generateId"].includes(key)) {
+                    sourceOptions[key] = value;
+                  }
+                }
+
+                map.addSource(source.id, sourceOptions);
               } else if (source.type === "raster") {
                 if (source.url) {
                   map.addSource(source.id, {
@@ -3691,6 +3714,10 @@ HTMLWidgets.widget({
 
                 if (layer.maxzoom) {
                   layerConfig["maxzoom"] = layer.maxzoom;
+                }
+
+                if (layer.metadata) {
+                  layerConfig["metadata"] = layer.metadata;
                 }
 
                 if (layer.before_id) {
@@ -3861,6 +3888,16 @@ HTMLWidgets.widget({
 
           if (mapData.fitBounds) {
             map.fitBounds(mapData.fitBounds.bounds, mapData.fitBounds.options);
+            map._mapglInitialFit = mapData.fitBounds;
+          }
+          if (
+            mapData.flyTo ||
+            mapData.easeTo ||
+            mapData.setCenter ||
+            mapData.setZoom ||
+            mapData.jumpTo
+          ) {
+            map._mapglInitialFit = null;
           }
           if (mapData.flyTo) {
             map.flyTo(mapData.flyTo);
@@ -3874,6 +3911,29 @@ HTMLWidgets.widget({
           if (mapData.setZoom) {
             map.setZoom(mapData.setZoom);
           }
+
+          // Apply set_filter() / set_layout_property() / set_paint_property()
+          const _setFilter = function (map, layerId, filter) {
+            map.setFilter(layerId, filter);
+            _mapglCompareLayerState(map).filters[layerId] = filter;
+          };
+          [
+            [mapData.setFilter, _setFilter, "filter"],
+            [mapData.setLayoutProperty, _mapglCompareSetLayoutProperty],
+            [mapData.setPaintProperty, _mapglCompareSetPaintProperty],
+          ].forEach(function ([calls, apply, valueKey]) {
+            (calls || []).forEach(function (call) {
+              if (!map.getLayer(call.layer)) {
+                console.warn(`mapgl: layer "${call.layer}" not found.`);
+                return;
+              }
+              if (valueKey) {
+                apply(map, call.layer, call[valueKey]);
+              } else {
+                apply(map, call.layer, call.name, call.value);
+              }
+            });
+          });
 
           // Apply moveLayer operations if provided
           if (mapData.moveLayer) {
@@ -4113,6 +4173,42 @@ HTMLWidgets.widget({
             map.controls.push({ type: "navigation", control: nav });
           }
 
+          // Add custom controls if any are defined
+          if (mapData.custom_controls) {
+            Object.keys(mapData.custom_controls).forEach(function (key) {
+              const controlOptions = mapData.custom_controls[key];
+              const customControlContainer = document.createElement("div");
+
+              if (controlOptions.className) {
+                customControlContainer.className = controlOptions.className;
+              } else {
+                customControlContainer.className =
+                  "maplibregl-ctrl maplibregl-ctrl-group";
+              }
+
+              customControlContainer.innerHTML = controlOptions.html;
+
+              const customControl = {
+                onAdd: function () {
+                  return customControlContainer;
+                },
+                onRemove: function () {
+                  if (customControlContainer.parentNode) {
+                    customControlContainer.parentNode.removeChild(
+                      customControlContainer,
+                    );
+                  }
+                },
+              };
+
+              map.addControl(
+                customControl,
+                controlOptions.position || "top-right",
+              );
+              map.controls.push({ type: key, control: customControl });
+            });
+          }
+
           // Add geolocate control if enabled
           if (mapData.geolocate_control) {
             const geolocate = new maplibregl.GeolocateControl({
@@ -4136,7 +4232,35 @@ HTMLWidgets.widget({
           }
 
           // Add draw control if enabled
-          if (mapData.draw_control && mapData.draw_control.enabled) {
+          if (
+            mapData.draw_control &&
+            mapData.draw_control.enabled &&
+            mapData.draw_control.provider === "terra-draw"
+          ) {
+            // Guard: applyMapModifications re-runs after a style change, and
+            // the terra control survives style changes on its own
+            if (!map._mapgl_draw) {
+              const terraDrawCtl = new MapglTerraDrawControl(
+                Object.assign({}, mapData.draw_control, {
+                  gl: "maplibre",
+                  sync: {
+                    inputId: el.id,
+                    syncUrl: mapData.sync_url,
+                    mapglId: mapData.mapgl_id,
+                  },
+                  getSourceData: function (sourceId) {
+                    const source = map.getSource(sourceId);
+                    return source && source._data ? source._data : null;
+                  },
+                  featuresQueue: mapData.draw_features_queue,
+                }),
+              );
+              map.addControl(terraDrawCtl, mapData.draw_control.position);
+              if (!map.controls) map.controls = [];
+              map.controls.push({ type: "draw", control: terraDrawCtl });
+              map._mapgl_draw = terraDrawCtl;
+            }
+          } else if (mapData.draw_control && mapData.draw_control.enabled) {
             MapboxDraw.constants.classes.CONTROL_BASE = "maplibregl-ctrl";
             MapboxDraw.constants.classes.CONTROL_PREFIX = "maplibregl-ctrl-";
             MapboxDraw.constants.classes.CONTROL_GROUP =
@@ -4669,209 +4793,29 @@ HTMLWidgets.widget({
           }
 
           // Add the layers control if provided
-          if (mapData.layers_control) {
-            const layersControl = document.createElement("div");
-            layersControl.id = mapData.layers_control.control_id;
-
-            // Handle use_icon parameter
-            let className = mapData.layers_control.collapsible
-              ? "layers-control collapsible"
-              : "layers-control";
-
-            layersControl.className = className;
-            layersControl.style.position = "absolute";
-
-            // Set the position correctly - fix position bug by using correct CSS positioning
-            const position = mapData.layers_control.position || "top-left";
-            if (position === "top-left") {
-              layersControl.style.top =
-                (mapData.layers_control.margin_top || 10) + "px";
-              layersControl.style.left =
-                (mapData.layers_control.margin_left || 10) + "px";
-            } else if (position === "top-right") {
-              layersControl.style.top =
-                (mapData.layers_control.margin_top || 10) + "px";
-              layersControl.style.right =
-                (mapData.layers_control.margin_right || 10) + "px";
-            } else if (position === "bottom-left") {
-              layersControl.style.bottom =
-                (mapData.layers_control.margin_bottom || 30) + "px";
-              layersControl.style.left =
-                (mapData.layers_control.margin_left || 10) + "px";
-            } else if (position === "bottom-right") {
-              layersControl.style.bottom =
-                (mapData.layers_control.margin_bottom || 40) + "px";
-              layersControl.style.right =
-                (mapData.layers_control.margin_right || 10) + "px";
-            }
-
-            el.appendChild(layersControl);
-
-            const layersList = document.createElement("div");
-            layersList.className = "layers-list";
-            layersControl.appendChild(layersList);
-
-            // Fetch layers to be included in the control
-            let layers =
-              mapData.layers_control.layers ||
-              map.getStyle().layers.map((layer) => layer.id);
-            let layersConfig = mapData.layers_control.layers_config;
-            const getLayerControlVisibility = (targetMap, layerId) => {
-              if (
-                window.MapGLFlowmapPlugin &&
-                window.MapGLFlowmapPlugin.hasLayer(targetMap, layerId)
-              ) {
-                return window.MapGLFlowmapPlugin.getVisibility(
-                  targetMap,
-                  layerId,
-                );
-              }
-              if (targetMap.getLayer(layerId)) {
-                return (
-                  targetMap.getLayoutProperty(layerId, "visibility") ||
-                  "visible"
-                );
-              }
-              return "visible";
-            };
-            const setLayerControlVisibility = (
-              targetMap,
-              layerId,
-              visibility,
-            ) => {
-              if (
-                window.MapGLFlowmapPlugin &&
-                window.MapGLFlowmapPlugin.setVisibility(
-                  targetMap,
-                  layerId,
-                  visibility,
-                )
-              ) {
-                return;
-              }
-              if (targetMap.getLayer(layerId)) {
-                targetMap.setLayoutProperty(layerId, "visibility", visibility);
-              }
-            };
-
-            // If we have a layers_config, use that; otherwise fall back to original behavior
-            if (layersConfig && Array.isArray(layersConfig)) {
-              layersConfig.forEach((config, index) => {
-                const link = document.createElement("a");
-                // Ensure config.ids is always an array
-                const layerIds = Array.isArray(config.ids)
-                  ? config.ids
-                  : [config.ids];
-                link.id = layerIds.join("-");
-                link.href = "#";
-                link.textContent = config.label;
-                link.setAttribute("data-layer-ids", JSON.stringify(layerIds));
-                link.setAttribute("data-layer-type", config.type);
-
-                // Check if the first layer's visibility is set to "none" initially.
-                // In a compare widget each side only has its own layers, but a single
-                // layers_control can reference ids from both sides (e.g. "sp" and "env")
-                // so the toggle can fire on both maps. If the first id isn't present on
-                // this map, fall back to "visible". We pre-check with getLayer() because
-                // getLayoutProperty() on a missing layer fires an error event (not a
-                // throw), which try/catch cannot silence.
-                const firstLayerId = layerIds[0];
-                const initialVisibility = getLayerControlVisibility(
-                  map,
-                  firstLayerId,
-                );
-                link.className = initialVisibility === "none" ? "" : "active";
-
-                // Show or hide layer(s) when the toggle is clicked
-                // toggle on BOTH maps in the compare widget
-                link.onclick = function (e) {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  const layerIds = JSON.parse(
-                    this.getAttribute("data-layer-ids"),
-                  );
-                  // read visibility from whichever map actually has this layer
-                  // (pre-check with getLayer() — getLayoutProperty fires an error
-                  // event on missing layers and try/catch cannot silence it)
-                  const firstLayerId = layerIds[0];
-                  const visibility = getLayerControlVisibility(
-                    map,
-                    firstLayerId,
-                  );
-
-                  const newVis = visibility === "visible" ? "none" : "visible";
-                  const allMaps = compareMaps;
-                  layerIds.forEach((layerId) => {
-                    allMaps.forEach((m) => {
-                      setLayerControlVisibility(m, layerId, newVis);
-                    });
-                  });
-                  this.className = newVis === "visible" ? "active" : "";
-                };
-
-                layersList.appendChild(link);
-              });
-            } else {
-              // Fallback to original behavior for simple layer arrays
-              layers.forEach((layerId, index) => {
-                const link = document.createElement("a");
-                link.id = layerId;
-                link.href = "#";
-                link.textContent = layerId;
-                link.className = "active";
-
-                // Show or hide layer when the toggle is clicked
-                // toggle on BOTH maps in the compare widget
-                link.onclick = function (e) {
-                  const clickedLayer = this.textContent;
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  const visibility = getLayerControlVisibility(
-                    map,
-                    clickedLayer,
-                  );
-
-                  // toggle on BOTH maps in the compare widget
-                  const newVis = visibility === "visible" ? "none" : "visible";
-                  compareMaps.forEach((m) => {
-                    setLayerControlVisibility(m, clickedLayer, newVis);
-                  });
-                  this.className = newVis === "visible" ? "active" : "";
-                };
-
-                layersList.appendChild(link);
-              });
-            }
-
-            // Handle collapsible behavior
-            if (mapData.layers_control.collapsible) {
-              const toggleButton = document.createElement("div");
-              toggleButton.className = "toggle-button";
-
-              if (mapData.layers_control.use_icon) {
-                // Add icon-only class to the control for compact styling
-                layersControl.classList.add("icon-only");
-
-                // More GIS-like layers stack icon
-                toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                    <polyline points="2 17 12 22 22 17"></polyline>
-                                    <polyline points="2 12 12 17 22 12"></polyline>
-                                </svg>`;
-                toggleButton.style.display = "flex";
-                toggleButton.style.alignItems = "center";
-                toggleButton.style.justifyContent = "center";
-              } else {
-                toggleButton.textContent = "Layers";
-              }
-
-              toggleButton.onclick = function () {
-                layersControl.classList.toggle("open");
-              };
-              layersControl.insertBefore(toggleButton, layersList);
-            }
+          // Guard against re-adding when applyMapModifications re-runs after
+          // a style change: track which initial controls were already
+          // processed, so one removed via clear_controls stays removed
+          map._mapglProcessedLayersControls =
+            map._mapglProcessedLayersControls || {};
+          const layersControlProcessed =
+            mapData.layers_control &&
+            map._mapglProcessedLayersControls[
+              mapData.layers_control.control_id
+            ];
+          if (mapData.layers_control && !layersControlProcessed) {
+            map._mapglProcessedLayersControls[
+              mapData.layers_control.control_id
+            ] = true;
+            const layersControl = new MapglLayersControl(
+              mapData.layers_control,
+            );
+            map.addControl(
+              layersControl,
+              mapData.layers_control.position || "top-left",
+            );
+            if (!map.controls) map.controls = [];
+            map.controls.push({ type: "layers", control: layersControl });
           }
 
           // Set projection if provided (after all other setup is complete)

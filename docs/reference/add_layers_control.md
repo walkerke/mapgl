@@ -1,6 +1,12 @@
 # Add a layers control to the map
 
-Add a layers control to the map
+The layers control is a native map control: it stacks alongside other
+controls (navigation, fullscreen, etc.) in its corner rather than
+overlapping them, following the order in which controls are added to the
+map. Its default appearance matches the other map controls (white
+background, dark monochrome items). To restore the blue active style
+from earlier versions of mapgl, set `active_color = "#4a90e2"` and
+`active_text_color = "#ffffff"`.
 
 ## Usage
 
@@ -19,7 +25,8 @@ add_layers_control(
   margin_top = NULL,
   margin_right = NULL,
   margin_bottom = NULL,
-  margin_left = NULL
+  margin_left = NULL,
+  mode = c("multiple", "single")
 )
 ```
 
@@ -73,21 +80,35 @@ add_layers_control(
 
 - margin_top:
 
-  Custom top margin in pixels, allowing for fine control over control
-  positioning to avoid overlaps. Default is NULL (uses standard
-  positioning).
+  Optional top margin in pixels, applied to the control within the
+  native control stack. Rarely needed now that the control no longer
+  overlaps other controls; NULL (the default) uses standard control
+  spacing.
 
 - margin_right:
 
-  Custom right margin in pixels. Default is NULL.
+  Optional right margin in pixels. Default is NULL.
 
 - margin_bottom:
 
-  Custom bottom margin in pixels. Default is NULL.
+  Optional bottom margin in pixels. Default is NULL.
 
 - margin_left:
 
-  Custom left margin in pixels. Default is NULL.
+  Optional left margin in pixels. Default is NULL.
+
+- mode:
+
+  How many entries can be visible at once. In `"multiple"` mode (the
+  default), entries toggle independently. In `"single"` mode, activating
+  an entry turns the others off — useful for flipping through
+  alternative analytical layers or raster imagery where only one should
+  show at a time. Clicking the active entry does nothing. When the
+  control is created in `"single"` mode with several entries visible,
+  the first visible entry stays on and the rest are turned off. To
+  combine both behaviors on one map, add two controls: one
+  `"single"`-mode control for the alternatives and one `"multiple"`-mode
+  control for independent overlays.
 
 ## Value
 

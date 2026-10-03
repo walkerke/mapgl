@@ -87,8 +87,12 @@ Functions to add interactive controls to your map
   : Add a layers control to the map
 - [`add_draw_control()`](https://walker-data.com/mapgl/reference/add_draw_control.md)
   : Add a draw control to a map
+- [`add_terradraw_control()`](https://walker-data.com/mapgl/reference/add_terradraw_control.md)
+  : Add a Terra Draw control to a map
 - [`draw_attribute()`](https://walker-data.com/mapgl/reference/draw_attribute.md)
   : Define an editable draw attribute
+- [`terradraw_options()`](https://walker-data.com/mapgl/reference/terradraw_options.md)
+  : Configure the Terra Draw provider for the draw control
 - [`add_geocoder_control()`](https://walker-data.com/mapgl/reference/add_geocoder_control.md)
   : Add a geocoder control to a map
 - [`add_reset_control()`](https://walker-data.com/mapgl/reference/add_reset_control.md)
@@ -177,6 +181,13 @@ Functions to help with map styling and expressions
   Create a concatenation expression
 - [`number_format()`](https://walker-data.com/mapgl/reference/number_format.md)
   : Create a number formatting expression
+- [`if_else_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+  [`case_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+  [`coalesce_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+  [`has_column()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+  [`is_blank()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+  [`html_escape_expr()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
+  : Conditional expressions for popups, tooltips, and styling
 - [`tooltip_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
   [`popup_style()`](https://walker-data.com/mapgl/reference/tooltip_style.md)
   : Style a tooltip or popup

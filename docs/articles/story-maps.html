@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -263,7 +263,7 @@ a real estate firm might use a story map to market a property.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/walkerke/mapboxapi" class="external-link">mapboxapi</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">property</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">97.71326</span>, <span class="fl">30.402550</span><span class="op">)</span></span>
-<span><span class="va">isochrone</span> <span class="op">&lt;-</span> <span class="fu">mb_isochrone</span><span class="op">(</span><span class="va">property</span>, profile <span class="op">=</span> <span class="st">"driving"</span>, time <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
+<span><span class="va">isochrone</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://walker-data.com/mapboxapi/reference/mb_isochrone.html" class="external-link">mb_isochrone</a></span><span class="op">(</span><span class="va">property</span>, profile <span class="op">=</span> <span class="st">"driving"</span>, time <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/fluidPage.html" class="external-link">fluidPage</a></span><span class="op">(</span></span>
 <span>  <span class="va">tags</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span>href <span class="op">=</span> <span class="st">"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&amp;display=swap"</span>, rel<span class="op">=</span><span class="st">"stylesheet"</span><span class="op">)</span>,</span>
@@ -275,7 +275,7 @@ a real estate firm might use a story map to market a property.</p>
 <span>        title <span class="op">=</span> <span class="st">"MULTIFAMILY INVESTMENT OPPORTUNITY"</span>,</span>
 <span>        content <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>          <span class="fu"><a href="https://rstudio.github.io/htmltools/reference/builder.html" class="external-link">p</a></span><span class="op">(</span><span class="st">"New Class A Apartments in Austin, Texas"</span><span class="op">)</span>,</span>
-<span>          <span class="fu"><a href="https://rstudio.github.io/htmltools/reference/builder.html" class="external-link">img</a></span><span class="op">(</span>src <span class="op">=</span> <span class="st">"apartment.png"</span>, width <span class="op">=</span> <span class="st">"300px"</span><span class="op">)</span></span>
+<span>          <span class="fu"><a href="https://rstudio.github.io/htmltools/reference/builder.html" class="external-link">img</a></span><span class="op">(</span>src <span class="op">=</span> <span class="st">"https://www.austinkayaktours.com/wp-content/uploads/sites/4074/2020/04/Austin-Skyline-Tour-image-1.jpg?w=700&amp;h=700&amp;zoom=2"</span>, width <span class="op">=</span> <span class="st">"300px"</span><span class="op">)</span></span>
 <span>        <span class="op">)</span>,</span>
 <span>        position <span class="op">=</span> <span class="st">"center"</span></span>
 <span>      <span class="op">)</span>,</span>
@@ -536,7 +536,7 @@ please do reach out if you are interested.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

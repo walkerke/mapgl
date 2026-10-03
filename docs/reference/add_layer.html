@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,8 @@
 <span>  before_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tooltip_style <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  popup_style <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  popup_style <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  metadata <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -136,6 +137,10 @@
 <dt id="arg-tooltip-style-popup-style">tooltip_style, popup_style<a class="anchor" aria-label="anchor" href="#arg-tooltip-style-popup-style"></a></dt>
 <dd><p>Optional appearance for the tooltip/popup: a preset string (<code>"light"</code> or <code>"dark"</code>) or a <code><a href="tooltip_style.html">tooltip_style()</a></code> object. When omitted, the native (unstyled) appearance is kept.</p></dd>
 
+
+<dt id="arg-metadata">metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
+<dd><p>An optional named list stored as the layer's <code>metadata</code> style property. It is not rendered, but is available to JavaScript through <code>map.getLayer(id).metadata</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -186,7 +191,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

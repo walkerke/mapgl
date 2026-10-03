@@ -157,6 +157,45 @@ mapboxgl(style = mapbox_style("dark"),
   )
 ```
 
+With more points, clustering keeps the map readable. Setting
+`donut_column` in
+[`cluster_options()`](https://walker-data.com/mapgl/reference/cluster_options.md)
+draws each cluster as a donut chart of the categories inside it, reusing
+the colors from `circle_color`:
+
+``` r
+
+many_points <- st_sf(
+  category = sample(categories, 3000, replace = TRUE,
+                    prob = c(0.4, 0.3, 0.2, 0.1)),
+  geometry = st_sample(st_as_sfc(bbox), 3000)
+)
+```
+
+    ## Warning in st_poly_sample(x, size = size, ..., type = type, by_polygon =
+    ## by_polygon, : coordinate ranges not computed along great circles; install
+    ## package lwgeom to get rid of this warning
+
+``` r
+
+mapboxgl(style = mapbox_style("dark"),
+         bounds = many_points) |>
+  add_circle_layer(
+    id = "poi-clusters",
+    source = many_points,
+    circle_color = match_expr(
+      "category",
+      values = c("music", "bar", "theatre", "bicycle"),
+      stops = c("#1f78b4", "#33a02c", "#e31a1c", "#ff7f00")
+    ),
+    circle_radius = 6,
+    cluster_options = cluster_options(
+      donut_column = "category",
+      circle_stroke_color = "#222222"
+    )
+  )
+```
+
 ### Symbol layers
 
 Symbol layers offer a wide range of arguments for customizing icon and

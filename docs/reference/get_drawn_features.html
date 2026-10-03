@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,6 +72,9 @@ available, a 0-row sf object with an <code>id</code> column is returned.</p>
     <p>In non-Shiny sessions, retrieval requires a map that was built by piping the
 original widget object through <code><a href="add_draw_control.html">add_draw_control()</a></code>. Non-Shiny proxy updates
 and compare widgets are not yet supported.</p>
+<p>With <code>add_draw_control(provider = "terra-draw")</code>, features include a <code>mode</code>
+column recording which drawing tool created each feature (e.g. <code>"polygon"</code>,
+<code>"circle"</code>, <code>"freehand"</code>).</p>
     </div>
 
     <div class="section level2">
@@ -118,7 +121,7 @@ and compare widgets are not yet supported.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

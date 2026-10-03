@@ -21,6 +21,10 @@ Useful links:
 
 **Maintainer**: Kyle Walker <kyle@walker-data.com>
 
+Authors:
+
+- Kyle Walker <kyle@walker-data.com>
+
 Other contributors:
 
 - Egor Kotov <kotov.egor@gmail.com> \[contributor\]
