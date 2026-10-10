@@ -196,6 +196,16 @@ add_navigation_control <- function(
 #'        off. To combine both behaviors on one map, add two controls: one
 #'        `"single"`-mode control for the alternatives and one
 #'        `"multiple"`-mode control for independent overlays.
+#' @details
+#' JavaScript-managed layers outside the Mapbox/MapLibre style can participate
+#' in this control by registering a visibility provider with
+#' `MapglLayersControl.registerLayerVisibilityProvider(map, provider)`. The
+#' provider is an object with `hasLayer(map, layerId)`,
+#' `getVisibility(map, layerId)`, and
+#' `setVisibility(map, layerId, visibility)` methods. `getVisibility()` returns
+#' `"visible"` or `"none"`; `setVisibility()` receives one of those values.
+#' Registration returns a function that unregisters the provider. This API is
+#' intended for JavaScript integrations such as Deck.gl overlays.
 #'
 #' @return The modified map object with the layers control added.
 #' @export

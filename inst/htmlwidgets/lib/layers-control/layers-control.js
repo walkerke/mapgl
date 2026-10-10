@@ -25,6 +25,48 @@
     this._links = [];
   }
 
+  // Register visibility handlers for layers that are managed outside the GL
+  // style (for example, Deck.gl overlays). A provider implements:
+  //   hasLayer(map, layerId) -> boolean
+  //   getVisibility(map, layerId) -> "visible" | "none"
+  //   setVisibility(map, layerId, visibility)
+  // The returned function unregisters the provider.
+  MapglLayersControl.registerLayerVisibilityProvider = function (map, provider) {
+    if (
+      !map ||
+      !provider ||
+      typeof provider.hasLayer !== "function" ||
+      typeof provider.getVisibility !== "function" ||
+      typeof provider.setVisibility !== "function"
+    ) {
+      throw new TypeError(
+        "A layer visibility provider must implement hasLayer(), getVisibility(), and setVisibility()"
+      );
+    }
+
+    map._mapglLayerVisibilityProviders = map._mapglLayerVisibilityProviders || [];
+    if (!map._mapglLayerVisibilityProviders.includes(provider)) {
+      map._mapglLayerVisibilityProviders.push(provider);
+    }
+
+    // A provider can be registered after the control is mounted. Refresh its
+    // active states so controls reflect the provider's current visibility.
+    (map._mapglLayersControls || []).forEach(function (control) {
+      control.syncVisibilityStates();
+    });
+
+    return function () {
+      var providers = map._mapglLayerVisibilityProviders || [];
+      var index = providers.indexOf(provider);
+      if (index !== -1) {
+        providers.splice(index, 1);
+      }
+      (map._mapglLayersControls || []).forEach(function (control) {
+        control.syncVisibilityStates(false);
+      });
+    };
+  };
+
   MapglLayersControl.prototype.onAdd = function (map) {
     var config = this._config;
     var self = this;
@@ -145,7 +187,7 @@
 
   // Re-derive each entry's active state from actual layer visibility (used
   // after style reloads, when visibility is restored from saved state)
-  MapglLayersControl.prototype.syncVisibilityStates = function () {
+  MapglLayersControl.prototype.syncVisibilityStates = function (enforceSingle) {
     var self = this;
     this._links.forEach(function (entry) {
       var visibility = self._getVisibility(entry.ids[0]);
@@ -157,6 +199,29 @@
       entry.ids.forEach(function (id) {
         self._setLegendDisplay(id, active);
       });
+    });
+    if (enforceSingle !== false) {
+      this._enforceSingleVisibility();
+    }
+  };
+
+  // Keep late-registered providers consistent with single mode. Entries that
+  // were unknown when the control mounted could not be switched off then.
+  MapglLayersControl.prototype._enforceSingleVisibility = function () {
+    if (!this._single) {
+      return;
+    }
+    var self = this;
+    var firstActive = false;
+    this._links.forEach(function (entry) {
+      if (entry.el.className !== "active") {
+        return;
+      }
+      if (firstActive) {
+        self._setEntryState(entry, false);
+      } else {
+        firstActive = true;
+      }
     });
   };
 
@@ -259,6 +324,12 @@
     ) {
       return window.MapGLFlowmapPlugin.getVisibility(map, layerId);
     }
+    var providers = map._mapglLayerVisibilityProviders || [];
+    for (var i = 0; i < providers.length; i++) {
+      if (providers[i].hasLayer(map, layerId)) {
+        return providers[i].getVisibility(map, layerId);
+      }
+    }
     if (map.getLayer(layerId)) {
       return map.getLayoutProperty(layerId, "visibility") || "visible";
     }
@@ -272,6 +343,13 @@
       window.MapGLFlowmapPlugin.setVisibility(map, layerId, visibility)
     ) {
       return;
+    }
+    var providers = map._mapglLayerVisibilityProviders || [];
+    for (var i = 0; i < providers.length; i++) {
+      if (providers[i].hasLayer(map, layerId)) {
+        providers[i].setVisibility(map, layerId, visibility);
+        return;
+      }
     }
     if (map.getLayer(layerId)) {
       map.setLayoutProperty(layerId, "visibility", visibility);

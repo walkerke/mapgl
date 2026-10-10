@@ -84,6 +84,20 @@ test_that("mode is validated and carried in payloads", {
   expect_match(js, "_setEntryState", fixed = TRUE)
 })
 
+test_that("layers control exposes the JavaScript visibility provider API", {
+  js <- paste(
+    readLines(system.file(
+      "htmlwidgets/lib/layers-control/layers-control.js",
+      package = "mapgl"
+    )),
+    collapse = "\n"
+  )
+
+  expect_match(js, "registerLayerVisibilityProvider", fixed = TRUE)
+  expect_match(js, "_mapglLayerVisibilityProviders", fixed = TRUE)
+  expect_match(js, "_enforceSingleVisibility", fixed = TRUE)
+})
+
 test_that("initial payload shape is preserved across the layers input forms", {
   base_map <- maplibre() |>
     add_fill_layer(id = "l1", source = "src") |>
