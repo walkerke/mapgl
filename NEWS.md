@@ -1,3 +1,9 @@
+# mapgl (development version)
+
+## Minor improvements and maintenance
+
+* `add_layers_control()` can delegate visibility to registered JavaScript providers, allowing integrations such as Deck.gl overlays to participate without patching mapgl's control internals.
+
 # mapgl 0.5.2
 
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.

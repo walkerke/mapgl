@@ -81,6 +81,17 @@ background, dark monochrome items). To restore the blue active style from
 earlier versions of mapgl, set \code{active_color = "#4a90e2"} and
 \code{active_text_color = "#ffffff"}.
 }
+\details{
+JavaScript-managed layers outside the Mapbox/MapLibre style can participate
+in this control by registering a visibility provider with
+\code{MapglLayersControl.registerLayerVisibilityProvider(map, provider)}. The
+provider is an object with \code{hasLayer(map, layerId)},
+\code{getVisibility(map, layerId)}, and
+\code{setVisibility(map, layerId, visibility)} methods. \code{getVisibility()} returns
+\code{"visible"} or \code{"none"}; \code{setVisibility()} receives one of those values.
+Registration returns a function that unregisters the provider. This API is
+intended for JavaScript integrations such as Deck.gl overlays.
+}
 \examples{
 \dontrun{
 library(tigris)
