@@ -980,8 +980,10 @@ window.MapGLFlowmapPlugin = (function () {
     const locations = customLocations !== undefined ? customLocations : dataTarget._locationsRows;
     const flows = customFlows !== undefined ? customFlows : dataTarget._flowsRows;
     const isPickable = customPickable !== undefined ? customPickable : true;
-    // When custom flows are provided we've already done the location filtering externally
-    const skipLocationFilter = customFlows !== undefined;
+    // redrawFlowmaps supplies cached rows as custom flows even when it has not
+    // filtered them. Skip FlowmapGL's location filter only when clickToFilter
+    // has already filtered the flows externally.
+    const skipLocationFilter = customFlows !== undefined && settings.clickToFilter;
 
     const layerProps = {
       id: config.id,
