@@ -950,6 +950,18 @@ window.MapGLFlowmapPlugin = (function () {
     }
   }
 
+  function flowmapDataComparator(nextData, previousData) {
+    // makeLayer creates a fresh wrapper object on every redraw, including
+    // filter-only updates. Keep FlowmapLayer's data provider and selector
+    // memoization when the underlying row arrays have not changed.
+    return Boolean(
+      nextData &&
+      previousData &&
+      nextData.locations === previousData.locations &&
+      nextData.flows === previousData.flows
+    );
+  }
+
   function makeLayer(config, HTMLWidgets, map, customLocations, customFlows, customPickable) {
     const settings = config.settings || {};
 
@@ -977,6 +989,7 @@ window.MapGLFlowmapPlugin = (function () {
         locations: locations,
         flows: flows,
       },
+      dataComparator: flowmapDataComparator,
       beforeId: config.beforeId || undefined,
       slot: config.slot || undefined,
       pickable: isPickable,
