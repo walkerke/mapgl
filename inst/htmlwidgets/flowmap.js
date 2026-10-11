@@ -925,10 +925,9 @@ window.MapGLFlowmapPlugin = (function () {
           const clickToFilterEnabled = pickedLayerId &&
             (map._flowmapsConfig || []).some(function (config) {
               const settings = config.settings || {};
-              const layerPrefix = String(config.id) + "-";
+              const id = String(config.id);
               return settings.clickToFilter !== false &&
-                (pickedLayerId === config.id + "-circles" ||
-                  pickedLayerId.indexOf(layerPrefix) === 0);
+                (pickedLayerId === id || pickedLayerId === id + "-circles");
             });
           if (clickToFilterEnabled && typeof event.preventDefault === "function") {
             event.preventDefault();
@@ -1032,6 +1031,9 @@ window.MapGLFlowmapPlugin = (function () {
     }
     let copied = overlayClusterLevelsCache.get(clusterLevels);
     if (!copied) {
+      // Context and spotlight FlowmapLayers keep separate cluster state. Give
+      // each overlay separate mutable node records, then reuse this copy for
+      // later redraws of the same cluster-level result.
       copied = clusterLevels.map(function (level) {
         return Object.assign({}, level, {
           nodes: Array.isArray(level.nodes)
@@ -1273,6 +1275,10 @@ window.MapGLFlowmapPlugin = (function () {
     const sourceLayer = (map._mapglFlowmapLayers || []).find(function (layer) {
       return layer._mapglCanonicalId === flowmapId && layer.state;
     });
+    // FlowmapGL 9.4.0 does not expose these provider/cluster accessors as a
+    // public FlowmapLayer API. Keep this compatibility boundary in one place:
+    // the spotlight overlay needs the canonical layer's cluster membership
+    // and flow ID accessors.
     const provider = sourceLayer && sourceLayer.state.dataProvider;
     const accessors = sourceLayer && sourceLayer.state.accessors;
     if (!provider || !accessors) {
@@ -1302,6 +1308,10 @@ window.MapGLFlowmapPlugin = (function () {
       return [];
     }
     return Array.isArray(locationIds) ? locationIds : [locationIds];
+  }
+
+  function locationIdKey(locationId) {
+    return locationId == null ? null : String(locationId);
   }
 
   function init(map, x, el, HTMLWidgets) {
@@ -1430,10 +1440,15 @@ window.MapGLFlowmapPlugin = (function () {
       let baseFlows = config.data._flowsRows;
 
       if (hoverActive) {
-        const hoveredLocationSet = new Set(locationContext.locationIds);
+        const hoveredLocationSet = new Set(
+          locationContext.locationIds.map(locationIdKey)
+        );
         const highlightFlows = baseFlows.filter(function (flow) {
-          return hoveredLocationSet.has(locationContext.getFlowOriginId(flow)) ||
-            hoveredLocationSet.has(locationContext.getFlowDestId(flow));
+          return hoveredLocationSet.has(
+            locationIdKey(locationContext.getFlowOriginId(flow))
+          ) || hoveredLocationSet.has(
+            locationIdKey(locationContext.getFlowDestId(flow))
+          );
         });
         const spotlightMode = settings.spotlightMode || "spotlight";
         const spotlightGray = spotlightMode === "grayscale";
@@ -1446,7 +1461,9 @@ window.MapGLFlowmapPlugin = (function () {
         // configured opacity and mute the context through its flow colors.
         const layer = makeLayer(config, HTMLWidgetsInstance, map, baseLocations, baseFlows);
         const baseLayer = cloneFlowmapLayer(layer, {
-          id: id + "-dim",
+          // Keep the canonical Deck ID so it reuses the existing FlowmapLayer
+          // state and data provider while only its style changes.
+          id: id,
           opacity: settings.opacity == null ? 1.0 : settings.opacity,
           colorScheme: contextColorScheme,
           pickable: true  // Keep pickable so hover events pass through to handlers
@@ -1512,9 +1529,9 @@ window.MapGLFlowmapPlugin = (function () {
     }
 
     // FlowmapBlue highlights the hovered location ID itself. Recreate
-    // Flowmap.gl's location ring on the dim context layer after Deck has
-    // installed the new layer instances; a cluster therefore gets one ring
-    // around its aggregate circle rather than rings on all member locations.
+    // Flowmap.gl's location ring on the context layer after Deck has installed
+    // the new layer instances; a cluster gets one ring around its aggregate
+    // circle rather than rings on all member locations.
     map._flowmapsConfig.forEach(function (config) {
       const id = config.id;
       const hovered = map._flowmapHoveredLocation && map._flowmapHoveredLocation[id];
@@ -1532,14 +1549,15 @@ window.MapGLFlowmapPlugin = (function () {
 
       requestAnimationFrame(function () {
         const activeHover = map._flowmapHoveredLocation && map._flowmapHoveredLocation[id];
-        const dimLayer = (map._mapglFlowmapLayers || []).find(function (layer) {
-          return layer.id === id + "-dim";
+        const contextLayer = (map._mapglFlowmapLayers || []).find(function (layer) {
+          return layer.id === id;
         });
         if (!activeHover || String(activeHover.id) !== String(hovered.id) ||
-            !dimLayer || !dimLayer.state || typeof dimLayer.setState !== "function") {
+            !contextLayer || !contextLayer.state || typeof contextLayer.setState !== "function") {
           return;
         }
-        dimLayer.setState({
+        // FlowmapGL 9.4.0's location-ring state uses this internal shape.
+        contextLayer.setState({
           highlightedObject: {
             type: "location",
             coords: [lon, lat],
@@ -1612,11 +1630,16 @@ window.MapGLFlowmapPlugin = (function () {
     if (objectType === "location") {
       const locId = clickedObject.id;
       const selected = map._flowmapSelectedLocations[id] || [];
-      const index = selected.indexOf(locId);
+      const locIdKey = locationIdKey(locId);
+      const index = selected.findIndex(function (selectedId) {
+        return locationIdKey(selectedId) === locIdKey;
+      });
       let newSelected;
       if (index > -1) {
         // Deselect
-        newSelected = selected.filter(function(s) { return s !== locId; });
+        newSelected = selected.filter(function (selectedId) {
+          return locationIdKey(selectedId) !== locIdKey;
+        });
       } else if (
         (event && event.shiftKey) ||
         (event && event.srcEvent && (
@@ -1645,7 +1668,7 @@ window.MapGLFlowmapPlugin = (function () {
   }
 
   function hasLayer(map, id) {
-    // First check canonical config store (works even when hover replaces the layer id)
+    // First check canonical config store; spotlight overlays use suffixed IDs.
     if (map && map._flowmapsConfig) {
       return map._flowmapsConfig.some(function (c) { return c.id === id; });
     }
