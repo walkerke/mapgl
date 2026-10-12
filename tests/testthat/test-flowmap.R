@@ -190,9 +190,39 @@ test_that("flowmap click and node hover interactions work in a browser", {
     timeout = 5
   ))
 
-  # Record the picking arguments for one explicit map move at an empty pixel.
+  # A standalone flow hover must fall back to an unrestricted pick so the
+  # default flow tooltip remains available, while the circle-first pick keeps
+  # spotlighting limited to locations.
+  flow_hover_result <- js_value(
+    "var m=document.querySelector('.html-widget').map, d=m._deckgl;
+     var a=m.project([-74.01,40.75]), b=m.project([-73.98,40.75]), p=null;
+     for(var i=1;i<20;i++){
+       var t=i/20, candidate={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+       var hit=d.pickObject({x:candidate.x,y:candidate.y,radius:2});
+       if(hit && hit.object && hit.object.type==='flow'){p=candidate;break;}
+     }
+     if(!p)return {found:false};
+     var original=d.pickObject.bind(d), calls=[];
+     d.pickObject=function(o){calls.push(o);return original(o);};
+     m.fire('mousemove',{point:p,lngLat:m.unproject(p),originalEvent:{}});
+     d.pickObject=original;
+     var tooltip=document.querySelector('.mapgl-flowmap-example-tooltip');
+     return {found:true,count:calls.length,
+       layerIds:calls.map(function(o){return o.layerIds||null;}),
+       text:tooltip && tooltip.innerText};"
+  )
+  expect_true(flow_hover_result$found)
+  expect_equal(flow_hover_result$count, 2)
+  expect_identical(
+    as.character(flow_hover_result$layerIds[[1]]), "flows-circles"
+  )
+  expect_null(flow_hover_result$layerIds[[2]])
+  expect_match(flow_hover_result$text, "10")
+
+  # Without flow tooltip content, an empty pixel needs only the circle pick.
   pick_result <- js_value(
     "var m=document.querySelector('.html-widget').map, d=m._deckgl;
+     m._flowmapsConfig[0].tooltip.flow=false;
      var original=d.pickObject.bind(d), calls=[], moveEvents=0;
      d.pickObject=function(o){calls.push(o);return original(o);};
      m.on('mousemove',function(){moveEvents++;});

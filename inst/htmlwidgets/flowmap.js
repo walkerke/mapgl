@@ -821,9 +821,17 @@ window.MapGLFlowmapPlugin = (function () {
         if (!deckInstance || !map._mapglFlowmapLayers || map._mapglFlowmapLayers.length === 0) return;
         const { x, y } = e.point;
         try {
-          // Pick only location circles. A second, unrestricted GPU pick made
-          // every mousemove more expensive and could spotlight a flow arrow.
-          const info = pickFlowmapLocation(deckInstance, map, x, y, 6);
+          // Prefer location circles so spotlighting cannot be triggered by a
+          // flow arrow. If a flow tooltip is enabled, fall back to a regular
+          // pick when no circle was hit so standalone mode can show it too.
+          const locationInfo = pickFlowmapLocation(deckInstance, map, x, y, 6);
+          const hasFlowTooltip = (map._flowmapsConfig || []).some(function (config) {
+            return config.tooltip && config.tooltip.enabled &&
+              config.tooltip.flow !== false;
+          });
+          const info = locationInfo || (hasFlowTooltip
+            ? deckInstance.pickObject({ x, y, radius: 2 })
+            : null);
           map.getCanvas().style.cursor = info ? "pointer" : "";
 
           if (info && info.layer) {
