@@ -64,6 +64,24 @@ test_that("add_flowmap serializes minimal flowmap config", {
   expect_equal(mapbox_map$x$flowmaps[[1]]$id, "flows")
 })
 
+test_that("flowmap interactions and scalar location selections serialize", {
+  flowmap <- flowmap_test_map(
+    flow_selected_locations = "a",
+    flow_spotlight_mode = "brighten"
+  )$x$flowmaps[[1]]
+
+  expect_true(inherits(flowmap$settings$selectedLocations, "AsIs"))
+  expect_equal(as.character(flowmap$settings$selectedLocations), "a")
+  expect_true(flowmap$settings$clickToFilter)
+  expect_true(flowmap$settings$hoverToSpotlight)
+  expect_equal(flowmap$settings$spotlightMode, "brighten")
+
+  expect_error(
+    flowmap_test_map(flow_spotlight_mode = "unknown"),
+    "should be one of"
+  )
+})
+
 test_that("add_flowmap serializes tooltip content and style", {
   no_tooltip <- flowmap_test_map(tooltip = FALSE)
   expect_null(no_tooltip$x$flowmaps[[1]]$tooltip)
@@ -135,7 +153,7 @@ test_that("add_flowmap validates tooltip content and style", {
   )
 })
 
-test_that("flowmap_color_schemes returns FlowMapGL 9.3.0 presets", {
+test_that("flowmap_color_schemes returns FlowMapGL 9.4.0 presets", {
   expected <- c(
     "Blues",
     "BluGrn",
@@ -329,12 +347,18 @@ test_that("set_flowmap_settings normalizes snake_case aliases", {
   map <- flowmap_test_map() |>
     set_flowmap_settings("flows", "color_scheme", "Viridis") |>
     set_flowmap_settings("flows", "temporal_scale_domain", "all") |>
-    set_flowmap_settings("flows", "max_top_flows_display_num", 100)
+    set_flowmap_settings("flows", "max_top_flows_display_num", 100) |>
+    set_flowmap_settings("flows", "click_to_filter", FALSE) |>
+    set_flowmap_settings("flows", "hover_to_spotlight", FALSE) |>
+    set_flowmap_settings("flows", "spotlight_mode", "grayscale")
 
   settings <- map$x$flowmaps[[1]]$settings
   expect_equal(settings$colorScheme, "Viridis")
   expect_equal(settings$temporalScaleDomain, "all")
   expect_equal(settings$maxTopFlowsDisplayNum, 100)
+  expect_false(settings$clickToFilter)
+  expect_false(settings$hoverToSpotlight)
+  expect_equal(settings$spotlightMode, "grayscale")
 })
 
 test_that("set_flowmap_settings sends unchanged proxy message shape", {
@@ -499,7 +523,7 @@ test_that("set_flowmap_filter accepts valid inputs and sends a message", {
   result <- set_flowmap_filter(
     proxy,
     "flows",
-    selected_locations = c("a", "b"),
+    selected_locations = "a",
     location_filter_mode = "INCOMING",
     selected_time_range = as.Date(c("2024-01-01", "2024-01-31"))
   )
@@ -507,14 +531,21 @@ test_that("set_flowmap_filter accepts valid inputs and sends a message", {
   expect_identical(result, proxy)
   expect_length(messages, 1)
   expect_equal(messages[[1]]$message$message$type, "set_flowmap_filter")
+  expect_true(
+    inherits(messages[[1]]$message$message$filter$selectedLocations, "AsIs")
+  )
+  expect_equal(
+    as.character(messages[[1]]$message$message$filter$selectedLocations),
+    "a"
+  )
   expect_equal(messages[[1]]$message$message$id, "flows")
   expect_equal(
     messages[[1]]$message$message$filter$locationFilterMode,
     "INCOMING"
   )
   expect_equal(
-    messages[[1]]$message$message$filter$selectedLocations,
-    c("a", "b")
+    as.character(messages[[1]]$message$message$filter$selectedLocations),
+    "a"
   )
 })
 

@@ -19,9 +19,12 @@ setting names are \code{opacity}, \code{colorScheme}, \code{darkMode}, \code{fad
 \code{flowLineThicknessScale}, \code{flowLineCurviness}, \code{clusteringEnabled},
 \code{clusteringAuto}, \code{clusteringLevel}, \code{fadeEnabled},
 \code{fadeOpacityEnabled}, \code{adaptiveScalesEnabled}, \code{temporalScaleDomain},
-\code{maxTopFlowsDisplayNum}, and \code{flowEndpointsInViewportMode}.
-Snake-case aliases such as \code{color_scheme}, \code{temporal_scale_domain}, and
-\code{max_top_flows_display_num} are accepted and normalized internally.
+\code{maxTopFlowsDisplayNum}, \code{flowEndpointsInViewportMode}, \code{clickToFilter},
+\code{hoverToSpotlight}, and \code{spotlightMode}. Equivalent snake-case aliases
+such as \code{color_scheme}, \code{temporal_scale_domain},
+\code{max_top_flows_display_num}, \code{flow_endpoints_in_viewport_mode},
+\code{click_to_filter}, \code{hover_to_spotlight}, and \code{spotlight_mode} are accepted
+and normalized internally.
 Filter state (\code{selectedTimeRange}, \code{selectedLocations}, and
 \code{locationFilterMode}) must be updated with \code{\link[=set_flowmap_filter]{set_flowmap_filter()}}.}
 
@@ -42,6 +45,7 @@ must be between 0 and 100. \code{maxTopFlowsDisplayNum} must be positive.
 \code{clusteringLevel} must be numeric or \code{NULL}. \code{flowLinesRenderingMode} must
 be \code{"straight"}, \code{"animated-straight"}, or \code{"curved"}.
 \code{temporalScaleDomain} must be \code{"selected"} or \code{"all"}.
-\code{flowEndpointsInViewportMode} must be \code{"any"} or \code{"both"}. Boolean
-settings must be scalar \code{TRUE} or \code{FALSE}.
+\code{flowEndpointsInViewportMode} must be \code{"any"} or \code{"both"}.
+\code{spotlightMode} must be \code{"spotlight"}, \code{"grayscale"}, or \code{"brighten"}.
+Boolean settings must be scalar \code{TRUE} or \code{FALSE}.
 }

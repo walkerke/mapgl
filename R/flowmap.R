@@ -52,7 +52,9 @@ flowmap_color_schemes <- function() {
 #'   and `"multiply"` when `FALSE`. If `FALSE`, no blending is applied. Note: CSS blending requires
 #'   a standalone canvas overlay and is ignored when `before_id` or `slot` is specified.
 #' @param flow_fade_amount Controls how much lower-magnitude flows fade compared to higher ones. Range: 0-100.
-#' @param flow_highlight_color Color used for highlighting hovered elements.
+#' @param flow_highlight_color Color used for FlowmapGL's hover highlight.
+#'   When `flow_hover_to_spotlight = TRUE`, hovering spotlights locations and
+#'   clusters; hover highlights on flows are suppressed.
 #' @param flow_locations_enabled Whether to show location circles.
 #' @param flow_location_totals_enabled Whether to show incoming/outgoing totals as concentric circles at each location.
 #' @param flow_location_labels_enabled Whether to show text labels at locations.
@@ -75,7 +77,9 @@ flowmap_color_schemes <- function() {
 #' @param flow_time_column Optional column name in `flows` for time data.
 #' @param flow_selected_time_range Optional vector of two dates (or strings) for initial time filtering.
 #' @param flow_selected_locations Optional vector of location IDs to select.
-#' @param flow_location_filter_mode Optional location filter mode: `"ALL"`, `"INCOMING"`, `"OUTGOING"`, or `"BETWEEN"`.
+#' @param flow_location_filter_mode Optional location filter mode: `"ALL"` (the default,
+#'   flows touching any selected location), `"INCOMING"`, `"OUTGOING"`, or
+#'   `"BETWEEN"` (flows with both endpoints selected).
 #' @param tooltip Hover tooltip content. Use `FALSE`/`NULL` to disable,
 #'   `TRUE` for the default, a column name, a `{brace}` template, a
 #'   `concat()`/`number_format()` expression, or a named `list(location = ,
@@ -91,6 +95,17 @@ flowmap_color_schemes <- function() {
 #'   radius, font, padding, shadow, and `position = "floating"`/`"anchored"`).
 #'   Defaults to a light/dark preset matching `flow_dark_mode`.
 #' @param popup_style Popup appearance; same forms as `tooltip_style`.
+#' @param flow_click_to_filter Whether clicking a location filters flows using
+#'   `flow_location_filter_mode`. Clicking an unselected location selects only
+#'   it; clicking a selected location deselects it. Shift-click adds or removes
+#'   locations. Defaults to `TRUE`.
+#' @param flow_hover_to_spotlight Whether hovering over a location spotlights
+#'   its connected flows after a 500 ms delay. Defaults to `TRUE`.
+#' @param flow_spotlight_mode Appearance of flows while a location is
+#'   spotlighted: `"spotlight"` dims unrelated flows in gray, `"grayscale"`
+#'   renders all flows in gray and emphasizes connected flows, and `"brighten"`
+#'   keeps all flows in their original colors and emphasizes connected flows.
+#'   Defaults to `"spotlight"`.
 #' @param visibility Whether the layer is initially `"visible"` or `"none"`.
 #' @param before_id Optional map layer ID to render before.
 #' @param slot Optional Mapbox Standard slot.
@@ -166,6 +181,9 @@ add_flowmap <- function(
   popup = FALSE,
   tooltip_style = NULL,
   popup_style = NULL,
+  flow_click_to_filter = TRUE,
+  flow_hover_to_spotlight = TRUE,
+  flow_spotlight_mode = c("spotlight", "grayscale", "brighten"),
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -183,6 +201,10 @@ add_flowmap <- function(
   flow_temporal_scale_domain <- match.arg(flow_temporal_scale_domain)
   flow_endpoints_in_viewport_mode <- match.arg(flow_endpoints_in_viewport_mode)
   flow_location_filter_mode <- match.arg(flow_location_filter_mode)
+  flow_spotlight_mode <- match.arg(flow_spotlight_mode)
+
+  flowmap_validate_logical(flow_click_to_filter, "flow_click_to_filter")
+  flowmap_validate_logical(flow_hover_to_spotlight, "flow_hover_to_spotlight")
 
   if (
     !is.numeric(flow_opacity) ||
@@ -315,7 +337,6 @@ add_flowmap <- function(
     flow_adaptive_scales_enabled,
     "flow_adaptive_scales_enabled"
   )
-
   if (
     !is.character(flow_highlight_color) ||
       length(flow_highlight_color) != 1 ||
@@ -378,7 +399,7 @@ add_flowmap <- function(
   }
 
   if (!is.null(flow_selected_locations)) {
-    flow_selected_locations <- as.character(flow_selected_locations)
+    flow_selected_locations <- I(as.character(flow_selected_locations))
   }
 
   flow_color_scheme <- flowmap_normalize_color_scheme(flow_color_scheme)
@@ -420,7 +441,10 @@ add_flowmap <- function(
       timeColumn = flow_time_column,
       selectedTimeRange = flow_selected_time_range,
       selectedLocations = flow_selected_locations,
-      locationFilterMode = flow_location_filter_mode
+      locationFilterMode = flow_location_filter_mode,
+      clickToFilter = flow_click_to_filter,
+      hoverToSpotlight = flow_hover_to_spotlight,
+      spotlightMode = flow_spotlight_mode
     ),
     visibility = visibility,
     beforeId = before_id,
@@ -482,7 +506,7 @@ set_flowmap_filter <- function(
         "`selected_locations` must be a character vector (or `NULL`)."
       )
     }
-    filter$selectedLocations <- selected_locations
+    filter$selectedLocations <- I(selected_locations)
   }
   if (!is.null(location_filter_mode)) {
     filter$locationFilterMode <- flowmap_validate_choice(
@@ -529,9 +553,12 @@ set_flowmap_filter <- function(
 #'   `flowLineThicknessScale`, `flowLineCurviness`, `clusteringEnabled`,
 #'   `clusteringAuto`, `clusteringLevel`, `fadeEnabled`,
 #'   `fadeOpacityEnabled`, `adaptiveScalesEnabled`, `temporalScaleDomain`,
-#'   `maxTopFlowsDisplayNum`, and `flowEndpointsInViewportMode`.
-#'   Snake-case aliases such as `color_scheme`, `temporal_scale_domain`, and
-#'   `max_top_flows_display_num` are accepted and normalized internally.
+#'   `maxTopFlowsDisplayNum`, `flowEndpointsInViewportMode`, `clickToFilter`,
+#'   `hoverToSpotlight`, and `spotlightMode`. Equivalent snake-case aliases
+#'   such as `color_scheme`, `temporal_scale_domain`,
+#'   `max_top_flows_display_num`, `flow_endpoints_in_viewport_mode`,
+#'   `click_to_filter`, `hover_to_spotlight`, and `spotlight_mode` are accepted
+#'   and normalized internally.
 #'   Filter state (`selectedTimeRange`, `selectedLocations`, and
 #'   `locationFilterMode`) must be updated with [set_flowmap_filter()].
 #' @param value The setting value.
@@ -547,8 +574,9 @@ set_flowmap_filter <- function(
 #' `clusteringLevel` must be numeric or `NULL`. `flowLinesRenderingMode` must
 #' be `"straight"`, `"animated-straight"`, or `"curved"`.
 #' `temporalScaleDomain` must be `"selected"` or `"all"`.
-#' `flowEndpointsInViewportMode` must be `"any"` or `"both"`. Boolean
-#' settings must be scalar `TRUE` or `FALSE`.
+#' `flowEndpointsInViewportMode` must be `"any"` or `"both"`.
+#' `spotlightMode` must be `"spotlight"`, `"grayscale"`, or `"brighten"`.
+#' Boolean settings must be scalar `TRUE` or `FALSE`.
 #' @export
 set_flowmap_settings <- function(map, id, name, value) {
   setting <- flowmap_normalize_setting(name, value)
@@ -677,7 +705,13 @@ flowmap_setting_name_map <- c(
   maxTopFlowsDisplayNum = "maxTopFlowsDisplayNum",
   max_top_flows_display_num = "maxTopFlowsDisplayNum",
   flowEndpointsInViewportMode = "flowEndpointsInViewportMode",
-  flow_endpoints_in_viewport_mode = "flowEndpointsInViewportMode"
+  flow_endpoints_in_viewport_mode = "flowEndpointsInViewportMode",
+  clickToFilter = "clickToFilter",
+  click_to_filter = "clickToFilter",
+  hoverToSpotlight = "hoverToSpotlight",
+  hover_to_spotlight = "hoverToSpotlight",
+  spotlightMode = "spotlightMode",
+  spotlight_mode = "spotlightMode"
 )
 
 flowmap_filter_setting_names <- c(
@@ -776,6 +810,13 @@ flowmap_validate_setting_value <- function(name, value) {
       value,
       "value",
       c("any", "both")
+    ),
+    clickToFilter = flowmap_validate_logical_setting(value),
+    hoverToSpotlight = flowmap_validate_logical_setting(value),
+    spotlightMode = flowmap_validate_choice(
+      value,
+      "value",
+      c("spotlight", "grayscale", "brighten")
     )
   )
 }
@@ -964,7 +1005,7 @@ flowmap_dependencies <- function() {
     ),
     htmltools::htmlDependency(
       name = "flowmap-plugin",
-      version = "1.0.0",
+      version = "1.0.1",
       src = c(file = system.file("htmlwidgets", package = "mapgl")),
       script = "flowmap.js",
       stylesheet = "flowmap.css"

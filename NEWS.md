@@ -1,3 +1,9 @@
+# mapgl (development version)
+
+* Flowmaps now support click-to-filter and delayed, node-only hover spotlighting by default. `flow_click_to_filter` and `flow_hover_to_spotlight` can disable the interactions; `flow_spotlight_mode` selects the spotlight appearance. The same controls can be changed with `set_flowmap_settings()` using `clickToFilter`, `hoverToSpotlight`, and `spotlightMode`. Clicking a selected location clears it without changing the configured `flow_location_filter_mode`.
+
+* Update the bundled FlowmapGL runtime to 9.4.0. Existing `flow_temporal_scale_domain` support continues to choose selected-time or all-time scale domains. The vendored runtime ships only its minified bundle; debug bundles and source maps stay out of the installed package.
+
 # mapgl 0.5.2
 
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.
