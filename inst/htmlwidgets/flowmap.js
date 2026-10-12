@@ -821,8 +821,9 @@ window.MapGLFlowmapPlugin = (function () {
         if (!deckInstance || !map._mapglFlowmapLayers || map._mapglFlowmapLayers.length === 0) return;
         const { x, y } = e.point;
         try {
-          const info = pickFlowmapLocation(deckInstance, map, x, y, 6) ||
-            deckInstance.pickObject({ x, y, radius: 2 });
+          // Pick only location circles. A second, unrestricted GPU pick made
+          // every mousemove more expensive and could spotlight a flow arrow.
+          const info = pickFlowmapLocation(deckInstance, map, x, y, 6);
           map.getCanvas().style.cursor = info ? "pointer" : "";
 
           if (info && info.layer) {
@@ -1245,9 +1246,15 @@ window.MapGLFlowmapPlugin = (function () {
     if (!deckInstance || typeof deckInstance.pickObject !== "function") {
       return null;
     }
-    const layerIds = (map._mapglFlowmapLayers || []).map(function (layer) {
-      return layer.id + "-circles";
-    });
+    const layerIds = (map._mapglFlowmapLayers || [])
+      .filter(function (layer) {
+        // Spotlight overlays use suffixed IDs and are intentionally not
+        // pickable. Restrict pointer picking to each canonical flowmap.
+        return layer.id === layer._mapglCanonicalId;
+      })
+      .map(function (layer) {
+        return layer.id + "-circles";
+      });
     if (layerIds.length === 0) {
       return null;
     }

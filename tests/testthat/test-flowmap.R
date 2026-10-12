@@ -82,6 +82,132 @@ test_that("flowmap interactions and scalar location selections serialize", {
   )
 })
 
+test_that("flowmap click and node hover interactions work in a browser", {
+  skip_on_cran()
+  skip_if_not_installed("chromote")
+
+  blank_style <- list(
+    version = 8,
+    sources = structure(list(), names = character(0)),
+    layers = list(list(
+      id = "bg",
+      type = "background",
+      paint = list(`background-color` = "#dddddd")
+    ))
+  )
+  locations <- data.frame(
+    id = c("a", "b", "c"),
+    lat = c(40.75, 40.75, 40.75),
+    lon = c(-74.01, -73.98, -73.95)
+  )
+  flows <- data.frame(
+    origin = c("a", "b"), dest = c("b", "c"), count = c(10, 8)
+  )
+  m <- maplibre(
+    style = blank_style, center = c(-73.98, 40.75), zoom = 11
+  ) |>
+    add_flowmap(
+      id = "flows", locations = locations, flows = flows,
+      flow_blend = FALSE, flow_clustering_enabled = FALSE,
+      flow_adaptive_scales_enabled = FALSE,
+      flow_click_to_filter = TRUE, flow_hover_to_spotlight = TRUE
+    )
+
+  dir <- tempfile("mapgl-flowmap-interactions-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  html_file <- file.path(dir, "map.html")
+  htmlwidgets::saveWidget(m, html_file, selfcontained = FALSE)
+
+  b <- tryCatch(chromote::ChromoteSession$new(), error = function(e) NULL)
+  if (is.null(b)) skip("chromote could not start a browser")
+  on.exit(b$close(), add = TRUE)
+  b$Emulation$setDeviceMetricsOverride(
+    width = 1000, height = 700, deviceScaleFactor = 1, mobile = FALSE
+  )
+
+  js_value <- function(expr) {
+    out <- b$Runtime$evaluate(
+      paste0("JSON.stringify((function() {", expr, "})())"),
+      returnByValue = TRUE
+    )
+    value <- out$result$value
+    if (is.null(value) || identical(value, "null")) return(NULL)
+    jsonlite::fromJSON(value, simplifyVector = TRUE)
+  }
+  wait_for <- function(expr, timeout = 30) {
+    deadline <- Sys.time() + timeout
+    repeat {
+      result <- tryCatch(js_value(expr), error = function(e) NULL)
+      if (isTRUE(result)) return(invisible(TRUE))
+      if (Sys.time() > deadline) return(FALSE)
+      Sys.sleep(0.25)
+    }
+  }
+  b$Page$navigate(paste0("file://", html_file))
+  if (!wait_for(
+    "return !!document.querySelector('.html-widget');",
+    timeout = 10
+  )) skip("Widget page failed to load")
+
+  map_ready <- wait_for(
+    "var e=document.querySelector('.html-widget');
+     return !!(e && e.map && e.map._mapglFlowmapLayers &&
+       e.map._mapglFlowmapLayers.length &&
+       e.map._mapglFlowmapLayers[0].state.dataProvider);"
+  )
+  if (!map_ready) skip("Flowmap did not initialize in the headless browser")
+
+  click_result <- js_value(
+    "var m=document.querySelector('.html-widget').map;
+     var layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
+     layer._mapglOnClick({object:{type:'location',id:'a'}},{shiftKey:false});
+     layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
+     layer._mapglOnClick({object:{type:'location',id:'b'}},{shiftKey:true});
+     return m._flowmapSelectedLocations.flows;"
+  )
+  expect_equal(as.character(click_result), c("a", "b"))
+
+  # A flow hit clears the spotlight; a node hit starts the delayed spotlight.
+  js_value(
+    "var m=document.querySelector('.html-widget').map;
+     var layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
+     layer._mapglOnHover({object:{type:'flow',id:'a-b'}}); return true;"
+  )
+  expect_true(wait_for(
+    "var m=document.querySelector('.html-widget').map;
+     return m._flowmapHoveredLocation.flows === null;"
+  ))
+  js_value(
+    "var m=document.querySelector('.html-widget').map;
+     var layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
+     layer._mapglOnHover({object:{type:'location',id:'b'}}); return true;"
+  )
+  expect_true(wait_for(
+    "var m=document.querySelector('.html-widget').map;
+     return m._flowmapHoveredLocation.flows &&
+       String(m._flowmapHoveredLocation.flows.id) === 'b';",
+    timeout = 5
+  ))
+
+  # Record the picking arguments for one explicit map move at an empty pixel.
+  pick_result <- js_value(
+    "var m=document.querySelector('.html-widget').map, d=m._deckgl;
+     var original=d.pickObject.bind(d), calls=[], moveEvents=0;
+     d.pickObject=function(o){calls.push(o);return original(o);};
+     m.on('mousemove',function(){moveEvents++;});
+     m._mapglPickCalls=calls;
+     m.fire('mousemove',{point:{x:1,y:1},lngLat:m.getCenter(),originalEvent:{}});
+     return {count:calls.length,moveEvents:moveEvents,
+       layerIds:calls.map(function(o){return o.layerIds || null;})};"
+  )
+  expect_equal(pick_result$moveEvents, 1)
+  expect_equal(pick_result$count, 1)
+  expect_true(all(vapply(pick_result$layerIds, function(ids) {
+    identical(as.character(ids), "flows-circles")
+  }, logical(1))))
+})
+
 test_that("add_flowmap serializes tooltip content and style", {
   no_tooltip <- flowmap_test_map(tooltip = FALSE)
   expect_null(no_tooltip$x$flowmaps[[1]]$tooltip)
