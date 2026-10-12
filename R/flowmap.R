@@ -1,6 +1,6 @@
 #' FlowMapGL color scheme names
 #'
-#' Returns the FlowMapGL 9.3.0 preset color scheme names supported by
+#' Returns the FlowMapGL 9.4.0 preset color scheme names supported by
 #' [add_flowmap()]. These names are case-sensitive.
 #'
 #' @details
@@ -956,7 +956,7 @@ flowmap_dependencies <- function() {
     ),
     htmltools::htmlDependency(
       name = "flowmap-gl",
-      version = "9.3.0",
+      version = "9.4.0",
       src = c(
         file = system.file("htmlwidgets/lib/flowmap-gl", package = "mapgl")
       ),

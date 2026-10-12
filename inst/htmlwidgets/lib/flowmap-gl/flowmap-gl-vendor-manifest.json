@@ -3,20 +3,20 @@
   "source": "npm release packages",
   "build": {
     "command": "data-raw/flowmap-vendor/build-flowmap.sh build",
-    "node": "v26.0.0",
-    "npm": "11.14.1",
+    "node": "v26.11.1",
+    "npm": "11.20.0",
     "esbuild": "0.28.0"
   },
   "bundle": {
     "path": "inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js",
-    "sha256": "6ee7d9f48276e5ff94a81333b8006590e7a3dba9cdb26c8802a9adf61a380fda",
-    "bytes": 811231
+    "sha256": "eb2b90ae8e2a8d2a7d66855ecfebc1d70142565c182469163de8fbe698368f04",
+    "bytes": 823755
   },
   "patches": [
     {
       "path": "data-raw/flowmap-vendor/patches/flowmap-temporal-scale-domain.patch",
-      "sha256": "4643c406fdd4c82175f5cbda27d414d5b1e65b08d7270b98eef9b3dc1045b7e7",
-      "bytes": 19025,
+      "sha256": "759f6ab7b6c8d17881e73179bcda5067259c367b02f2e2936240411d311737fe",
+      "bytes": 14164,
       "purpose": "Add temporalScaleDomain so temporal flow width/color domains can use selected-time or all-time flows."
     }
   ],
@@ -24,7 +24,7 @@
     "path": "LICENSE.note"
   },
   "colorSchemes": {
-    "source": "FlowMapGL 9.3.0 vendored bundle",
+    "source": "FlowMapGL 9.4.0 vendored bundle",
     "names": [
       "Blues",
       "BluGrn",
@@ -105,21 +105,21 @@
     },
     {
       "name": "@flowmap.gl/data",
-      "version": "9.3.0",
+      "version": "9.4.0",
       "license": "Apache-2.0",
-      "integrity": "sha512-1a4EZJdK13q5Mj3bVurFSpuYVBLSaByJJ9B4LMd7XvuD/ovB6JArDjdJetsA9jVHdA89lZli7f8ALX+oek+WtA==",
-      "resolved": "https://registry.npmjs.org/@flowmap.gl/data/-/data-9.3.0.tgz",
-      "gitHead": "ed581e11ca674ed1e17457a9526c864f8def678b",
+      "integrity": "sha512-7tbCmruZqNkGzbH20b+uF08ULdWoKKzwwSsLD69xYqQosGj+Ldn6fShP1cWCbeJrS9C+hd37paXNpmB0U05+vA==",
+      "resolved": "https://registry.npmjs.org/@flowmap.gl/data/-/data-9.4.0.tgz",
+      "gitHead": "52bf492e7058759d01944b37cb3a232484ee0a7f",
       "homepage": null,
       "repository": "git@github.com:visgl/flowmap.gl.git"
     },
     {
       "name": "@flowmap.gl/layers",
-      "version": "9.3.0",
+      "version": "9.4.0",
       "license": "Apache-2.0",
-      "integrity": "sha512-kARLb28BYK58O4iuiZK0IdNO+W1EX4+MaLbufRU1O0LTMM0Aoe2lET7y4QcrOifQT0dV6cAjzjw4GDnbogOxJg==",
-      "resolved": "https://registry.npmjs.org/@flowmap.gl/layers/-/layers-9.3.0.tgz",
-      "gitHead": "ed581e11ca674ed1e17457a9526c864f8def678b",
+      "integrity": "sha512-wyW+mT3r4H98GTwQyuS/RDWH5i2YZUBg6O27xH8RAu/t3H64lvP4rig+OQ+1Q3fFZ66/Q50Y9sk7qVX3KbZZfw==",
+      "resolved": "https://registry.npmjs.org/@flowmap.gl/layers/-/layers-9.4.0.tgz",
+      "gitHead": "52bf492e7058759d01944b37cb3a232484ee0a7f",
       "homepage": null,
       "repository": "git@github.com:visgl/flowmap.gl.git"
     },
