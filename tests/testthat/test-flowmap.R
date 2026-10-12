@@ -168,40 +168,33 @@ test_that("flowmap click and node hover interactions work in a browser", {
   )
   expect_equal(as.character(click_result), c("a", "b"))
 
-  # A flow hit clears the spotlight; a node hit starts the delayed spotlight.
+  # Hover a real node, then confirm the spotlight layer appears.
   js_value(
     "var m=document.querySelector('.html-widget').map;
-     var layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
-     layer._mapglOnHover({object:{type:'flow',id:'a-b'}}); return true;"
-  )
-  expect_true(wait_for(
-    "var m=document.querySelector('.html-widget').map;
-     return m._flowmapHoveredLocation.flows === null;"
-  ))
-  js_value(
-    "var m=document.querySelector('.html-widget').map;
-     var layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
-     layer._mapglOnHover({object:{type:'location',id:'b'}}); return true;"
+     var p=m.project([-73.98,40.75]);
+     m.fire('mousemove',{point:p,lngLat:m.unproject(p),originalEvent:{}});
+     return true;"
   )
   expect_true(wait_for(
     "var m=document.querySelector('.html-widget').map;
      return m._flowmapHoveredLocation.flows &&
-       String(m._flowmapHoveredLocation.flows.id) === 'b';",
-    timeout = 5
+       String(m._flowmapHoveredLocation.flows.id) === 'b' &&
+       m._mapglFlowmapLayers.some(function(l){return l.id==='flows-highlight';});",
+    timeout = 10
   ))
 
   # A standalone flow hover must fall back to an unrestricted pick so the
   # default flow tooltip remains available, while the circle-first pick keeps
-  # spotlighting limited to locations.
+  # spotlighting limited to locations. Find a flow pixel by its source layer;
+  # FlowmapGL enriches the raw pick asynchronously, so object.type is absent.
   flow_hover_result <- js_value(
     "var m=document.querySelector('.html-widget').map, d=m._deckgl;
-     var a=m.project([-74.01,40.75]), b=m.project([-73.98,40.75]), p=null;
-     for(var i=1;i<20;i++){
-       var t=i/20, candidate={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
-       var hit=d.pickObject({x:candidate.x,y:candidate.y,radius:2});
-       if(hit && hit.object && hit.object.type==='flow'){p=candidate;break;}
-     }
-     if(!p)return {found:false};
+     var a=m.project([-74.01,40.75]), b=m.project([-73.98,40.75]);
+     var p={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+     var hit=d.pickObject({x:p.x,y:p.y,radius:2});
+     var sourceLayer=hit && ((hit.sourceLayer && hit.sourceLayer.id) ||
+       (hit.layer && hit.layer.id));
+     if(sourceLayer!=='flows-flow-lines')return {found:false,sourceLayer:sourceLayer};
      var original=d.pickObject.bind(d), calls=[];
      d.pickObject=function(o){calls.push(o);return original(o);};
      m.fire('mousemove',{point:p,lngLat:m.unproject(p),originalEvent:{}});
@@ -217,7 +210,24 @@ test_that("flowmap click and node hover interactions work in a browser", {
     as.character(flow_hover_result$layerIds[[1]]), "flows-circles"
   )
   expect_null(flow_hover_result$layerIds[[2]])
-  expect_match(flow_hover_result$text, "10")
+  expect_true(wait_for(
+    "var tooltip=document.querySelector('.mapgl-flowmap-example-tooltip');
+     return !!(tooltip && tooltip.style.display !== 'none' &&
+       /^10 trips/.test(tooltip.innerText.trim()));"
+  ))
+  expect_true(wait_for(
+    "var m=document.querySelector('.html-widget').map;
+     return m._flowmapHoveredLocation.flows === null &&
+       !m._mapglFlowmapLayers.some(function(l){return l.id==='flows-highlight';});"
+  ))
+  Sys.sleep(0.6)
+  flow_hover_state <- js_value(
+    "var m=document.querySelector('.html-widget').map;
+     return {hovered:m._flowmapHoveredLocation.flows,
+       hasHighlight:m._mapglFlowmapLayers.some(function(l){return l.id==='flows-highlight';})};"
+  )
+  expect_null(flow_hover_state$hovered)
+  expect_false(flow_hover_state$hasHighlight)
 
   # Without flow tooltip content, an empty pixel needs only the circle pick.
   pick_result <- js_value(
