@@ -144,6 +144,30 @@ test_that("flowmap click and node hover interactions work in a browser", {
       Sys.sleep(0.25)
     }
   }
+  click_location <- function(lon, shift = FALSE) {
+    point <- js_value(sprintf(
+      "var m=document.querySelector('.html-widget').map;
+       var p=m.project([%s,40.75]);
+       var r=m.getContainer().getBoundingClientRect();
+       return {x:p.x+r.left,y:p.y+r.top};",
+      format(lon, scientific = FALSE)
+    ))
+    modifiers <- if (shift) 8L else 0L
+    b$Input$dispatchMouseEvent(
+      type = "mouseMoved", x = point$x, y = point$y,
+      modifiers = modifiers
+    )
+    b$Input$dispatchMouseEvent(
+      type = "mousePressed", x = point$x, y = point$y,
+      modifiers = modifiers, button = "left", buttons = 1L,
+      clickCount = 1L
+    )
+    b$Input$dispatchMouseEvent(
+      type = "mouseReleased", x = point$x, y = point$y,
+      modifiers = modifiers, button = "left", buttons = 0L,
+      clickCount = 1L
+    )
+  }
   b$Page$navigate(paste0("file://", html_file))
   if (!wait_for(
     "return !!document.querySelector('.html-widget');",
@@ -158,15 +182,19 @@ test_that("flowmap click and node hover interactions work in a browser", {
   )
   if (!map_ready) skip("Flowmap did not initialize in the headless browser")
 
-  click_result <- js_value(
-    "var m=document.querySelector('.html-widget').map;
-     var layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
-     layer._mapglOnClick({object:{type:'location',id:'a'}},{shiftKey:false});
-     layer=m._mapglFlowmapLayers.find(function(l){return l.id==='flows';});
-     layer._mapglOnClick({object:{type:'location',id:'b'}},{shiftKey:true});
-     return m._flowmapSelectedLocations.flows;"
-  )
-  expect_equal(as.character(click_result), c("a", "b"))
+  click_location(-74.01)
+  expect_true(wait_for(
+    "var selected=document.querySelector('.html-widget').map._flowmapSelectedLocations.flows;
+     return selected && selected.length===1 && String(selected[0])==='a';",
+    timeout = 3
+  ))
+  click_location(-73.98, shift = TRUE)
+  expect_true(wait_for(
+    "var selected=document.querySelector('.html-widget').map._flowmapSelectedLocations.flows;
+     return selected && selected.length===2 &&
+       String(selected[0])==='a' && String(selected[1])==='b';",
+    timeout = 3
+  ))
 
   # Hover a real node, then confirm the spotlight layer appears.
   js_value(

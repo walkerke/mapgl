@@ -877,11 +877,8 @@ window.MapGLFlowmapPlugin = (function () {
           if (info && info.layer) {
             const event = {
               srcEvent: sourceEvent,
-              shiftKey: Boolean(
-                sourceEvent.shiftKey ||
-                (sourceEvent.getModifierState && sourceEvent.getModifierState("Shift")) ||
+              shiftKey: hasShiftModifier(sourceEvent) ||
                 map._flowmapShiftClickPending
-              )
             };
             info.x = x;
             info.y = y;
@@ -909,10 +906,7 @@ window.MapGLFlowmapPlugin = (function () {
         map.on("mousemove", onMapMouseMove);
         map.on("mousedown", function (event) {
           const sourceEvent = event.originalEvent || event;
-          const shiftClick = Boolean(
-            sourceEvent.shiftKey ||
-            (sourceEvent.getModifierState && sourceEvent.getModifierState("Shift"))
-          );
+          const shiftClick = hasShiftModifier(sourceEvent);
           map._flowmapShiftClickPending = shiftClick && sourceEvent.button === 0;
           if (!map._flowmapShiftClickPending || !event.point) return;
 
@@ -1656,12 +1650,8 @@ window.MapGLFlowmapPlugin = (function () {
           return locationIdKey(selectedId) !== locIdKey;
         });
       } else if (
-        (event && event.shiftKey) ||
-        (event && event.srcEvent && (
-          event.srcEvent.shiftKey ||
-          (event.srcEvent.getModifierState && event.srcEvent.getModifierState("Shift"))
-        )) ||
-        (info.event && info.event.shiftKey) ||
+        hasShiftModifier(event) ||
+        hasShiftModifier(info.event) ||
         map._flowmapShiftClickPending
       ) {
         // Shift-click adds another location to the selection.
@@ -1680,6 +1670,19 @@ window.MapGLFlowmapPlugin = (function () {
       map._flowmapHoveredLocation[id] = null;
       redrawFlowmaps(map, map._flowmapHTMLWidgets);
     }
+  }
+
+  function hasShiftModifier(event) {
+    if (!event || typeof event !== "object") {
+      return false;
+    }
+    if (event.shiftKey ||
+        (event.getModifierState && event.getModifierState("Shift"))) {
+      return true;
+    }
+    return event.srcEvent && event.srcEvent !== event
+      ? hasShiftModifier(event.srcEvent)
+      : false;
   }
 
   function hasLayer(map, id) {
