@@ -149,6 +149,7 @@ reg.finalizer(.mapgl_draw_sync, function(e) {
     features_json <- jsonlite::toJSON(
       features,
       auto_unbox = TRUE,
+      digits = NA,
       null = "null",
       na = "null"
     )
