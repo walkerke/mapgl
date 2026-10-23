@@ -7,14 +7,15 @@ OUTPUT_DIR="$ROOT_DIR/inst/htmlwidgets/lib/flowmap-gl"
 LICENSE_NOTE_PATH="$ROOT_DIR/LICENSE.note"
 COMMAND="${1:-build}"
 BUNDLE_NAME="flowmap-gl-bundle.min.js"
-DEBUG_BUNDLE_NAME="flowmap-gl-bundle.js"
 MANIFEST_NAME="flowmap-gl-vendor-manifest.json"
 GENERATED_FILES=(
-  "$DEBUG_BUNDLE_NAME"
-  "$DEBUG_BUNDLE_NAME.map"
   "$BUNDLE_NAME"
-  "$BUNDLE_NAME.map"
   "$MANIFEST_NAME"
+)
+OBSOLETE_FILES=(
+  "flowmap-gl-bundle.js"
+  "flowmap-gl-bundle.js.map"
+  "flowmap-gl-bundle.min.js.map"
 )
 
 usage() {
@@ -39,43 +40,10 @@ build_outputs() {
   npx esbuild entry.js \
     --bundle \
     --format=iife \
-    --outfile="$output_dir/$DEBUG_BUNDLE_NAME" \
-    --sourcemap \
-    --sources-content=true
-  normalize_sourcemap "$output_dir/$DEBUG_BUNDLE_NAME.map"
-
-  npx esbuild entry.js \
-    --bundle \
-    --format=iife \
     --outfile="$output_dir/$BUNDLE_NAME" \
-    --minify \
-    --sourcemap \
-    --sources-content=true
-  normalize_sourcemap "$output_dir/$BUNDLE_NAME.map"
+    --minify
 
   node scripts/generate-vendor-metadata.mjs "$output_dir" "$license_note_path"
-}
-
-normalize_sourcemap() {
-  local sourcemap_path="$1"
-
-  node - "$sourcemap_path" <<'NODE'
-const {readFileSync, writeFileSync} = require('node:fs');
-
-const sourcemapPath = process.argv[2];
-const marker = 'data-raw/flowmap-vendor/';
-const sourcemap = JSON.parse(readFileSync(sourcemapPath, 'utf8'));
-
-sourcemap.sources = sourcemap.sources.map((source) => {
-  const markerIndex = source.indexOf(marker);
-  if (markerIndex >= 0) {
-    return source.slice(markerIndex + marker.length);
-  }
-  return source;
-});
-
-writeFileSync(sourcemapPath, `${JSON.stringify(sourcemap)}\n`);
-NODE
 }
 
 apply_patches() {
@@ -99,8 +67,11 @@ apply_patches() {
 
 case "$COMMAND" in
   build)
+    for file in "${OBSOLETE_FILES[@]}"; do
+      rm -f "$OUTPUT_DIR/$file"
+    done
     build_outputs "$OUTPUT_DIR" "$LICENSE_NOTE_PATH"
-    ls -lh "$OUTPUT_DIR/$DEBUG_BUNDLE_NAME" "$OUTPUT_DIR/$BUNDLE_NAME"
+    ls -lh "$OUTPUT_DIR/$BUNDLE_NAME"
     ;;
   check)
     TMP_DIR="$(mktemp -d)"
@@ -112,6 +83,12 @@ case "$COMMAND" in
     build_outputs "$TMP_DIR" "$TMP_DIR/LICENSE.note"
     for file in "${GENERATED_FILES[@]}"; do
       diff -u "$OUTPUT_DIR/$file" "$TMP_DIR/$file"
+    done
+    for file in "${OBSOLETE_FILES[@]}"; do
+      if [[ -e "$OUTPUT_DIR/$file" ]]; then
+        printf 'Obsolete generated file remains: %s\n' "$OUTPUT_DIR/$file" >&2
+        exit 1
+      fi
     done
     diff -u "$LICENSE_NOTE_PATH" "$TMP_DIR/LICENSE.note"
     ;;
