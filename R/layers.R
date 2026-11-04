@@ -822,7 +822,7 @@ add_fill_extrusion_layer <- function(
 #' @param cluster_radius The radius of each cluster when clustering points, in pixels. Defaults to 50 for circle clusters and to 1.5 times the largest of `radius_stops` (60 by default) for donut clusters, which keeps neighboring donuts from piling on top of each other.
 #' @param color_stops A vector of colors for the circle color step expression. Ignored for donut clusters.
 #' @param radius_stops A vector of radii for the circle radius step expression. Also sizes donut clusters.
-#' @param count_stops A vector of point counts for both color and radius step expressions.
+#' @param count_stops A vector of point counts for both color and radius step expressions. For donut clusters with `donut_weight`, these are thresholds on the weighted total instead, matching the cluster label.
 #' @param circle_blur Amount to blur the circle. Ignored for donut clusters.
 #' @param circle_opacity The opacity of the circle. For donut clusters, the opacity of the whole donut.
 #' @param circle_stroke_color The color of the circle's stroke. For donut clusters, the color of the donut's outer edge (default `"white"`).
@@ -1549,13 +1549,17 @@ cluster_options <- function(
 
   # Images are drawn at their display radius; drawing everything at the
   # largest radius and scaling with icon-size saves few images (each
-  # cluster's mix is usually unique) but costs more bytes per image
+  # cluster's mix is usually unique) but costs more bytes per image.
   radius <- step_expr(
     column = "point_count",
     base = cluster_options$radius_stops[1],
     stops = cluster_options$radius_stops[-1],
     values = cluster_options$count_stops[-1]
   )
+  # Weighted donuts are sized by the same weighted total their label shows
+  if (!is.null(label_value)) {
+    radius[[2]] <- label_value
+  }
 
   unit_parts <- list()
   for (i in seq_along(units)) {

@@ -2,6 +2,8 @@
 
 * Various bug fixes and performance improvements (#226).
 
+* Weighted donut clusters (`donut_weight`) are now sized by their weighted total, so `count_stops` should be given in the weight's units.
+
 # mapgl 0.5.2
 
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.

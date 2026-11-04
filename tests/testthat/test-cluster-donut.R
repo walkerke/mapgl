@@ -229,6 +229,37 @@ test_that("weights add a total and weighted label", {
   expect_match(label, '["get","race:_total"]', fixed = TRUE)
 })
 
+test_that("weighted donuts are sized by the weighted total", {
+  weighted <- maplibre() |>
+    add_circle_layer(
+      "p",
+      donut_points(),
+      circle_color = race_colors(default = NULL),
+      cluster_options = cluster_options(
+        donut_column = "race",
+        donut_weight = "pop",
+        radius_stops = c(20, 30, 40),
+        count_stops = c(0, 5000, 50000)
+      )
+    )
+  icon <- to_json(find_layer(weighted, "p-clusters")$layout[["icon-image"]])
+  expect_match(
+    icon,
+    '["step",["coalesce",["get","race:_total"],0],20,5000,30,50000,40]',
+    fixed = TRUE
+  )
+
+  counted <- maplibre() |>
+    add_circle_layer(
+      "p",
+      donut_points(),
+      circle_color = race_colors(default = NULL),
+      cluster_options = cluster_options(donut_column = "race")
+    )
+  icon <- to_json(find_layer(counted, "p-clusters")$layout[["icon-image"]])
+  expect_match(icon, '["step",["get","point_count"],20,100,30,750,40]', fixed = TRUE)
+})
+
 test_that("grouped match_expr() labels expand into shared-color categories", {
   m <- maplibre() |>
     add_circle_layer(
