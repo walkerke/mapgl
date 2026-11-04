@@ -1890,6 +1890,33 @@ function executePendingOperationsMapbox(mapId) {
   }
 }
 
+// 3D models live in the style, so setStyle() drops them. Every model added to
+// a map is kept on the map and registered again on each style load. Don't
+// guard with map.hasModel(): before the first model is added it throws in GL
+// JS 3.x; addModel() itself ignores a repeat of the same id and URL.
+function addMapglModel(map, id, url) {
+  if (!map._mapglModels) {
+    map._mapglModels = {};
+  }
+  map._mapglModels[id] = url;
+  map.addModel(id, url);
+}
+
+function restoreMapglModels(map, initialModels) {
+  if (!map._mapglModels) {
+    map._mapglModels = {};
+  }
+  // A proxy-added model with the same id replaces the initial one
+  (initialModels || []).forEach(function (model) {
+    if (!(model.id in map._mapglModels)) {
+      map._mapglModels[model.id] = model.url;
+    }
+  });
+  for (const id in map._mapglModels) {
+    map.addModel(id, map._mapglModels[id]);
+  }
+}
+
 // Helper to register a user image
 function registerUserImageMapbox(mapId, imageId, url, options) {
   if (!window._mapgl.userImages[mapId]) {
@@ -2096,6 +2123,11 @@ HTMLWidgets.widget({
             });
           }
 
+          // Register 3D models (glTF/GLB) used by model layers. This runs on
+          // every style load, so models (including proxy-added ones) come back
+          // after set_style() before its preserved layers are re-added.
+          restoreMapglModels(map, x.models);
+
           // Add sources if provided
           if (x.sources) {
             x.sources.forEach(function (source) {
@@ -2158,12 +2190,17 @@ HTMLWidgets.widget({
                   });
                 }
               } else if (source.type === "raster-dem") {
-                map.addSource(source.id, {
+                // Only pass maxzoom when set: an undefined maxzoom overrides the
+                // TileJSON value and leaves terrain without elevation data.
+                const demOptions = {
                   type: "raster-dem",
                   url: source.url,
                   tileSize: source.tileSize,
-                  maxzoom: source.maxzoom,
-                });
+                };
+                if (source.maxzoom != null) {
+                  demOptions.maxzoom = source.maxzoom;
+                }
+                map.addSource(source.id, demOptions);
               } else if (source.type === "image") {
                 map.addSource(source.id, {
                   type: "image",
@@ -5108,6 +5145,8 @@ if (HTMLWidgets.shinyMode) {
         } else {
           console.error("Layer not found:", message.layer);
         }
+      } else if (message.type === "add_model") {
+        addMapglModel(map, message.modelId, message.url);
       } else if (message.type === "add_image") {
         const mapId = map.getContainer().id;
 
