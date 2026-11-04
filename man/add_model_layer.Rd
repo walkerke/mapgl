@@ -106,14 +106,12 @@ Draws one instance of a 3D model, registered with \code{\link[=add_model]{add_mo
 point feature of a source. Mapbox GL JS only.
 }
 \details{
-Scale, rotation and translation accept data-driven expressions, so each
-instance can be sized and oriented from feature attributes. Mapbox can't
-build an array from feature values with \verb{["array", ...]}, but an
-\code{interpolate} expression with array outputs can. For a uniform scale taken
-from a column \code{s}:
+Scale, rotation and translation accept data-driven and zoom-based
+expressions, so each instance can be sized and oriented from feature
+attributes. Expressions can't combine separate columns into an array, but an
+\code{interpolate} expression with array outputs can turn one column into a
+\code{c(x, y, z)} value. For a uniform scale taken from a column \code{s}:
 \code{model_scale = list("interpolate", list("linear"), get_column("s"), 0, list("literal", list(0, 0, 0)), 10, list("literal", list(10, 10, 10)))}.
-Mapbox does not support zoom-dependent expressions on these properties for
-GeoJSON or vector tile sources.
 
 Mapbox reads glTF models as y-up and converts them to the map's z-up frame,
 with the model's -z axis pointing north. Feature queries and popups don't

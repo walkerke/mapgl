@@ -75,14 +75,12 @@ add_model <- function(map, id, url) {
 #' Draws one instance of a 3D model, registered with [add_model()], at each
 #' point feature of a source. Mapbox GL JS only.
 #'
-#' Scale, rotation and translation accept data-driven expressions, so each
-#' instance can be sized and oriented from feature attributes. Mapbox can't
-#' build an array from feature values with `["array", ...]`, but an
-#' `interpolate` expression with array outputs can. For a uniform scale taken
-#' from a column `s`:
+#' Scale, rotation and translation accept data-driven and zoom-based
+#' expressions, so each instance can be sized and oriented from feature
+#' attributes. Expressions can't combine separate columns into an array, but an
+#' `interpolate` expression with array outputs can turn one column into a
+#' `c(x, y, z)` value. For a uniform scale taken from a column `s`:
 #' `model_scale = list("interpolate", list("linear"), get_column("s"), 0, list("literal", list(0, 0, 0)), 10, list("literal", list(10, 10, 10)))`.
-#' Mapbox does not support zoom-dependent expressions on these properties for
-#' GeoJSON or vector tile sources.
 #'
 #' Mapbox reads glTF models as y-up and converts them to the map's z-up frame,
 #' with the model's -z axis pointing north. Feature queries and popups don't
