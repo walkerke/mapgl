@@ -1,3 +1,21 @@
+// Mapbox GL JS recognizes a PMTiles source by parsing its URL with `new URL()`,
+// and its PMTiles provider fetches from a web worker; both need an absolute URL.
+// Resolve relative paths such as "tiles/data.pmtiles" against the page.
+function _mapglAbsolutePmtilesUrl(url) {
+  if (
+    typeof url === "string" &&
+    /\.pmtiles([?#]|$)/.test(url) &&
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)
+  ) {
+    try {
+      return new URL(url, window.location.href).href;
+    } catch (e) {
+      return url;
+    }
+  }
+  return url;
+}
+
 // Attach cluster-click + cursor handlers to a "-clusters" layer.
 // Auto-branches on source capability:
 //   - live-clustered GeoJSON  -> getClusterExpansionZoom
@@ -2137,7 +2155,7 @@ HTMLWidgets.widget({
                 };
                 // Add url or tiles
                 if (source.url) {
-                  sourceOptions.url = source.url;
+                  sourceOptions.url = _mapglAbsolutePmtilesUrl(source.url);
                 }
                 if (source.tiles) {
                   sourceOptions.tiles = source.tiles;
@@ -2174,20 +2192,24 @@ HTMLWidgets.widget({
                 // Store GeoJSON data for later retrieval (e.g., for draw control)
                 storeSourceDataMapbox(el.id, source.id, geojsonData);
               } else if (source.type === "raster") {
-                if (source.url) {
-                  map.addSource(source.id, {
+                if (source.url || source.tiles) {
+                  const rasterOptions = {
                     type: "raster",
-                    url: source.url,
                     tileSize: source.tileSize,
                     maxzoom: source.maxzoom,
-                  });
-                } else if (source.tiles) {
-                  map.addSource(source.id, {
-                    type: "raster",
-                    tiles: source.tiles,
-                    tileSize: source.tileSize,
-                    maxzoom: source.maxzoom,
-                  });
+                  };
+                  if (source.url) {
+                    rasterOptions.url = _mapglAbsolutePmtilesUrl(source.url);
+                  } else {
+                    rasterOptions.tiles = source.tiles;
+                  }
+                  // Pass through any other options (provider, minzoom, ...)
+                  for (const [key, value] of Object.entries(source)) {
+                    if (!["id", "type", "url", "tiles", "tileSize", "maxzoom"].includes(key)) {
+                      rasterOptions[key] = value;
+                    }
+                  }
+                  map.addSource(source.id, rasterOptions);
                 }
               } else if (source.type === "raster-dem") {
                 // Only pass maxzoom when set: an undefined maxzoom overrides the
@@ -3449,7 +3471,7 @@ if (HTMLWidgets.shinyMode) {
           };
           // Add url or tiles
           if (message.source.url) {
-            sourceConfig.url = message.source.url;
+            sourceConfig.url = _mapglAbsolutePmtilesUrl(message.source.url);
           }
           if (message.source.tiles) {
             sourceConfig.tiles = message.source.tiles;
@@ -3497,7 +3519,7 @@ if (HTMLWidgets.shinyMode) {
             tileSize: message.source.tileSize,
           };
           if (message.source.url) {
-            sourceConfig.url = message.source.url;
+            sourceConfig.url = _mapglAbsolutePmtilesUrl(message.source.url);
           } else if (message.source.tiles) {
             sourceConfig.tiles = message.source.tiles;
           }

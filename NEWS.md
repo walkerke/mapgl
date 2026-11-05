@@ -6,6 +6,8 @@
 
 * New `add_model()` and `add_model_layer()` draw 3D glTF/GLB models at point features on Mapbox GL maps.
 
+* `add_pmtiles_source()` on Mapbox GL maps now works with relative paths such as `"tiles/data.pmtiles"`, and `compare()` maps keep extra vector and raster source options (`provider`, `minzoom`, ...) when first rendered.
+
 # mapgl 0.5.2
 
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.
