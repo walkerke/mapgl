@@ -1,6 +1,10 @@
 # mapgl (development version)
 
-* Various bug fixes and performance improvements (#226).
+* Various bug fixes and performance improvements (#226), including terrain from `add_raster_dem_source()` without `maxzoom`.
+
+* Weighted donut clusters (`donut_weight`) are now sized by their weighted total, so `count_stops` should be given in the weight's units.
+
+* New `add_model()` and `add_model_layer()` draw 3D glTF/GLB models at point features on Mapbox GL maps.
 
 # mapgl 0.5.2
 

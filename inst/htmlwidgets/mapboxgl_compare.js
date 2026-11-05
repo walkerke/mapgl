@@ -965,6 +965,8 @@ HTMLWidgets.widget({
                 map.setFilter(message.layer, message.filter);
                 // Track filter state for layer restoration
                 layerState.filters[message.layer] = message.filter;
+              } else if (message.type === "add_model") {
+                addCompareModel(map, message.modelId, message.url);
               } else if (message.type === "add_source") {
                 if (message.source.type === "vector") {
                   const sourceConfig = {
@@ -2655,6 +2657,32 @@ HTMLWidgets.widget({
           }
         }
 
+        // 3D models live in the style, so setStyle() drops them. Every model
+        // added to a map is kept on the map and registered again on each
+        // style change; addModel() ignores a repeat of the same id and URL.
+        function addCompareModel(map, id, url) {
+          if (!map._mapglModels) {
+            map._mapglModels = {};
+          }
+          map._mapglModels[id] = url;
+          map.addModel(id, url);
+        }
+
+        function restoreCompareModels(map, initialModels) {
+          if (!map._mapglModels) {
+            map._mapglModels = {};
+          }
+          // A proxy-added model with the same id replaces the initial one
+          (initialModels || []).forEach(function (model) {
+            if (!(model.id in map._mapglModels)) {
+              map._mapglModels[model.id] = model.url;
+            }
+          });
+          for (const id in map._mapglModels) {
+            map.addModel(id, map._mapglModels[id]);
+          }
+        }
+
         function applyMapModifications(map, mapData) {
           // Initialize controls array if it doesn't exist
           if (!map.controls) {
@@ -2732,6 +2760,10 @@ HTMLWidgets.widget({
             });
           }
 
+          // Register 3D models used by model layers. This also runs after
+          // set_style(), so models come back before preserved layers do.
+          restoreCompareModels(map, mapData.models);
+
           // Add sources if provided
           if (mapData.sources) {
             mapData.sources.forEach(function (source) {
@@ -2784,12 +2816,17 @@ HTMLWidgets.widget({
                   });
                 }
               } else if (source.type === "raster-dem") {
-                map.addSource(source.id, {
+                // Only pass maxzoom when set: an undefined maxzoom overrides the
+                // TileJSON value and leaves terrain without elevation data.
+                const demOptions = {
                   type: "raster-dem",
                   url: source.url,
                   tileSize: source.tileSize,
-                  maxzoom: source.maxzoom,
-                });
+                };
+                if (source.maxzoom != null) {
+                  demOptions.maxzoom = source.maxzoom;
+                }
+                map.addSource(source.id, demOptions);
               } else if (source.type === "image") {
                 map.addSource(source.id, {
                   type: "image",
