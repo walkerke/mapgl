@@ -29,6 +29,8 @@ Functions to add various types of visualization layers to your map
   : Add a heatmap layer to a Mapbox GL map
 - [`add_fill_extrusion_layer()`](https://walker-data.com/mapgl/reference/add_fill_extrusion_layer.md)
   : Add a fill-extrusion layer to a Mapbox GL map
+- [`add_model_layer()`](https://walker-data.com/mapgl/reference/add_model_layer.md)
+  : Add a 3D model layer to a Mapbox GL map
 - [`add_raster_layer()`](https://walker-data.com/mapgl/reference/add_raster_layer.md)
   : Add a raster layer to a Mapbox GL map
 - [`add_symbol_layer()`](https://walker-data.com/mapgl/reference/add_symbol_layer.md)
@@ -343,6 +345,8 @@ Functions for advanced mapping features
   : Add a Globe Minimap to a map
 - [`add_image()`](https://walker-data.com/mapgl/reference/add_image.md)
   : Add an image to the map
+- [`add_model()`](https://walker-data.com/mapgl/reference/add_model.md)
+  : Add a 3D model to a Mapbox GL map
 - [`get_drawn_features()`](https://walker-data.com/mapgl/reference/get_drawn_features.md)
   : Get drawn features from the map
 - [`add_features_to_draw()`](https://walker-data.com/mapgl/reference/add_features_to_draw.md)

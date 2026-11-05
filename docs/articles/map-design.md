@@ -9,29 +9,25 @@ flexibility in how you design your maps.
 Let’s grab some data from **tidycensus** on median age by Census tract
 in Florida and initialize an empty map focused on Florida.
 
-``` r
-
-library(tidycensus)
-library(mapgl)
-
-fl_age <- get_acs(
-  geography = "tract",
-  variables = "B01002_001",
-  state = "FL",
-  year = 2024,
-  geometry = TRUE
-)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`tidycensus`](https://walker-data.com/tidycensus/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+\
+`fl_age`` ``<-`` `[`get_acs`](https://walker-data.com/tidycensus/reference/get_acs.html)`(`\
+`  geography ``=`` ``"tract"``,`\
+`  variables ``=`` ``"B01002_001"``,`\
+`  state ``=`` ``"FL"``,`\
+`  year ``=`` ``2024``,`\
+`  geometry ``=`` ``TRUE`\
+`)`
 
     ## Getting data from the 2020-2024 5-year ACS
 
-``` r
-
-fl_map <- mapboxgl(mapbox_style("light"),
-                   bounds = fl_age)
-
-fl_map
-```
+\
+`fl_map`` ``<-`` `[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(`[`mapbox_style`](https://walker-data.com/mapgl/reference/mapbox_style.md)`(``"light"``)``,`\
+`                   bounds ``=`` ``fl_age``)`\
+\
+`fl_map`
 
 ### Continuous styling
 
@@ -48,31 +44,29 @@ smooth color transitions. You can specify the classification method
 (“equal”, “quantile”, or “jenks”) and either a palette function or
 specific colors:
 
-``` r
-
-# Automatic continuous scale with equal breaks
-continuous_scale <- interpolate_palette(
-  data = fl_age,
-  column = "estimate",
-  method = "equal",
-  n = 5,
-  palette = viridisLite::plasma
-)
-
-fl_map |>
-  add_fill_layer(
-    id = "fl_tracts",
-    source = fl_age,
-    fill_color = continuous_scale$expression,
-    fill_opacity = 0.5
-  ) |>
-  add_legend(
-    "Median age in Florida",
-    values = get_legend_labels(continuous_scale, digits = 0),
-    colors = get_legend_colors(continuous_scale),
-    type = "continuous"
-  )
-```
+\
+`# Automatic continuous scale with equal breaks`\
+`continuous_scale`` ``<-`` `[`interpolate_palette`](https://walker-data.com/mapgl/reference/interpolate_palette.md)`(`\
+`  data ``=`` ``fl_age``,`\
+`  column ``=`` ``"estimate"``,`\
+`  method ``=`` ``"equal"``,`\
+`  n ``=`` ``5``,`\
+`  palette ``=`` ``viridisLite``::`[`plasma`](https://sjmgarnier.github.io/viridisLite/reference/viridis.html)\
+`)`\
+\
+`fl_map`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`    id ``=`` ``"fl_tracts"``,`\
+`    source ``=`` ``fl_age``,`\
+`    fill_color ``=`` ``continuous_scale``$``expression``,`\
+`    fill_opacity ``=`` ``0.5`\
+`  ``)`` ``|>`\
+`  `[`add_legend`](https://walker-data.com/mapgl/reference/map_legends.md)`(`\
+`    ``"Median age in Florida"``,`\
+`    values ``=`` `[`get_legend_labels`](https://walker-data.com/mapgl/reference/classification_helpers.md)`(``continuous_scale``, digits ``=`` ``0``)``,`\
+`    colors ``=`` `[`get_legend_colors`](https://walker-data.com/mapgl/reference/classification_helpers.md)`(``continuous_scale``)``,`\
+`    type ``=`` ``"continuous"`\
+`  ``)`
 
 For lower-level control, the
 [`interpolate()`](https://walker-data.com/mapgl/reference/interpolate.md)
@@ -80,78 +74,74 @@ function creates an `interpolate` expression where you manually specify
 values and stops. This gives you complete control over the color
 mapping:
 
-``` r
-
-fl_map |>
-  add_fill_layer(
-  id = "fl_tracts",
-  source = fl_age,
-  fill_color = interpolate(
-    column = "estimate",
-    values = c(20, 80),
-    stops = c("lightblue", "darkblue"),
-    na_color = "lightgrey"
-  ),
-  fill_opacity = 0.5
- ) |>
-  add_legend(
-    "Median age in Florida",
-    values = c(20, 80),
-    colors = c("lightblue", "darkblue")
-  )
-```
+\
+`fl_map`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`  id ``=`` ``"fl_tracts"``,`\
+`  source ``=`` ``fl_age``,`\
+`  fill_color ``=`` `[`interpolate`](https://walker-data.com/mapgl/reference/interpolate.md)`(`\
+`    column ``=`` ``"estimate"``,`\
+`    values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``20``, ``80``)``,`\
+`    stops ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"lightblue"``, ``"darkblue"``)``,`\
+`    na_color ``=`` ``"lightgrey"`\
+`  ``)``,`\
+`  fill_opacity ``=`` ``0.5`\
+` ``)`` ``|>`\
+`  `[`add_legend`](https://walker-data.com/mapgl/reference/map_legends.md)`(`\
+`    ``"Median age in Florida"``,`\
+`    values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``20``, ``80``)``,`\
+`    colors ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"lightblue"``, ``"darkblue"``)`\
+`  ``)`
 
 You can also let readers switch among several continuous color ramps
 directly from the legend. The map layer is styled with the selected
 ramp, and clicking a different ramp in the legend updates both the
 legend gradient and the map.
 
-``` r
-
-age_ramps <- list(
-  Viridis = viridisLite::viridis(5),
-  Magma = viridisLite::magma(5),
-  Blue = c("#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"),
-  Fire = c("#ffffcc", "#ffeda0", "#feb24c", "#f03b20", "#bd0026")
-)
-
-age_picker_scale <- interpolate_palette(
-  data = fl_age,
-  column = "estimate",
-  method = "equal",
-  n = 5,
-  color_ramps = age_ramps,
-  selected_ramp = "Viridis",
-  na_color = "lightgrey"
-)
-
-maplibre(
-  style = carto_style("positron"),
-  bounds = fl_age
-) |>
-  add_fill_layer(
-    id = "fl_age_picker",
-    source = fl_age,
-    fill_color = age_picker_scale$expression,
-    fill_opacity = 0.65,
-    fill_outline_color = "rgba(255,255,255,0.25)"
-  ) |>
-  add_legend(
-    "Median age in Florida",
-    values = get_legend_labels(age_picker_scale, digits = 0),
-    colors = age_picker_scale,
-    type = "continuous",
-    layer_id = "fl_age_picker",
-    ramp_picker = TRUE,
-    style = legend_style(
-      background_color = "white",
-      background_opacity = 0.92,
-      border_color = "#d1d5db",
-      border_width = 1,
-      shadow = TRUE
-    )
-  )
-```
+\
+`age_ramps`` ``<-`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`  Viridis ``=`` ``viridisLite``::`[`viridis`](https://sjmgarnier.github.io/viridisLite/reference/viridis.html)`(``5``)``,`\
+`  Magma ``=`` ``viridisLite``::`[`magma`](https://sjmgarnier.github.io/viridisLite/reference/viridis.html)`(``5``)``,`\
+`  Blue ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"#eff3ff"``, ``"#bdd7e7"``, ``"#6baed6"``, ``"#3182bd"``, ``"#08519c"``)``,`\
+`  Fire ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"#ffffcc"``, ``"#ffeda0"``, ``"#feb24c"``, ``"#f03b20"``, ``"#bd0026"``)`\
+`)`\
+\
+`age_picker_scale`` ``<-`` `[`interpolate_palette`](https://walker-data.com/mapgl/reference/interpolate_palette.md)`(`\
+`  data ``=`` ``fl_age``,`\
+`  column ``=`` ``"estimate"``,`\
+`  method ``=`` ``"equal"``,`\
+`  n ``=`` ``5``,`\
+`  color_ramps ``=`` ``age_ramps``,`\
+`  selected_ramp ``=`` ``"Viridis"``,`\
+`  na_color ``=`` ``"lightgrey"`\
+`)`\
+\
+[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(`\
+`  style ``=`` `[`carto_style`](https://walker-data.com/mapgl/reference/carto_style.md)`(``"positron"``)``,`\
+`  bounds ``=`` ``fl_age`\
+`)`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`    id ``=`` ``"fl_age_picker"``,`\
+`    source ``=`` ``fl_age``,`\
+`    fill_color ``=`` ``age_picker_scale``$``expression``,`\
+`    fill_opacity ``=`` ``0.65``,`\
+`    fill_outline_color ``=`` ``"rgba(255,255,255,0.25)"`\
+`  ``)`` ``|>`\
+`  `[`add_legend`](https://walker-data.com/mapgl/reference/map_legends.md)`(`\
+`    ``"Median age in Florida"``,`\
+`    values ``=`` `[`get_legend_labels`](https://walker-data.com/mapgl/reference/classification_helpers.md)`(``age_picker_scale``, digits ``=`` ``0``)``,`\
+`    colors ``=`` ``age_picker_scale``,`\
+`    type ``=`` ``"continuous"``,`\
+`    layer_id ``=`` ``"fl_age_picker"``,`\
+`    ramp_picker ``=`` ``TRUE``,`\
+`    style ``=`` `[`legend_style`](https://walker-data.com/mapgl/reference/legend_style.md)`(`\
+`      background_color ``=`` ``"white"``,`\
+`      background_opacity ``=`` ``0.92``,`\
+`      border_color ``=`` ``"#d1d5db"``,`\
+`      border_width ``=`` ``1``,`\
+`      shadow ``=`` ``TRUE`\
+`    ``)`\
+`  ``)`
 
 ### Categorical styling
 
@@ -170,66 +160,62 @@ These functions automatically calculate appropriate break points and
 generate step expressions. You can specify the number of classes and the
 color palette to use:
 
-``` r
-
-# Automatic quantile classification with 5 classes
-q_class <- step_quantile(
-  data = fl_age,
-  column = "estimate",
-  n = 5,
-  colors = RColorBrewer::brewer.pal(5, "PRGn")
-)
-
-fl_map |>
-  add_fill_layer(
-    id = "fl_tracts",
-    source = fl_age,
-    fill_color = q_class$expression,
-    fill_opacity = 0.5
-  ) |>
-  add_legend(
-    "Median age in Florida",
-    values = get_legend_labels(q_class, digits = 0, suffix = " years"),
-    colors = get_legend_colors(q_class),
-    type = "categorical"
-  )
-```
+\
+`# Automatic quantile classification with 5 classes`\
+`q_class`` ``<-`` `[`step_quantile`](https://walker-data.com/mapgl/reference/step_classification.md)`(`\
+`  data ``=`` ``fl_age``,`\
+`  column ``=`` ``"estimate"``,`\
+`  n ``=`` ``5``,`\
+`  colors ``=`` ``RColorBrewer``::`[`brewer.pal`](https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html)`(``5``, ``"PRGn"``)`\
+`)`\
+\
+`fl_map`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`    id ``=`` ``"fl_tracts"``,`\
+`    source ``=`` ``fl_age``,`\
+`    fill_color ``=`` ``q_class``$``expression``,`\
+`    fill_opacity ``=`` ``0.5`\
+`  ``)`` ``|>`\
+`  `[`add_legend`](https://walker-data.com/mapgl/reference/map_legends.md)`(`\
+`    ``"Median age in Florida"``,`\
+`    values ``=`` `[`get_legend_labels`](https://walker-data.com/mapgl/reference/classification_helpers.md)`(``q_class``, digits ``=`` ``0``, suffix ``=`` ``" years"``)``,`\
+`    colors ``=`` `[`get_legend_colors`](https://walker-data.com/mapgl/reference/classification_helpers.md)`(``q_class``)``,`\
+`    type ``=`` ``"categorical"`\
+`  ``)`
 
 For lower-level control, you can still use the
 [`step_expr()`](https://walker-data.com/mapgl/reference/step_expr.md)
 function directly. Step expressions require a `base` value followed by a
 series of `stops` and threshold `values`:
 
-``` r
-
-brewer_pal <- RColorBrewer::brewer.pal(5, "RdYlBu")
-
-fl_map |>
-  add_fill_layer(
-  id = "fl_tracts",
-  source = fl_age,
-  fill_color = step_expr(
-    column = "estimate",
-    base = brewer_pal[1],
-    stops = brewer_pal[2:5],
-    values = seq(25, 70, 15),
-    na_color = "white"
-  ),
-  fill_opacity = 0.5
- ) |>
-  add_legend(
-    "Median age in Florida",
-    values = c(
-      "Under 25",
-      "25-40",
-      "40-55",
-      "55-70",
-      "Above 70"
-    ),
-    colors = brewer_pal,
-    type = "categorical"
-  )
-```
+\
+`brewer_pal`` ``<-`` ``RColorBrewer``::`[`brewer.pal`](https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html)`(``5``, ``"RdYlBu"``)`\
+\
+`fl_map`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`  id ``=`` ``"fl_tracts"``,`\
+`  source ``=`` ``fl_age``,`\
+`  fill_color ``=`` `[`step_expr`](https://walker-data.com/mapgl/reference/step_expr.md)`(`\
+`    column ``=`` ``"estimate"``,`\
+`    base ``=`` ``brewer_pal``[``1``]``,`\
+`    stops ``=`` ``brewer_pal``[``2``:``5``]``,`\
+`    values ``=`` `[`seq`](https://rdrr.io/r/base/seq.html)`(``25``, ``70``, ``15``)``,`\
+`    na_color ``=`` ``"white"`\
+`  ``)``,`\
+`  fill_opacity ``=`` ``0.5`\
+` ``)`` ``|>`\
+`  `[`add_legend`](https://walker-data.com/mapgl/reference/map_legends.md)`(`\
+`    ``"Median age in Florida"``,`\
+`    values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(`\
+`      ``"Under 25"``,`\
+`      ``"25-40"``,`\
+`      ``"40-55"``,`\
+`      ``"55-70"``,`\
+`      ``"Above 70"`\
+`    ``)``,`\
+`    colors ``=`` ``brewer_pal``,`\
+`    type ``=`` ``"categorical"`\
+`  ``)`
 
 ### Pop-ups, tooltips, and highlighting
 
@@ -253,36 +239,34 @@ the desired values on hover. In the example shown here, we tell Mapbox
 GL JS to change a Census tract’s fill to yellow and fill opacity to 1
 when the users hovers over the tract.
 
-``` r
-
-fl_age$popup <- glue::glue(
-  "<strong>GEOID: </strong>{fl_age$GEOID}<br><strong>Median age: </strong>{fl_age$estimate}"
-)
-
-fl_map |>
-  add_fill_layer(
-  id = "fl_tracts",
-  source = fl_age,
-  fill_color = interpolate(
-    column = "estimate",
-    values = c(20, 80),
-    stops = c("lightblue", "darkblue"),
-    na_color = "lightgrey"
-  ),
-  fill_opacity = 0.5,
-  popup = "popup",
-  tooltip = "estimate",
-  hover_options = list(
-    fill_color = "yellow",
-    fill_opacity = 1
-  )
- ) |>
-  add_legend(
-    "Median age in Florida",
-    values = c(20, 80),
-    colors = c("lightblue", "darkblue")
-  )
-```
+\
+`fl_age``$``popup`` ``<-`` ``glue``::`[`glue`](https://glue.tidyverse.org/reference/glue.html)`(`\
+`  ``"<strong>GEOID: </strong>{fl_age$GEOID}<br><strong>Median age: </strong>{fl_age$estimate}"`\
+`)`\
+\
+`fl_map`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`  id ``=`` ``"fl_tracts"``,`\
+`  source ``=`` ``fl_age``,`\
+`  fill_color ``=`` `[`interpolate`](https://walker-data.com/mapgl/reference/interpolate.md)`(`\
+`    column ``=`` ``"estimate"``,`\
+`    values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``20``, ``80``)``,`\
+`    stops ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"lightblue"``, ``"darkblue"``)``,`\
+`    na_color ``=`` ``"lightgrey"`\
+`  ``)``,`\
+`  fill_opacity ``=`` ``0.5``,`\
+`  popup ``=`` ``"popup"``,`\
+`  tooltip ``=`` ``"estimate"``,`\
+`  hover_options ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`    fill_color ``=`` ``"yellow"``,`\
+`    fill_opacity ``=`` ``1`\
+`  ``)`\
+` ``)`` ``|>`\
+`  `[`add_legend`](https://walker-data.com/mapgl/reference/map_legends.md)`(`\
+`    ``"Median age in Florida"``,`\
+`    values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``20``, ``80``)``,`\
+`    colors ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"lightblue"``, ``"darkblue"``)`\
+`  ``)`
 
 #### Expression-based popups with conditional logic
 
@@ -303,29 +287,27 @@ and
 [`is_blank()`](https://walker-data.com/mapgl/reference/conditional_expressions.md)
 — let you handle missing or unreliable attributes on the fly:
 
-``` r
-
-fl_map |>
-  add_fill_layer(
-    id = "fl_tracts",
-    source = fl_age,
-    fill_color = interpolate(
-      column = "estimate",
-      values = c(20, 80),
-      stops = c("lightblue", "darkblue"),
-      na_color = "lightgrey"
-    ),
-    fill_opacity = 0.5,
-    popup = concat(
-      "<strong>GEOID: </strong>", get_column("GEOID"), "<br>",
-      if_else_expr(
-        is_blank("estimate"),
-        "Median age not available",
-        concat("<strong>Median age: </strong>", number_format("estimate", maximum_fraction_digits = 1))
-      )
-    )
-  )
-```
+\
+`fl_map`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`    id ``=`` ``"fl_tracts"``,`\
+`    source ``=`` ``fl_age``,`\
+`    fill_color ``=`` `[`interpolate`](https://walker-data.com/mapgl/reference/interpolate.md)`(`\
+`      column ``=`` ``"estimate"``,`\
+`      values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``20``, ``80``)``,`\
+`      stops ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"lightblue"``, ``"darkblue"``)``,`\
+`      na_color ``=`` ``"lightgrey"`\
+`    ``)``,`\
+`    fill_opacity ``=`` ``0.5``,`\
+`    popup ``=`` `[`concat`](https://walker-data.com/mapgl/reference/concat.md)`(`\
+`      ``"<strong>GEOID: </strong>"``, `[`get_column`](https://walker-data.com/mapgl/reference/get_column.md)`(``"GEOID"``)``, ``"<br>"``,`\
+`      `[`if_else_expr`](https://walker-data.com/mapgl/reference/conditional_expressions.md)`(`\
+`        `[`is_blank`](https://walker-data.com/mapgl/reference/conditional_expressions.md)`(``"estimate"``)``,`\
+`        ``"Median age not available"``,`\
+`        `[`concat`](https://walker-data.com/mapgl/reference/concat.md)`(``"<strong>Median age: </strong>"``, `[`number_format`](https://walker-data.com/mapgl/reference/number_format.md)`(``"estimate"``, maximum_fraction_digits ``=`` ``1``)``)`\
+`      ``)`\
+`    ``)`\
+`  ``)`
 
 Conditions can be any GL-style boolean expression
 (e.g. `list(">=", get_column("estimate"), 65)`), and only the branch
@@ -351,66 +333,62 @@ By default,
 uses quantile breaks; pass `x_breaks` and `y_breaks` as four-value
 numeric vectors when you need stable bins across maps or filtered views.
 
-``` r
-
-fl_age_income <- get_acs(
-  geography = "tract",
-  variables = c(
-    median_age = "B01002_001",
-    median_income = "B19013_001"
-  ),
-  state = "FL",
-  year = 2024,
-  geometry = TRUE,
-  output = "wide"
-)
-```
+\
+`fl_age_income`` ``<-`` `[`get_acs`](https://walker-data.com/tidycensus/reference/get_acs.html)`(`\
+`  geography ``=`` ``"tract"``,`\
+`  variables ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(`\
+`    median_age ``=`` ``"B01002_001"``,`\
+`    median_income ``=`` ``"B19013_001"`\
+`  ``)``,`\
+`  state ``=`` ``"FL"``,`\
+`  year ``=`` ``2024``,`\
+`  geometry ``=`` ``TRUE``,`\
+`  output ``=`` ``"wide"`\
+`)`
 
     ## Getting data from the 2020-2024 5-year ACS
 
-``` r
-
-names(fl_age_income) <- sub("E$", "", names(fl_age_income))
-
-fl_age_income$popup <- glue::glue(
-  "<strong>GEOID: </strong>{fl_age_income$GEOID}<br>",
-  "<strong>Median age: </strong>{round(fl_age_income$median_age, 1)}<br>",
-  "<strong>Median household income: </strong>${format(round(fl_age_income$median_income), big.mark = ',')}"
-)
-
-age_income_scale <- bivariate_scale(
-  data = fl_age_income,
-  x = "median_income",
-  y = "median_age", na_color = "white", palette = "blue_red"
-)
-
-maplibre(
-  style = carto_style("positron"),
-  bounds = fl_age_income
-) |>
-  add_fill_layer(
-    id = "fl_age_income",
-    source = fl_age_income,
-    fill_color = age_income_scale$expression,
-    fill_opacity = 0.75,
-    fill_outline_color = "rgba(255,255,255,0.25)",
-    popup = "popup",
-    hover_options = list(
-      fill_opacity = 1
-    )
-  ) |>
-  add_bivariate_legend(
-    age_income_scale,
-    legend_title = "Age and income",
-    x_title = "Higher income",
-    y_title = "Older median age",
-    layer_id = "fl_age_income",
-    style = legend_style(
-      background_color = "white",
-      background_opacity = 0.94,
-      border_color = "#d1d5db",
-      border_width = 1,
-      shadow = TRUE
-    )
-  )
-```
+\
+[`names`](https://rdrr.io/r/base/names.html)`(``fl_age_income``)`` ``<-`` `[`sub`](https://rdrr.io/r/base/grep.html)`(``"E$"``, ``""``, `[`names`](https://rdrr.io/r/base/names.html)`(``fl_age_income``)``)`\
+\
+`fl_age_income``$``popup`` ``<-`` ``glue``::`[`glue`](https://glue.tidyverse.org/reference/glue.html)`(`\
+`  ``"<strong>GEOID: </strong>{fl_age_income$GEOID}<br>"``,`\
+`  ``"<strong>Median age: </strong>{round(fl_age_income$median_age, 1)}<br>"``,`\
+`  ``"<strong>Median household income: </strong>${format(round(fl_age_income$median_income), big.mark = ',')}"`\
+`)`\
+\
+`age_income_scale`` ``<-`` `[`bivariate_scale`](https://walker-data.com/mapgl/reference/bivariate_scale.md)`(`\
+`  data ``=`` ``fl_age_income``,`\
+`  x ``=`` ``"median_income"``,`\
+`  y ``=`` ``"median_age"``, na_color ``=`` ``"white"``, palette ``=`` ``"blue_red"`\
+`)`\
+\
+[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(`\
+`  style ``=`` `[`carto_style`](https://walker-data.com/mapgl/reference/carto_style.md)`(``"positron"``)``,`\
+`  bounds ``=`` ``fl_age_income`\
+`)`` ``|>`\
+`  `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`    id ``=`` ``"fl_age_income"``,`\
+`    source ``=`` ``fl_age_income``,`\
+`    fill_color ``=`` ``age_income_scale``$``expression``,`\
+`    fill_opacity ``=`` ``0.75``,`\
+`    fill_outline_color ``=`` ``"rgba(255,255,255,0.25)"``,`\
+`    popup ``=`` ``"popup"``,`\
+`    hover_options ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`      fill_opacity ``=`` ``1`\
+`    ``)`\
+`  ``)`` ``|>`\
+`  `[`add_bivariate_legend`](https://walker-data.com/mapgl/reference/add_bivariate_legend.md)`(`\
+`    ``age_income_scale``,`\
+`    legend_title ``=`` ``"Age and income"``,`\
+`    x_title ``=`` ``"Higher income"``,`\
+`    y_title ``=`` ``"Older median age"``,`\
+`    layer_id ``=`` ``"fl_age_income"``,`\
+`    style ``=`` `[`legend_style`](https://walker-data.com/mapgl/reference/legend_style.md)`(`\
+`      background_color ``=`` ``"white"``,`\
+`      background_opacity ``=`` ``0.94``,`\
+`      border_color ``=`` ``"#d1d5db"``,`\
+`      border_width ``=`` ``1``,`\
+`      shadow ``=`` ``TRUE`\
+`    ``)`\
+`  ``)`

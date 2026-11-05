@@ -57,6 +57,8 @@ cluster_options(
 - count_stops:
 
   A vector of point counts for both color and radius step expressions.
+  For donut clusters with `donut_weight`, these are thresholds on the
+  weighted total instead, matching the cluster label.
 
 - circle_blur:
 

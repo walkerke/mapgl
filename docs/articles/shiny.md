@@ -13,37 +13,35 @@ comes with the **sf** package. We’ll initialize a basic app with a
 sidebar using the **bslib** package that does nothing more than display
 North Carolina’s counties over a basemap.
 
-``` r
-
-library(shiny)
-library(bslib)
-library(mapgl)
-library(sf)
-
-nc <- st_read(system.file("shape/nc.shp", package="sf"))
-
-ui <- page_sidebar(
-  title = "mapgl with Shiny",
-  sidebar = sidebar(),
-  card(
-    full_screen = TRUE,
-    maplibreOutput("map")
-  )
-)
-
-server <- function(input, output, session) {
-  output$map <- renderMaplibre({
-    maplibre(style = carto_style("positron")) |> 
-      fit_bounds(nc, animate = FALSE) |> 
-      add_fill_layer(id = "nc_data",
-                     source = nc,
-                     fill_color = "blue",
-                     fill_opacity = 0.5)
-  })
-}
-
-shinyApp(ui, server)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`shiny`](https://shiny.posit.co/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`bslib`](https://rstudio.github.io/bslib/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`sf`](https://r-spatial.github.io/sf/)`)`\
+\
+`nc`` ``<-`` `[`st_read`](https://r-spatial.github.io/sf/reference/st_read.html)`(`[`system.file`](https://rdrr.io/r/base/system.file.html)`(``"shape/nc.shp"``, package``=``"sf"``)``)`\
+\
+`ui`` ``<-`` `[`page_sidebar`](https://rstudio.github.io/bslib/reference/page_sidebar.html)`(`\
+`  title ``=`` ``"mapgl with Shiny"``,`\
+`  sidebar ``=`` `[`sidebar`](https://rstudio.github.io/bslib/reference/sidebar.html)`(``)``,`\
+`  `[`card`](https://rstudio.github.io/bslib/reference/card.html)`(`\
+`    full_screen ``=`` ``TRUE``,`\
+`    `[`maplibreOutput`](https://walker-data.com/mapgl/reference/maplibreOutput.md)`(``"map"``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+`  ``output``$``map`` ``<-`` `[`renderMaplibre`](https://walker-data.com/mapgl/reference/renderMaplibre.md)`(``{`\
+`    `[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(``style ``=`` `[`carto_style`](https://walker-data.com/mapgl/reference/carto_style.md)`(``"positron"``)``)`` ``|>`` `\
+`      `[`fit_bounds`](https://walker-data.com/mapgl/reference/fit_bounds.md)`(``nc``, animate ``=`` ``FALSE``)`` ``|>`` `\
+`      `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(``id ``=`` ``"nc_data"``,`\
+`                     source ``=`` ``nc``,`\
+`                     fill_color ``=`` ``"blue"``,`\
+`                     fill_opacity ``=`` ``0.5``)`\
+`  ``}``)`\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/clipboard-2017990981.png)
 
@@ -81,37 +79,35 @@ click.
 
 Try this example to see how this works:
 
-``` r
-
-ui <- page_sidebar(
-  title = "mapgl with Shiny",
-  sidebar = sidebar(
-    verbatimTextOutput("clicked_feature")
-  ),
-  card(
-    full_screen = TRUE,
-    maplibreOutput("map")
-  )
-)
-
-server <- function(input, output, session) {
-  output$map <- renderMaplibre({
-    maplibre(style = carto_style("positron")) |> 
-      fit_bounds(nc, animate = FALSE) |> 
-      add_fill_layer(id = "nc_data",
-                     source = nc,
-                     fill_color = "blue",
-                     fill_opacity = 0.5)
-  })
-  
-  output$clicked_feature <- renderPrint({
-    req(input$map_feature_click)
-    input$map_feature_click
-  })
-}
-
-shinyApp(ui, server)
-```
+\
+`ui`` ``<-`` `[`page_sidebar`](https://rstudio.github.io/bslib/reference/page_sidebar.html)`(`\
+`  title ``=`` ``"mapgl with Shiny"``,`\
+`  sidebar ``=`` `[`sidebar`](https://rstudio.github.io/bslib/reference/sidebar.html)`(`\
+`    `[`verbatimTextOutput`](https://rdrr.io/pkg/shiny/man/textOutput.html)`(``"clicked_feature"``)`\
+`  ``)``,`\
+`  `[`card`](https://rstudio.github.io/bslib/reference/card.html)`(`\
+`    full_screen ``=`` ``TRUE``,`\
+`    `[`maplibreOutput`](https://walker-data.com/mapgl/reference/maplibreOutput.md)`(``"map"``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+`  ``output``$``map`` ``<-`` `[`renderMaplibre`](https://walker-data.com/mapgl/reference/renderMaplibre.md)`(``{`\
+`    `[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(``style ``=`` `[`carto_style`](https://walker-data.com/mapgl/reference/carto_style.md)`(``"positron"``)``)`` ``|>`` `\
+`      `[`fit_bounds`](https://walker-data.com/mapgl/reference/fit_bounds.md)`(``nc``, animate ``=`` ``FALSE``)`` ``|>`` `\
+`      `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(``id ``=`` ``"nc_data"``,`\
+`                     source ``=`` ``nc``,`\
+`                     fill_color ``=`` ``"blue"``,`\
+`                     fill_opacity ``=`` ``0.5``)`\
+`  ``}``)`\
+`  `\
+`  ``output``$``clicked_feature`` ``<-`` `[`renderPrint`](https://rdrr.io/pkg/shiny/man/renderPrint.html)`(``{`\
+`    `[`req`](https://rdrr.io/pkg/shiny/man/req.html)`(``input``$``map_feature_click``)`\
+`    ``input``$``map_feature_click`\
+`  ``}``)`\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/clipboard-3084377675.png)
 
@@ -153,48 +149,46 @@ Try out this example which uses a color picker widget to change the
 color on the map, and a slider to filter the visible counties based on
 an expression.
 
-``` r
-
-library(colourpicker)
-
-ui <- page_sidebar(
-  title = "mapgl with Shiny",
-  sidebar = sidebar(
-    colourInput("color", "Select a color",
-                value = "blue"),
-    sliderInput("slider", "Show BIR74 values above:",
-                value = 248, min = 248, max = 21588)
-  ),
-  card(
-    full_screen = TRUE,
-    maplibreOutput("map")
-  )
-)
-
-server <- function(input, output, session) {
-  output$map <- renderMaplibre({
-    maplibre(style = carto_style("positron")) |> 
-      fit_bounds(nc, animate = FALSE) |> 
-      add_fill_layer(id = "nc_data",
-                     source = nc,
-                     fill_color = "blue",
-                     fill_opacity = 0.5)
-  })
-  
-  observeEvent(input$color, {
-    maplibre_proxy("map") |>
-      set_paint_property("nc_data", "fill-color", input$color)
-  })
-  
-  observeEvent(input$slider, {
-    maplibre_proxy("map") |> 
-      set_filter("nc_data", 
-                 list(">=", get_column("BIR74"), input$slider))
-  })
-}
-
-shinyApp(ui, server)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`colourpicker`](https://github.com/daattali/colourpicker)`)`\
+\
+`ui`` ``<-`` `[`page_sidebar`](https://rstudio.github.io/bslib/reference/page_sidebar.html)`(`\
+`  title ``=`` ``"mapgl with Shiny"``,`\
+`  sidebar ``=`` `[`sidebar`](https://rstudio.github.io/bslib/reference/sidebar.html)`(`\
+`    ``colourInput``(``"color"``, ``"Select a color"``,`\
+`                value ``=`` ``"blue"``)``,`\
+`    `[`sliderInput`](https://rdrr.io/pkg/shiny/man/sliderInput.html)`(``"slider"``, ``"Show BIR74 values above:"``,`\
+`                value ``=`` ``248``, min ``=`` ``248``, max ``=`` ``21588``)`\
+`  ``)``,`\
+`  `[`card`](https://rstudio.github.io/bslib/reference/card.html)`(`\
+`    full_screen ``=`` ``TRUE``,`\
+`    `[`maplibreOutput`](https://walker-data.com/mapgl/reference/maplibreOutput.md)`(``"map"``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+`  ``output``$``map`` ``<-`` `[`renderMaplibre`](https://walker-data.com/mapgl/reference/renderMaplibre.md)`(``{`\
+`    `[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(``style ``=`` `[`carto_style`](https://walker-data.com/mapgl/reference/carto_style.md)`(``"positron"``)``)`` ``|>`` `\
+`      `[`fit_bounds`](https://walker-data.com/mapgl/reference/fit_bounds.md)`(``nc``, animate ``=`` ``FALSE``)`` ``|>`` `\
+`      `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(``id ``=`` ``"nc_data"``,`\
+`                     source ``=`` ``nc``,`\
+`                     fill_color ``=`` ``"blue"``,`\
+`                     fill_opacity ``=`` ``0.5``)`\
+`  ``}``)`\
+`  `\
+`  `[`observeEvent`](https://rdrr.io/pkg/shiny/man/observeEvent.html)`(``input``$``color``, ``{`\
+`    `[`maplibre_proxy`](https://walker-data.com/mapgl/reference/maplibre_proxy.md)`(``"map"``)`` ``|>`\
+`      `[`set_paint_property`](https://walker-data.com/mapgl/reference/set_paint_property.md)`(``"nc_data"``, ``"fill-color"``, ``input``$``color``)`\
+`  ``}``)`\
+`  `\
+`  `[`observeEvent`](https://rdrr.io/pkg/shiny/man/observeEvent.html)`(``input``$``slider``, ``{`\
+`    `[`maplibre_proxy`](https://walker-data.com/mapgl/reference/maplibre_proxy.md)`(``"map"``)`` ``|>`` `\
+`      `[`set_filter`](https://walker-data.com/mapgl/reference/set_filter.md)`(``"nc_data"``, `\
+`                 `[`list`](https://rdrr.io/r/base/list.html)`(``">="``, `[`get_column`](https://walker-data.com/mapgl/reference/get_column.md)`(``"BIR74"``)``, ``input``$``slider``)``)`\
+`  ``}``)`\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/clipboard-4076622643.png)
 

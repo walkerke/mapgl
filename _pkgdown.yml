@@ -60,6 +60,7 @@ reference:
       - add_circle_layer
       - add_heatmap_layer
       - add_fill_extrusion_layer
+      - add_model_layer
       - add_raster_layer
       - add_symbol_layer
       - add_view
@@ -231,6 +232,7 @@ reference:
       - compare
       - add_globe_minimap
       - add_image
+      - add_model
       - get_drawn_features
       - add_features_to_draw
       - clear_drawn_features

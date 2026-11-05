@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mapgl</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.5.2" id="mapgl-052">mapgl 0.5.2<a class="anchor" aria-label="anchor" href="#mapgl-052"></a></h2>
+<h2 class="pkg-version" data-toc-text="development version" id="mapgl-development-version">mapgl (development version)<a class="anchor" aria-label="anchor" href="#mapgl-development-version"></a></h2>
+<ul><li><p>Various bug fixes and performance improvements (<a href="https://github.com/walkerke/mapgl/issues/226" class="external-link">#226</a>), including terrain from <code><a href="../reference/add_raster_dem_source.html">add_raster_dem_source()</a></code> without <code>maxzoom</code>.</p></li>
+<li><p>Weighted donut clusters (<code>donut_weight</code>) are now sized by their weighted total, so <code>count_stops</code> should be given in the weight’s units.</p></li>
+<li><p>New <code><a href="../reference/add_model.html">add_model()</a></code> and <code><a href="../reference/add_model_layer.html">add_model_layer()</a></code> draw 3D glTF/GLB models at point features on Mapbox GL maps.</p></li>
+<li><p>Update Mapbox GL JS to v3.34.2.</p></li>
+<li><p><code><a href="../reference/add_pmtiles_source.html">add_pmtiles_source()</a></code> on Mapbox GL maps now works with relative paths such as <code>"tiles/data.pmtiles"</code>, and <code><a href="../reference/compare.html">compare()</a></code> maps keep extra vector and raster source options (<code>provider</code>, <code>minzoom</code>, …) when first rendered.</p></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.2" id="mapgl-052">mapgl 0.5.2<a class="anchor" aria-label="anchor" href="#mapgl-052"></a></h2><p class="text-muted">CRAN release: 2026-10-02</p>
 <ul><li><p>Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.</p></li>
 <li><p>Interactive categorical legends preserve hexagon and custom SVG patch shapes when toggling categories or resetting filters.</p></li>
 <li><p>Clusters can be drawn as donut charts showing each cluster’s category mix with <code>cluster_options(donut_column = )</code>, for live GeoJSON clustering and pre-clustered vector tiles.</p></li>

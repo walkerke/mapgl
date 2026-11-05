@@ -1,6 +1,35 @@
 # Changelog
 
+## mapgl (development version)
+
+- Various bug fixes and performance improvements
+  ([\#226](https://github.com/walkerke/mapgl/issues/226)), including
+  terrain from
+  [`add_raster_dem_source()`](https://walker-data.com/mapgl/reference/add_raster_dem_source.md)
+  without `maxzoom`.
+
+- Weighted donut clusters (`donut_weight`) are now sized by their
+  weighted total, so `count_stops` should be given in the weight’s
+  units.
+
+- New
+  [`add_model()`](https://walker-data.com/mapgl/reference/add_model.md)
+  and
+  [`add_model_layer()`](https://walker-data.com/mapgl/reference/add_model_layer.md)
+  draw 3D glTF/GLB models at point features on Mapbox GL maps.
+
+- Update Mapbox GL JS to v3.34.2.
+
+- [`add_pmtiles_source()`](https://walker-data.com/mapgl/reference/add_pmtiles_source.md)
+  on Mapbox GL maps now works with relative paths such as
+  `"tiles/data.pmtiles"`, and
+  [`compare()`](https://walker-data.com/mapgl/reference/compare.md) maps
+  keep extra vector and raster source options (`provider`, `minzoom`, …)
+  when first rendered.
+
 ## mapgl 0.5.2
+
+CRAN release: 2026-10-02
 
 - Donut count labels use the same overlap and collision-placement rules
   as their icons, preventing collision-hidden numbers inside visible

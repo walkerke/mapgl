@@ -9,17 +9,13 @@ users coming from other R mapping packages.
 
 Install from CRAN:
 
-``` r
-
-install.packages("mapgl")
-```
+\
+[`install.packages`](https://rdrr.io/r/utils/install.packages.html)`(``"mapgl"``)`
 
 Or, install the development version from GitHub:
 
-``` r
-
-remotes::install_github("walkerke/mapgl")
-```
+\
+`remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"walkerke/mapgl"``)`
 
 Read through these vignettes to learn how to use the package:
 
