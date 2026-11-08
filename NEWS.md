@@ -1,6 +1,8 @@
 # mapgl (development version)
 
-* Various bug fixes and performance improvements (#226), including terrain from `add_raster_dem_source()` without `maxzoom`.
+* Categorical legends accept one `patch_shape` per value, so one legend can mix built-in and custom shapes, e.g. `patch_shape = list(isochrone_sf, "circle")`.
+
+* Various bug fixes and performance improvements (#226), including terrain from `add_raster_dem_source()` without `maxzoom`, saved maps that are about 10 MB smaller, bottom-corner legends that no longer cover the map's logo or attribution, and hollow custom SVG legend patches.
 
 * Weighted donut clusters (`donut_weight`) are now sized by their weighted total, so `count_stops` should be given in the weight's units.
 
