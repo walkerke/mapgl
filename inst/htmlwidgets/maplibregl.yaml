@@ -35,12 +35,12 @@ dependencies:
       - "bezier-mode.js"
   - name: terra-draw
     version: "1.32.2"
-    src: "htmlwidgets/lib/terra-draw-control"
+    src: "htmlwidgets/lib/terra-draw"
     script:
       - "terra-draw.umd.js"
   - name: terra-draw-maplibre-gl-adapter
     version: "1.4.1"
-    src: "htmlwidgets/lib/terra-draw-control"
+    src: "htmlwidgets/lib/terra-draw-maplibre-gl-adapter"
     script:
       - "terra-draw-maplibre-gl-adapter.umd.js"
   - name: mapgl-terra-draw-control
@@ -87,7 +87,7 @@ dependencies:
       - "turf.min.js"
   - name: turf-operations
     version: "1.0.0"
-    src: "htmlwidgets"
+    src: "htmlwidgets/lib/turf-operations"
     script:
       - "turf-operations.js"
   - name: html2canvas
@@ -97,7 +97,7 @@ dependencies:
       - "html2canvas.min.js"
   - name: screenshot
     version: "1.0.0"
-    src: "htmlwidgets"
+    src: "htmlwidgets/lib/screenshot"
     script:
       - "screenshot.js"
   - name: legend-interactivity

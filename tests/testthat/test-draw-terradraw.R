@@ -810,7 +810,7 @@ test_that("curve densifier matches the bezier plugin port exactly", {
     console.log(JSON.stringify(out));
     ',
     shQuote(system.file(
-      "htmlwidgets/lib/terra-draw-control/terra-draw.umd.js",
+      "htmlwidgets/lib/terra-draw/terra-draw.umd.js",
       package = "mapgl"
     )),
     shQuote(system.file(
