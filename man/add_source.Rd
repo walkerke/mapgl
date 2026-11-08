@@ -11,7 +11,13 @@ add_source(map, id, data, ...)
 
 \item{id}{A unique ID for the source.}
 
-\item{data}{An sf object or a URL pointing to a remote GeoJSON file.}
+\item{data}{An sf object, a GeoJSON document as a string, or a URL pointing
+to a remote GeoJSON file. A string is taken as GeoJSON when it has class
+\code{"json"} or \code{"geojson"} (as \code{geojsonsf::sf_geojson()} and
+\code{jsonlite::toJSON()} return) or when its first non-blank character opens
+a JSON object or array (a brace or a bracket); it is passed to the map
+verbatim, so feature property names and any foreign members of the
+FeatureCollection are kept as written.}
 
 \item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }

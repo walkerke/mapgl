@@ -2,7 +2,13 @@
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
-#' @param data An sf object or a URL pointing to a remote GeoJSON file.
+#' @param data An sf object, a GeoJSON document as a string, or a URL pointing
+#'   to a remote GeoJSON file. A string is taken as GeoJSON when it has class
+#'   `"json"` or `"geojson"` (as `geojsonsf::sf_geojson()` and
+#'   `jsonlite::toJSON()` return) or when its first non-blank character opens
+#'   a JSON object or array (a brace or a bracket); it is passed to the map
+#'   verbatim, so feature property names and any foreign members of the
+#'   FeatureCollection are kept as written.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
@@ -17,10 +23,14 @@ add_source <- function(map, id, data, ...) {
       data <- sf::st_transform(data, crs = 4326)
     }
     geojson <- geojsonsf::sf_geojson(data, simplify = FALSE)
-  } else if (is.character(data) && grepl("^http", data)) {
+  } else if (is_geojson_string(data)) {
+    geojson <- structure(paste(data, collapse = "\n"), class = "json")
+  } else if (is.character(data) && length(data) == 1 && grepl("^http", data)) {
     geojson <- data
   } else {
-    stop("Data must be an sf object or a URL to a remote GeoJSON file.")
+    stop(
+      "Data must be an sf object, a GeoJSON string, or a URL to a remote GeoJSON file."
+    )
   }
 
   source <- list(
@@ -879,4 +889,13 @@ add_pmtiles_source <- function(
   }
 
   return(map)
+}
+
+# A character value holding a GeoJSON document: the classes `geojsonsf` and
+# `jsonlite` give their output, or text whose first non-blank character opens
+# a JSON object or array. A URL never matches (it starts with a letter).
+is_geojson_string <- function(x) {
+  is.character(x) &&
+    length(x) >= 1 &&
+    (inherits(x, c("json", "geojson")) || grepl("^\\s*[\\{\\[]", x[1]))
 }

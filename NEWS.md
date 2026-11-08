@@ -1,5 +1,7 @@
 # mapgl (development version)
 
+* `add_source()` accepts a GeoJSON document as a string (class `"json"`/`"geojson"`, or text starting with `{`/`[`) and passes it to the map verbatim, keeping feature property names and foreign members of the FeatureCollection as written (#234).
+
 * Various bug fixes and performance improvements (#226), including terrain from `add_raster_dem_source()` without `maxzoom`.
 
 * Weighted donut clusters (`donut_weight`) are now sized by their weighted total, so `count_stops` should be given in the weight's units.
