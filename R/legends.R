@@ -12,7 +12,7 @@
 #' @param colors The corresponding colors for the values (either a vector of colors, a single color, or an interpolate function).
 #' @param type One of "continuous" or "categorical" (for `add_legend` only).
 #' @param circular_patches (Deprecated) Logical, whether to use circular patches in the legend. Use `patch_shape = "circle"` instead.
-#' @param patch_shape Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".
+#' @param patch_shape Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). A character vector or list the same length as `values` gives each item its own shape, for legends that mix layer types (for example, a square for a fill layer next to a circle for a point layer); a list can mix built-in names, SVG strings and sf objects, such as `list(isochrone_sf, "circle")`. Default is "square".
 #' @param position The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").
 #' @param sizes An optional numeric vector of sizes for the legend patches, or a single numeric value (only for categorical legends). For line patches, this controls the line thickness.
 #' @param add Logical, whether to add this legend to existing legends (TRUE) or replace existing legends (FALSE). Default is FALSE.
@@ -217,9 +217,13 @@
 #' \strong{Automatic legend stacking.} When multiple legends share the same
 #' corner position, they are automatically stacked so they do not overlap, and
 #' they reflow when a legend is shown or hidden (by zoom, by a layers control,
-#' or by collapsing). Legends with any explicit \code{margin_*} value, and
-#' legends the user has dragged, are left exactly where they were placed and
-#' are ignored by the stacking (they may overlap a stacked group).
+#' or by collapsing). Legends in a bottom corner start above the map's own
+#' controls there (the Mapbox logo, the attribution, a scale bar), so they don't
+#' cover them. A legend with any explicit \code{margin_*} value stays exactly
+#' where it was placed; if it is the first legend added to its corner, the
+#' others stack against it, so a margin moves the whole group. Later legends
+#' with margins, and legends the user has dragged, are ignored by the stacking
+#' (they may overlap a stacked group).
 #'
 #' \strong{Collapsible legends.} When \code{collapsible = TRUE}, a 26x26px toggle
 #' button is rendered in the legend's top-right corner. Collapsed, only the
@@ -783,45 +787,12 @@ add_categorical_legend <- function(
     patch_shape <- "circle"
   }
 
-  # Handle sf objects by converting to SVG
-  if (inherits(patch_shape, "sf")) {
-    patch_shape <- .sf_to_svg(patch_shape)
-  }
+  # One shape for every value, or one per value; built-in names, custom SVG
+  # strings and sf objects (converted to SVG) are all accepted.
+  shapes <- .resolve_patch_shapes(patch_shape, length(values))
+  shape_kind <- shapes$kind
+  shape_svg <- shapes$svg
 
-  # Determine if patch_shape is a built-in shape or custom SVG
-  built_in_shapes <- c("square", "circle", "line", "hexagon")
-  is_custom_svg <- !patch_shape %in% built_in_shapes
-
-  # Validate patch_shape
-  if (is_custom_svg) {
-    # Check if it looks like a valid SVG string
-    if (!is.character(patch_shape) || nchar(patch_shape) == 0) {
-      stop(
-        "'patch_shape' must be one of: ",
-        paste(
-          c(built_in_shapes, "a custom SVG string, or an sf object"),
-          collapse = ", "
-        )
-      )
-    }
-
-    # Basic SVG validation - should contain < and >
-    if (!grepl("<.*>", patch_shape)) {
-      stop(
-        "Custom SVG patch_shape appears invalid. It should contain SVG elements like '<path d=\"...\" />' or '<polygon points=\"...\" />'. Got: ",
-        substr(patch_shape, 1, 50),
-        if (nchar(patch_shape) > 50) "..." else ""
-      )
-    }
-  }
-
-  # Extract SVG string for custom shapes
-  svg_shape <- if (is_custom_svg) patch_shape else NULL
-
-  # Set patch_shape to "custom" for processing
-  if (is_custom_svg) {
-    patch_shape <- "custom"
-  }
   # Validate and prepare inputs
   if (length(colors) == 1) {
     colors <- rep(colors, length(values))
@@ -831,15 +802,10 @@ add_categorical_legend <- function(
     )
   }
 
-  # Give a default size if no size supplied
+  # Give a default size if no size supplied: line thickness for lines,
+  # patch size for everything else
   if (is.null(sizes)) {
-    sizes <- switch(
-      patch_shape,
-      "circle" = 20,
-      "line" = 3, # Default line thickness
-      "hexagon" = 20,
-      20 # default for square
-    )
+    sizes <- ifelse(shape_kind == "line", 3, 20)
   }
 
   if (length(sizes) == 1) {
@@ -850,7 +816,8 @@ add_categorical_legend <- function(
     )
   }
 
-  max_size <- max(sizes)
+  # line thickness doesn't set the width of the patch column
+  max_size <- if (any(shape_kind != "line")) max(sizes[shape_kind != "line"]) else max(sizes)
   patch_spacing <- match.arg(patch_spacing)
   proportional <- identical(patch_spacing, "proportional")
 
@@ -944,32 +911,34 @@ add_categorical_legend <- function(
 
   # Function to replace colors in SVG content
   .replace_svg_colors <- function(svg_content, new_color) {
-    # Replace common color attributes
+    # Replace common color attributes, leaving "none" and "transparent" alone so
+    # outline-only shapes (rings, hollow squares) stay hollow
+    keep <- "(?!\\s*(?:none|transparent)\\b)"
     svg_content <- gsub(
-      'fill\\s*=\\s*["\'][^"\']*["\']',
+      paste0('(?i)fill\\s*=\\s*["\']', keep, '[^"\']*["\']'),
       paste0('fill="', new_color, '"'),
       svg_content,
-      ignore.case = TRUE
+      perl = TRUE
     )
     svg_content <- gsub(
-      'stroke\\s*=\\s*["\'][^"\']*["\']',
+      paste0('(?i)stroke\\s*=\\s*["\']', keep, '[^"\']*["\']'),
       paste0('stroke="', new_color, '"'),
       svg_content,
-      ignore.case = TRUE
+      perl = TRUE
     )
 
     # Also handle fill and stroke in style attributes
     svg_content <- gsub(
-      'fill\\s*:\\s*[^;]+',
+      paste0('(?i)fill\\s*:', keep, '\\s*[^;"\']+'),
       paste0('fill:', new_color),
       svg_content,
-      ignore.case = TRUE
+      perl = TRUE
     )
     svg_content <- gsub(
-      'stroke\\s*:\\s*[^;]+',
+      paste0('(?i)stroke\\s*:', keep, '\\s*[^;"\']+'),
       paste0('stroke:', new_color),
       svg_content,
-      ignore.case = TRUE
+      perl = TRUE
     )
 
     # If no fill or stroke found, add fill
@@ -1009,7 +978,7 @@ add_categorical_legend <- function(
 
   legend_items <- lapply(seq_along(values), function(i) {
     patch_html <- switch(
-      patch_shape,
+      shape_kind[i],
       "square" = paste0(
         '<span class="legend-color legend-shape-square" style="background-color:',
         colors[i],
@@ -1036,13 +1005,13 @@ add_categorical_legend <- function(
         'px; display: block;"></span>'
       ),
       "hexagon" = create_hexagon_svg(colors[i], sizes[i]),
-      "custom" = .process_custom_svg(svg_shape, colors[i], sizes[i])
+      "custom" = .process_custom_svg(shape_svg[i], colors[i], sizes[i])
     )
 
     # Adjust container dimensions based on shape
-    if (patch_shape == "line") {
+    if (shape_kind[i] == "line") {
       container_width <- 30
-      container_height <- max(sizes) # Use max line thickness for consistent spacing
+      container_height <- max(sizes[shape_kind == "line"]) # Use max line thickness for consistent spacing
     } else {
       container_width <- max_size
       container_height <- if (proportional) sizes[[i]] else max_size
@@ -1892,4 +1861,65 @@ add_continuous_legend <- function(
 
     return(map)
   }
+}
+
+# Resolve `patch_shape` into one entry per legend value. Accepts a single shape
+# or one per value; each is a built-in name ("square", "circle", "line",
+# "hexagon") or a custom SVG string. An sf object is converted to one SVG shape.
+.resolve_patch_shapes <- function(patch_shape, n) {
+  built_in_shapes <- c("square", "circle", "line", "hexagon")
+  geom_svg <- function(g) {
+    if (inherits(g, "sfc")) g <- sf::st_sf(geometry = g)
+    .sf_to_svg(g)
+  }
+  if (inherits(patch_shape, c("sf", "sfc"))) {
+    patch_shape <- geom_svg(patch_shape)
+  } else if (is.list(patch_shape)) {
+    # one entry per value: built-in shape names, SVG strings and sf objects can be mixed
+    patch_shape <- vapply(patch_shape, function(s) {
+      if (inherits(s, c("sf", "sfc"))) {
+        geom_svg(s)
+      } else if (is.character(s) && length(s) == 1) {
+        s
+      } else {
+        NA_character_
+      }
+    }, character(1), USE.NAMES = FALSE)
+  }
+  if (
+    !is.character(patch_shape) || length(patch_shape) == 0 ||
+      anyNA(patch_shape) || any(!nzchar(patch_shape))
+  ) {
+    stop(
+      "'patch_shape' must be one of: ",
+      paste(
+        c(built_in_shapes, "a custom SVG string, or an sf object"),
+        collapse = ", "
+      ),
+      call. = FALSE
+    )
+  }
+  if (length(patch_shape) == 1) {
+    patch_shape <- rep(patch_shape, n)
+  } else if (length(patch_shape) != n) {
+    stop(
+      "'patch_shape' must be a single shape or have the same length as 'values'.",
+      call. = FALSE
+    )
+  }
+  custom <- !patch_shape %in% built_in_shapes
+  bad <- custom & !grepl("<.*>", patch_shape)
+  if (any(bad)) {
+    x <- patch_shape[which(bad)[1]]
+    stop(
+      "Custom SVG patch_shape appears invalid. It should contain SVG elements like '<path d=\"...\" />' or '<polygon points=\"...\" />'. Got: ",
+      substr(x, 1, 50),
+      if (nchar(x) > 50) "..." else "",
+      call. = FALSE
+    )
+  }
+  list(
+    kind = ifelse(custom, "custom", patch_shape),
+    svg = ifelse(custom, patch_shape, NA_character_)
+  )
 }

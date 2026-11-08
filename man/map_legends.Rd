@@ -245,7 +245,7 @@ add_continuous_legend(
 
 \item{circular_patches}{(Deprecated) Logical, whether to use circular patches in the legend. Use \code{patch_shape = "circle"} instead.}
 
-\item{patch_shape}{Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".}
+\item{patch_shape}{Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). A character vector or list the same length as \code{values} gives each item its own shape, for legends that mix layer types (for example, a square for a fill layer next to a circle for a point layer); a list can mix built-in names, SVG strings and sf objects, such as \code{list(isochrone_sf, "circle")}. Default is "square".}
 
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 
@@ -331,9 +331,13 @@ legend as the user zooms in.
 \strong{Automatic legend stacking.} When multiple legends share the same
 corner position, they are automatically stacked so they do not overlap, and
 they reflow when a legend is shown or hidden (by zoom, by a layers control,
-or by collapsing). Legends with any explicit \code{margin_*} value, and
-legends the user has dragged, are left exactly where they were placed and
-are ignored by the stacking (they may overlap a stacked group).
+or by collapsing). Legends in a bottom corner start above the map's own
+controls there (the Mapbox logo, the attribution, a scale bar), so they don't
+cover them. A legend with any explicit \code{margin_*} value stays exactly
+where it was placed; if it is the first legend added to its corner, the
+others stack against it, so a margin moves the whole group. Later legends
+with margins, and legends the user has dragged, are ignored by the stacking
+(they may overlap a stacked group).
 
 \strong{Collapsible legends.} When \code{collapsible = TRUE}, a 26x26px toggle
 button is rendered in the legend's top-right corner. Collapsed, only the
