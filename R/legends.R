@@ -181,7 +181,7 @@
 #'
 #' }
 
-#' @param interactive Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.
+#' @param interactive Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features, and pressing and holding an item shows that category alone; holding the isolated item again shows every category. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.
 #' @param filter_column Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.
 #' @param filter_values For interactive legends, the actual data values to filter on. For categorical legends, use this when your display labels differ from the data values (e.g., values = c("Music", "Bar") for display, filter_values = c("music", "bar") for filtering). For continuous legends, provide numeric break values when using formatted display labels (e.g., values = get_legend_labels(scale), filter_values = get_breaks(scale)). If NULL (default), uses values.
 #' @param classification A mapgl_classification object (from step_quantile, step_equal_interval, etc.) to use for the legend. When provided, values and colors will be automatically extracted. For interactive legends, range-based filtering will be used based on the classification breaks.
@@ -193,6 +193,7 @@
 #' @param color_column Character, the data column to use when restyling the layer. If NULL, mapgl attempts to auto-detect it from the layer paint expression.
 #' @param color_property Character, the paint property to restyle. If NULL, mapgl attempts to auto-detect one of `fill-color`, `circle-color`, `line-color`, or `fill-extrusion-color`.
 #' @param na_color Color to use for missing values when rebuilding the interpolation expression.
+#' @param only_button Logical. For interactive categorical legends, whether to show an "only" button when hovering over an item, which shows that category alone (and reads "all" on the isolated item). Pressing and holding an item does the same with or without the button. Default is FALSE.
 #' @param draggable Logical, whether the legend can be dragged to a new position by the user. Default is FALSE.
 #' @param collapsible Logical, whether to render a toggle button that collapses the legend to a header-only view. Default is FALSE. Most useful for categorical legends with tall bodies on small viewports.
 #' @param collapsed Logical, whether the legend starts in the collapsed state. Only applies when \code{collapsible = TRUE}. Default is FALSE.
@@ -277,7 +278,8 @@ add_legend <- function(
   collapsed = FALSE,
   patch_spacing = c("uniform", "proportional"),
   min_zoom = NULL,
-  max_zoom = NULL
+  max_zoom = NULL,
+  only_button = FALSE
 ) {
   type <- match.arg(type)
   if (is.null(unique_id)) {
@@ -394,7 +396,8 @@ if (is.null(values) || is.null(colors)) {
         collapsed = collapsed,
         patch_spacing = patch_spacing,
         min_zoom = min_zoom,
-        max_zoom = max_zoom
+        max_zoom = max_zoom,
+        only_button = only_button
       )
     }
   }
@@ -776,7 +779,8 @@ add_categorical_legend <- function(
   collapsed = FALSE,
   patch_spacing = c("uniform", "proportional"),
   min_zoom = NULL,
-  max_zoom = NULL
+  max_zoom = NULL,
+  only_button = FALSE
 ) {
   # Handle deprecation of circular_patches
   if (!missing(circular_patches) && circular_patches) {
@@ -1259,7 +1263,8 @@ add_categorical_legend <- function(
       colors = colors,
       filterColumn = filter_column,
       filterValues = as.list(actual_filter_values),  # Use list to preserve types in JSON
-      breaks = if (!is.null(breaks)) as.numeric(breaks) else NULL
+      breaks = if (!is.null(breaks)) as.numeric(breaks) else NULL,
+      onlyButton = isTRUE(only_button)
     )
   }
 

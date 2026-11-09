@@ -1,5 +1,7 @@
 # mapgl (development version)
 
+* Interactive categorical legends can isolate a category: press and hold a legend item to show that category alone, and hold it again to show every category. A plain click still toggles one category. `only_button = TRUE` adds an "only" button on hover that does the same.
+
 * Categorical legends accept one `patch_shape` per value, so one legend can mix built-in and custom shapes, e.g. `patch_shape = list(isochrone_sf, "circle")`.
 
 * Various bug fixes and performance improvements (#226), including terrain from `add_raster_dem_source()` without `maxzoom`, saved maps that are about 10 MB smaller, bottom-corner legends that no longer cover the map's logo or attribution, and hollow custom SVG legend patches.
