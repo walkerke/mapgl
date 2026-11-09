@@ -47,7 +47,8 @@ add_legend(
   collapsed = FALSE,
   patch_spacing = c("uniform", "proportional"),
   min_zoom = NULL,
-  max_zoom = NULL
+  max_zoom = NULL,
+  only_button = FALSE
 )
 
 add_categorical_legend(
@@ -77,7 +78,8 @@ add_categorical_legend(
   collapsed = FALSE,
   patch_spacing = c("uniform", "proportional"),
   min_zoom = NULL,
-  max_zoom = NULL
+  max_zoom = NULL,
+  only_button = FALSE
 )
 
 add_continuous_legend(
@@ -271,7 +273,7 @@ add_continuous_legend(
 
 \item{target}{For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare". For synced grids with more than two maps, a map identifier such as "map3" can also be used.}
 
-\item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.}
+\item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features, and pressing and holding an item shows that category alone; holding the isolated item again shows every category. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.}
 
 \item{filter_column}{Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.}
 
@@ -311,6 +313,8 @@ legend is hidden when the map zoom is below this value.}
 
 \item{max_zoom}{The maximum zoom level at which the legend is displayed. The
 legend is hidden when the map zoom is at or above this value.}
+
+\item{only_button}{Logical. For interactive categorical legends, whether to show an "only" button when hovering over an item, which shows that category alone (and reads "all" on the isolated item). Pressing and holding an item does the same with or without the button. Default is FALSE.}
 }
 \value{
 The updated map object with the legend added.
