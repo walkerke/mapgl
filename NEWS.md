@@ -1,5 +1,7 @@
 # mapgl (development version)
 
+* `add_source()` accepts a relative path to a GeoJSON file, such as `"data/lines.geojson"`, as well as a URL. The browser resolves the path against the page, so the file must be served alongside the saved HTML.
+
 * Flowmaps now support click-to-filter and delayed, node-only hover spotlighting by default. `flow_click_to_filter` and `flow_hover_to_spotlight` can disable the interactions; `flow_spotlight_mode` selects the spotlight appearance. The same controls can be changed with `set_flowmap_settings()` using `clickToFilter`, `hoverToSpotlight`, and `spotlightMode`. Clicking a selected location clears it without changing the configured `flow_location_filter_mode`.
 
 * Flowmap time-range and location-filter updates now reuse the cached data provider instead of rebuilding it. Click-to-filter also respects `flow_location_filter_mode`, and a single selected location is passed to FlowmapGL as a one-element array.
