@@ -6,6 +6,20 @@
 
 * Update the bundled FlowmapGL runtime to 9.4.0. Existing `flow_temporal_scale_domain` support continues to choose selected-time or all-time scale domains. The vendor build cleans generated debug bundles and source maps from `inst/`.
 
+* Interactive categorical legends can isolate a category: press and hold a legend item to show that category alone, and hold it again to show every category. A plain click still toggles one category. `only_button = TRUE` adds an "only" button on hover that does the same.
+
+* Categorical legends accept one `patch_shape` per value, so one legend can mix built-in and custom shapes, e.g. `patch_shape = list(isochrone_sf, "circle")`.
+
+* Various bug fixes and performance improvements (#226), including terrain from `add_raster_dem_source()` without `maxzoom`, saved maps that are about 10 MB smaller, bottom-corner legends that no longer cover the map's logo or attribution, and hollow custom SVG legend patches.
+
+* Weighted donut clusters (`donut_weight`) are now sized by their weighted total, so `count_stops` should be given in the weight's units.
+
+* New `add_model()` and `add_model_layer()` draw 3D glTF/GLB models at point features on Mapbox GL maps.
+
+* Update Mapbox GL JS to v3.34.2.
+
+* `add_pmtiles_source()` on Mapbox GL maps now works with relative paths such as `"tiles/data.pmtiles"`, and `compare()` maps keep extra vector and raster source options (`provider`, `minzoom`, ...) when first rendered.
+
 # mapgl 0.5.2
 
 * Donut count labels use the same overlap and collision-placement rules as their icons, preventing collision-hidden numbers inside visible donuts for native and precomputed clusters. Ordinary circle-cluster labels are unchanged.

@@ -61,35 +61,33 @@ In most cases you’ll want to set the option `scrollZoom = FALSE` when
 you initialize your map so map scrolling behavior doesn’t interfere with
 story scrolling.
 
-``` r
-
-library(shiny)
-library(mapgl)
-
-ui <- fluidPage(
-  story_map(
-    map_id = "map",
-    sections = list(
-      "intro" = story_section(
-        "Introduction",
-        "This is a story map."
-      ),
-      "location" = story_section(
-        "Location",
-        "Check out this interesting location."
-      )
-    )
-  )
-)
-
-server <- function(input, output, session) {
-  output$map <- renderMapboxgl({
-    mapboxgl(scrollZoom = FALSE)
-  })
-}
-
-shinyApp(ui, server)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`shiny`](https://shiny.posit.co/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+\
+`ui`` ``<-`` `[`fluidPage`](https://rdrr.io/pkg/shiny/man/fluidPage.html)`(`\
+`  `[`story_map`](https://walker-data.com/mapgl/reference/story_map.md)`(`\
+`    map_id ``=`` ``"map"``,`\
+`    sections ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`      ``"intro"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        ``"Introduction"``,`\
+`        ``"This is a story map."`\
+`      ``)``,`\
+`      ``"location"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        ``"Location"``,`\
+`        ``"Check out this interesting location."`\
+`      ``)`\
+`    ``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+`  ``output``$``map`` ``<-`` `[`renderMapboxgl`](https://walker-data.com/mapgl/reference/renderMapboxgl.md)`(``{`\
+`    `[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(``scrollZoom ``=`` ``FALSE``)`\
+`  ``}``)`\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/story-1a.gif)
 
@@ -109,44 +107,42 @@ define an expression, much like you would in
 [`observeEvent()`](https://rdrr.io/pkg/shiny/man/observeEvent.html) in
 Shiny, to be executed when a given section appears.
 
-``` r
-
-library(shiny)
-library(mapgl)
-
-ui <- fluidPage(
-  story_map(
-    map_id = "map",
-    sections = list(
-      "intro" = story_section(
-        "Introduction",
-        "This is a story map."
-      ),
-      "location" = story_section(
-        "Location",
-        "Check out this interesting location."
-      )
-    )
-  )
-)
-
-server <- function(input, output, session) {
-  output$map <- renderMapboxgl({
-    mapboxgl(scrollZoom = FALSE)
-  })
-  
-  on_section("map", "location", {
-    mapboxgl_proxy("map") |> 
-      fly_to(center = c(12.49257, 41.890233), 
-             zoom = 17.5,
-             pitch = 49,
-             bearing = 12.8)
-  })
-  
-}
-
-shinyApp(ui, server)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`shiny`](https://shiny.posit.co/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+\
+`ui`` ``<-`` `[`fluidPage`](https://rdrr.io/pkg/shiny/man/fluidPage.html)`(`\
+`  `[`story_map`](https://walker-data.com/mapgl/reference/story_map.md)`(`\
+`    map_id ``=`` ``"map"``,`\
+`    sections ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`      ``"intro"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        ``"Introduction"``,`\
+`        ``"This is a story map."`\
+`      ``)``,`\
+`      ``"location"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        ``"Location"``,`\
+`        ``"Check out this interesting location."`\
+`      ``)`\
+`    ``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+`  ``output``$``map`` ``<-`` `[`renderMapboxgl`](https://walker-data.com/mapgl/reference/renderMapboxgl.md)`(``{`\
+`    `[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(``scrollZoom ``=`` ``FALSE``)`\
+`  ``}``)`\
+`  `\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"location"``, ``{`\
+`    `[`mapboxgl_proxy`](https://walker-data.com/mapgl/reference/mapboxgl_proxy.md)`(``"map"``)`` ``|>`` `\
+`      `[`fly_to`](https://walker-data.com/mapgl/reference/fly_to.md)`(``center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``12.49257``, ``41.890233``)``, `\
+`             zoom ``=`` ``17.5``,`\
+`             pitch ``=`` ``49``,`\
+`             bearing ``=`` ``12.8``)`\
+`  ``}``)`\
+`  `\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/story-1b.gif)
 
@@ -156,52 +152,50 @@ to the original globe. This can be remedied by tying an
 [`on_section()`](https://walker-data.com/mapgl/reference/on_section.md)
 event to the introductory section.
 
-``` r
-
-library(shiny)
-library(mapgl)
-
-ui <- fluidPage(
-  story_map(
-    map_id = "map",
-    sections = list(
-      "intro" = story_section(
-        "Introduction",
-        "This is a story map."
-      ),
-      "location" = story_section(
-        "Location",
-        "Check out this interesting location."
-      )
-    )
-  )
-)
-
-server <- function(input, output, session) {
-  output$map <- renderMapboxgl({
-    mapboxgl(scrollZoom = FALSE)
-  })
-  
-  on_section("map", "intro", {
-    mapboxgl_proxy("map") |> 
-      fly_to(center = c(0, 0),
-             zoom = 0,
-             pitch = 0,
-             bearing = 0)
-  })
-  
-  on_section("map", "location", {
-    mapboxgl_proxy("map") |> 
-      fly_to(center = c(12.49257, 41.890233), 
-             zoom = 17.5,
-             pitch = 49,
-             bearing = 12.8)
-  })
-  
-}
-
-shinyApp(ui, server)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`shiny`](https://shiny.posit.co/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+\
+`ui`` ``<-`` `[`fluidPage`](https://rdrr.io/pkg/shiny/man/fluidPage.html)`(`\
+`  `[`story_map`](https://walker-data.com/mapgl/reference/story_map.md)`(`\
+`    map_id ``=`` ``"map"``,`\
+`    sections ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`      ``"intro"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        ``"Introduction"``,`\
+`        ``"This is a story map."`\
+`      ``)``,`\
+`      ``"location"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        ``"Location"``,`\
+`        ``"Check out this interesting location."`\
+`      ``)`\
+`    ``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+`  ``output``$``map`` ``<-`` `[`renderMapboxgl`](https://walker-data.com/mapgl/reference/renderMapboxgl.md)`(``{`\
+`    `[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(``scrollZoom ``=`` ``FALSE``)`\
+`  ``}``)`\
+`  `\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"intro"``, ``{`\
+`    `[`mapboxgl_proxy`](https://walker-data.com/mapgl/reference/mapboxgl_proxy.md)`(``"map"``)`` ``|>`` `\
+`      `[`fly_to`](https://walker-data.com/mapgl/reference/fly_to.md)`(``center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``0``, ``0``)``,`\
+`             zoom ``=`` ``0``,`\
+`             pitch ``=`` ``0``,`\
+`             bearing ``=`` ``0``)`\
+`  ``}``)`\
+`  `\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"location"``, ``{`\
+`    `[`mapboxgl_proxy`](https://walker-data.com/mapgl/reference/mapboxgl_proxy.md)`(``"map"``)`` ``|>`` `\
+`      `[`fly_to`](https://walker-data.com/mapgl/reference/fly_to.md)`(``center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``12.49257``, ``41.890233``)``, `\
+`             zoom ``=`` ``17.5``,`\
+`             pitch ``=`` ``49``,`\
+`             bearing ``=`` ``12.8``)`\
+`  ``}``)`\
+`  `\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/story-1c.gif)
 
@@ -222,92 +216,90 @@ In many cases, you’ll want to use story maps to visualize data that
 you’ll add to a Mapbox / MapLibre basemap. Let’s build an example of how
 a real estate firm might use a story map to market a property.
 
-``` r
-
-library(shiny)
-library(mapgl)
-library(mapboxapi)
-
-property <- c(-97.71326, 30.402550)
-isochrone <- mb_isochrone(property, profile = "driving", time = 20)
-
-ui <- fluidPage(
-  tags$link(href = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap", rel="stylesheet"),
-  story_map(
-    map_id = "map",
-    font_family = "Poppins",
-    sections = list(
-      "intro" = story_section(
-        title = "MULTIFAMILY INVESTMENT OPPORTUNITY",
-        content = list(
-          p("New Class A Apartments in Austin, Texas"),
-          img(src = "https://www.austinkayaktours.com/wp-content/uploads/sites/4074/2020/04/Austin-Skyline-Tour-image-1.jpg?w=700&h=700&zoom=2", width = "300px")
-        ),
-        position = "center"
-      ),
-      "marker" = story_section(
-        title = "PROPERTY LOCATION",
-        content = list(
-          p("The property will be located in the thriving Domain district of north Austin, home to some of the city's best shopping, dining, and entertainment.")
-        )
-      ),
-      "isochrone" = story_section(
-        title = "AUSTIN AT YOUR FINGERTIPS",
-        content = list(
-          p("The property is within a 20-minute drive of downtown Austin, the University of Texas, and the city's major employers.")
-        )
-      )
-    )
-  )
-)
-
-server <- function(input, output, session) {
-  output$map <- renderMapboxgl({
-    mapboxgl(scrollZoom = FALSE,
-             center = c(-97.7301093, 30.288647),
-             zoom = 12)
-  })
-
-  on_section("map", "intro", {
-    mapboxgl_proxy("map") |>
-      clear_markers() |>
-      fly_to(center = c(-97.7301093, 30.288647),
-             zoom = 12,
-             pitch = 0,
-             bearing = 0)
-
-  })
-
-  on_section("map", "marker", {
-    mapboxgl_proxy("map") |>
-      clear_layer("isochrone") |>
-      add_markers(data = property, color = "#CC5500") |>
-      fly_to(center = property,
-             zoom = 16,
-             pitch = 45,
-             bearing = -90)
-  })
-
-  on_section("map", "isochrone", {
-    mapboxgl_proxy("map") |>
-      add_fill_layer(
-        id = "isochrone",
-        source = isochrone,
-        fill_color = "#CC5500",
-        fill_opacity = 0.5
-      ) |>
-      fit_bounds(
-        isochrone,
-        animate = TRUE,
-        duration = 8000,
-        pitch = 75
-      )
-  })
-
-}
-
-shinyApp(ui, server)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`shiny`](https://shiny.posit.co/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapboxapi`](https://github.com/walkerke/mapboxapi)`)`\
+\
+`property`` ``<-`` `[`c`](https://rdrr.io/r/base/c.html)`(``-``97.71326``, ``30.402550``)`\
+`isochrone`` ``<-`` `[`mb_isochrone`](https://walker-data.com/mapboxapi/reference/mb_isochrone.html)`(``property``, profile ``=`` ``"driving"``, time ``=`` ``20``)`\
+\
+`ui`` ``<-`` `[`fluidPage`](https://rdrr.io/pkg/shiny/man/fluidPage.html)`(`\
+`  ``tags``$``link``(``href ``=`` ``"https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"``, rel``=``"stylesheet"``)``,`\
+`  `[`story_map`](https://walker-data.com/mapgl/reference/story_map.md)`(`\
+`    map_id ``=`` ``"map"``,`\
+`    font_family ``=`` ``"Poppins"``,`\
+`    sections ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`      ``"intro"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        title ``=`` ``"MULTIFAMILY INVESTMENT OPPORTUNITY"``,`\
+`        content ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`          `[`p`](https://rstudio.github.io/htmltools/reference/builder.html)`(``"New Class A Apartments in Austin, Texas"``)``,`\
+`          `[`img`](https://rstudio.github.io/htmltools/reference/builder.html)`(``src ``=`` ``"https://www.austinkayaktours.com/wp-content/uploads/sites/4074/2020/04/Austin-Skyline-Tour-image-1.jpg?w=700&h=700&zoom=2"``, width ``=`` ``"300px"``)`\
+`        ``)``,`\
+`        position ``=`` ``"center"`\
+`      ``)``,`\
+`      ``"marker"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        title ``=`` ``"PROPERTY LOCATION"``,`\
+`        content ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`          `[`p`](https://rstudio.github.io/htmltools/reference/builder.html)`(``"The property will be located in the thriving Domain district of north Austin, home to some of the city's best shopping, dining, and entertainment."``)`\
+`        ``)`\
+`      ``)``,`\
+`      ``"isochrone"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        title ``=`` ``"AUSTIN AT YOUR FINGERTIPS"``,`\
+`        content ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`          `[`p`](https://rstudio.github.io/htmltools/reference/builder.html)`(``"The property is within a 20-minute drive of downtown Austin, the University of Texas, and the city's major employers."``)`\
+`        ``)`\
+`      ``)`\
+`    ``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+`  ``output``$``map`` ``<-`` `[`renderMapboxgl`](https://walker-data.com/mapgl/reference/renderMapboxgl.md)`(``{`\
+`    `[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(``scrollZoom ``=`` ``FALSE``,`\
+`             center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``-``97.7301093``, ``30.288647``)``,`\
+`             zoom ``=`` ``12``)`\
+`  ``}``)`\
+\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"intro"``, ``{`\
+`    `[`mapboxgl_proxy`](https://walker-data.com/mapgl/reference/mapboxgl_proxy.md)`(``"map"``)`` ``|>`\
+`      `[`clear_markers`](https://walker-data.com/mapgl/reference/clear_markers.md)`(``)`` ``|>`\
+`      `[`fly_to`](https://walker-data.com/mapgl/reference/fly_to.md)`(``center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``-``97.7301093``, ``30.288647``)``,`\
+`             zoom ``=`` ``12``,`\
+`             pitch ``=`` ``0``,`\
+`             bearing ``=`` ``0``)`\
+\
+`  ``}``)`\
+\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"marker"``, ``{`\
+`    `[`mapboxgl_proxy`](https://walker-data.com/mapgl/reference/mapboxgl_proxy.md)`(``"map"``)`` ``|>`\
+`      `[`clear_layer`](https://walker-data.com/mapgl/reference/clear_layer.md)`(``"isochrone"``)`` ``|>`\
+`      `[`add_markers`](https://walker-data.com/mapgl/reference/add_markers.md)`(``data ``=`` ``property``, color ``=`` ``"#CC5500"``)`` ``|>`\
+`      `[`fly_to`](https://walker-data.com/mapgl/reference/fly_to.md)`(``center ``=`` ``property``,`\
+`             zoom ``=`` ``16``,`\
+`             pitch ``=`` ``45``,`\
+`             bearing ``=`` ``-``90``)`\
+`  ``}``)`\
+\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"isochrone"``, ``{`\
+`    `[`mapboxgl_proxy`](https://walker-data.com/mapgl/reference/mapboxgl_proxy.md)`(``"map"``)`` ``|>`\
+`      `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`        id ``=`` ``"isochrone"``,`\
+`        source ``=`` ``isochrone``,`\
+`        fill_color ``=`` ``"#CC5500"``,`\
+`        fill_opacity ``=`` ``0.5`\
+`      ``)`` ``|>`\
+`      `[`fit_bounds`](https://walker-data.com/mapgl/reference/fit_bounds.md)`(`\
+`        ``isochrone``,`\
+`        animate ``=`` ``TRUE``,`\
+`        duration ``=`` ``8000``,`\
+`        pitch ``=`` ``75`\
+`      ``)`\
+`  ``}``)`\
+\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/story-2.gif)
 
@@ -364,108 +356,106 @@ introductory story panel. The user selects a county to display; on
 scroll, the story will then zoom to the selected county and show a
 histogram of values for Census tracts in that county.
 
-``` r
-
-library(shiny)
-library(mapgl)
-library(tidycensus)
-library(tidyverse)
-library(sf)
-
-fl_age <- get_acs(
-  geography = "tract",
-  variables = "B01002_001",
-  state = "FL",
-  year = 2023,
-  geometry = TRUE
-) |>
-  separate_wider_delim(NAME, delim = "; ", names = c("tract", "county", "state")) %>%
-  st_sf()
-
-ui <- fluidPage(
-  story_maplibre(
-    map_id = "map",
-    sections = list(
-      "intro" = story_section(
-        "Median Age in Florida",
-        content = list(
-          selectInput(
-            "county",
-            "Select a county",
-            choices = sort(unique(fl_age$county))
-          ),
-          p("Scroll down to view the median age distribution in the selected county.")
-        )
-      ),
-      "county" = story_section(
-        title = NULL,
-        content = list(
-          uiOutput("county_text"),
-          plotOutput("county_plot")
-        )
-      )
-    )
-  )
-)
-
-server <- function(input, output, session) {
-
-  sel_county <- reactive({
-    filter(fl_age, county == input$county)
-  })
-
-  output$map <- renderMaplibre({
-    maplibre(
-      carto_style("positron"),
-      bounds = fl_age,
-      scrollZoom = FALSE
-    ) |>
-      add_fill_layer(
-        id = "fl_tracts",
-        source = fl_age,
-        fill_color = interpolate(
-          column = "estimate",
-          values = c(20, 80),
-          stops = c("lightblue", "darkblue"),
-          na_color = "lightgrey"
-        ),
-        fill_opacity = 0.5
-      ) |>
-      add_legend(
-        "Median age in Florida",
-        values = c(20, 80),
-        colors = c("lightblue", "darkblue"),
-        position = "bottom-right"
-      )
-  })
-
-  output$county_text <- renderUI({
-    h2(toupper(input$county))
-  })
-
-  output$county_plot <- renderPlot({
-    ggplot(sel_county(), aes(x = estimate)) +
-      geom_histogram(fill = "lightblue", color = "black", bins = 10) +
-      theme_minimal() +
-      labs(x = "Median Age", y = "")
-  })
-
-  on_section("map", "intro", {
-    maplibre_proxy("map") |>
-      set_filter("fl_tracts", NULL) |>
-      fit_bounds(fl_age, animate = TRUE)
-  })
-
-  on_section("map", "county", {
-    maplibre_proxy("map") |>
-      set_filter("fl_tracts", filter = list("==", "county", input$county)) |>
-      fit_bounds(sel_county(), animate = TRUE)
-  })
-
-}
-
-shinyApp(ui, server)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`shiny`](https://shiny.posit.co/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`tidycensus`](https://walker-data.com/tidycensus/)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`tidyverse`](https://tidyverse.tidyverse.org)`)`\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`sf`](https://r-spatial.github.io/sf/)`)`\
+\
+`fl_age`` ``<-`` `[`get_acs`](https://walker-data.com/tidycensus/reference/get_acs.html)`(`\
+`  geography ``=`` ``"tract"``,`\
+`  variables ``=`` ``"B01002_001"``,`\
+`  state ``=`` ``"FL"``,`\
+`  year ``=`` ``2023``,`\
+`  geometry ``=`` ``TRUE`\
+`)`` ``|>`\
+`  `[`separate_wider_delim`](https://tidyr.tidyverse.org/reference/separate_wider_delim.html)`(``NAME``, delim ``=`` ``"; "``, names ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"tract"``, ``"county"``, ``"state"``)``)`` `[`%>%`](https://magrittr.tidyverse.org/reference/pipe.html)\
+`  `[`st_sf`](https://r-spatial.github.io/sf/reference/sf.html)`(``)`\
+\
+`ui`` ``<-`` `[`fluidPage`](https://rdrr.io/pkg/shiny/man/fluidPage.html)`(`\
+`  `[`story_maplibre`](https://walker-data.com/mapgl/reference/story_maplibre.md)`(`\
+`    map_id ``=`` ``"map"``,`\
+`    sections ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`      ``"intro"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        ``"Median Age in Florida"``,`\
+`        content ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`          `[`selectInput`](https://rdrr.io/pkg/shiny/man/selectInput.html)`(`\
+`            ``"county"``,`\
+`            ``"Select a county"``,`\
+`            choices ``=`` `[`sort`](https://rdrr.io/r/base/sort.html)`(`[`unique`](https://rdrr.io/r/base/unique.html)`(``fl_age``$``county``)``)`\
+`          ``)``,`\
+`          `[`p`](https://rstudio.github.io/htmltools/reference/builder.html)`(``"Scroll down to view the median age distribution in the selected county."``)`\
+`        ``)`\
+`      ``)``,`\
+`      ``"county"`` ``=`` `[`story_section`](https://walker-data.com/mapgl/reference/story_section.md)`(`\
+`        title ``=`` ``NULL``,`\
+`        content ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(`\
+`          `[`uiOutput`](https://rdrr.io/pkg/shiny/man/htmlOutput.html)`(``"county_text"``)``,`\
+`          `[`plotOutput`](https://rdrr.io/pkg/shiny/man/plotOutput.html)`(``"county_plot"``)`\
+`        ``)`\
+`      ``)`\
+`    ``)`\
+`  ``)`\
+`)`\
+\
+`server`` ``<-`` ``function``(``input``, ``output``, ``session``)`` ``{`\
+\
+`  ``sel_county`` ``<-`` `[`reactive`](https://rdrr.io/pkg/shiny/man/reactive.html)`(``{`\
+`    `[`filter`](https://dplyr.tidyverse.org/reference/filter.html)`(``fl_age``, ``county`` ``==`` ``input``$``county``)`\
+`  ``}``)`\
+\
+`  ``output``$``map`` ``<-`` `[`renderMaplibre`](https://walker-data.com/mapgl/reference/renderMaplibre.md)`(``{`\
+`    `[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(`\
+`      `[`carto_style`](https://walker-data.com/mapgl/reference/carto_style.md)`(``"positron"``)``,`\
+`      bounds ``=`` ``fl_age``,`\
+`      scrollZoom ``=`` ``FALSE`\
+`    ``)`` ``|>`\
+`      `[`add_fill_layer`](https://walker-data.com/mapgl/reference/add_fill_layer.md)`(`\
+`        id ``=`` ``"fl_tracts"``,`\
+`        source ``=`` ``fl_age``,`\
+`        fill_color ``=`` `[`interpolate`](https://walker-data.com/mapgl/reference/interpolate.md)`(`\
+`          column ``=`` ``"estimate"``,`\
+`          values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``20``, ``80``)``,`\
+`          stops ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"lightblue"``, ``"darkblue"``)``,`\
+`          na_color ``=`` ``"lightgrey"`\
+`        ``)``,`\
+`        fill_opacity ``=`` ``0.5`\
+`      ``)`` ``|>`\
+`      `[`add_legend`](https://walker-data.com/mapgl/reference/map_legends.md)`(`\
+`        ``"Median age in Florida"``,`\
+`        values ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``20``, ``80``)``,`\
+`        colors ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``"lightblue"``, ``"darkblue"``)``,`\
+`        position ``=`` ``"bottom-right"`\
+`      ``)`\
+`  ``}``)`\
+\
+`  ``output``$``county_text`` ``<-`` `[`renderUI`](https://rdrr.io/pkg/shiny/man/renderUI.html)`(``{`\
+`    `[`h2`](https://rstudio.github.io/htmltools/reference/builder.html)`(`[`toupper`](https://rdrr.io/r/base/chartr.html)`(``input``$``county``)``)`\
+`  ``}``)`\
+\
+`  ``output``$``county_plot`` ``<-`` `[`renderPlot`](https://rdrr.io/pkg/shiny/man/renderPlot.html)`(``{`\
+`    `[`ggplot`](https://ggplot2.tidyverse.org/reference/ggplot.html)`(``sel_county``(``)``, `[`aes`](https://ggplot2.tidyverse.org/reference/aes.html)`(``x ``=`` ``estimate``)``)`` ``+`\
+`      `[`geom_histogram`](https://ggplot2.tidyverse.org/reference/geom_histogram.html)`(``fill ``=`` ``"lightblue"``, color ``=`` ``"black"``, bins ``=`` ``10``)`` ``+`\
+`      `[`theme_minimal`](https://ggplot2.tidyverse.org/reference/ggtheme.html)`(``)`` ``+`\
+`      `[`labs`](https://ggplot2.tidyverse.org/reference/labs.html)`(``x ``=`` ``"Median Age"``, y ``=`` ``""``)`\
+`  ``}``)`\
+\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"intro"``, ``{`\
+`    `[`maplibre_proxy`](https://walker-data.com/mapgl/reference/maplibre_proxy.md)`(``"map"``)`` ``|>`\
+`      `[`set_filter`](https://walker-data.com/mapgl/reference/set_filter.md)`(``"fl_tracts"``, ``NULL``)`` ``|>`\
+`      `[`fit_bounds`](https://walker-data.com/mapgl/reference/fit_bounds.md)`(``fl_age``, animate ``=`` ``TRUE``)`\
+`  ``}``)`\
+\
+`  `[`on_section`](https://walker-data.com/mapgl/reference/on_section.md)`(``"map"``, ``"county"``, ``{`\
+`    `[`maplibre_proxy`](https://walker-data.com/mapgl/reference/maplibre_proxy.md)`(``"map"``)`` ``|>`\
+`      `[`set_filter`](https://walker-data.com/mapgl/reference/set_filter.md)`(``"fl_tracts"``, filter ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``"=="``, ``"county"``, ``input``$``county``)``)`` ``|>`\
+`      `[`fit_bounds`](https://walker-data.com/mapgl/reference/fit_bounds.md)`(``sel_county``(``)``, animate ``=`` ``TRUE``)`\
+`  ``}``)`\
+\
+`}`\
+\
+[`shinyApp`](https://rdrr.io/pkg/shiny/man/shinyApp.html)`(``ui``, ``server``)`
 
 ![](images/story-3.gif)
 

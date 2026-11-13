@@ -47,7 +47,8 @@ add_legend(
   collapsed = FALSE,
   patch_spacing = c("uniform", "proportional"),
   min_zoom = NULL,
-  max_zoom = NULL
+  max_zoom = NULL,
+  only_button = FALSE
 )
 
 add_categorical_legend(
@@ -77,7 +78,8 @@ add_categorical_legend(
   collapsed = FALSE,
   patch_spacing = c("uniform", "proportional"),
   min_zoom = NULL,
-  max_zoom = NULL
+  max_zoom = NULL,
+  only_button = FALSE
 )
 
 add_continuous_legend(
@@ -245,7 +247,7 @@ add_continuous_legend(
 
 \item{circular_patches}{(Deprecated) Logical, whether to use circular patches in the legend. Use \code{patch_shape = "circle"} instead.}
 
-\item{patch_shape}{Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). Default is "square".}
+\item{patch_shape}{Character or sf object, the shape of patches to use in categorical legends. Can be one of the built-in shapes ("square", "circle", "line", "hexagon"), a custom SVG string, or an sf object with POLYGON or MULTIPOLYGON geometry (which will be automatically converted to SVG). A character vector or list the same length as \code{values} gives each item its own shape, for legends that mix layer types (for example, a square for a fill layer next to a circle for a point layer); a list can mix built-in names, SVG strings and sf objects, such as \code{list(isochrone_sf, "circle")}. Default is "square".}
 
 \item{position}{The position of the legend on the map (one of "top-left", "bottom-left", "top-right", "bottom-right").}
 
@@ -271,7 +273,7 @@ add_continuous_legend(
 
 \item{target}{For compare objects only: where to place the legend. Can be "compare" (attached to compare container, persists during swipe), "before" (attached to left/top map), or "after" (attached to right/bottom map). Default is "compare". For synced grids with more than two maps, a map identifier such as "map3" can also be used.}
 
-\item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.}
+\item{interactive}{Logical, whether to make the legend interactive. For categorical legends, clicking on legend items will toggle the visibility of the corresponding features, and pressing and holding an item shows that category alone; holding the isolated item again shows every category. For continuous legends, a range slider will appear allowing users to filter features by value. Default is FALSE. Note: interactive legends are not yet supported for compare maps.}
 
 \item{filter_column}{Character, the name of the data column to use for filtering when interactive is TRUE. If NULL (default), the column will be auto-detected from the layer's paint expression.}
 
@@ -311,6 +313,8 @@ legend is hidden when the map zoom is below this value.}
 
 \item{max_zoom}{The maximum zoom level at which the legend is displayed. The
 legend is hidden when the map zoom is at or above this value.}
+
+\item{only_button}{Logical. For interactive categorical legends, whether to show an "only" button when hovering over an item, which shows that category alone (and reads "all" on the isolated item). Pressing and holding an item does the same with or without the button. Default is FALSE.}
 }
 \value{
 The updated map object with the legend added.
@@ -331,9 +335,13 @@ legend as the user zooms in.
 \strong{Automatic legend stacking.} When multiple legends share the same
 corner position, they are automatically stacked so they do not overlap, and
 they reflow when a legend is shown or hidden (by zoom, by a layers control,
-or by collapsing). Legends with any explicit \code{margin_*} value, and
-legends the user has dragged, are left exactly where they were placed and
-are ignored by the stacking (they may overlap a stacked group).
+or by collapsing). Legends in a bottom corner start above the map's own
+controls there (the Mapbox logo, the attribution, a scale bar), so they don't
+cover them. A legend with any explicit \code{margin_*} value stays exactly
+where it was placed; if it is the first legend added to its corner, the
+others stack against it, so a margin moves the whole group. Later legends
+with margins, and legends the user has dragged, are ignored by the stacking
+(they may overlap a stacked group).
 
 \strong{Collapsible legends.} When \code{collapsible = TRUE}, a 26x26px toggle
 button is rendered in the legend's top-right corner. Collapsed, only the

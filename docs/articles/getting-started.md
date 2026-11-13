@@ -7,12 +7,10 @@ Your gateway to Mapbox GL JS v3 in R is the
 function. Run the function with no arguments to get an interactive globe
 using Mapbox’s Standard style:
 
-``` r
-
-library(mapgl)
-
-mapboxgl()
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+\
+[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(``)`
 
 To use Mapbox maps, you will need a [Mapbox access
 token](https://docs.mapbox.com/help/getting-started/access-tokens/). If
@@ -34,12 +32,10 @@ of your map. Mapbox GL JS also supports modifying map projections; here
 we use `projection = "winkelTripel"` for the Winkel Tripel global
 projection.
 
-``` r
-
-mapboxgl(
-  style = mapbox_style("satellite"),
-  projection = "winkelTripel")
-```
+\
+[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(`\
+`  style ``=`` `[`mapbox_style`](https://walker-data.com/mapgl/reference/mapbox_style.md)`(``"satellite"``)``,`\
+`  projection ``=`` ``"winkelTripel"``)`
 
 To get a more local view in your map, you can use the `center`, `zoom`,
 `pitch`, and `bearing` arguments. In the example shown below, these
@@ -48,18 +44,16 @@ several of these animated transitions. In Mapbox GL JS v3, the new
 Standard style includes custom-rendered buildings around the world, such
 as the American Airlines Center in Dallas.
 
-``` r
-
-mapboxgl(
-  center = c(-97.6, 25.4)
-) |> 
-  fly_to(
-    center = c(-96.810481, 32.790869),
-    zoom = 18.4,
-    pitch = 75,
-    bearing = 136.8
-  )
-```
+\
+[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(`\
+`  center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``-``97.6``, ``25.4``)`\
+`)`` ``|>`` `\
+`  `[`fly_to`](https://walker-data.com/mapgl/reference/fly_to.md)`(`\
+`    center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``-``96.810481``, ``32.790869``)``,`\
+`    zoom ``=`` ``18.4``,`\
+`    pitch ``=`` ``75``,`\
+`    bearing ``=`` ``136.8`\
+`  ``)`
 
 ![](dallas.gif)
 
@@ -73,12 +67,10 @@ default tiles in
 [`maplibre()`](https://walker-data.com/mapgl/reference/maplibre.md) are
 CARTO’s Voyager tiles, which are usable without an API key.
 
-``` r
-
-library(mapgl)
-
-maplibre()
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`mapgl`](https://walker-data.com/mapgl/)`)`\
+\
+[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(``)`
 
 [MapTiler](https://www.maptiler.com/) tiles are also available via the
 [`maptiler_style()`](https://walker-data.com/mapgl/reference/maptiler_style.md)
@@ -93,16 +85,14 @@ These controls and styles are available with
 well; **mapgl** aims to provide a consistent API to work with either
 Mapbox or MapLibre.
 
-``` r
-
-maplibre(
-  style = maptiler_style("bright"),
-  center = c(-43.23412, -22.91370),
-  zoom = 14
-) |> 
-  add_fullscreen_control(position = "top-left") |> 
-  add_navigation_control()
-```
+\
+[`maplibre`](https://walker-data.com/mapgl/reference/maplibre.md)`(`\
+`  style ``=`` `[`maptiler_style`](https://walker-data.com/mapgl/reference/maptiler_style.md)`(``"bright"``)``,`\
+`  center ``=`` `[`c`](https://rdrr.io/r/base/c.html)`(``-``43.23412``, ``-``22.91370``)``,`\
+`  zoom ``=`` ``14`\
+`)`` ``|>`` `\
+`  `[`add_fullscreen_control`](https://walker-data.com/mapgl/reference/add_fullscreen_control.md)`(``position ``=`` ``"top-left"``)`` ``|>`` `\
+`  `[`add_navigation_control`](https://walker-data.com/mapgl/reference/add_navigation_control.md)`(``)`
 
 ### Quick data visualization with view functions
 
@@ -120,18 +110,14 @@ automatically style your data based on geometry type. You can also
 specify a column for styling, and the functions will create appropriate
 color scales for you.
 
-``` r
-
-library(sf)
-```
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`sf`](https://r-spatial.github.io/sf/)`)`
 
     ## Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 
-``` r
-
-# Quick view of the North Carolina dataset
-nc <- st_read(system.file("shape/nc.shp", package="sf"))
-```
+\
+`# Quick view of the North Carolina dataset`\
+`nc`` ``<-`` `[`st_read`](https://r-spatial.github.io/sf/reference/st_read.html)`(`[`system.file`](https://rdrr.io/r/base/system.file.html)`(``"shape/nc.shp"``, package``=``"sf"``)``)`
 
     ## Reading layer `nc' from data source 
     ##   `/Library/Frameworks/R.framework/Versions/4.6/Resources/library/sf/shape/nc.shp' 
@@ -142,10 +128,8 @@ nc <- st_read(system.file("shape/nc.shp", package="sf"))
     ## Bounding box:  xmin: -84.32385 ymin: 33.88199 xmax: -75.45698 ymax: 36.58965
     ## Geodetic CRS:  NAD27
 
-``` r
-
-maplibre_view(nc, column = "AREA")
-```
+\
+[`maplibre_view`](https://walker-data.com/mapgl/reference/maplibre_view.md)`(``nc``, column ``=`` ``"AREA"``)`
 
 If you want to add additional layers on top of a view function, you can
 use the
@@ -162,12 +146,10 @@ vignette](https://walker-data.com/mapgl/articles/layers-overview.html).
 allows users to create synced swipe maps that can compare two styles.
 This function works for either Mapbox or MapLibre maps.
 
-``` r
-
-m1 <- mapboxgl()
-m2 <- mapboxgl(mapbox_style("satellite-streets"))
-
-compare(m1, m2)
-```
+\
+`m1`` ``<-`` `[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(``)`\
+`m2`` ``<-`` `[`mapboxgl`](https://walker-data.com/mapgl/reference/mapboxgl.md)`(`[`mapbox_style`](https://walker-data.com/mapgl/reference/mapbox_style.md)`(``"satellite-streets"``)``)`\
+\
+[`compare`](https://walker-data.com/mapgl/reference/compare.md)`(``m1``, ``m2``)`
 
 ![](athens.gif)

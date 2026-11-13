@@ -37,12 +37,12 @@ dependencies:
       - "radius-mode.js"
   - name: terra-draw
     version: "1.32.2"
-    src: "htmlwidgets/lib/terra-draw-control"
+    src: "htmlwidgets/lib/terra-draw"
     script:
       - "terra-draw.umd.js"
   - name: terra-draw-maplibre-gl-adapter
     version: "1.4.1"
-    src: "htmlwidgets/lib/terra-draw-control"
+    src: "htmlwidgets/lib/terra-draw-maplibre-gl-adapter"
     script:
       - "terra-draw-maplibre-gl-adapter.umd.js"
   - name: mapgl-terra-draw-control

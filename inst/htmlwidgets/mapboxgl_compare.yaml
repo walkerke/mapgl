@@ -1,13 +1,13 @@
 dependencies:
   - name: mapbox-gl-js
-    version: "3.31.0"
+    version: "3.34.2"
     src:
       href: "https://api.mapbox.com/mapbox-gl-js/"
     script:
-      - "v3.31.0/mapbox-gl.js"
+      - "v3.34.2/mapbox-gl.js"
       - "plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"
     stylesheet:
-      - "v3.31.0/mapbox-gl.css"
+      - "v3.34.2/mapbox-gl.css"
       - "plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css"
   - name: mapbox-gl-draw
     version: "1.5.1"
@@ -34,12 +34,12 @@ dependencies:
       - "radius-mode.js"
   - name: terra-draw
     version: "1.32.2"
-    src: "htmlwidgets/lib/terra-draw-control"
+    src: "htmlwidgets/lib/terra-draw"
     script:
       - "terra-draw.umd.js"
   - name: terra-draw-mapbox-gl-adapter
     version: "1.4.0"
-    src: "htmlwidgets/lib/terra-draw-control"
+    src: "htmlwidgets/lib/terra-draw-mapbox-gl-adapter"
     script:
       - "terra-draw-mapbox-gl-adapter.umd.js"
   - name: mapgl-terra-draw-control
