@@ -33,6 +33,23 @@ const additionalBundledPackages = [
     repository: 'https://github.com/georgealways/lil-gui'
   }
 ];
+const downloadedPackageSpecs = [
+  {
+    name: 'terra-draw',
+    license: 'MIT',
+    repository: 'https://github.com/JamesLMilner/terra-draw'
+  },
+  {
+    name: 'terra-draw-maplibre-gl-adapter',
+    license: 'MIT',
+    repository: 'https://github.com/JamesLMilner/terra-draw'
+  },
+  {
+    name: 'terra-draw-mapbox-gl-adapter',
+    license: 'MIT',
+    repository: 'https://github.com/JamesLMilner/terra-draw'
+  }
+];
 const patchPurposes = {
   'patches/flowmap-temporal-scale-domain.patch':
     'Add temporalScaleDomain so temporal flow width/color domains can use selected-time or all-time flows.'
@@ -43,6 +60,14 @@ const [lock, packageJson, bundle] = await Promise.all([
   readJson(packagePath),
   readFile(path.join(outputDir, bundleName))
 ]);
+const downloadScript = await readFile(
+  path.join(vendorDir, '..', 'get-maplibre.R'),
+  'utf8'
+);
+const downloadedPackages = downloadedPackageSpecs.map((pkg) => ({
+    ...pkg,
+    version: getPinnedUnpkgVersion(pkg.name, downloadScript)
+  }));
 const colorSchemes = extractColorSchemes(bundle.toString('utf8'));
 const patchMetadata = await getPatchMetadata();
 
@@ -103,7 +128,7 @@ const manifest = {
     path: 'LICENSE.note'
   },
   colorSchemes: {
-    source: 'FlowMapGL 9.3.0 vendored bundle',
+    source: 'FlowMapGL 9.4.0 vendored bundle',
     names: colorSchemes
   },
   directDependencies: directPackages,
@@ -202,6 +227,29 @@ function renderLicenseNote(packages) {
     '| Package | Version | License | Source |',
     '| --- | --- | --- | --- |',
     ...renderCopyrightRows(packages),
+    '',
+    '## Terra Draw',
+    '',
+    'Prebuilt UMD bundles shipped pristine at `inst/htmlwidgets/lib/terra-draw-control/`',
+    '(downloaded by `data-raw/get-maplibre.R`):',
+    '',
+    '| Package | Version | License | Source |',
+    '| --- | --- | --- | --- |',
+    ...downloadedPackages.map((pkg) => {
+      const {version} = pkg;
+      return `| ${pkg.name} | ${version} | ${pkg.license} | ${pkg.repository} |`;
+    }),
+    '',
+    'Several toolbar icon glyphs in `terra-draw-control.js` are adapted from',
+    'Feather Icons (MIT, https://github.com/feathericons/feather).',
+    '',
+    '## Bundled data',
+    '',
+    'The `bixi_locations` and `bixi_flows` datasets are derived from BIXI Montréal',
+    'Open Data (https://bixi.com/fr/donnees-ouvertes), © BIXI Montréal and released',
+    'under the BIXI Montréal Open Data license. The data were prepared for the',
+    'FlowmapBlue project (https://github.com/FlowmapBlue/FlowmapBlue) by Ilya',
+    'Boyandin (https://github.com/ilyabo).',
     ''
   ].join('\n');
 }
@@ -215,6 +263,19 @@ function renderCopyrightRows(packages) {
     const source = pkg.repository ?? pkg.homepage ?? pkg.resolved ?? '';
     return `| ${pkg.name} | ${pkg.version} | ${license} | ${source} |`;
   });
+}
+
+function getPinnedUnpkgVersion(packageName, script) {
+  const escapedName = packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = script.match(
+    new RegExp(`https://unpkg\\.com/${escapedName}@([^/\\s]+)`)
+  );
+  if (!match) {
+    throw new Error(
+      `Could not find a pinned unpkg version for ${packageName} in data-raw/get-maplibre.R`
+    );
+  }
+  return match[1];
 }
 
 function renderLicense(license) {

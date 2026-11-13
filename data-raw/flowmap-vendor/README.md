@@ -36,17 +36,16 @@ data-raw/flowmap-vendor/build-flowmap.sh check
 ```
 
 The build command runs `npm ci`, applies every `patches/*.patch` with
-`git apply --check` first, bundles `entry.js` with esbuild, and writes:
+`git apply --check` first, bundles `entry.js` with esbuild, and writes only the
+minified runtime bundle and metadata:
 
-- `inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.js`
-- `inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.js.map`
 - `inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js`
-- `inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-bundle.min.js.map`
 - `inst/htmlwidgets/lib/flowmap-gl/flowmap-gl-vendor-manifest.json`
 - `LICENSE.note`
 
-The check command rebuilds those files in a temporary directory and fails if
-the committed copies differ.
+The check command rebuilds those files in a temporary directory, fails if the
+committed copies differ, and rejects obsolete debug bundles or source maps in
+the runtime asset directory.
 
 Commit the vendoring workspace files, the generated files under
 `inst/htmlwidgets/lib/flowmap-gl/`, and any tests that verify those outputs.
@@ -60,10 +59,10 @@ generated browser bundle.
 
 ## Local FlowmapGL Patch
 
-mapgl adds `flow_temporal_scale_domain` for temporal flowmaps. FlowmapGL 9.3.0
-only supports viewport-adaptive scaling, so mapgl carries
-`patches/flowmap-temporal-scale-domain.patch` until upstream provides a native
-temporal scale-domain control.
+mapgl adds `flow_temporal_scale_domain` for temporal flowmaps. FlowmapGL 9.4.0
+adds scale-lock controls, but those lock the current scale domains. mapgl still
+carries `patches/flowmap-temporal-scale-domain.patch` so temporal flowmaps can
+choose between selected-time domains and all-time domains.
 
 `adaptiveScalesEnabled` remains spatial: when enabled, scale domains are limited
 to flows with endpoints in the current viewport. `temporalScaleDomain` is

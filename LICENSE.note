@@ -10,8 +10,8 @@ Below are the licenses of the individual bundled components:
 | @deck.gl/layers | 9.3.2 | MIT | https://github.com/visgl/deck.gl.git |
 | @deck.gl/mapbox | 9.3.2 | MIT | https://github.com/visgl/deck.gl.git |
 | @esbuild/darwin-arm64 | 0.28.0 | MIT | git+https://github.com/evanw/esbuild.git |
-| @flowmap.gl/data | 9.3.0 | Apache-2.0 | git@github.com:visgl/flowmap.gl.git |
-| @flowmap.gl/layers | 9.3.0 | Apache-2.0 | git@github.com:visgl/flowmap.gl.git |
+| @flowmap.gl/data | 9.4.0 | Apache-2.0 | git@github.com:visgl/flowmap.gl.git |
+| @flowmap.gl/layers | 9.4.0 | Apache-2.0 | git@github.com:visgl/flowmap.gl.git |
 | @loaders.gl/core | 4.4.2 | MIT | https://github.com/visgl/loaders.gl |
 | @loaders.gl/images | 4.4.2 | MIT | https://github.com/visgl/loaders.gl |
 | @loaders.gl/loader-utils | 4.4.2 | MIT | https://github.com/visgl/loaders.gl |

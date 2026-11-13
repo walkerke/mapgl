@@ -1,5 +1,11 @@
 # mapgl (development version)
 
+* Flowmaps now support click-to-filter and delayed, node-only hover spotlighting by default. `flow_click_to_filter` and `flow_hover_to_spotlight` can disable the interactions; `flow_spotlight_mode` selects the spotlight appearance. The same controls can be changed with `set_flowmap_settings()` using `clickToFilter`, `hoverToSpotlight`, and `spotlightMode`. Clicking a selected location clears it without changing the configured `flow_location_filter_mode`.
+
+* Flowmap time-range and location-filter updates now reuse the cached data provider instead of rebuilding it. Click-to-filter also respects `flow_location_filter_mode`, and a single selected location is passed to FlowmapGL as a one-element array.
+
+* Update the bundled FlowmapGL runtime to 9.4.0. Existing `flow_temporal_scale_domain` support continues to choose selected-time or all-time scale domains. The vendor build cleans generated debug bundles and source maps from `inst/`.
+
 * Interactive categorical legends can isolate a category: press and hold a legend item to show that category alone, and hold it again to show every category. A plain click still toggles one category. `only_button = TRUE` adds an "only" button on hover that does the same.
 
 * Categorical legends accept one `patch_shape` per value, so one legend can mix built-in and custom shapes, e.g. `patch_shape = list(isochrone_sf, "circle")`.

@@ -39,6 +39,9 @@ add_flowmap(
   popup = FALSE,
   tooltip_style = NULL,
   popup_style = NULL,
+  flow_click_to_filter = TRUE,
+  flow_hover_to_spotlight = TRUE,
+  flow_spotlight_mode = c("spotlight", "grayscale", "brighten"),
   visibility = c("visible", "none"),
   before_id = NULL,
   slot = NULL
@@ -87,7 +90,9 @@ a standalone canvas overlay and is ignored when \code{before_id} or \code{slot} 
 
 \item{flow_fade_amount}{Controls how much lower-magnitude flows fade compared to higher ones. Range: 0-100.}
 
-\item{flow_highlight_color}{Color used for highlighting hovered elements.}
+\item{flow_highlight_color}{Color used for FlowmapGL's hover highlight.
+When \code{flow_hover_to_spotlight = TRUE}, hovering spotlights locations and
+clusters; hover highlights on flows are suppressed.}
 
 \item{flow_locations_enabled}{Whether to show location circles.}
 
@@ -129,7 +134,9 @@ thickness and color scales use only the currently selected time range
 
 \item{flow_selected_locations}{Optional vector of location IDs to select.}
 
-\item{flow_location_filter_mode}{Optional location filter mode: \code{"ALL"}, \code{"INCOMING"}, \code{"OUTGOING"}, or \code{"BETWEEN"}.}
+\item{flow_location_filter_mode}{Optional location filter mode: \code{"ALL"} (the default,
+flows touching any selected location), \code{"INCOMING"}, \code{"OUTGOING"}, or
+\code{"BETWEEN"} (flows with both endpoints selected).}
 
 \item{tooltip}{Hover tooltip content. Use \code{FALSE}/\code{NULL} to disable,
 \code{TRUE} for the default, a column name, a \code{{brace}} template, a
@@ -148,6 +155,20 @@ radius, font, padding, shadow, and \code{position = "floating"}/\code{"anchored"
 Defaults to a light/dark preset matching \code{flow_dark_mode}.}
 
 \item{popup_style}{Popup appearance; same forms as \code{tooltip_style}.}
+
+\item{flow_click_to_filter}{Whether clicking a location filters flows using
+\code{flow_location_filter_mode}. Clicking an unselected location selects only
+it; clicking a selected location deselects it. Shift-click adds or removes
+locations. Defaults to \code{TRUE}.}
+
+\item{flow_hover_to_spotlight}{Whether hovering over a location spotlights
+its connected flows after a 500 ms delay. Defaults to \code{TRUE}.}
+
+\item{flow_spotlight_mode}{Appearance of flows while a location is
+spotlighted: \code{"spotlight"} dims unrelated flows in gray, \code{"grayscale"}
+renders all flows in gray and emphasizes connected flows, and \code{"brighten"}
+keeps all flows in their original colors and emphasizes connected flows.
+Defaults to \code{"spotlight"}.}
 
 \item{visibility}{Whether the layer is initially \code{"visible"} or \code{"none"}.}
 

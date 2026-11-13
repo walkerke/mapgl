@@ -10,7 +10,7 @@ flowmap_color_schemes()
 A character vector of FlowMapGL preset names.
 }
 \description{
-Returns the FlowMapGL 9.3.0 preset color scheme names supported by
+Returns the FlowMapGL 9.4.0 preset color scheme names supported by
 \code{\link[=add_flowmap]{add_flowmap()}}. These names are case-sensitive.
 }
 \details{
