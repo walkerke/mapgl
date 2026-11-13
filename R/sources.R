@@ -2,7 +2,9 @@
 #'
 #' @param map A map object created by the `mapboxgl` or `maplibre` function.
 #' @param id A unique ID for the source.
-#' @param data An sf object or a URL pointing to a remote GeoJSON file.
+#' @param data An sf object, or a URL or path to a GeoJSON file. A relative path
+#'   (e.g. `"lines.geojson"`) is resolved by the browser against the page, so the
+#'   file must be served alongside the saved HTML.
 #' @param ... Additional arguments to be passed to the JavaScript addSource method.
 #'
 #' @return The modified map object with the new source added.
@@ -17,10 +19,10 @@ add_source <- function(map, id, data, ...) {
       data <- sf::st_transform(data, crs = 4326)
     }
     geojson <- geojsonsf::sf_geojson(data, simplify = FALSE)
-  } else if (is.character(data) && grepl("^http", data)) {
+  } else if (is.character(data) && length(data) == 1) {
     geojson <- data
   } else {
-    stop("Data must be an sf object or a URL to a remote GeoJSON file.")
+    stop("Data must be an sf object, or a URL or path to a GeoJSON file.")
   }
 
   source <- list(

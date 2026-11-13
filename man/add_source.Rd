@@ -11,7 +11,9 @@ add_source(map, id, data, ...)
 
 \item{id}{A unique ID for the source.}
 
-\item{data}{An sf object or a URL pointing to a remote GeoJSON file.}
+\item{data}{An sf object, or a URL or path to a GeoJSON file. A relative path
+(e.g. \code{"lines.geojson"}) is resolved by the browser against the page, so the
+file must be served alongside the saved HTML.}
 
 \item{...}{Additional arguments to be passed to the JavaScript addSource method.}
 }
