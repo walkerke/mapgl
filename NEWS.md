@@ -16,7 +16,7 @@
 
 * Weighted donut clusters (`donut_weight`) are now sized by their weighted total, so `count_stops` should be given in the weight's units.
 
-* New `add_model()` and `add_model_layer()` draw 3D glTF/GLB models at point features on Mapbox GL maps.
+* New `add_model()` and `add_model_layer()` draw 3D glTF/GLB models at point features on Mapbox GL maps. `model_allow_density_reduction = FALSE` draws every feature where Mapbox would otherwise thin dense models.
 
 * Update Mapbox GL JS to v3.34.2.
 

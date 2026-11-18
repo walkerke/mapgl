@@ -44,6 +44,14 @@ test_that("add_model_layer builds a model layer with paint properties", {
   expect_equal(layer$source$type, "geojson")
 })
 
+test_that("add_model_layer can turn off density reduction", {
+  m <- mapboxgl() |> add_model_layer("m", "src", model_id = "x")
+  expect_null(m$x$layers[[1]]$layout[["model-allow-density-reduction"]])
+
+  m <- mapboxgl() |> add_model_layer("m", "src", model_id = "x", model_allow_density_reduction = FALSE)
+  expect_false(m$x$layers[[1]]$layout[["model-allow-density-reduction"]])
+})
+
 test_that("add_model_layer validates xyz vectors", {
   expect_error(
     mapboxgl() |> add_model_layer("m", "src", model_id = "x", model_scale = c(1, 2)),

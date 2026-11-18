@@ -116,6 +116,9 @@ add_model <- function(map, id, url) {
 #' @param model_type `"common-3d"` (the default) or `"location-indicator"`.
 #' @param model_elevation_reference `"ground"` (the default) to place models on
 #'   the terrain, or `"sea"` to measure translation from sea level.
+#' @param model_allow_density_reduction Logical. Mapbox thins dense models by
+#'   default, keeping one per grid cell of each tile until the map is zoomed
+#'   well past the source's maximum zoom. Set to `FALSE` to draw every feature.
 #'
 #' @return The modified map object.
 #' @export
@@ -137,6 +140,7 @@ add_model_layer <- function(
   model_ambient_occlusion_intensity = NULL,
   model_type = NULL,
   model_elevation_reference = NULL,
+  model_allow_density_reduction = NULL,
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
@@ -178,6 +182,9 @@ add_model_layer <- function(
   paint <- paint[!vapply(paint, is.null, logical(1))]
 
   layout <- list("model-id" = model_id)
+  if (!is.null(model_allow_density_reduction)) {
+    layout[["model-allow-density-reduction"]] <- model_allow_density_reduction
+  }
   if (!is.null(visibility)) layout[["visibility"]] <- visibility
 
   add_layer(
