@@ -2,6 +2,8 @@
 
 * `tooltip_style()` and `popup_style()` gain `hide_after`, a number of seconds after which a tooltip or popup hides on its own (#194). A tooltip's clock restarts whenever the pointer moves, so it also clears a tooltip left behind by a tap on a touch screen. It works for layer tooltips and popups, `set_tooltip()`/`set_popup()`, compare maps and `add_flowmap()`.
 
+* Interactive legends anchored to the bottom of the map no longer shift their rows when the "Reset Filter" button appears, which made a second click land on a different row. The button's space is now kept from the start in `"bottom-left"` and `"bottom-right"` legends.
+
 * `add_flowmap()` gains `flow_location_labels_min_zoom` to hide location labels until the map is zoomed in far enough; it can also be changed with `set_flowmap_settings()`.
 
 * Flowmap tooltips and popups can now use extra columns of `locations` and `flows` by name, as documented. Extra `locations` columns were previously reachable only as `{location.column}` in a brace template, and extra `flows` columns not at all. Flow columns are available when the hovered flow corresponds to exactly one row of `flows`.
