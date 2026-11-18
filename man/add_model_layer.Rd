@@ -22,6 +22,7 @@ add_model_layer(
   model_ambient_occlusion_intensity = NULL,
   model_type = NULL,
   model_elevation_reference = NULL,
+  model_allow_density_reduction = NULL,
   visibility = "visible",
   slot = NULL,
   min_zoom = NULL,
@@ -77,6 +78,10 @@ to 1.}
 
 \item{model_elevation_reference}{\code{"ground"} (the default) to place models on
 the terrain, or \code{"sea"} to measure translation from sea level.}
+
+\item{model_allow_density_reduction}{Logical. Mapbox thins dense models by
+default, keeping one per grid cell of each tile until the map is zoomed
+well past the source's maximum zoom. Set to \code{FALSE} to draw every feature.}
 
 \item{visibility}{Whether this layer is displayed.}
 
