@@ -15,7 +15,7 @@ object created by \code{\link[=mapboxgl_proxy]{mapboxgl_proxy()}} or \code{\link
 \item{name}{The setting name to update. Supported canonical FlowMapGL
 setting names are \code{opacity}, \code{colorScheme}, \code{darkMode}, \code{fadeAmount},
 \code{highlightColor}, \code{locationsEnabled}, \code{locationTotalsEnabled},
-\code{locationLabelsEnabled}, \code{flowLinesRenderingMode},
+\code{locationLabelsEnabled}, \code{locationLabelsMinZoom}, \code{flowLinesRenderingMode},
 \code{flowLineThicknessScale}, \code{flowLineCurviness}, \code{clusteringEnabled},
 \code{clusteringAuto}, \code{clusteringLevel}, \code{fadeEnabled},
 \code{fadeOpacityEnabled}, \code{adaptiveScalesEnabled}, \code{temporalScaleDomain},
