@@ -153,6 +153,47 @@ window.MapGLFlowmapPlugin = (function () {
     ensureFlowmapAttribution(map);
   }
 
+  // Location labels can be held back until the map is zoomed in far enough
+  // (settings.locationLabelsMinZoom), so a wide view is not a pile of text.
+  function flowmapLabelsVisible(map, settings) {
+    if (!settings || !settings.locationLabelsEnabled) {
+      return false;
+    }
+    const minZoom = settings.locationLabelsMinZoom;
+    if (minZoom == null || !map || typeof map.getZoom !== "function") {
+      return true;
+    }
+    return map.getZoom() >= minZoom;
+  }
+
+  // Redraw only when a zoom crosses a label threshold, not on every zoom tick.
+  function installFlowmapLabelZoomWatch(map) {
+    if (map._flowmapLabelZoomWatch) {
+      return;
+    }
+    map._flowmapLabelZoomWatch = true;
+    const labelState = function () {
+      return (map._flowmapsConfig || [])
+        .map(function (config) {
+          return flowmapLabelsVisible(map, config.settings) ? "1" : "0";
+        })
+        .join("");
+    };
+    map.on("zoom", function () {
+      const watching = (map._flowmapsConfig || []).some(function (config) {
+        return config.settings && config.settings.locationLabelsMinZoom != null;
+      });
+      if (!watching) {
+        return;
+      }
+      const state = labelState();
+      if (state !== map._flowmapLabelZoomState) {
+        map._flowmapLabelZoomState = state;
+        redrawFlowmaps(map, map._flowmapHTMLWidgets);
+      }
+    });
+  }
+
   function getTooltipStore(map) {
     if (!map._mapglFlowmapTooltips) {
       map._mapglFlowmapTooltips = {};
@@ -319,13 +360,49 @@ window.MapGLFlowmapPlugin = (function () {
   // expressions can use simple keys (origin_id, dest_name, incoming, ...). The
   // original nested object is preserved so dotted paths ({origin.id},
   // {totals.incomingCount}) keep resolving too.
-  function flowmapProps(object, objectType) {
+  // Index the original flow rows by origin/dest so a hovered flow can carry
+  // its row's extra columns. FlowmapGL aggregates flows before drawing, so the
+  // picked object holds only its two ends and its total. A pair with more than
+  // one row (a time series, repeated pairs) maps to null: its extra columns
+  // would be ambiguous. Cached per rows array.
+  function flowmapRowKey(origin, dest) {
+    return String(origin) + "\u0000" + String(dest);
+  }
+
+  function getFlowRowIndex(config) {
+    const data = config && config.data;
+    const rows = data && data._flowsRows;
+    if (!Array.isArray(rows)) {
+      return null;
+    }
+    if (data._flowsRowIndex && data._flowsRowIndexRows === rows) {
+      return data._flowsRowIndex;
+    }
+    const index = new Map();
+    rows.forEach(function (row) {
+      const key = flowmapRowKey(row.origin, row.dest);
+      index.set(key, index.has(key) ? null : row);
+    });
+    data._flowsRowIndex = index;
+    data._flowsRowIndexRows = rows;
+    return index;
+  }
+
+  function flowmapProps(object, objectType, config) {
     const props = Object.assign({}, object);
     if (objectType === "location") {
       const totals = object.totals || {};
       props.incoming = totals.incomingCount;
       props.outgoing = totals.outgoingCount;
       props.internal = totals.internalCount;
+      // Extra `locations` columns sit on the nested row; lift them so a bare
+      // column name, a plain {column} and get_column() all reach them.
+      const locationRow = object.location || {};
+      Object.keys(locationRow).forEach(function (key) {
+        if (!(key in props)) {
+          props[key] = locationRow[key];
+        }
+      });
     } else if (objectType === "flow") {
       const origin = object.origin || {};
       const dest = object.dest || {};
@@ -333,6 +410,17 @@ window.MapGLFlowmapPlugin = (function () {
       props.origin_name = origin.name;
       props.dest_id = dest.id;
       props.dest_name = dest.name;
+      // Extra `flows` columns, when the hovered flow is exactly one input row
+      // (not a clustered or summed flow). Built-in keys are never overwritten.
+      const index = getFlowRowIndex(config);
+      const row = index && index.get(flowmapRowKey(origin.id, dest.id));
+      if (row) {
+        Object.keys(row).forEach(function (key) {
+          if (!(key in props)) {
+            props[key] = row[key];
+          }
+        });
+      }
     }
     return props;
   }
@@ -368,7 +456,7 @@ window.MapGLFlowmapPlugin = (function () {
       return null;
     }
 
-    const props = flowmapProps(object, objectType);
+    const props = flowmapProps(object, objectType, config);
 
     let html;
     if (spec === true) {
@@ -549,6 +637,28 @@ window.MapGLFlowmapPlugin = (function () {
     return [10, 10];
   }
 
+  // tooltip_style(hide_after = ) / popup_style(hide_after = ): seconds after
+  // which the tooltip or popup hides on its own. A tooltip's clock restarts
+  // each time the pointer moves over a flow or location.
+  function scheduleFlowmapAutoHide(map, id, storeKey, styleSpec, hide) {
+    const store = getTooltipStore(map);
+    if (!store[id]) store[id] = {};
+    if (!store[id]._timers) store[id]._timers = {};
+    const timers = store[id]._timers;
+    if (timers[storeKey]) {
+      clearTimeout(timers[storeKey]);
+      timers[storeKey] = null;
+    }
+    const seconds = styleSpec && Number(styleSpec.hide_after);
+    if (!(seconds > 0)) {
+      return;
+    }
+    timers[storeKey] = setTimeout(function () {
+      timers[storeKey] = null;
+      hide();
+    }, seconds * 1000);
+  }
+
   function showInteractiveUI(map, config, info, behavior) {
     const interaction = config[behavior];
     if (!interaction || !interaction.enabled) return;
@@ -599,10 +709,14 @@ window.MapGLFlowmapPlugin = (function () {
         store[config.id][storeKey].remove();
       }
 
-      store[config.id][storeKey] = new Popup(options)
+      const anchoredPopup = new Popup(options)
         .setLngLat(lngLat)
         .setHTML(html)
         .addTo(map);
+      store[config.id][storeKey] = anchoredPopup;
+      scheduleFlowmapAutoHide(map, config.id, storeKey, styleSpec, function () {
+        anchoredPopup.remove();
+      });
     } else {
       // Floating mode: a bare <div> styled inline from the spec.
       const point = getTooltipPoint(map, info);
@@ -635,6 +749,9 @@ window.MapGLFlowmapPlugin = (function () {
       element.style.top = point.y + offset[1] + "px";
       element.style.display = "block";
       element.style.pointerEvents = behavior === "popup" ? "auto" : "none";
+      scheduleFlowmapAutoHide(map, config.id, storeKey, styleSpec, function () {
+        element.style.display = "none";
+      });
 
       if (behavior === "popup") {
         // Delayed listener to avoid immediate dismissal from bubbling
@@ -1100,7 +1217,7 @@ window.MapGLFlowmapPlugin = (function () {
       highlightColor: settings.highlightColor,
       locationsEnabled: settings.locationsEnabled,
       locationTotalsEnabled: settings.locationTotalsEnabled,
-      locationLabelsEnabled: settings.locationLabelsEnabled,
+      locationLabelsEnabled: flowmapLabelsVisible(map, settings),
       flowLinesRenderingMode: settings.flowLinesRenderingMode,
       flowLineThicknessScale: settings.flowLineThicknessScale == null ? 1 : settings.flowLineThicknessScale,
       flowLineCurviness: settings.flowLineCurviness == null ? 1 : settings.flowLineCurviness,
@@ -1334,6 +1451,7 @@ window.MapGLFlowmapPlugin = (function () {
     }
 
     installFlowmapAttributionRefresh(map);
+    installFlowmapLabelZoomWatch(map);
 
     const interleaved = x.flowmaps.some(function (flowmap) {
       return Boolean(flowmap.beforeId || flowmap.slot);

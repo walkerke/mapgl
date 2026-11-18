@@ -22,7 +22,8 @@ tooltip_style(
   shadow_color = NULL,
   shadow_size = NULL,
   position = NULL,
-  offset = NULL
+  offset = NULL,
+  hide_after = NULL
 )
 
 popup_style(
@@ -42,7 +43,8 @@ popup_style(
   shadow_color = NULL,
   shadow_size = NULL,
   position = NULL,
-  offset = NULL
+  offset = NULL,
+  hide_after = NULL
 )
 }
 \arguments{
@@ -83,6 +85,14 @@ or \code{"anchored"} (pinned to the feature). Ignored by ordinary layers.}
 
 \item{offset}{For floating flowmap tooltips, a numeric pixel offset or a
 length-2 numeric \code{c(x, y)}.}
+
+\item{hide_after}{Optional number of seconds after which the tooltip or
+popup hides on its own. A tooltip's clock restarts whenever the pointer
+moves over a feature, so it hides after the pointer has rested for this
+long (and after a tap on a touch screen, where there is no pointer to move
+away). A popup closes this long after it opens. \code{NULL} (the default) keeps
+the usual behavior. Setting only \code{hide_after} leaves the appearance
+unchanged.}
 }
 \value{
 A list of class \code{mapgl_tooltip_style}.
@@ -106,5 +116,8 @@ tooltip_style(
   text_color = "#e6edf3",
   border_radius = 6
 )
+
+# Keep the default look, but hide the tooltip after three seconds
+tooltip_style(hide_after = 3)
 }
 }

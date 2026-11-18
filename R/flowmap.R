@@ -58,6 +58,11 @@ flowmap_color_schemes <- function() {
 #' @param flow_locations_enabled Whether to show location circles.
 #' @param flow_location_totals_enabled Whether to show incoming/outgoing totals as concentric circles at each location.
 #' @param flow_location_labels_enabled Whether to show text labels at locations.
+#' @param flow_location_labels_min_zoom Optional zoom level below which location
+#'   labels are hidden. Useful when labels crowd each other in a wide view, for
+#'   example on a phone: the labels appear once the map is zoomed in this far.
+#'   `NULL` (the default) shows labels at every zoom. Only applies when
+#'   `flow_location_labels_enabled = TRUE`.
 #' @param flow_lines_rendering_mode Controls how flow lines are rendered: `"straight"`, `"animated-straight"`, or `"curved"`.
 #' @param flow_line_thickness_scale Multiplier for flow line thickness.
 #' @param flow_line_curviness Multiplier for flow line curviness (only used when `flow_lines_rendering_mode` is `"curved"`).
@@ -87,7 +92,10 @@ flowmap_color_schemes <- function() {
 #'   Available fields are, for locations: `name`, `id`, `lat`, `lon`,
 #'   `incoming`, `outgoing`, `internal` (plus any `locations` columns); for
 #'   flows: `count`, `origin_id`, `origin_name`, `dest_id`, `dest_name` (plus
-#'   any `flows` columns).
+#'   any `flows` columns). Extra `flows` columns are available when the hovered
+#'   flow corresponds to exactly one row of `flows`; a flow summed from several
+#'   rows (a clustered flow, or a pair repeated across time steps) carries only
+#'   the built-in fields.
 #' @param popup Click popup content. Same forms as `tooltip`; defaults to
 #'   `FALSE` (disabled).
 #' @param tooltip_style Tooltip appearance. A preset string (`"light"`,
@@ -161,6 +169,7 @@ add_flowmap <- function(
   flow_locations_enabled = TRUE,
   flow_location_totals_enabled = TRUE,
   flow_location_labels_enabled = FALSE,
+  flow_location_labels_min_zoom = NULL,
   flow_lines_rendering_mode = c("straight", "animated-straight", "curved"),
   flow_line_thickness_scale = 1,
   flow_line_curviness = 1,
@@ -326,6 +335,10 @@ add_flowmap <- function(
     flow_location_labels_enabled,
     "flow_location_labels_enabled"
   )
+  flowmap_validate_nullable_numeric_scalar(
+    flow_location_labels_min_zoom,
+    "flow_location_labels_min_zoom"
+  )
   flowmap_validate_logical(flow_clustering_enabled, "flow_clustering_enabled")
   flowmap_validate_logical(flow_clustering_auto, "flow_clustering_auto")
   flowmap_validate_logical(flow_fade_enabled, "flow_fade_enabled")
@@ -426,6 +439,7 @@ add_flowmap <- function(
       locationsEnabled = flow_locations_enabled,
       locationTotalsEnabled = flow_location_totals_enabled,
       locationLabelsEnabled = flow_location_labels_enabled,
+      locationLabelsMinZoom = flow_location_labels_min_zoom,
       flowLinesRenderingMode = flow_lines_rendering_mode,
       flowLineThicknessScale = flow_line_thickness_scale,
       flowLineCurviness = flow_line_curviness,
@@ -549,7 +563,7 @@ set_flowmap_filter <- function(
 #' @param name The setting name to update. Supported canonical FlowMapGL
 #'   setting names are `opacity`, `colorScheme`, `darkMode`, `fadeAmount`,
 #'   `highlightColor`, `locationsEnabled`, `locationTotalsEnabled`,
-#'   `locationLabelsEnabled`, `flowLinesRenderingMode`,
+#'   `locationLabelsEnabled`, `locationLabelsMinZoom`, `flowLinesRenderingMode`,
 #'   `flowLineThicknessScale`, `flowLineCurviness`, `clusteringEnabled`,
 #'   `clusteringAuto`, `clusteringLevel`, `fadeEnabled`,
 #'   `fadeOpacityEnabled`, `adaptiveScalesEnabled`, `temporalScaleDomain`,
@@ -682,6 +696,8 @@ flowmap_setting_name_map <- c(
   location_totals_enabled = "locationTotalsEnabled",
   locationLabelsEnabled = "locationLabelsEnabled",
   location_labels_enabled = "locationLabelsEnabled",
+  locationLabelsMinZoom = "locationLabelsMinZoom",
+  location_labels_min_zoom = "locationLabelsMinZoom",
   flowLinesRenderingMode = "flowLinesRenderingMode",
   flow_lines_rendering_mode = "flowLinesRenderingMode",
   flowLineThicknessScale = "flowLineThicknessScale",
@@ -784,6 +800,10 @@ flowmap_validate_setting_value <- function(name, value) {
     locationsEnabled = flowmap_validate_logical_setting(value),
     locationTotalsEnabled = flowmap_validate_logical_setting(value),
     locationLabelsEnabled = flowmap_validate_logical_setting(value),
+    locationLabelsMinZoom = flowmap_validate_nullable_numeric_scalar(
+      value,
+      "value"
+    ),
     flowLinesRenderingMode = flowmap_validate_choice(
       value,
       "value",

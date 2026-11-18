@@ -28,6 +28,13 @@
 #'   or `"anchored"` (pinned to the feature). Ignored by ordinary layers.
 #' @param offset For floating flowmap tooltips, a numeric pixel offset or a
 #'   length-2 numeric `c(x, y)`.
+#' @param hide_after Optional number of seconds after which the tooltip or
+#'   popup hides on its own. A tooltip's clock restarts whenever the pointer
+#'   moves over a feature, so it hides after the pointer has rested for this
+#'   long (and after a tap on a touch screen, where there is no pointer to move
+#'   away). A popup closes this long after it opens. `NULL` (the default) keeps
+#'   the usual behavior. Setting only `hide_after` leaves the appearance
+#'   unchanged.
 #'
 #' @return A list of class `mapgl_tooltip_style`.
 #' @export
@@ -43,6 +50,9 @@
 #'   text_color = "#e6edf3",
 #'   border_radius = 6
 #' )
+#'
+#' # Keep the default look, but hide the tooltip after three seconds
+#' tooltip_style(hide_after = 3)
 #' }
 tooltip_style <- function(
   preset = NULL,
@@ -61,13 +71,24 @@ tooltip_style <- function(
   shadow_color = NULL,
   shadow_size = NULL,
   position = NULL,
-  offset = NULL
+  offset = NULL,
+  hide_after = NULL
 ) {
   if (!is.null(preset)) {
     preset <- match.arg(preset, c("light", "dark", "auto"))
   }
   if (!is.null(position)) {
     position <- match.arg(position, c("floating", "anchored"))
+  }
+  if (!is.null(hide_after)) {
+    if (
+      !is.numeric(hide_after) ||
+        length(hide_after) != 1 ||
+        is.na(hide_after) ||
+        hide_after <= 0
+    ) {
+      rlang::abort("`hide_after` must be a single positive number of seconds.")
+    }
   }
 
   style <- list(
@@ -87,7 +108,8 @@ tooltip_style <- function(
     shadow_color = shadow_color,
     shadow_size = shadow_size,
     position = position,
-    offset = offset
+    offset = offset,
+    hide_after = hide_after
   )
 
   style <- style[!vapply(style, is.null, logical(1))]
@@ -114,7 +136,8 @@ popup_style <- function(
   shadow_color = NULL,
   shadow_size = NULL,
   position = NULL,
-  offset = NULL
+  offset = NULL,
+  hide_after = NULL
 ) {
   tooltip_style(
     preset = preset,
@@ -133,7 +156,8 @@ popup_style <- function(
     shadow_color = shadow_color,
     shadow_size = shadow_size,
     position = position,
-    offset = offset
+    offset = offset,
+    hide_after = hide_after
   )
 }
 

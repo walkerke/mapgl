@@ -19,6 +19,7 @@ add_flowmap(
   flow_locations_enabled = TRUE,
   flow_location_totals_enabled = TRUE,
   flow_location_labels_enabled = FALSE,
+  flow_location_labels_min_zoom = NULL,
   flow_lines_rendering_mode = c("straight", "animated-straight", "curved"),
   flow_line_thickness_scale = 1,
   flow_line_curviness = 1,
@@ -100,6 +101,12 @@ clusters; hover highlights on flows are suppressed.}
 
 \item{flow_location_labels_enabled}{Whether to show text labels at locations.}
 
+\item{flow_location_labels_min_zoom}{Optional zoom level below which location
+labels are hidden. Useful when labels crowd each other in a wide view, for
+example on a phone: the labels appear once the map is zoomed in this far.
+\code{NULL} (the default) shows labels at every zoom. Only applies when
+\code{flow_location_labels_enabled = TRUE}.}
+
 \item{flow_lines_rendering_mode}{Controls how flow lines are rendered: \code{"straight"}, \code{"animated-straight"}, or \code{"curved"}.}
 
 \item{flow_line_thickness_scale}{Multiplier for flow line thickness.}
@@ -144,7 +151,10 @@ flows touching any selected location), \code{"INCOMING"}, \code{"OUTGOING"}, or
 Available fields are, for locations: \code{name}, \code{id}, \code{lat}, \code{lon},
 \code{incoming}, \code{outgoing}, \code{internal} (plus any \code{locations} columns); for
 flows: \code{count}, \code{origin_id}, \code{origin_name}, \code{dest_id}, \code{dest_name} (plus
-any \code{flows} columns).}
+any \code{flows} columns). Extra \code{flows} columns are available when the hovered
+flow corresponds to exactly one row of \code{flows}; a flow summed from several
+rows (a clustered flow, or a pair repeated across time steps) carries only
+the built-in fields.}
 
 \item{popup}{Click popup content. Same forms as \code{tooltip}; defaults to
 \code{FALSE} (disabled).}
